@@ -4,7 +4,7 @@
         {
             "label": "▶️ Run a tool",
             "type": "shell",
-            "command": "scripts/run_a_tool.sh"
+            "command": "${workspaceFolder}/scripts/run_a_tool.sh"
         }
     ]
 }
