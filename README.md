@@ -14,11 +14,11 @@ For this tools I use a shadow GitHub account, that doen't have access to my real
 Their connector are a little bit fragile and sometimes doesn't work.
 
 **Standalone programs** can run locally or on a Docker container, so they can be almost !00% secure.  
-They have a CLI and sometine a UI   
+They have a CLI and sometime a web UI exposed on the guest.  
 
 Local running tools s 
 
-**IDE plugins**  
+**IDE plugins** ❌ 
 - GitHub Copilot
 - Continue.DEV
 - Cline
@@ -27,14 +27,14 @@ Local running tools s
 - AliBaba Qwen Coder
 - Mistral Chat
 
-**Standalone programs**
+**Standalone programs** on Docker ✔️
 - [Aider](Aider/Aider.md)
-- OpenCode
+- [OpenCode](OpenCode/OpenCode.md)
 - [Qwen Code](Qwen%20Code/Qwen%20Code.md)
 - Mistral Vibe
 
 
-## Docker
+## 🐳 Docker
 
 I want to run the tools in a Docker container and us a Bind Volume to store the repo, so that I can easily access it within an IDE.  
 The problem is that a **Dockerfile -v parameter** only creates readonly bind models.  
@@ -49,7 +49,7 @@ So I will use **Docker Compose** files, where is much easier to set volumes.
 
 ## Qwen Code
 
-[Qwen Code](Qwen Code/Qwen20Code.md)
+[Qwen Code](Qwen%20Code/Qwen%20Code.md)
 
 
 
@@ -57,11 +57,11 @@ So I will use **Docker Compose** files, where is much easier to set volumes.
 
 https://coder.qwen.ai
 
-Is a web tool, it uses Qwen website and it often stop to work and disrupt the work a lot (20/04/2026).
+Is a web tool, it uses Qwen website and it often stop to work and disrupt the work a lot ⚠️ (20/04/2026).
 
 ## Mistral AI 
 
-I added GitHub connectors but it doesn't work today (20/).with connecto
+I added GitHub connectors but it doesn't work today ⚠️ (20/04/2026).with connecto
 
 
 ## Mistral Vibe

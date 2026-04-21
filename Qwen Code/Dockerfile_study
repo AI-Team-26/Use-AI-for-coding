@@ -1,0 +1,13 @@
+RUN apt-get update && apt-get install -y gettext && rm -rf /var/lib/apt/lists/*
+
+# Copy the settings file with the placeholder
+COPY settings.ini /app/settings.ini
+
+# Replace the placeholder with the actual secret
+# Pass the secret as a build argument
+ARG SECRET_KEY
+ENV SECRET_KEY=$SECRET_KEY
+
+# Substitute the placeholder with the actual value
+RUN envsubst < /app/settings.ini > /app/settings_final.ini && \
+    mv /app/settings_final.ini /app/settings.ini
