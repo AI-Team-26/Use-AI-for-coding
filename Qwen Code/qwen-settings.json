@@ -14,7 +14,36 @@
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         "description": "Qwen3-Coder via Dashscope",
         "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen3-32b",
+        "name": "qwen3-32b",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "Qwen3-Coder via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen3:8b",
+        "name": "qwen3:8b (Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "xxx via Ollama",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen3.5:4b",
+        "name": "qwen3.5:4b (Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "xxx via Ollama",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "codellama:7b",
+        "name": "codellama:7b (Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "codellama:7b via Ollama",
+        "envKey": "ALIBABA_API_KEY"
       }
+
     ]
   },
   "env": {

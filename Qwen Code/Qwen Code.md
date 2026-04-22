@@ -26,11 +26,9 @@ docker build \
 ```bash
 # set settings file
 guest_volume=/d/Programming/PROJECTS/QwenCode_iCode
-
 cp qwen-settings.json $guest_volume/.qwen/settings.json
 sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $guest_volume/.qwen/settings.json
-
-#cat $guest_volume/.qwen/settings.json   #to check
+cat $guest_volume/.qwen/settings.json      #to check
 
 
 export MSYS_NO_PATHCONV=1  # Disable path conversion (otherwise on GitBash in Windows /data becomes C:/data which is not desired here)
@@ -48,4 +46,29 @@ docker run -it \
 If teh container is running... to attach to it:
 ```bash
 
+```
+
+
+
+## Models
+
+### AliBaba
+- qwen3.6-plus: ✔️
+- qwen3.5-plus: ✔️
+- qwen3.6-flash
+- qwen-max-2025-01-25
+- qwen3.5-35b-a3b
+- qwen-plus
+
+### Ollama
+- qwen3:8b: ❌ too stupid
+- llama3.1:8b: ❌ too stupid
+- qwen3.5:4b: 
+- codellama:7b-code
+
+
+add model to settings:
+```bash
+model="codellama:7b"
+add_model.sh model
 ```
