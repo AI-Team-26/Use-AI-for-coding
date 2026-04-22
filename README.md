@@ -41,6 +41,44 @@ The problem is that a **Dockerfile -v parameter** only creates readonly bind mod
 So I will use **Docker Compose** files, where is much easier to set volumes.  
 
 
+### GIT
+
+The tool require to access GIT.  
+I created a fine-grained token and ask it to use with "git config --global credential.helper store".
+
+
+### Ollama
+
+To access host Ollama, it needs to be exposed to the Docker network.
+```bash
+# 8k/16k context
+OLLAMA_ORIGINS="*"   OLLAMA_HOST=0.0.0.0  OLLAMA_MAX_CONTEXT_SIZE=8162    ollama serve
+OLLAMA_ORIGINS="*"   OLLAMA_HOST=0.0.0.0  OLLAMA_MAX_CONTEXT_SIZE=16384   ollama serve
+```
+
+Use **HTTP**, not HTTPS.  
+
+```bash
+curl http://localhost:11434/v1/chat/completions -d '{
+  "model": "qwen3:8b",
+  "messages": [{"role": "user", "content": "hello"}]
+}'
+
+
+curl http://host.docker.internal:11434/v1/chat/completions -d '{
+  "model": "qwen3:8b",
+  "messages": [{"role": "user", "content": "hello"}]
+}'
+```
+
+
+### Tools UI
+
+AionUi: https://github.com/iOfficeAI/AionUi  
+Qwen Code docuemntation sugegsts it to have a UI (and also https://github.com/Piebald-AI/gemini-cli-desktop).
+
+
+
 
 ## OpenCode
 

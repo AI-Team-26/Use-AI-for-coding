@@ -65,10 +65,11 @@ If teh container is running... to attach to it:
 - llama3.1:8b: ❌ too stupid
 - qwen3.5:4b: 
 - codellama:7b-code
+- dolphin3:8b ❌ does not support tools
+- codellama:7b: ❌ does not support tools
 
 
-add model to settings:
+Add a model to settings:
 ```bash
-model="codellama:7b"
-add_model.sh model
+python add_model ""
 ```

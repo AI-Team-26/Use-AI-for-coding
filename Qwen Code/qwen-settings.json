@@ -42,8 +42,14 @@
         "baseUrl": "http://host.docker.internal:11434/v1",
         "description": "codellama:7b via Ollama",
         "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "codellama:7b-code",
+        "name": "codellama:7b-code (Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "codellama:7b-code via Ollama",
+        "envKey": "ALIBABA_API_KEY"
       }
-
     ]
   },
   "env": {
