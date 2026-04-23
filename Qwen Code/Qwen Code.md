@@ -11,39 +11,58 @@ Docs:
 ## Create custom image
 
 - Pass the configuration file into a volume
-- Pass the /worlkspae directory into a volume
-- Start Qwen from /workspace
+- Pass the /projects directory into a volume
+- Start Qwen from /projects
 
 ```bash
 docker build \
-    --label "Qwen code for AI coding" \
-    -t qwencode:1 \
+    --label "Qwen Code for AI coding" \
+    -t qwencode:3 \
     .
 ```
 
 ## Run the Container
 
+We run the container passing 2 Volumes:
+- /root/.quen   -> for the settings.json file
+- /projects     -> for the GIT repositories and other files (start.sh, README)
+
+### Setup
 ```bash
-# set settings file
-guest_volume=/d/Programming/PROJECTS/QwenCode_iCode
-cp qwen-settings.json $guest_volume/.qwen/settings.json
-sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $guest_volume/.qwen/settings.json
-cat $guest_volume/.qwen/settings.json      #to check
+# Prepare settings file and other utilities
+docker_volume=/d/Programming/PROJECTS/QwenCode_Container
+mkdir -p "$docker_volume/.qwen"
+mkdir -p "$docker_volume/projects"
 
+cp for-docker-volume/README.md "$docker_volume/projects/README.md"
+cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
 
+cp for-docker-volume/qwen-settings.json $docker_volume/.qwen/settings.json
+sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $docker_volume/.qwen/settings.json
+
+# to check replace result
+cat $docker_volume/.qwen/settings.json     
+```
+
+### Run
+
+```bash
 export MSYS_NO_PATHCONV=1  # Disable path conversion (otherwise on GitBash in Windows /data becomes C:/data which is not desired here)
 
-label="description=Qwen Code for ICode"
+label="description=Qwen Code for different projects"
 
+# calling with ICode argument as starting project
 docker run -it \
-    --name QwenCode_ICode \
+    --name QwenCode_3 \
     --label "$label" \
     -v /$guest_volume/.qwen:/root/.qwen \
-    -v /$guest_volume/workspace:/workspace \
-    qwencode:1
+    -v /$guest_volume/projects:/projects \
+    qwencode:3 ICode
 ``` 
 
-If teh container is running... to attach to it:
+### Attach to container
+
+If the container is running... to attach to it:
 ```bash
 
 ```
@@ -53,9 +72,9 @@ If teh container is running... to attach to it:
 ## Models
 
 ### AliBaba
-- qwen3.6-plus: ✔️
-- qwen3.5-plus: ✔️
-- qwen3.6-flash
+- qwen3.6-plus          : ✔️
+- qwen3.5-plus          : ✔️
+- qwen3.6-flash         : ::question::
 - qwen-max-2025-01-25
 - qwen3.5-35b-a3b
 - qwen-plus

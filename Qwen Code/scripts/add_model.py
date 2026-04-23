@@ -6,7 +6,7 @@ import os
 import subprocess
 
 settings_file_path = "qwen-settings.json"
-docker_volume = "/d/Programming/PROJECTS/QwenCode_iCode"
+docker_volume = "/d/Programming/PROJECTS/QwenCode_Container"
 github_pat = os.environ['ALIBABA_QWEN_CODE_FOR_DOCKER_1']
 
 def main():
