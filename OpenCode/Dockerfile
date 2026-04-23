@@ -1,7 +1,5 @@
 FROM ubuntu:24.04
 
-LABEL description="Qwen Code for ICode project"
-
 # Set environment variables to avoid interactive installations
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -29,7 +27,19 @@ RUN curl -fsSL https://opencode.ai/install | bash
 # Set working directory
 WORKDIR /workspace
 
-# Expose a port
+# Create a non-root user
+#RUN useradd -m -s /bin/bash developer && echo "developer:developer" | chpasswd && adduser developer sudo
+#RUN useradd -m -s /bin/bash developer
+
+# Give permission on workspace dir
+#RUN chown developer:developer /workspace && chmod 755 /workspace
+#RUN chmod -R 777 .
+#RUN chown -R developer:developer /workspace
+
+# Set home directory
+#ENV HOME=/home/developer
+
+# Expose a port (you can change this as needed)
 EXPOSE 8080
 
 # Default command

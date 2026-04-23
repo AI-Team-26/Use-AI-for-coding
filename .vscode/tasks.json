@@ -1,8 +1,7 @@
 {
     "tasks": [
-
         {
-            "label": "▶️ Run a tool",
+            "label": "▶️ Run",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/run_a_tool.sh"
         }

@@ -19,12 +19,17 @@ select opt in "${options[@]}"; do
             echo "Executing OpenCode..."
             ./OpenCode/run.sh
             break
-            ;;
+            ;;           
         "Run Qwen Code")
             #echo "Executing Qwen Code..."
             ./Qwen\ Code/run.sh
             break
             ;;
+        #"Add a model to Qwen Code")
+        #    ./Qwen\ Code/add.sh
+        #    break
+        #    ;;
+        #
         "Exit")
             echo "Exiting..."
             exit 0
