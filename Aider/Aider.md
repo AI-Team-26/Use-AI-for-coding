@@ -16,7 +16,7 @@ Since containers are ephemeral, the extras will need to be reinstalled the next 
 
 Base image: paulgauthier/aider-full  
 Customization:
-- GIT
+- GIT (required ?)
 - a README.md file with instructions
 - auto-start script to seet compatibe OpenAI provider URL and key
 

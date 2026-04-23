@@ -1,0 +1,8 @@
+dark-mode: true
+
+# editor
+editor: nano
+
+# Model provider
+#openai-api-type: "openai" deprecated
+
