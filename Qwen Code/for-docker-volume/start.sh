@@ -11,6 +11,8 @@ FOLDER_EMOJI="📁"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="�
 
 echo -e "${BOLD_PURPLE}QWEN code${NC}\n"
 
+cd /projects
+
 # --- Git Setup ---
 setup_git() {
     if ! git config --global user.name >/dev/null 2>&1; then
@@ -55,11 +57,14 @@ select_project() {
         return
     fi
     
-    echo -e "${YELLOW}${FOLDER_EMOJI} Seelct a projects:${NC}"
-    select proj in "${projects[@]}" "🟢 Clone a new project" "◻ Exit"; do
-        if [[ "$proj" == "🟢 Clone a new project" ]]; then
+    echo -e "${YELLOW}${FOLDER_EMOJI} Select a projects:${NC}"
+    select proj in "${projects[@]}" "➕ Clone a new project" "💻 Shell" "⭕ Exit"; do
+        if [[ "$proj" == "➕ Clone a new project" ]]; then
             clone_project; select_project; break
-        elif [[ "$proj" == "◻ Exit" ]]; then
+        elif [[ "$proj" == "💻 Shell" ]]; then            
+            /bin/bash  
+            #exit 1
+        elif [[ "$proj" == "⭕ Exit" ]]; then
             exit 0
         elif [[ -n "$proj" ]]; then
             echo -e "${GREEN}${ROCKET_EMOJI} Running project: $proj${NC}"
