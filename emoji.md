@@ -15,3 +15,16 @@
 | 🛠️    | :wrench:               | Work in progress                |
 | 🎉    | :tada:                 | Celebration                     |
 | 🟩    | :green_square:         | Green square (explicit green)   |
+| 🐳    |                        |                                 |
+| 🏗️    |                        |                                 |
+| 🔍    |                        |                                 |
+| 🌐    |                        |                                 |
+| 🔒    |                        |                                 |
+| 📦    |                        |                                 |
+| ⚙️    |                        |                                 |
+| 🎯    |                        |                                 |
+| 📜    |                        |                                 |
+| 📌    |                        |                                 |
+| 🔽    |                        |                                 |
+| ↩️    |                        |                                 |
+| 🔲    |                        |                                 |

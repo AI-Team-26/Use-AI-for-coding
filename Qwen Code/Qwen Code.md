@@ -17,7 +17,7 @@ Docs:
 ```bash
 docker build \
     --label "Qwen Code for AI coding" \
-    -t qwencode:3 \
+    -t qwencode:4 \
     .
 ```
 
@@ -41,7 +41,7 @@ cp for-docker-volume/qwen-settings.json $docker_volume/.qwen/settings.json
 sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $docker_volume/.qwen/settings.json
 
 # to check replace result
-cat $docker_volume/.qwen/settings.json     
+cat $docker_volume/.qwen/settings.json
 ```
 
 ### Run
@@ -53,19 +53,52 @@ label="description=Qwen Code for different projects"
 
 # calling with ICode argument as starting project
 docker run -it \
-    --name QwenCode_3 \
+    --name QwenCode_4 \
     --label "$label" \
-    -v /$guest_volume/.qwen:/root/.qwen \
-    -v /$guest_volume/projects:/projects \
-    qwencode:3 ICode
+    -v /$docker_volume/.qwen:/root/.qwen \
+    -v /$docker_volume/projects:/projects \
+    qwencode:4 ICode
 ``` 
 
 ### Attach to container
 
-If the container is running... to attach to it:
+_docker attach_ can pickup the entrypoint script when it is in a selection wait state, waiting for user input but without printing the menu.  
+To avoid this, use ``docker start -ai "$container_id"`` 
+- The -a flag attaches to the container's output immediately.
+- The -i flag keeps STDIN open for interactive input.
+  
+If you want to keep using _docker attach_, modify start.sh to force a new prompt when attached.  
+Add this at the top of entrypoint script (start.sh):    
+(not tested)  
 ```bash
-
+# Force a new prompt if attached to a running container
+if [ -z "$PS1" ]; then
+    echo -e "\n🔄 Restarting project selection..."
+fi
 ```
+
+### Investigate the container
+
+```bash
+container = ...
+docker exec -it $container //bin/bash
+```
+
+
+## GitHub permissions
+
+GitHub User: alex-cyper-75
+Email: alex.cyber.75@gmail.com
+PAT: ???
+
+### PAT
+
+I create a fine-grained access token.
+Repositories: list
+- Metadata (required): automatically selected
+- Contents: Read & write
+- Pull REquests: Read & Write
+- Actions: Read  (to check execution result)
 
 
 

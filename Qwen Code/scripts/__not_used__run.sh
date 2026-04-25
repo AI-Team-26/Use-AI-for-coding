@@ -30,14 +30,16 @@ select opt in "${options[@]}"; do
 
                 echo "Starting and attaching to container: $container_id"
 
-                # Start the container (if not already running)
-                docker start "$container_id" || {
+                # Start the container
+                # -a:  attaches to the container's output immediately.
+                # -1: keeps STDIN open for interactive input.
+                docker start -ai "$container_id" || {
                     echo "Failed to start container $container_id"
                     break
                 }
 
-                # Attach to the container
-                docker attach "$container_id"
+                # Attach will pick up the entrypoint script in a "waiting usder input state", not what we want
+                #docker attach "$container_id"
 
                 break
             else

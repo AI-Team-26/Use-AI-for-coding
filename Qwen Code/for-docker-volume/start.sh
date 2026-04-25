@@ -1,51 +1,76 @@
 #!/bin/bash
-# script for the Docker Container
+# 📁 Qwen Project Manager: Select or clone a GitHub project, then run it with `qwen`.
+#   - Sets up Git credentials if missing.
+#   - Lists projects in /projects (bind-mounted from host).
+#   - Allows cloning new repos interactively.
 
-# Start Qwen in the selected  project
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Emojis
-FOLDER_EMOJI="📁"
-ROCKET_EMOJI="🚀"
-WARNING_EMOJI="⚠️"
-
-# Navigate to /projects
-#cd /projects || { echo -e "${RED}${WARNING_EMOJI} Failed to enter /projects directory!${NC}"; exit 1; }
+# --- Config ---
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'; BOLD_PURPLE='\033[1;35m'
+FOLDER_EMOJI="📁"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"
 
 
-# List available projects (folders)
-projects=($(ls -d */ | tr -d '/'))
+echo -e "${BOLD_PURPLE}QWEN code${NC}\n"
 
-# Function to display projects and prompt selection
+# --- Git Setup ---
+setup_git() {
+    if ! git config --global user.name >/dev/null 2>&1; then
+        echo -e "${YELLOW}${GIT_EMOJI} Git not configured. Set up credentials:${NC}"
+        read -p "GitHub username: " git_username
+        read -p "GitHub email: " git_email
+        read -s -p "GitHub PAT: " git_pat; echo
+        git config --global user.name "$git_username"
+        git config --global user.email "$git_email"
+        git config --global credential.helper store
+        echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
+        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
+    fi
+}
+
+# --- Clone a New Project ---
+clone_project() {
+    read -p "GitHub repo URL: " repo_url
+    read -p "Directory name (leave blank for repo name): " dir_name
+    dir_name=${dir_name:-$(basename "$repo_url" .git)}
+    if [ -d "/projects/$dir_name" ]; then
+        echo -e "${RED}${WARNING_EMOJI} Directory '/projects/$dir_name' exists!${NC}"
+        return
+    fi
+    echo -e "${YELLOW}${GIT_EMOJI} Cloning into /projects/$dir_name...${NC}"
+    git clone "$repo_url" "/projects/$dir_name" || {
+        echo -e "${RED}${WARNING_EMOJI} Clone failed!${NC}"; return
+    }
+    echo -e "${GREEN}${GIT_EMOJI} Cloned successfully!${NC}"
+}
+
+# --- Select or Clone a Project ---
 select_project() {
-    echo -e "${YELLOW}${FOLDER_EMOJI} Available projects:${NC}"
-    select proj in "${projects[@]}"; do
-        if [[ -n "$proj" ]]; then
+
+    # List available projects (folders in current directory)
+    projects=($(ls -d */ 2>/dev/null | tr -d '/'))
+
+    if [ ${#projects[@]} -eq 0 ]; then
+        echo -e "${YELLOW}${FOLDER_EMOJI} No projects found. Clone one first!${NC}"
+        clone_project
+        select_project
+        return
+    fi
+    
+    echo -e "${YELLOW}${FOLDER_EMOJI} Seelct a projects:${NC}"
+    select proj in "${projects[@]}" "🟢 Clone a new project" "◻ Exit"; do
+        if [[ "$proj" == "🟢 Clone a new project" ]]; then
+            clone_project; select_project; break
+        elif [[ "$proj" == "◻ Exit" ]]; then
+            exit 0
+        elif [[ -n "$proj" ]]; then
             echo -e "${GREEN}${ROCKET_EMOJI} Running project: $proj${NC}"
-            cd "$proj" || { echo -e "${RED}${WARNING_EMOJI} Failed to enter $proj!${NC}"; exit 1; }
-            qwen
-            break
+            cd "/projects/$proj" || exit 1
+            qwen; break
         else
-            echo -e "${RED}${WARNING_EMOJI} Invalid selection. Try again.${NC}"
+            echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
         fi
     done
 }
 
-# Check if an argument is provided
-if [ $# -gt 0 ]; then  # number of argumen > 0 ?
-    if [[ " ${projects[@]} " =~ " $1 " ]]; then   # =~  is a regex for "contains"
-        echo -e "${GREEN}${ROCKET_EMOJI} Running project: $1${NC}"
-        cd "$1" || { echo -e "${RED}${WARNING_EMOJI} Failed to enter $1!${NC}"; exit 1; }
-        qwen
-    else
-        echo -e "${RED}${WARNING_EMOJI} Project '$1' does not exist!${NC}"
-        select_project
-    fi
-else
-    select_project
-fi
+# --- Main ---
+setup_git
+select_project
