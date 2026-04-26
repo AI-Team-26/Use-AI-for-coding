@@ -5,9 +5,8 @@ FROM ghcr.io/qwenlm/qwen-code:0.15.2
 
 ### Install .net 10 SDK
 # Install prerequisites
-RUN apt-get update && apt-get install -y wget gpg apt-transport-https
-
-### Microsoft .net SDK
+RUN apt-get update && apt-get install -y --no-install-recommends wget gpg
+# apt-transport-https  TODO: remove ?
 
 # Download and install key to keyrings (modern way)
 RUN wget https://packages.microsoft.com/keys/microsoft.asc -O- | \
@@ -16,6 +15,7 @@ RUN wget https://packages.microsoft.com/keys/microsoft.asc -O- | \
 # Re-add repo with signed-by
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft-prod.list
 
+# Install libraries
 RUN apt-get update && apt-get install -y \
     dotnet-sdk-10.0 \
     && apt-get clean \
@@ -35,7 +35,6 @@ RUN apt-get update && apt-get install -y \
 
 # WORKDIR /projects
 # we use a /projects directory that has to be passed as volume !!!
-
 
 #ENTRYPOINT ["/bin/sh", "-c", "/projects/start.sh"]
 # Use ENTRYPOINT to run the script, and CMD for the default argument

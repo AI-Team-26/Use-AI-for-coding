@@ -24,8 +24,16 @@ setup_git() {
         git config --global user.email "$git_email"
         git config --global credential.helper store
         echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
-        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
+        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"      
     fi
+}
+
+# --- GitHub CLI Setup ---
+setup_github_cli() {
+    if [[ -f ~/.git-credentials ]]; then
+        export GH_TOKEN=$(sed -n 's|https://[^:]*:\([^@]*\)@github.com|\1|p' ~/.git-credentials)
+        echo -e "${GREEN}🐙 GitHub CLI configured!${NC}"
+    fi  
 }
 
 # --- Clone a New Project ---
@@ -42,6 +50,12 @@ clone_project() {
         echo -e "${RED}${WARNING_EMOJI} Clone failed!${NC}"; return
     }
     echo -e "${GREEN}${GIT_EMOJI} Cloned successfully!${NC}"
+
+
+    # Set the Git pre-push to avoid push directly to main branch
+    cp git_hook_pre_push.sh "/projects/$dir_name/.git/hooks/pre-push"
+    # Make it executable (REQUIRED - Git ignores non-executable hooks)
+    chmod +x "/projects/$dir_name/.git/hooks/pre-push"
 }
 
 # --- Select or Clone a Project ---
@@ -69,7 +83,7 @@ select_project() {
         elif [[ -n "$proj" ]]; then
             echo -e "${GREEN}${ROCKET_EMOJI} Running project: $proj${NC}"
             cd "/projects/$proj" || exit 1
-            qwen; break
+            qwen --continue ; break
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
         fi
@@ -78,4 +92,5 @@ select_project() {
 
 # --- Main ---
 setup_git
+setup_github_cli
 select_project

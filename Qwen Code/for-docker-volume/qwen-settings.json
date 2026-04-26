@@ -90,5 +90,34 @@
   },
   "model": {
     "name": "qwen3.6-plus"
+  },
+  "$version": 3,
+  "permissions": {
+    "allow": [
+      "Bash(touch *)",
+      "Bash(dotnet *)",
+      // GIT
+      //"Bash(git *)",
+      "Bash(git checkout *)", // single branch
+      "Bash(git checkout -b **)", // create + checkout
+      "Bash(git checkout --track **)", // track remote
+      "Bash(git add -A)",
+      "Bash(git commit -m *)",
+      // GitHub CLI
+      "Bash(gh run view *)",
+      // example: gh pr view 5 --json number,title,body,comments,url
+      "Bash(gh pr view *)",
+      "Bash(gh pr view * --json *)",
+      "Bash(gh pr view * --comments)",
+      "Bash(gh pr view * --json * --comments)"
+    ],
+    "deny": [
+        "Bash(rm -rf **)",
+        //"Bash(curl **)",
+        "Bash(wget **)",
+        "Bash(gh api (DELETE|PATCH|POST) **)",
+        "Bash(git push --force **)",
+        "Bash(git reset --hard **)"
+    ]
   }
 }
