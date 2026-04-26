@@ -36,15 +36,46 @@ Local running tools s
 
 ## 🐳 Docker
 
-I want to run the tools in a Docker container and us a Bind Volume to store the repo, so that I can easily access it within an IDE.  
-The problem is that a **Dockerfile -v parameter** only creates readonly bind models.  
-So I will use **Docker Compose** files, where is much easier to set volumes.  
+I run the tools in a Docker container and Bind Volume to store the repo, so that I can easily access it within an IDE.  
+The way to create teh bind volume is the *-v** parameter of _docker run_.  
+
+## GitHub
+
+### Credentials
+
+Can be set with these commands:
+```bash
+git config --global user.name "$git_username"
+git config --global user.email "$git_email"
+git config --global credential.helper store
+echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
+```
 
 
-### GIT
+### PAT
 
-The tool require to access GIT.  
-I created a fine-grained token and ask it to use with "git config --global credential.helper store".
+I create a fine-grained access token.
+Repositories: All  
+Permissions:
+- Contents: Read & write
+- Pull Requests: Read & Write
+- Actions: Read  (to check execution result)
+- Metadata (required): automatically selected
+
+### Recover PAT to migrate to a new container
+
+``git config --global user.name``  
+``git config --global user.email``  
+``git config --global credential.helper``  
+``cat ~/.git-credentials``  "github_pat" is part of the key  
+
+
+### Action logs
+
+How to access Action run logs?   
+TODO:   not found a solution yet  
+Maybe GitHub API (it needs PAT)?  
+https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-repository
 
 
 ### Ollama
