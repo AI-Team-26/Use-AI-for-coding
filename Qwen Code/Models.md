@@ -14,7 +14,10 @@ python scripts/add_model.py alibaba qwen-max-2025-01-25
 - qwen3.5-122b-a10b     : ❔ 
 - qwen3.5-35b-a3b
 - qwen3-max-2026-01-23  
-- qwen-plus
+- qwen-plus             : ✔️ 💔 Free quota exhausted
+- qwen-plus-2025-07-28
+- qwen-plus-2025-09-11 
+- qwen3.5-plus-2026-04-20
 - qvq-max-2025-03-25    :   
 
 

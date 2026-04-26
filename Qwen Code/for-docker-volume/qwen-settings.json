@@ -51,10 +51,31 @@
         "envKey": "ALIBABA_API_KEY"
       },
       {
-        "id": "qwen-plus",
-        "name": "qwen-plus (AliBaba)",
+        "id": "qwen3-max-2026-01-23",
+        "name": "qwen3-max-2026-01-23 (AliBaba)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "description": "AliBaba qwen-plus via Dashscope",
+        "description": "AliBaba qwen3-max-2026-01-23 via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen-plus-2025-07-28",
+        "name": "qwen-plus-2025-07-28 (AliBaba)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "AliBaba qwen-plus-2025-07-28 via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen-plus-2025-09-11",
+        "name": "qwen-plus-2025-09-11 (AliBaba)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "AliBaba qwen-plus-2025-09-11 via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+      {
+        "id": "qwen3.5-plus-2026-04-20",
+        "name": "qwen3.5-plus-2026-04-20 (AliBaba)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "AliBaba qwen3.5-plus-2026-04-20 via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       }
     ]
