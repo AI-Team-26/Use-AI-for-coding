@@ -43,6 +43,7 @@ mkdir -p "$docker_volume/projects"
 
 cp for-docker-volume/README.md "$docker_volume/projects/README.md"
 cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
+cp for-docker-volume/git_hook_pre_push.sh "$docker_volume/projects/git_hook_pre_push.sh"
 
 cp for-docker-volume/qwen-settings.json $docker_volume/.qwen/settings.json
 sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $docker_volume/.qwen/settings.json
