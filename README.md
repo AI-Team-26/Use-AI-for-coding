@@ -54,7 +54,8 @@ echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
 
 ### PAT
 
-I create a fine-grained access token.
+Create a fine-grained access token for the owner (alex-cyber-75)
+Owner: alex-cyber-75
 Repositories: All  
 Permissions:
 - Contents: Read & write
@@ -62,13 +63,88 @@ Permissions:
 - Actions: Read  (to check execution result)
 - Metadata (required): automatically selected
 
+On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
+and it will store in ~/git-credentials on a single line like this:
+``https://alex-cyber:github_pat_11CAZ*****HhS@github.com``
+
+
+### Use Multiple PAT
+
+The fine-grained GitHub PAT is created for a the user or an organiztion they have access to; you have to choose it.       
+If you created a PAT attached to the user, it does not allow you to work with the organization repositories, and vice-versa.  
+
+There is a way to use a specific PAT in the github credentials ?
+
+To differentiate the PAT to use, based on the repository, you need to enable this property:
+``git config --global credential.useHttpPath true`` 
+
+Then you can add multiple PAT, for specific repositories.  
+The PAT for-repo has to be set wit hte hFULL REPOSITORY PATH, can't be "generic".  
+
+[TODO: example of credentials for a repo]
+
+**To check current credentials**:
+``cat ~/.git-credentials``
+
+Then the ~/git-credentials file should contain the full path, no wildcard ("*") and full repo path (ending with .git"):  
+```txt
+https://user:token1@github.com/account
+https://user:token2@github.com/organization/repo.git
+```
+
+```bash
+# 1. Enable path-based matching
+git config --global credential.useHttpPath true
+
+# 2. Clear the file (creates it if it doesn't exist)
+# Using ':' is a clean way to truncate a file to 0 bytes
+: > ~/.git-credentials
+
+# 2b or delete specific lines:
+sed -i '2d' /root/.git-credentials
+
+# 3. Add PAT for owned repositories (Use -e for newlines)
+TOKEN_1=***
+echo -e "https://alex-cyber:$TOKEN_1@github.com/alex-cyber-75" >> ~/.git-credentials
+
+# 4. Add PAT for organization repositories
+TOKEN_2=***
+echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75-Team/*" >> ~/.git-credentials
+echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75/Alex75.AIAgents" >> ~/.git-credentials
+echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75/Alex75.AIAgents" >> ~/.git-credentials
+
+# 5. Secure the file
+chmod 600 ~/.git-credentials
+```` 
+
+
+## Organization repositories
+
+Create a fine-grained access token for the organization repositories
+Owner: organization
+Repositories: All
+Permisisons:
+- Contents: Read & write
+- Pull Requests: Read & Write
+- Actions: Read  (to check execution result)
+- Metadata (required): automatically selected
+
+
+github_pat_11CAZACO*****OEItFo
+
+
+
 ### Recover PAT to migrate to a new container
 
 ``git config --global user.name``  
 ``git config --global user.email``  
 ``git config --global credential.helper``  
-``cat ~/.git-credentials``  "github_pat" is part of the key  
+``cat ~/.git-credentials``  ()"github_pat_" is part of the key)    IS IT SHOWIMNG ONLY THE LAST ??
 
+
+### Replace the PAT
+
+https://alex-cyber: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@github.com
 
 ### Action logs
 
@@ -115,6 +191,8 @@ curl http://host.docker.internal:11434/v1/chat/completions -d '{
   "messages": [{"role": "user", "content": "hello"}]
 }'
 ```
+  
+Models that can run locally: [Ollama Models](Ollama_Models.md)
 
 
 ### Tools UI
@@ -132,7 +210,7 @@ Qwen Code docuemntation sugegsts it to have a UI (and also https://github.com/Pi
 
 ## Qwen Code
 
-[Qwen Code](Qwen%20Code/Qwen%20Code.md)
+[Qwen Code](Qwen%20Code/README.md)
 
 
 
