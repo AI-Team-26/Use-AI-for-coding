@@ -1,0 +1,28 @@
+{
+    "model": {
+        "name": "qwen2.5-coder:7b-20k",
+        "skipStartupContext": true,             // skip the big workspace dump at session start
+        "maxSessionTurns": 20,                  // don't let sessions grow unbounded
+        "chatCompression": {
+            "contextPercentageThreshold": 0.5  // compress earlier (50% instead of 70%)
+        },
+        "generationConfig": {
+            "contextWindowSize": 20480,           // tell Qwen Code the real limit — critical!
+            "samplingParams": {
+                "max_tokens": 2048                  // cap output, avoids the 8K→64K retry logic
+            }
+        }
+    },
+    "memory": {
+        "enableManagedAutoMemory": false,   // stop injecting memories into every session
+        "enableManagedAutoDream": false     // already off, but explicit
+    }, 
+    "fastModel": "",                        // disable fast model entirely
+    "ui": {
+        "enableFollowupSuggestions": false    // no point without a fast model
+    },  
+    "systemPrompt": "You are a helpful coding assistant.",
+    "tools": {
+        "sandbox": false
+    }
+}

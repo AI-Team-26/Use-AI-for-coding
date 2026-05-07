@@ -1,4 +1,4 @@
-FROM ghcr.io/qwenlm/qwen-code:0.15.2
+FROM ghcr.io/qwenlm/qwen-code:0.15.6
 # https://github.com/QwenLM/qwen-code/pkgs/container/qwen-code
 # https://github.com/QwenLM/qwen-code/releases
 # https://github.com/QwenLM/qwen-code/blob/main/Dockerfile

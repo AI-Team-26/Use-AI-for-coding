@@ -31,8 +31,19 @@ setup_git() {
 # --- GitHub CLI Setup ---
 setup_github_cli() {
     if [[ -f ~/.git-credentials ]]; then
-        export GH_TOKEN=$(sed -n 's|https://[^:]*:\([^@]*\)@github.com|\1|p' ~/.git-credentials)
-        echo -e "${GREEN}🐙 GitHub CLI configured!${NC}"
+
+        # can be HTTPS or git URL
+        local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+
+        if [[ -n "$repo_path" ]]; then
+            #export GH_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|https://[^:]*:\([^@]*\)@github.com|\1|p' | head -1)
+            #export GH_TOKEN=$(grep "$repo_path" ~/.git-credentials | awk -F'[:/]' '{print $3}' | head -1)
+            export GH_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+            echo -e "${GREEN}🐙 GitHub CLI configured for ${repo_path}!${NC}"
+        fi
+        
+        #export GH_TOKEN=$(sed -n 's|https://[^:]*:\([^@]*\)@github.com|\1|p' ~/.git-credentials)
+        #echo -e "${GREEN}🐙 GitHub CLI configured!${NC}"
     fi  
 }
 
@@ -62,17 +73,21 @@ clone_project() {
 select_project() {
 
     # List available projects (folders in current directory)
-    projects=($(ls -d */ 2>/dev/null | tr -d '/'))
+    # $(...) perform word splitting, will not work with names with spaces
+    #projects=($(ls -d */ 2>/dev/null | tr -d '/'))
+    mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     if [ ${#projects[@]} -eq 0 ]; then
+    
         echo -e "${YELLOW}${FOLDER_EMOJI} No projects found. Clone one first!${NC}"
         clone_project
         select_project
         return
     fi
     
-    echo -e "${YELLOW}${FOLDER_EMOJI} Select a projects:${NC}"
+    echo -e "${YELLOW}${FOLDER_EMOJI} Select a projects:${NC}"   
     select proj in "${projects[@]}" "➕ Clone a new project" "💻 Shell" "⭕ Exit"; do
+    
         if [[ "$proj" == "➕ Clone a new project" ]]; then
             clone_project; select_project; break
         elif [[ "$proj" == "💻 Shell" ]]; then            
@@ -83,7 +98,11 @@ select_project() {
         elif [[ -n "$proj" ]]; then
             echo -e "${GREEN}${ROCKET_EMOJI} Running project: $proj${NC}"
             cd "/projects/$proj" || exit 1
-            qwen --continue ; break
+
+            setup_github_cli
+
+            # --no-sandbox: if sandbox is enabled — the Docker-in-Docker overhead adds latency
+            qwen --nosandbox --continue ; break
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
         fi
@@ -92,5 +111,4 @@ select_project() {
 
 # --- Main ---
 setup_git
-setup_github_cli
 select_project

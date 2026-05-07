@@ -5,7 +5,7 @@ Docs:
 - Docker image: https://github.com/QwenLM/qwen-code/pkgs/container/qwen-code
 
 ``echo $GITHUB_TOKEN_PUBLIC | docker login ghcr.io -u alex-piccione --password-stdin``
-``docker pull ghcr.io/qwenlm/qwen-code:0.14.5``
+``docker pull ghcr.io/qwenlm/qwen-code:0.15.6``
 
 
 ## Use a custom Docker image
@@ -24,7 +24,7 @@ QwenCode Dockerfile: https://github.com/QwenLM/qwen-code/blob/main/Dockerfile
 ```bash
 docker build \
     --label "Qwen Code for AI coding" \
-    -t qwencode:4 \
+    -t qwencode:5 \
     .
 ```
 
@@ -45,8 +45,10 @@ cp for-docker-volume/README.md "$docker_volume/projects/README.md"
 cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
 cp for-docker-volume/git_hook_pre_push.sh "$docker_volume/projects/git_hook_pre_push.sh"
 
-cp for-docker-volume/qwen-settings.json $docker_volume/.qwen/settings.json
-sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_1/g" $docker_volume/.qwen/settings.json
+cp for-docker-volume/settings.json $docker_volume/.qwen/settings.json
+sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_QWEN_CODE_FOR_DOCKER_2/g" $docker_volume/.qwen/settings.json
+sed -i "s/{{XIAOMI_API_KEY}}/$XIAOMI_API_KEY_QWEN_CODE_LOCAL/g" $docker_volume/.qwen/settings.json
+
 
 # to check replace result
 cat $docker_volume/.qwen/settings.json
@@ -57,16 +59,18 @@ cat $docker_volume/.qwen/settings.json
 ```bash
 export MSYS_NO_PATHCONV=1  # Disable path conversion (otherwise on GitBash in Windows /data becomes C:/data which is not desired here)
 
-label="description=Qwen Code for different projects"
+label="description=Qwen Code for GitHub projects"
 
 # calling with ICode argument as starting project
-# It will ask for GitHub credentials immediately, be ready ❗
+# It will ask for GitHub credentials immediately, be ready with GitHunb username, email and PAT ❗
+# see main README for instruction to modify .git-ceredentials file
+
 docker run -it \
-    --name QwenCode_4 \
+    --name QwenCode_v5 \
     --label "$label" \
     -v /$docker_volume/.qwen:/root/.qwen \
     -v /$docker_volume/projects:/projects \
-    qwencode:4 ICode
+    qwencode:5
 ``` 
 
 ### Attach to an exising container

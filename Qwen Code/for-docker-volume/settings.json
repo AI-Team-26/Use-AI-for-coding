@@ -2,10 +2,45 @@
   "modelProviders": {
     "openai": [
       {
-        "id": "qwen3.5-plus",
-        "name": "qwen3.5-plus (AliBaba)",
+        "id": "mimo-v2.5-pro",
+        "name": "mimo-v2.5-pro (Xiaomi MiMo)",
+        "baseUrl": "https://api.xiaomimimo.com/v1",
+        "description": "mimo-v2.5-pro",
+        "envKey": "XIAOMI_API_KEY"
+      },
+      {
+        "id": "mimo-v2.5",
+        "name": "mimo-v2.5 (Xiaomi MiMo)",
+        "baseUrl": "https://api.xiaomimimo.com/v1",
+        "description": "mimo-v2.5",
+        "envKey": "XIAOMI_API_KEY"
+      },
+      {
+        "id": "mimo-v2-flash",
+        "name": "mimo-v2-flash (Xiaomi MiMo)",
+        "baseUrl": "https://api.xiaomimimo.com/v1",
+        "description": "mimo-v2-flash",
+        "envKey": "XIAOMI_API_KEY"
+      },
+      {
+        "id": "qwen3-coder-plus",
+        "name": "qwen3-coder-plus (AliBaba)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-        "description": "Qwen3-Coder via Dashscope",
+        "description": "qwen3-coder-plus via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+       {
+        "id": "qwen-plus-2025-07-28",
+        "name": "qwen-plus-2025-07-28 (AliBaba)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "qwen-plus-2025-07-28 via Dashscope",
+        "envKey": "ALIBABA_API_KEY"
+      },
+       {
+        "id": "qwen3.5-122b-a10b",
+        "name": "qwen3.5-122b-a10b (AliBaba)",
+        "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        "description": "qwen3.5-122b-a10b via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       },
       {
@@ -15,12 +50,26 @@
         "description": "Qwen3-Coder via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       },
+
       {
-        "id": "qwen3:8b",
-        "name": "qwen3:8b (Ollama)",
+        "id": "qwen2.5-coder:7b-20k",
+        "name": "qwen2.5-coder:7b-20k (local Ollama)",
         "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "xxx via Ollama",
-        "envKey": "ALIBABA_API_KEY"
+        "description": "qwen2.5-coder:7b-20k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 20480,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },
+      {
+        "id": "qwen3:8b-20k",
+        "name": "qwen3:8b-20k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen3:8b-20k via local Ollama",
+        "envKey": "LOCAL_OLLAMA"
       },
       {
         "id": "qwen3.5:4b",
@@ -81,7 +130,9 @@
     ]
   },
   "env": {
-    "ALIBABA_API_KEY": "{{ALIBABA_API_KEY}}"
+    "LOCAL_OLLAMA": "sk-123456",
+    "ALIBABA_API_KEY": "{{ALIBABA_API_KEY}}",
+    "XIAOMI_API_KEY": "{{XIAOMI_API_KEY}}"
   },
   "security": {
     "auth": {
@@ -89,27 +140,32 @@
     }
   },
   "model": {
-    "name": "qwen3.6-plus"
+    "name": "qwen2.5-coder:7b-20k"
   },
   "$version": 3,
   "permissions": {
     "allow": [
       "Bash(touch *)",
       "Bash(dotnet *)",
-      // GIT
-      //"Bash(git *)",
+      "Bash(git status)", 
+      "Bash(git switch main)",
+      "Bash(git pull)",
+      "Bash(git push -u origin *)",
       "Bash(git checkout *)", // single branch
       "Bash(git checkout -b **)", // create + checkout
       "Bash(git checkout --track **)", // track remote
       "Bash(git add -A)",
+      "Bash(git add *)",
       "Bash(git commit -m *)",
-      // GitHub CLI
       "Bash(gh run view *)",
-      // example: gh pr view 5 --json number,title,body,comments,url
       "Bash(gh pr view *)",
       "Bash(gh pr view * --json *)",
       "Bash(gh pr view * --comments)",
-      "Bash(gh pr view * --json * --comments)"
+      "Bash(gh pr view * --json * --comments)",
+      //"Bash(gh pr create **)",
+      "Bash(gh pr create --title * --body *)",
+      "Bash(gh pr create --title * --body * --base * --head *)",
+      "WebFetch(**)"
     ],
     "deny": [
         "Bash(rm -rf **)",
