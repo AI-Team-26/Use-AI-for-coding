@@ -7,32 +7,32 @@ There are 3 types of tools:
 
 **IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and github trought it.
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets !!  
+- GitHub Copilot (VS & VS Code)
+- Continue.DEV
+- Cline
+- LllamaCode
+- CodeGeeX 
 
+❌ they can do potentially everything in .your PC
 
 **Web based tools** are nice, but I find out too fragile and you can't usually use the provider and model of your choice.  
 For this tools I use a shadow GitHub account, that doen't have access to my real account.  
 Their connector are a little bit fragile and sometimes doesn't work.
-
-**Standalone programs** can run locally or on a Docker container, so they can be almost !00% secure.  
-They have a CLI and sometime a web UI exposed on the guest.  
-
-Local running tools s 
-
-**IDE plugins** ❌ 
-- GitHub Copilot
-- Continue.DEV
-- Cline
-
-**Web based tools**  
 - AliBaba Qwen Coder
 - Mistral Chat
 
-**Standalone programs** on Docker ✔️
+❌ Good for specific tasks but I find out they are too limited, models prone to mistakes, less customizable and time-consuming.
+
+**Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
+They have a CLI and sometime a web UI exposed on the guest.  
+
 - [Aider](Aider/Aider.md)
 - [OpenCode](OpenCode/OpenCode.md)
 - [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md)
 - [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)
 - Mistral Vibe
+
+✔️ The perfect solution when run on container
 
 
 ## 🐳 Docker
@@ -40,7 +40,7 @@ Local running tools s
 I run the tools in a Docker container and Bind Volume to store the repo, so that I can easily access it within an IDE.  
 The way to create teh bind volume is the *-v** parameter of _docker run_.  
 
-## GitHub
+## GIT GitHub integration
 
 ### Credentials
 
@@ -51,6 +51,13 @@ git config --global user.email "$git_email"
 git config --global credential.helper store
 echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
 ```
+
+### GitHub CLI
+
+This one requires its own authentication.  
+I automatically provide it generating an environment variable on-the-fly when we select the project.  
+See _start.sh_ scripts in difefrent tools (Qwen Code or Pi Agent for example).  
+
 
 ### PAT
 
@@ -90,13 +97,13 @@ Then you can add multiple PAT, for specific repositories.
 The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generic using part of the path (TO VERIFY) or wildcard.  
 
 
-### Edit credentials
+### 📌 Edit credentials
 
 **To read the current credentials**:
 ``cat ~/.git-credentials``
 
 ```bash
-# git config --global credential.useHttpPath true  
+# git config --global credential.useHttpPath true    # at this point should be already set
 
 # Clear the file (creates it if it doesn't exist)
 # Using ':' is a clean way to truncate a file to 0 bytes
