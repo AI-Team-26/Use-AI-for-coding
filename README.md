@@ -1,9 +1,9 @@
 # Use AI for Coding
 
-There are 3 types of tools:
-- IDE plugins
-- Web based tools
-- Standalone programs
+There are three types of tools:
+- IDE plugins          ❌ they can do potentially everything in .your PC
+- Web based tools      ❌ Good for specific tasks but I find out they are too limited, models prone to mistakes, less customizable and time-consuming.
+- Standalone programs  ✔️ The perfect solution when run on container
 
 **IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and github trought it.
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets !!  
@@ -13,34 +13,32 @@ They are not 100% secure, because they still have access to ... who knows? AND y
 - LllamaCode
 - CodeGeeX 
 
-❌ they can do potentially everything in .your PC
-
 **Web based tools** are nice, but I find out too fragile and you can't usually use the provider and model of your choice.  
 For this tools I use a shadow GitHub account, that doen't have access to my real account.  
 Their connector are a little bit fragile and sometimes doesn't work.
 - AliBaba Qwen Coder
 - Mistral Chat
 
-❌ Good for specific tasks but I find out they are too limited, models prone to mistakes, less customizable and time-consuming.
-
 **Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
 They have a CLI and sometime a web UI exposed on the guest.  
 
-- [Aider](Aider/Aider.md)
-- [OpenCode](OpenCode/OpenCode.md)
-- [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md)
-- [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)
-- Mistral Vibe
-
-✔️ The perfect solution when run on container
+- [Aider](Aider/Aider.md)            ❌ Found an issue very earlier and abandoned before having it really working
+- [OpenCode](OpenCode/OpenCode.md)    Abandoned before having it setup neither once
+- [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md)    ✔️ Really good
+- [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)       ✔️ Still setting it up but seems good
+- Mistral Vibe                       Neither started
 
 
 ## 🐳 Docker
 
-I run the tools in a Docker container and Bind Volume to store the repo, so that I can easily access it within an IDE.  
-The way to create teh bind volume is the *-v** parameter of _docker run_.  
+I run the tools in a Docker container and Binded Volumes to store the projects (GitHub repositories) and tool settings/customization, so that I can easily access all within the host. This allows to open the projects with local IDE (usefull to check changes in a branch) and update settings/customization easily.   
+The way to create the bind volume is with the *-v** parameter of _docker run_, because it needs to NOT be created by the Docker build or you can have permissions issues.  
+At the moment I'm not switching user, so the tool runs with _root_.  
+[TODO]
+** It will be good to switch to use a nomn-root user. **   
 
-## GIT GitHub integration
+
+## GIT & GitHub
 
 ### Credentials
 
