@@ -30,7 +30,8 @@ Local running tools s
 **Standalone programs** on Docker ✔️
 - [Aider](Aider/Aider.md)
 - [OpenCode](OpenCode/OpenCode.md)
-- [Qwen Code](Qwen%20Code/Qwen%20Code.md)
+- [Qwen Code](Qwen%20Code/Qwen%20Code%20README.md)
+- [Pi](Pi/Pi%20README.md)
 - Mistral Vibe
 
 
