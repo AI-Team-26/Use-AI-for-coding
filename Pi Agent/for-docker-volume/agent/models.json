@@ -1,0 +1,21 @@
+// https://pi.dev/docs/latest/models#model-configuration
+{
+  "providers": {
+    "ollama": {
+      //"baseUrl": "http://localhost:11434/v1",
+      "baseUrl": "http://host.docker.internal:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",
+      "models": [
+        { "id": "llama3.1:8b" },
+        { 
+            "id": "qwen2.5-coder:7b-ALEX-20k",
+            "name": "Jonny",
+            "contextWindow": 20480,
+            "maxTokens": 2048,
+            "reasoning": false
+        }
+      ]
+    }
+  }
+}
