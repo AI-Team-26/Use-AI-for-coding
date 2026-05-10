@@ -1,32 +1,20 @@
 {
-    "model": {
-        "name": "qwen2.5-coder:7b-20k",
-        "skipStartupContext": true,         
-        "maxSessionTurns": 20,          
-        "chatCompression": {
-            "contextPercentageThreshold": 0.5
-        }
-    },
-    "modelProviders": {
-        "openai": {
-            "generationConfig": {
-                "contextWindowSize": 20480,    
-                "samplingParams": {
-                    "max_tokens": 2048           
-                }
-            }
-        }
-    },
     "memory": {
         "enableManagedAutoMemory": false,   
         "enableManagedAutoDream": false  
     }, 
-    "fastModel": "",                 
-    "ui": {
-        "enableFollowupSuggestions": false    
-    },  
-    "systemPrompt": "You are a helpful coding assistant.",
-    "tools": {
-        "sandbox": false
-    }
+  "fastModel": "",
+  "experimental": {
+    "emitToolUseSummaries": false
+  },
+  "ui": {
+    "theme": "Qwen Light",
+    "enableFollowupSuggestions": false    
+  },
+  "tools": {
+    "enabled": false,
+    "sandbox": false
+  },
+  "systemPrompt": "You are a helpful coding assistant.",
+
 }

@@ -102,7 +102,11 @@ select_project() {
             setup_github_cli
 
             # --no-sandbox: if sandbox is enabled — the Docker-in-Docker overhead adds latency
-            qwen --nosandbox --continue ; break
+            # https://qwenlm.github.io/qwen-code-docs/en/users/features/sandbox/ 
+            # QWEN_SANDBOX=true|false|docker|podman|sandbox-exec
+            export QWEN_SANDBOX=false
+            #  --debug
+            qwen --continue; break
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
         fi

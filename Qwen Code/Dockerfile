@@ -1,6 +1,5 @@
-FROM ghcr.io/qwenlm/qwen-code:0.15.6
+FROM ghcr.io/qwenlm/qwen-code:0.15.10
 # https://github.com/QwenLM/qwen-code/pkgs/container/qwen-code
-# https://github.com/QwenLM/qwen-code/releases
 # https://github.com/QwenLM/qwen-code/blob/main/Dockerfile
 
 ### Install .net 10 SDK
@@ -34,10 +33,13 @@ RUN apt-get update && apt-get install -y \
 
 
 # WORKDIR /projects
-# we use a /projects directory that has to be passed as volume !!!
 
-#ENTRYPOINT ["/bin/sh", "-c", "/projects/start.sh"]
+# we use a /projects directory that has to be passed as volume !!!
+# We also expose /root/.qwen for settings. system prompt and other stuff to pass in
+#VOLUME ["/root/.qwen", "/projects"] this can cause permission problems
+
 # Use ENTRYPOINT to run the script, and CMD for the default argument
+ENV QWEN_SANDBOX=false
 ENTRYPOINT ["/projects/start.sh"]
 # Default: no argument (interactive selection)
 CMD [""]  

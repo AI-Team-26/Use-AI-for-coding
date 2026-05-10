@@ -1,27 +1,238 @@
 {
   "modelProviders": {
     "openai": [
+
+      // Ollama Local
+      {
+        "id": "qwen2.5-coder:7b-ALEX-20k",
+        "name": "qwen2.5-coder:7b-ALEX-20k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen2.5-coder:7b-ALEX-20k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 20480,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },
+      {
+        "id": "qwen2.5-coder:7b-20k",
+        "name": "qwen2.5-coder:7b-20k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen2.5-coder:7b-20k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 20480,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      }, 
+      {
+        "id": "codegeex4:9b-all-q4_K_M-ALEX-12k",
+        "name": "codegeex4:9b-all-q4_K_M-ALEX-12k(local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "codegeex4:9b-all-q4_K_M-ALEX-12k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 12288,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },     
+      {
+        "id": "qwen3:8b-16k",
+        "name": "qwen3:8b-16k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen3:8b-16k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 16384,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },
+      {
+        "id": "qwen3:8b-20k",
+        "name": "qwen3:8b-20k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen3:8b-20k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 20480,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },
+      {
+        "id": "qwen3.5:9b-q4_K_M-8k",
+        "name": "qwen3.5:9b-q4_K_M-8k (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "qwen3.5:9b-q4_K_M-8k via local Ollama",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 8192,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
+      },  
+
+      // OpenRouter
+      {
+        "id": "qwen/qwen3-coder-flash",
+        "name": "qwen/qwen3-coder-flash (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "qwen/qwen3-coder-flash on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+      {
+        "id": "qwen/qwen3.6-plus",
+        "name": "qwen/qwen3.6-plus (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "qwen/qwen3.6-plus on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+      {
+        "id": "kwaipilot/kat-coder-pro-v2",
+        "name": "kwaipilot/kat-coder-pro-v2 (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "kwaipilot/kat-coder-pro-v2 on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+     {
+        "id": "kwaipilot/kat-coder-pro-v2:free",
+        "name": "kwaipilot/kat-coder-pro-v2:free (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "kwaipilot/kat-coder-pro-v2:free on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+      {
+        "id": "minimax/minimax-m2.7",
+        "name": "minimax/minimax-m2.7 (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "minimax/minimax-m2.7 on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+      {
+        "id": "minimax/minimax-m2.5:free",
+        "name": "minimax/minimax-m2.5:free (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "minimax/minimax-m2.5:free on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+      {
+        "id": "google/gemini-3.1-flash-lite",
+        "name": "google/gemini-3.1-flash-lite (Openrouter)",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "description": "google/gemini-3.1-flash-lite on Openrouter",
+        "envKey": "OPENROUTER_API_KEY"
+      },
+
+      // Ofox
+      {
+        "id": "deepseek/deepseek-v4-flash",
+        "name": "deepseek/deepseek-v4-flash (Ofox.AI)",
+        "baseUrl": "https://api.ofox.ai/v1",
+        "description": "deepseek/deepseek-v4-flash on Ofox.AI",
+        "envKey": "OFOX_API_KEY"
+      },
+      {
+        "id": "bailian/qwen3-coder-next",
+        "name": "bailian/qwen3-coder-next (Ofox)",
+        "baseUrl": "https://api.ofox.ai/v1",
+        "description": "bailian/qwen3-coder-next on Ofox",
+        "envKey": "OFOX_API_KEY"
+      },
+      {
+        "id": "bailian/qwen3-coder-next",
+        "name": "bailian/qwen3-coder-next (Ofox)",
+        "baseUrl": "https://api.ofox.ai/v1",
+        "description": "bailian/qwen3-coder-next on Ofox",
+        "envKey": "OFOX_API_KEY"
+      },
+
+      
+      {
+        "id": "z-ai/glm-4.7-flash:free",
+        "name": "z-ai/glm-4.7-flash:free (Ofox.AI)",
+        "baseUrl": "https://api.ofox.ai/v1",
+        "description": "z-ai/glm-4.7-flash:free on Ofox.AI",
+        "envKey": "OFOX_API_KEY"
+      },
+      // Eden
+      {
+        "id": "google/gemma-4-26b-a4b-it",
+        "name": "google/gemma-4-26b-a4b-it (Eden.AI)",
+        "baseUrl": "https://api.edenai.run/v3",
+        "description": "google/gemma-4-26b-a4b-it on Eden.AI",
+        "envKey": "EDENAI_API_KEY"
+      },
+      {
+        "id": "amazon/zai.glm-4.7-flash",
+        "name": "amazon/zai.glm-4.7-flash (Eden.AI)",
+        "baseUrl": "https://api.edenai.run/v3",
+        "description": "amazon/zai.glm-4.7-flash on Eden.AI",
+        "envKey": "EDENAI_API_KEY"
+      },
+      // TokenMix
+      {
+        "id": "deepseek-v4-flash",
+        "name": "deepseek-v4-flash (TokenMix)",
+        "baseUrl": "https://api.tokenmix.ai/v1",
+        "description": "deepseek-v4-flash on TokenMix",
+        "envKey": "TOKENMIX_API_KEY"
+      },
+      {
+        "id": "hunyuan-lite",
+        "name": "hunyuan-lite (TokenMix)",
+        "baseUrl": "https://api.tokenmix.ai/v1",
+        "description": "hunyuan-lite on TokenMix",
+        "envKey": "TOKENMIX_API_KEY"
+      },
+      // DeepSeek
+      {
+        "id": "deepseek-v4-flash",
+        "name": "deepseek-v4-flash (DeepSeek)",
+        "baseUrl": "https://api.deepseek.com/v1",
+        "description": "deepseek-v4-flash on DeepSeek",
+        "envKey": "DEEPSEEK_API_KEY"
+      },
+      {
+        "id": "deepseek-v4-pro",
+        "name": "deepseek-v4-pro (DeepSeek)",
+        "baseUrl": "https://api.deepseek.com/v1",
+        "description": "deepseek-v4-pro on DeepSeek",
+        "envKey": "DEEPSEEK_API_KEY"
+      },     
+	
+      // Xiaomi
       {
         "id": "mimo-v2.5-pro",
-        "name": "mimo-v2.5-pro (Xiaomi MiMo)",
+        "name": "mimo-v2.5-pro (Xiaomi)",
         "baseUrl": "https://api.xiaomimimo.com/v1",
         "description": "mimo-v2.5-pro",
         "envKey": "XIAOMI_API_KEY"
       },
       {
         "id": "mimo-v2.5",
-        "name": "mimo-v2.5 (Xiaomi MiMo)",
+        "name": "mimo-v2.5 (Xiaomi)",
         "baseUrl": "https://api.xiaomimimo.com/v1",
         "description": "mimo-v2.5",
         "envKey": "XIAOMI_API_KEY"
       },
       {
         "id": "mimo-v2-flash",
-        "name": "mimo-v2-flash (Xiaomi MiMo)",
+        "name": "mimo-v2-flash (Xiaomi)",
         "baseUrl": "https://api.xiaomimimo.com/v1",
         "description": "mimo-v2-flash",
         "envKey": "XIAOMI_API_KEY"
       },
+      // AliBaba
       {
         "id": "qwen3-coder-plus",
         "name": "qwen3-coder-plus (AliBaba)",
@@ -29,14 +240,14 @@
         "description": "qwen3-coder-plus via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       },
-       {
+      {
         "id": "qwen-plus-2025-07-28",
         "name": "qwen-plus-2025-07-28 (AliBaba)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         "description": "qwen-plus-2025-07-28 via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       },
-       {
+      {
         "id": "qwen3.5-122b-a10b",
         "name": "qwen3.5-122b-a10b (AliBaba)",
         "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
@@ -50,41 +261,8 @@
         "description": "Qwen3-Coder via Dashscope",
         "envKey": "ALIBABA_API_KEY"
       },
-
-      {
-        "id": "qwen2.5-coder:7b-20k",
-        "name": "qwen2.5-coder:7b-20k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen2.5-coder:7b-20k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 20480,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      },
-      {
-        "id": "qwen3:8b-20k",
-        "name": "qwen3:8b-20k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen3:8b-20k via local Ollama",
-        "envKey": "LOCAL_OLLAMA"
-      },
-      {
-        "id": "qwen3.5:4b",
-        "name": "qwen3.5:4b (Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "xxx via Ollama",
-        "envKey": "ALIBABA_API_KEY"
-      },
-      {
-        "id": "nemotron-3-nano:4b-q8_0",
-        "name": "nemotron-3-nano:4b-q8_0 (Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "nemotron-3-nano:4b-q8_0 via Ollama",
-        "envKey": "ALIBABA_API_KEY"
-      },
+ 
+	  
       {
         "id": "qwen-max",
         "name": "qwen-max (AliBaba)",
@@ -131,8 +309,15 @@
   },
   "env": {
     "LOCAL_OLLAMA": "sk-123456",
+    "MISTRAL_API_KEY_1": "{{MISTRAL_API_KEY_1}}",
+    "MISTRAL_CODESTRAL_API_KEY_1": "{{MISTRAL_CODESTRAL_API_KEY_1}}",
     "ALIBABA_API_KEY": "{{ALIBABA_API_KEY}}",
-    "XIAOMI_API_KEY": "{{XIAOMI_API_KEY}}"
+    "XIAOMI_API_KEY": "{{XIAOMI_API_KEY}}",
+    "DEEPSEEK_API_KEY": "{{DEEPSEEK_API_KEY}}",
+    "OPENROUTER_API_KEY": "{{OPENROUTER_API_KEY}}",
+    "OFOX_API_KEY": "{{OFOX_API_KEY}}",
+    "EDENAI_API_KEY": "{{EDENAI_API_KEY}}",
+    "TOKENMIX_API_KEY": "{{TOKENMIX_API_KEY}}"
   },
   "security": {
     "auth": {
@@ -140,7 +325,18 @@
     }
   },
   "model": {
-    "name": "qwen2.5-coder:7b-20k"
+    "name": "minimax/minimax-m2.5:free"
+  },
+ "fastModel": "",
+  "experimental": {
+    "emitToolUseSummaries": true
+  },
+  "ui": {
+    "theme": "ANSI"
+  },
+  "tools": {
+    "enabled": true,
+    "sandbox": false
   },
   "$version": 3,
   "permissions": {
@@ -151,12 +347,14 @@
       "Bash(git switch main)",
       "Bash(git pull)",
       "Bash(git push -u origin *)",
+      "Bash(git push origin *)",      
       "Bash(git checkout *)", // single branch
       "Bash(git checkout -b **)", // create + checkout
       "Bash(git checkout --track **)", // track remote
+      "Bash(git merge main)",
       "Bash(git add -A)",
       "Bash(git add *)",
-      "Bash(git commit -m *)",
+      "Bash(git commit -m *)",      
       "Bash(gh run view *)",
       "Bash(gh pr view *)",
       "Bash(gh pr view * --json *)",
@@ -173,7 +371,8 @@
         "Bash(wget **)",
         "Bash(gh api (DELETE|PATCH|POST) **)",
         "Bash(git push --force **)",
-        "Bash(git reset --hard **)"
+        "Bash(git reset --hard **)",
+        "Bash(git push origin --delete **)"
     ]
   }
 }
