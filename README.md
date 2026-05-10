@@ -66,7 +66,7 @@ Permissions:
 
 On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
 and it will store in ~/git-credentials on a single line like this:
-``https://alex-cyber:github_pat_11CAZ*****HhS@github.com``
+``https://alex-cyber:<GITHUB_PAT>S@github.com``
 
 
 ### Use Multiple PAT
@@ -131,21 +131,14 @@ Permisisons:
 - Metadata (required): automatically selected
 
 
-github_pat_11CAZACO*****OEItFo
-
-
 
 ### Recover PAT to migrate to a new container
 
 ``git config --global user.name``  
 ``git config --global user.email``  
 ``git config --global credential.helper``  
-``cat ~/.git-credentials``  ()"github_pat_" is part of the key)    IS IT SHOWIMNG ONLY THE LAST ??
+``cat ~/.git-credentials``  ("github_pat_" is part of the key)
 
-
-### Replace the PAT
-
-https://alex-cyber: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@github.com
 
 ### Action logs
 
@@ -199,19 +192,7 @@ Models that can run locally: [Ollama Models](Ollama_Models.md)
 ### Tools UI
 
 AionUi: https://github.com/iOfficeAI/AionUi  
-Qwen Code docuemntation sugegsts it to have a UI (and also https://github.com/Piebald-AI/gemini-cli-desktop).
-
-
-
-
-## OpenCode
-
-[OpenCode](OpenCode/OpenCode.md)
-
-
-## Qwen Code
-
-[Qwen Code](Qwen%20Code/README.md)
+Qwen Code docuemntation suggests it to have a UI (and also https://github.com/Piebald-AI/gemini-cli-desktop).
 
 
 
@@ -223,7 +204,7 @@ Is a web tool, it uses Qwen website and it often stop to work and disrupt the wo
 
 ## Mistral AI 
 
-I added GitHub connectors but it doesn't work today ⚠️ (20/04/2026).with connecto
+I added GitHub connectors but it doesn't work today (it shows a message, probably internal incident) ⚠️ (20/04/2026).
 
 
 ## Mistral Vibe
