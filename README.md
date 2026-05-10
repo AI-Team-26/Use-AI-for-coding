@@ -64,11 +64,11 @@ Create a fine-grained access token for the owner of the repo, using the followin
   + Metadata (required): automatically selected
 
 Generate teh PAT and copy it.  
-Store it in a environment variable: `setx GITHUB_PAT_<ACCOUUNT>_<USE CASE> <GITHUB_PAT>`  
+Store it in a environment variable: `setx GITHUB_PAT_<ACCOUNT>_<USE CASE> <GITHUB_PAT>`  
 
 On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
 and it will store it in ~/git-credentials on a single line like this:
-``https://alex-cyber:<GITHUB_PAT>S@github.com``
+``https://<username>:<GITHUB_PAT>S@github.com``
 
 _Note_: When paste in bash shell with right click, **CLICK ONLY ONCE** (it will not show nothing so you tend to right-click again!)
 
@@ -103,22 +103,23 @@ The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generi
 : > ~/.git-credentials
 
 # ...or delete specific lines:
-sed -i '2d' /root/.git-credentials
+sed -i '2d' ~/.git-credentials
 
-# 3. Add PAT for owned repositories (Use -e for newlines)
-TOKEN_1=$GITHUB_PAT_FOR_USER_1
-echo -e "https://alex-cyber:$TOKEN_1@github.com/alex-cyber-75" >> ~/.git-credentials
+# Add PAT for owned repositories of Account or Organization
 
-# 4. Add PAT for organization repositories
-TOKEN_2=***
-echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75-Team/*" >> ~/.git-credentials
-echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75/Alex75.AIAgents" >> ~/.git-credentials
-echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75/Alex75.AIAgents" >> ~/.git-credentials
+TOKEN_1=$GITHUB_PAT_OF_USER
+echo "https://<username>:$TOKEN_1@github.com/<github_account>" >> ~/.git-credentials
+echo "https://<username>:$TOKEN_1@github.com/<github_organization>" >> ~/.git-credentials
+
+# Add PAT for NOT-owned repo
+TOKEN_2=$GITHUB_PAT_FOR_COLLABORATOR
+echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
+echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials               ## DOES NOT WORK (wildcard NOT accepted)
+# practically you need to use the full repo path
 
 # 5. Secure the file
 chmod 600 ~/.git-credentials
 ```
-
 
 ### Recover GitHub credentials to migrate to a new container
 

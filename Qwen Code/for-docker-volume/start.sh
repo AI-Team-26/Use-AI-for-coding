@@ -17,9 +17,9 @@ cd /projects
 setup_git() {
     if ! git config --global user.name >/dev/null 2>&1; then
         echo -e "${YELLOW}${GIT_EMOJI} Git not configured. Set up credentials:${NC}"
-        read -p "GitHub username: " git_username
+        read -p "GitHub username (does NOT require to match account): " git_username
         read -p "GitHub email: " git_email
-        read -s -p "GitHub PAT: " git_pat; echo
+        read -s -p "GitHub PAT (hidden): " git_pat; echo
         git config --global user.name "$git_username"
         git config --global user.email "$git_email"
         git config --global credential.helper store
