@@ -44,7 +44,7 @@ The way to create teh bind volume is the *-v** parameter of _docker run_.
 
 ### Credentials
 
-Can be set with these commands:
+The GitHub credentials to execute "git" can be set with these commands:
 ```bash
 git config --global user.name "$git_username"
 git config --global user.email "$git_email"
@@ -52,21 +52,25 @@ git config --global credential.helper store
 echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
 ```
 
-
 ### PAT
 
-Create a fine-grained access token for the owner (alex-cyber-75)
-Owner: alex-cyber-75
-Repositories: All  
-Permissions:
-- Contents: Read & write
-- Pull Requests: Read & Write
-- Actions: Read  (to check execution result)
-- Metadata (required): automatically selected
+Create a fine-grained access token for the owner of the repo, using the following data:
+- Owner: <GitHub account name>
+- Repositories: All  
+- Permissions:
+  + Contents: Read & Write
+  + Pull Requests: Read & Write
+  + Actions: Read  (to check execution result)
+  + Metadata (required): automatically selected
+
+Generate teh PAT and copy it.  
+Store it in a environment variable: `setx GITHUB_PAT_<ACCOUUNT>_<USE CASE> <GITHUB_PAT>`  
 
 On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
-and it will store in ~/git-credentials on a single line like this:
+and it will store it in ~/git-credentials on a single line like this:
 ``https://alex-cyber:<GITHUB_PAT>S@github.com``
+
+_Note_: When paste in bash shell with right click, **CLICK ONLY ONCE** (it will not show nothing so you tend to right-click again!)
 
 
 ### Use Multiple PAT
@@ -77,35 +81,32 @@ If you created a PAT attached to the user, it does not allow you to work with th
 There is a way to use a specific PAT in the github credentials ?
 
 To differentiate the PAT to use, based on the repository, you need to enable this property:
-``git config --global credential.useHttpPath true`` 
+```sh 
+#  Enable path-based matching
+git config --global credential.useHttpPath true
+``` 
 
 Then you can add multiple PAT, for specific repositories.  
-The PAT for-repo has to be set wit hte hFULL REPOSITORY PATH, can't be "generic".  
+The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generic using part of the path (TO VERIFY) or wildcard.  
 
-[TODO: example of credentials for a repo]
 
-**To check current credentials**:
+### Edit credentials
+
+**To read the current credentials**:
 ``cat ~/.git-credentials``
 
-Then the ~/git-credentials file should contain the full path, no wildcard ("*") and full repo path (ending with .git"):  
-```txt
-https://user:token1@github.com/account
-https://user:token2@github.com/organization/repo.git
-```
-
 ```bash
-# 1. Enable path-based matching
-git config --global credential.useHttpPath true
+# git config --global credential.useHttpPath true  
 
-# 2. Clear the file (creates it if it doesn't exist)
+# Clear the file (creates it if it doesn't exist)
 # Using ':' is a clean way to truncate a file to 0 bytes
 : > ~/.git-credentials
 
-# 2b or delete specific lines:
+# ...or delete specific lines:
 sed -i '2d' /root/.git-credentials
 
 # 3. Add PAT for owned repositories (Use -e for newlines)
-TOKEN_1=***
+TOKEN_1=$GITHUB_PAT_FOR_USER_1
 echo -e "https://alex-cyber:$TOKEN_1@github.com/alex-cyber-75" >> ~/.git-credentials
 
 # 4. Add PAT for organization repositories
@@ -116,53 +117,17 @@ echo -e "https://alex-cyber:$TOKEN_2@github.com/AIex-75/Alex75.AIAgents" >> ~/.g
 
 # 5. Secure the file
 chmod 600 ~/.git-credentials
-```` 
-
-
-## Organization repositories
-
-Create a fine-grained access token for the organization repositories
-Owner: organization
-Repositories: All
-Permisisons:
-- Contents: Read & write
-- Pull Requests: Read & Write
-- Actions: Read  (to check execution result)
-- Metadata (required): automatically selected
-
-
-
-### Recover PAT to migrate to a new container
-
-``git config --global user.name``  
-``git config --global user.email``  
-``git config --global credential.helper``  
-``cat ~/.git-credentials``  ("github_pat_" is part of the key)
-
-
-### Action logs
-
-How to access Action run logs?   
-TODO:   not found a solution yet  
-Maybe GitHub API (it needs PAT)?  
-https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#list-workflow-runs-for-a-repository
-
-or install github CLI in the Container?  
-https://github.com/cli/cli/blob/trunk/docs/install_linux.md#debian
-```bash
-(type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
-	&& sudo mkdir -p -m 755 /etc/apt/keyrings \
-	&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-	&& cat $out | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
-	&& sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
-	&& sudo mkdir -p -m 755 /etc/apt/sources.list.d \
-	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-	&& sudo apt update \
-	&& sudo apt install gh -y
 ```
 
 
-### Ollama
+### Recover GitHub credentials to migrate to a new container
+
+``git config --global user.name``  
+``git config --global user.email``  
+``cat ~/.git-credentials``  ("github_pat_" is part of the key)
+
+
+## Ollama
 
 To access host Ollama, it needs to be exposed to the Docker network.
 ```bash
@@ -189,10 +154,10 @@ curl http://host.docker.internal:11434/v1/chat/completions -d '{
 Models that can run locally: [Ollama Models](Ollama_Models.md)
 
 
-### Tools UI
+## Tools UI
 
 AionUi: https://github.com/iOfficeAI/AionUi  
-Qwen Code docuemntation suggests it to have a UI (and also https://github.com/Piebald-AI/gemini-cli-desktop).
+Qwen Code documentation suggests it to have a UI (and also https://github.com/Piebald-AI/gemini-cli-desktop).
 
 
 
