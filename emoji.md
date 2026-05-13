@@ -1,5 +1,7 @@
 # Emoji
 
+https://gist.github.com/rxaviers/7360908
+
 | Emoji | Markdown Syntax        | Use Case                        |
 |-------|------------------------|---------------------------------|
 | ✅    | :white_check_mark:     | Success/OK status               |
@@ -15,6 +17,7 @@
 | 🛠️    | :wrench:               | Work in progress                |
 | 🎉    | :tada:                 | Celebration                     |
 | 🟩    | :green_square:         | Green square (explicit green)   |
+| 🧪    |                        |                                 |  
 | 🐳    |                        |                                 |
 | 🏗️    |                        |                                 |
 | 🔍    |                        |                                 |
@@ -41,4 +44,25 @@
 | 💻   |                        | Shell                           |
 | 🐌   |                        | Slow                            |
 | 💯   |                        |                                 |
+| 💥 |
+| 🔥 | 
+| ⭐ | 
 | 🥇   |                        |                                 |
+| 〰️   |                        | Empty                           |
+| ➖   |                        | Empty                           |
+| 🔳   |                        |                                 |
+| 👉 |
+| 👈 |
+| 💪 |
+| 👌 |
+| 💙 |
+| 💚 |
+| 💛 |
+| ❤️ |
+| 💔 |
+| 👀 |
+| ⚡ |
+| 🌿 |                          | Branch                            |
+| :octocat: | 
+| 🔑 |
+| 💡 |

@@ -1,1 +1,4 @@
 .env
+
+# temporary file used when customize models
+Modelfile

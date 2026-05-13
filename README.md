@@ -1,12 +1,12 @@
 # Use AI for Coding
 
 There are three types of tools:
-- IDE plugins          ❌ they can do potentially everything in .your PC
-- Web based tools      ❌ Good for specific tasks but I find out they are too limited, models prone to mistakes, less customizable and time-consuming.
-- Standalone programs  ✔️ The perfect solution when run on container
+- IDE plugins........... ❌ Can do potentially everything in your PC
+- Web based tools ...... ❌ Too limited, models prone to mistakes, time-wasting.
+- Standalone programs .. ✔️ The perfect solution when run on container
 
 **IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and github trought it.
-They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets !!  
+They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets very easily.
 - GitHub Copilot (VS & VS Code)
 - Continue.DEV
 - Cline
@@ -22,11 +22,11 @@ Their connector are a little bit fragile and sometimes doesn't work.
 **Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
 They have a CLI and sometime a web UI exposed on the guest.  
 
-- [Aider](Aider/Aider.md)            ❌ Found an issue very earlier and abandoned before having it really working
-- [OpenCode](OpenCode/OpenCode.md)    Abandoned before having it setup neither once
+- [Aider](Aider/Aider.md) ❌ Found an issue very earlier and abandoned before having it really working
+- [OpenCode](OpenCode/OpenCode.md)   ❔ Abandoned before having it setup neither once
 - [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md)    ✔️ Really good
 - [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)       ✔️ Still setting it up but seems good
-- Mistral Vibe                       Neither started
+- Mistral Vibe               ❔ Neither started
 
 
 ## 🐳 Docker
@@ -38,7 +38,7 @@ At the moment I'm not switching user, so the tool runs with _root_.
 ** It will be good to switch to use a nomn-root user. **   
 
 
-## GIT & GitHub
+## :octocat: GIT & GitHub
 
 ### Credentials
 
@@ -60,13 +60,13 @@ See _start.sh_ scripts in difefrent tools (Qwen Code or Pi Agent for example).
 ### PAT
 
 Create a fine-grained access token for the owner of the repo, using the following data:
-- Owner: <GitHub account name>
+- Owner: ``<GitHub account name>``
 - Repositories: All  
 - Permissions:
   + Contents: Read & Write
   + Pull Requests: Read & Write
   + Actions: Read  (to check execution result)
-  + Metadata (required): automatically selected
+  + (Metadata: added automatically)
 
 Generate teh PAT and copy it.  
 Store it in a environment variable: `setx GITHUB_PAT_<ACCOUNT>_<USE CASE> <GITHUB_PAT>`  
@@ -97,7 +97,12 @@ The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generi
 
 ### 📌 Edit credentials
 
-**To read the current credentials**:
+```bash
+docker ps
+docker exec -it <conainer> //bin//bash    ## double slash to prevent GitBash to correct the path
+```
+
+To read the current credentials: 
 ``cat ~/.git-credentials``
 
 ```bash
@@ -108,17 +113,24 @@ The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generi
 : > ~/.git-credentials
 
 # ...or delete specific lines:
-sed -i '2d' ~/.git-credentials
+sed -i '1d' ~/.git-credentials
+
+## Get env variables with tokens
+env | grep GITHUB | sort
 
 # Add PAT for owned repositories of Account or Organization
 
-TOKEN_1=$GITHUB_PAT_OF_USER
-echo "https://<username>:$TOKEN_1@github.com/<github_account>" >> ~/.git-credentials
-echo "https://<username>:$TOKEN_1@github.com/<github_organization>" >> ~/.git-credentials
+USER_TOKEN=
+USERNAME=
+GITHUB_ACCOUNT=
+GITHUB_ORG=
+echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ACCOUNT" >> ~/.git-credentials
+echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ORG" >> ~/.git-credentials
 
 # Add PAT for NOT-owned repo
 TOKEN_2=$GITHUB_PAT_FOR_COLLABORATOR
-echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
+USERNAME=...
+echo "https://$USER$:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
 echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials               ## DOES NOT WORK (wildcard NOT accepted)
 # practically you need to use the full repo path
 

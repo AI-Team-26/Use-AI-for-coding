@@ -1,20 +1,116 @@
-// https://pi.dev/docs/latest/models#model-configuration
 {
+  "DOC": "https://pi.dev/docs/latest/models#model-configuration",
   "providers": {
+    "Novita AI": {
+        "baseUrl": "https://api.novita.ai/openai",
+        "api": "openai-completions",
+        "apiKey": "{{NOVITAAI_API_KEY}}",
+        "models": [
+            {
+                "id": "deepseek/deepseek-v4-flash",
+                "maxTokens": 2048
+            }
+        ]
+    },
     "ollama": {
-      //"baseUrl": "http://localhost:11434/v1",
+      "baseUrl_DOC": "original: http://localhost:11434/v1",
       "baseUrl": "http://host.docker.internal:11434/v1",
       "api": "openai-completions",
       "apiKey": "ollama",
+      "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 ",
       "models": [
-        { "id": "llama3.1:8b" },
-        { 
-            "id": "qwen2.5-coder:7b-ALEX-20k",
-            "name": "Jonny",
-            "contextWindow": 20480,
+        {   
+            "DOC": "FASTER and GREATER CONTEXT",
+            "id": "qwen2.5-coder:7b-instruct-q4_K_M-ALEX-22k",
+            "name": "qwen2.5-coder:7b-instruct-q4_K_M-ALEX-22k",
+            "contextWindow": 22528,
             "maxTokens": 2048,
             "reasoning": false
-        }
+        },
+
+        {   
+            "DOC": "Reasoning & TestingT",
+            "id": "Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k",
+            "name": "Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k",
+            "contextWindow": 22528,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+
+
+
+        {   
+            "_test": "OK",
+            "id": "granite4.1:8b-q5_K_M",
+            "name": "granite4.1:8b-q5_K_M",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+        { 
+            "_test": "OK",
+            "id": "second_constantine/deepseek-coder-v2:16b",
+            "name": "second_constantine/deepseek-coder-v2:16b",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        },       
+        { 
+            "_test": "OK",
+            "id": "qwen3:8b-ALEX-16k",
+            "name": "Qwen 1",
+            "contextWindow": 12288,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+        { 
+             "_test": "OK",
+            "id": "qwen3.5:9b-q4_K_M-12k",
+            "name": "Qwen 1",
+            "contextWindow": 12288,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+
+        { 
+            "id": "gemma4:e4b-it-q4_K_M",
+            "name": "Jonny",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        },      
+        { 
+            "id": "gemma4:e4b-it-q4_K_M-ALEX-8k",
+            "name": "Jonny",
+            "contextWindow": 8192,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+
+
+        { 
+            "id": "codegemma:7b-instruct-v1.1-q4_K_M",
+            "name": "Jonny",
+            "contextWindow": 8192,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+        
+        { 
+            "id": "llama3-groq-tool-use:8b-q5_0",
+            "name": "Jonny",
+            "contextWindow": 8192,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+
+        { 
+            "id": "mistral-nemo:12b-instruct-2407-q4_0",
+            "name": "AAA",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        } 
       ]
     }
   }

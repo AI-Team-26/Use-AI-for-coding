@@ -1,4 +1,4 @@
-# Qwen Code + Ollama Optimization (8GB -> 16GB)
+# Qwen Code + Ollama Optimization (8GB & 16GB)
 
 ## Qwen Code settings.json
 Location: ~/.qwen/settings.json (project .qwen/settings.json overrides)

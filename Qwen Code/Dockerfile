@@ -5,7 +5,6 @@ FROM ghcr.io/qwenlm/qwen-code:0.15.10
 ### Install .net 10 SDK
 # Install prerequisites
 RUN apt-get update && apt-get install -y --no-install-recommends wget gpg
-# apt-transport-https  TODO: remove ?
 
 # Download and install key to keyrings (modern way)
 RUN wget https://packages.microsoft.com/keys/microsoft.asc -O- | \

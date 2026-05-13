@@ -18,6 +18,12 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] http
     && apt-get update && apt-get install -y dotnet-sdk-10.0 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install GitHub CLI
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update && apt-get install -y gh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Official Pi Installation (via pi.dev)
 # This installs the 'pi' binary globally
 RUN curl -fsSL https://pi.dev/install.sh | sh

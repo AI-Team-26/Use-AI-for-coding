@@ -1,7 +1,7 @@
 # Plan Subscriptions
 
 
-| Provider    | $/month (min) | PAYG | Min top up | Free models | Models            | Pricing                           |  
+| Provider    | $/m (min)     | PAYG | Min top up | Free models | Models            | Pricing                           |  
 | ---         |            ---| ---  | ---        | ---         | ---               |                                   |               
 | DeepSeek    |               | Ok   |            | ❔          | Few and cheap     |                                   |
 | Xiaomi      |         6.00  | Ok   |         50 | ❔          |                   |                                   |
@@ -11,8 +11,9 @@
 | Mistral     |               |      |            | ❔          |                   |                                   |
 | Openrouter  |               |      |            | ✔️         |                   |                                   |
 | Ofox.ai     |               |      |         10 | ✔️         |                   |                                   |
-| Eden.ai     |               |      |         5  | ❔          |                   |                                   |
-| TokenMix    |               |      |         5  | ❔          |                   |                                   |
+| Eden.ai     |               |      |          5 | ❔          |                   |                                   |
+| TokenMix    |               |      |          5 | ❔          |                   |                                   |
+| Novita.ai   |         20.00 |     | Yes  |          5 |             | many, cheap       | good                              |
 
 
 ## Mono-provider
@@ -64,3 +65,11 @@ Pricing:
 
 
 ### TokenMix
+
+
+### Novita.ai
+
+Models:  https://novita.ai/pricing
+Pricing: https://novita.ai/pricing
+Plan:    https://novita.ai/billing/coding-plan   "Lite" / -20 USD/m  /  50M / no restictions
+Sandbox: https://novita.ai/pricing?sandbox=1
