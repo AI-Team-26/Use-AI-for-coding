@@ -1,7 +1,8 @@
-# Ollama Models
+# Ollama Models for 8GB VRAM
 
+GeForce GTX 1070 8GB on PCI slot 2 of ASUS P8Z77V-LV (2012 !!!)
 
-## Result on 8GB VRAM 
+## Results
 
 | Model                                         |     | GB   | GPU % | Context | Tk/s | Time | Result | Tools | Notes                                  |
 | :-------------------------------------------- | --- | ---: | -----:| ------: | ---: | ---: | :----- | ------| :------------------------------------- |
@@ -44,15 +45,11 @@
 | qwen2.5-coder:14b-instruct-q3_K_M             |❌〰️|  9.6 |    77 |    8192 |    4 |  32s | + Pass | yes   | Too slow                               | 
 
 
-| Model                                |      | Note                                                 |
-| ---                                  | ---  |                                                      |
-
+Models to test:
 - mistral-nemo:12b-instruct-2407-q3_K_S
 - llama3.1:8b-instruct-q5_K_M
 - codegemma:7b-instruct-v1.1-q4_K_M  v1.1 
-
-
-
+- llama3-groq-tool-use:8b-q5_0-ALEX-16k_v2
 
 
 ## To try
@@ -144,41 +141,3 @@ This is the “stretch” option for 8GB. With aggressive quantization it may st
 None of these models have C#/F# specialization — they're all general multilingual coders. The hard truth is that most benchmarks focus on Python/JS. For .NET work at 8GB, qwen3:8b is your best bet right now due to its stronger reasoning and recency.  
 If you ever get a 16GB card, devstral-small:24b or qwen2.5-coder:14b would be a meaningful jump for multi-file .NET projects.
 
-
-```bash
-ctx_4k=4096
-ctx_6k=6144
-ctx_8k=8192
-ctx_10k=10240
-ctx_12k=12288
-ctx_16k=16384
-ctx_18k=18432
-ctx_20k=20480 
-ctx_24k=24576
-ctx_28k=28672
-ctx_32k=32768
-
-# ── config ─────────────────────────────────────────────────
-base_model=codegeex4:9b-all-q5_K_M    # set this
-ctx=ctx_4k                   # set this
-
-ctx_val=${!ctx}
-new_model="$base_model-$((ctx_val / 1024))k"
-
-echo "new model: $new_model"
-
-# ── create and run ─────────────────────────────────────────
-echo "FROM $base_model
-PARAMETER num_ctx $ctx_val" > Modelfile
-
-ollama create "$new_model" -f Modelfile
-ollama run "$new_model" --verbose  "Hi, can you help me with F#?"
-ollama ps
-```
-
-See "Ollama from GGUF.md" in the Ollama project documentation for a different/update documentation:
-
-
-deepseek-coder-v2:16b-lite-base-q3_K_S
-
-codegeex4:9b-all-q5_K_M

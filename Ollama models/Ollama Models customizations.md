@@ -18,7 +18,16 @@ ctx_22k=22528
 ctx_24k=24576
 ctx_28k=28672
 ctx_32k=32768
-
+ctx_36k=$((1024*36))
+ctx_40k=$((1024*40))
+ctx_44k=$((1024*44))
+ctx_48k=$((1024*48))
+ctx_52k=$((1024*52))
+ctx_56k=$((1024*56))
+ctx_60k=$((1024*60))
+ctx_64k=$((1024*64))
+ctx_96k=$((1024*96))
+ctx_128k=$((1024*128))
 
 # ── config ─────────────────────────────────────────────────
 base_model=qwen2.5-coder:7b  # set this
@@ -232,11 +241,13 @@ ollama ps
 ```
 
 
-### qwen2.5-coder:7b-instruct-q5_K_M
+### qwen2.5-coder
+
+#### qwen2.5-coder:7b-instruct-q5_K_M
 
 ```bash
 base_model=qwen2.5-coder:7b-instruct-q5_K_M
-ctx=ctx_16k              
+ctx=ctx_64k              
 
 ctx_val=${!ctx}
 new_model="$base_model-ALEX-$((ctx_val / 1024))k"
@@ -247,8 +258,8 @@ cat > Modelfile <<EOF
 FROM $base_model
 PARAMETER num_ctx $ctx_val
 
-PARAMETER temperature 0.0
-PARAMETER top_k 10
+PARAMETER temperature 0.1
+PARAMETER top_k 20
 PARAMETER top_p 0.7
 PARAMETER min_p 0.05
 PARAMETER repeat_penalty 1.05
@@ -265,7 +276,7 @@ ollama ps
 
 ```bash
 base_model=qwen2.5-coder:7b-instruct-q4_K_M
-ctx=ctx_22k              
+ctx=ctx_128k              
 
 ctx_val=${!ctx}
 new_model="$base_model-ALEX-$((ctx_val / 1024))k"
@@ -414,11 +425,40 @@ ollama ps
 ```
 
 
+## gemma4:e4b-it-q8_0
+
+```bash
+base_model=gemma4:e4b-it-q8_0
+ctx=ctx_32k              
+
+ctx_val=${!ctx}
+new_model="$base_model-ALEX-$((ctx_val / 1024))k"
+
+echo $new_model
+
+cat > Modelfile <<EOF
+FROM $base_model
+PARAMETER num_ctx $ctx_val
+
+PARAMETER temperature 0.2
+PARAMETER top_k 20
+PARAMETER top_p 0.7
+PARAMETER min_p 0.05
+PARAMETER repeat_penalty 1.05
+PARAMETER repeat_last_n 128
+
+EOF
+
+ollama create "$new_model" -f Modelfile
+ollama run "$new_model" --verbose  "Hi, can you help me with F#?"
+ollama ps
+```
+
 ### gemma4:e2b-it-q4_K_M
 
 ```bash
 base_model=gemma4:e4b-it-q4_K_M
-ctx=ctx_10k              
+ctx=ctx_32k              
 
 ctx_val=${!ctx}
 new_model="$base_model-ALEX-$((ctx_val / 1024))k"

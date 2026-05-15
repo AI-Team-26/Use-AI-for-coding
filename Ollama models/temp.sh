@@ -60,7 +60,6 @@ PROMPT_END
     # Display the full response for debugging
     echo "API Response Details:"
     echo "$raw" | jq -r '.response' 2>/dev/null || echo "Raw response: $raw"
-}
-
 # Call the function with your desired model and prompt
 ollama_run "qwen2.5-coder:14b-instruct-q5_K_M"
+}
