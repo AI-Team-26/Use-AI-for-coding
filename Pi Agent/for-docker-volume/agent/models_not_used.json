@@ -1,0 +1,30 @@
+{
+"models": [
+        {  
+            "_Note": "FASTER and GREATER CONTEXT",
+            "id": "qwen2.5-coder:7b-instruct-q4_K_M-ALEX-22k",
+            "name": "qwen2.5-coder:7b-instruct-q4_K_M-ALEX-22k",
+            "contextWindow": 22528,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+          
+        {   
+            "_Note": "OK",
+            "id": "granite4.1:8b-q5_K_M",
+            "name": "granite4.1:8b-q5_K_M",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+
+        { 
+            "_Note": "OK",
+            "id": "qwen3:8b-ALEX-16k",
+            "name": "Qwen 1",
+            "contextWindow": 12288,
+            "maxTokens": 2048,
+            "reasoning": false
+        }
+    ]
+}

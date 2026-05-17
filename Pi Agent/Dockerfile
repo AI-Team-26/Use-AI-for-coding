@@ -2,7 +2,7 @@ FROM debian:bookworm-slim
 
 # Install prerequisites, Node.js, and Pi Agent with security updates
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    wget gpg ca-certificates curl git gnupg \
+    wget gpg ca-certificates curl git gnupg openssh-server \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     #&& npm install -g @mariozechner/pi-coding-agent \
@@ -25,15 +25,18 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | g
     && rm -rf /var/lib/apt/lists/*
 
 # Official Pi Installation (via pi.dev)
-# This installs the 'pi' binary globally
 RUN curl -fsSL https://pi.dev/install.sh | sh
 
-# we use a /projects directory that has to be passed as volume !!!
-# We also expose /root/.pi for global skills, API keys, and tool settings
-# VOLUME ["/root/.pi", "/projects"] this can cause permission problems
+# 🔐 SSH Server Setup
+RUN mkdir /var/run/sshd \
+    && echo 'root:pi' | chpasswd \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords no/' /etc/ssh/sshd_config
 
-#WORKDIR /projects
+# Expose SSH port
+EXPOSE 22
 
-# Use ENTRYPOINT to run the script, and CMD for the default argument
-ENTRYPOINT ["/projects/start.sh"]
+# Use ENTRYPOINT to start sshd first, then run start.sh
+ENTRYPOINT ["/bin/sh", "-c", "/usr/sbin/sshd && exec /projects/start.sh"]
 CMD [""]

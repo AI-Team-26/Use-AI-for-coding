@@ -4,13 +4,11 @@
 #   - Lists projects in /projects (bind-mounted from host).
 #   - Allows cloning new repos interactively.
 
-# --- Config ---
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'; BOLD_PURPLE='\033[1;35m'
-FOLDER_EMOJI="📁"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"
-
-echo -e "${BOLD_PURPLE}Pi Agent${NC}\n"
-
 cd /projects
+source start_common.sh
+
+echo -e "${bold}=== Pi Agent ==="
+echo -e "${bold}================${NC}"
 
 
 # --- Git Setup ---
@@ -71,12 +69,18 @@ select_project() {
     fi
 
     echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
-    select proj in "${projects[@]}" "➕ Clone a new project" "💻 Shell" "⭕ Exit"; do
+    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" "💻 Shell" "❌ Exit"; do
         if [[ "$proj" == "➕ Clone a new project" ]]; then
             clone_project; select_project; break
+        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
+            add_github_pat; select_project; break
         elif [[ "$proj" == "💻 Shell" ]]; then
+            show_help
             /bin/bash
-        elif [[ "$proj" == "⭕ Exit" ]]; then
+            #break
+            #select_project
+            exit 0            
+        elif [[ "$proj" == "❌ Exit" ]]; then
             exit 0
         elif [[ -n "$proj" ]]; then
             echo -e "${GREEN}${ROCKET_EMOJI} Running Pi Agent in project: $proj${NC}"
