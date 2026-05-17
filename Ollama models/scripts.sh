@@ -104,22 +104,18 @@ test_model() {
     # read a line and use the 2 values that are separated by the "=", setting them into "key" and "value"
     while IFS='=' read -r key value; do
         declare "$key=$value"
-        #print_value $key $value
+        print_value $key $value
     done < <(tr ' ' '\n' <<< "$run_result")  # convert space (' ') oin new-line ('\n')
-
-    #ollama_run $model "$prompt_1"
 
     
     # 2. Collect data from "ollama ps"
-    # TODO
-
     local ps_result
     ps_result=$(ollama_ps)
 
     #eval "$ps_result" # model, size, context, gpu
     while IFS='=' read -r key value; do
         declare "$key=$value"
-        #print_value $key $value
+        print_value $key $value
     done < <(tr ' ' '\n' <<< "$ps_result")
 
 
@@ -128,19 +124,24 @@ test_model() {
 
     #echo "--------" >&2
     local ctx_k=$(($context/1024))
+
     print_value "Model" "$model" 
     print_value "Size" "$size GB" 
     print_value "Context" "$ctx_k k"
     print_value "GPU" "$gpu %"   
     
-    print_value "Total duration" "$(printf "%.1s s" $(from_nano $total_duration))"
+    print_value "Total duration" "$(printf "%.1f s" $(from_nano $total_duration))"
     print_value "Eval duration" "$(printf "%.1f s" $eval_s)"
     print_value "Eval tokens" $eval_count    
     print_value "Eval rate     " "$(printf "%.0f t/s" $eval_rate)"
 
     # 3. Create output
 
-    tools="✔️"
+    result="❌"
+    if [ $has_tools == "1" && $gpu == "100" ]; then
+        result="✔️"
+    fi
+
     result="" #hasPtools + GPU 100%
     
     local exec_time="$(printf "%.1f  s" $(from_nano $total_duration))"
@@ -151,7 +152,7 @@ test_model() {
 
     # return value
     printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0s |%-1s| %40s |" \
-        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$exec_time" "$tools" ""
+        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$exec_time" "$has_tools" ""
 }
 
 # return "response: <multiline response> total_duration=<total_duration> eval_duration=<eval_duration> eval_count=<eval_count> eval_rate=<eval_rate>"
@@ -183,9 +184,8 @@ ollama_run() {
     local raw    
     raw=$(curl -s http://localhost:11434/api/generate -d "$json_payload")
     #raw=$(curl -w -s "\nHTTP Status: %{http_code}"  http://localhost:11434/api/generate -d "$json_payload")
-
     
-    #echo $raw >&2
+    #print_value "Raw output" "$raw"
 
     ## {"model":"gemma4:e4b","created_at":"2026-05-13T23:53:42.5431584Z","response":"","done":true,"done_reason":"stop",
     ##   "context":[2,105,9731,107,98,107,106,107,105,2364,107,30468,5631,106,107,105,4368,107,10979,236888,155818],
@@ -195,7 +195,6 @@ ollama_run() {
 
     #printf "%s\n" "$response" >&2   
     #print_value "Response" "$response"
-
 
     local has_tools=0
     if [[ $response == '```json'* ]]; then
@@ -222,8 +221,7 @@ ollama_run() {
 
     local eval_rate=$(( $eval_count * 1000000000 / $eval_duration )) 
 
-    #echo "output of ollama_run"
-
+    # To return the response, it has to be jq-escaped
     #response_json = jq
 
     # Output a single line with formatted text containing total_duration, eval_duration, eval_count, and eval_rate
@@ -294,104 +292,6 @@ ollama_ps() {
     }'
 }
 
-
-###############################
-###      Create Models      ###
-###############################
-
-#printf "P{ROMPT:\n\n%s\n" "$prompt_tool"
-### Usage
-# create_model_Q4 <model> <context_k>
-# create_model_Q4 "qwen3.6:8b" 32
-create_model_Q4() {
-    local temperature=0.1
-    local top_k=20
-    create_model "$1" "$2" $temperature $top_k
-}
-
-create_model_Q3() {
-    local temperature=0.0
-    local top_k=10
-    create_model "$1" "$2" $temperature $top_k
-}
-
-## create_model_with_comtext <model> <ctx_k> --test
-create_model_with_cotext() {
-    local base_model="$1"
-    local ctx_k="$2"
-
-    local ctx=$((1024 * ctx_k))
-    local new_model="${base_model}-${ctx_k}k"
-
-    echo ""                                                           >&2
-    echo "========================================================="  >&2
-    echo "CREATE MODEL: ${yellow}$new_model${reset}"                  >&2
-    echo "========================================================="  >&2
-
-    # 1. Start with the original Modelfile content
-    # Note: We use 'FROM $base_model' instead of the hash Ollama might return
-    echo "FROM $base_model" > Modelfile
-
-    # 2. Append everything EXCEPT the original FROM line to preserve TEMPLATE and SYSTEM
-    ollama show "$base_model" --modelfile | grep -v "^FROM" >> Modelfile
-
-    # 3. Append your custom PARAMETERS at the end to override defaults
-    cat >> Modelfile <<EOF
-
-# --- Custom Parameters ---
-PARAMETER num_ctx $ctx
-EOF
-
-    # 4. Build and clean up
-    ollama create "$new_model" -f Modelfile
-    rm Modelfile
-
-    if [ "$3" == "--test" ]; then
-        local _=$(test_model "$new_model")
-        echo "" >&2
-    fi
-}
-
-
-## create_model <model> <ctx_k> <temperature> <top_k>
-## create_model qwen2.5-coder:14b-instruct-q5_K_M  32  0.1  20
-create_model() {
-    local base_model="$1"
-    local ctx_k="$2"
-    local temperature="$3"
-    local top_k="$4"
-
-    local ctx=$((1024 * ctx_k))
-    local new_model="${base_model}-ALEX-${ctx_k}k"
-
-    echo "Creating model: $new_model"
-
-    # 1. Start with the original Modelfile content
-    # Note: We use 'FROM $base_model' instead of the hash Ollama might return
-    echo "FROM $base_model" > Modelfile
-    
-    # 2. Append everything EXCEPT the original FROM line to preserve TEMPLATE and SYSTEM
-    ollama show "$base_model" --modelfile | grep -v "^FROM" >> Modelfile
-
-    # 3. Append your custom PARAMETERS at the end to override defaults
-    cat >> Modelfile <<EOF
-
-# --- Custom Parameters ---
-PARAMETER num_ctx $ctx
-PARAMETER temperature $temperature
-PARAMETER top_k $top_k
-PARAMETER top_p 0.7
-PARAMETER min_p 0.05
-PARAMETER repeat_penalty 1.05
-PARAMETER repeat_last_n 128
-EOF
-
-    # 4. Build and clean up
-    ollama create "$new_model" -f Modelfile
-    rm Modelfile
-
-    test_model "$new_model"
-}
 
 
 ###############################

@@ -53,16 +53,18 @@ ollama ps
 
 For a brittle Q3 coder model, to reduce errors, I’d start with:
 
-- temperature: lower means more deterministic,
+- temperature: lower means more deterministic, if "0", only the most probable token is used (top_k, top_p, min_p and tfs_z will be ignored)
 - top_k / top_p / min_p: tighter sampling reduces weird token choices.
 - repeat_penalty / repeat_last_n: helps stop loops and repeated junk.
-- num_predict: keeps the model from wandering too long. Prevent it to fall in a loop
-  ! when set to 64, it cuts the response !!
+  Use a value between 1.05 and 1.15 (Q3).
+- num_predict: Cut the response to a max number of token. Can "break" the response. Use repeat_penalty to interrujpt loop.
+- rope_frequency_base: used for optimize old 4k/8k context models. NOT useful with new models.
 
-Perplexity:  
+
+Suggested set for Q3:  
 ```sh
 PARAMETER temperature 0.0      
-PARAMETER top_k 20             
+PARAMETER top_k 10             
 PARAMETER top_p 0.8
 PARAMETER min_p 0.05
 PARAMETER repeat_penalty 1.15
@@ -70,19 +72,24 @@ PARAMETER repeat_last_n 128
 # PARAMETER num_predict 64     
 ```
 
-Gemini:  
+Suggested set for Q4 and better:  
 ```sh
-FROM deepseek-coder-v2:16b-lite-base-q3_K_S
-# Stick to 0.0 for logic/math/code
-PARAMETER temperature 0.0
-# Higher top_k can help if temp was > 0, but at 0.0 it's ignored
-PARAMETER top_k 10
-# Slightly lower penalty to respect F# syntax patterns
+PARAMETER temperature 0.1      
+PARAMETER top_k 20             
+PARAMETER top_p 0.8
+PARAMETER min_p 0.05
 PARAMETER repeat_penalty 1.05
+PARAMETER repeat_last_n 256
+# PARAMETER num_predict 64     
 ```
 
-# Essential: Adjust RoPE for Llama 3 to prevent gibberish at 20k
-PARAMETER rope_frequency_base 572000
+
+### Gemma4
+
+_E2B_ and _E4B_ have a absolute native architectural limit of the context size of 128k.
+_E26B_ and _E31B_ are capped to 256k.  
+
+
 
 
 ## granite4.1:8b-q4_K_M
@@ -203,6 +210,9 @@ ollama create "$new_model" -f Modelfile
 ollama run "$new_model" --verbose  "Hi, can you help me with F#?"
 ollama ps
 ```
+
+
+
 
 
 

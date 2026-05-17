@@ -1,4 +1,4 @@
-# Emoji
+# Emoji list
 
 https://gist.github.com/rxaviers/7360908
 
@@ -15,6 +15,7 @@ https://gist.github.com/rxaviers/7360908
 | 🚀    | :rocket:               | Deployment/Speed                |
 | 🚨    | :rotating_light:       | Critical alert                  |
 | 🛠️    | :wrench:               | Work in progress                |
+| 🗑️    |
 | 🎉    | :tada:                 | Celebration                     |
 | 🟩    | :green_square:         | Green square (explicit green)   |
 | 🧪    |                        |                                 |  
@@ -22,19 +23,20 @@ https://gist.github.com/rxaviers/7360908
 | 🏗️    |                        |                                 |
 | 🔍    |                        |                                 |
 | 🌐    |                        |                                 |
-| 🔒    |                        |                                 |
+| 🔒    | :lock:                 |                                 |
 | 📦    |                        |                                 |
 | ⚙️    |                        |                                 |
 | 🎯    |                        |                                 |
 | 📜    |                        |                                 |
 | 📌    |                        |                                 |
+| ⏳    |                        |                                 |
 | 🔽    |                        |                                 |
 | ↩️    |                        |                                 |
 | 🔲    |                        |                                 |
-| ⭕
+| ⭕    |                        |                                 |
 | ▶️    |                        |                                 |
-| ‼️    |                        |                                 |
-| ❗    |                        |                                 |
+| ‼️     |                        |                                 |
+| ❗     |                        |                                 |
 | ☑️    |                        |                                 |
 | 💔    |                        | Expired free quota              |
 | 💥    |                        |                                 |
@@ -44,9 +46,9 @@ https://gist.github.com/rxaviers/7360908
 | 💻   |                        | Shell                           |
 | 🐌   |                        | Slow                            |
 | 💯   |                        |                                 |
-| 💥 |
-| 🔥 | 
-| ⭐ | 
+| 💥   |                        |                                 |
+| 🔥    |                        |                                 | 
+| ⭐   |                        |                                 |
 | 🥇   |                        |                                 |
 | 〰️   |                        | Empty                           |
 | ➖   |                        | Empty                           |
