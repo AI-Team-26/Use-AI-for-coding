@@ -1,5 +1,7 @@
 # Use AI for Coding
 
+What I was working on? --> [TODO](TODO.md).  
+  
 There are three types of tools:
 - IDE plugins........... ❌ Can do potentially everything in your PC
 - Web based tools ...... ❌ Too limited, models prone to mistakes, time-wasting.
@@ -131,7 +133,7 @@ echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ORG" >> ~/.git-credential
 TOKEN_2=$GITHUB_PAT_FOR_COLLABORATOR
 USERNAME=...
 echo "https://$USER$:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
-echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials               ## DOES NOT WORK (wildcard NOT accepted)
+echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials           ## DOES NOT WORK (wildcard NOT accepted)
 # practically you need to use the full repo path
 
 # 5. Secure the file

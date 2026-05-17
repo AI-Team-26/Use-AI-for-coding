@@ -13,22 +13,20 @@ MSI Afterburnet set to flat frequency curve at 900 mV.
 | mistral-nemo:12b-instruct-2407-q3_K_S         |✔️|  6.2 GB |    4096 | 100% |   44 |  21s | yes   |                                        |
 | mistral-nemo:12b-instruct-2407-q3_K_S         |✔️|  7.2 GB |    8192 | 100% |   69 |      |       |                                        |
 | qwen2.5-coder:14b-instruct-q3_K_M             |✔️|  8.2 GB |    4096 | 100% |      |      |       |                                        |    
-| qwen3.5:9b-q4_K_M-12k                         |✔️|  9.0 GB |         | 100% |   38 |  14s | yes   |                                        |
+| qwen3.5:9b-q4_K_M-12k                         |✔️|  9.0 GB |         | 100% |   38 |  14s | yes   | SLOW                                   |
 | qwen3.5-unsloth:9b-20k                        |✔️|  7.9 GB |         | 100% |   38 |   5s |       |                                        |
 | qwen3.5-unsloth:9b-24k                        |✔️|  8.0 GB |         | 100% |   38 |  14s |       |                                        |
 | qwen3.5-unsloth:9b-28k                        |✔️|  8.1 GB |         | 100% |   38 |  14s |       |                                        |
-| gemma4:e4b-it-q4_K_M-ALEX-8k
 | qwen2.5 -coder:14b-instruct-q3_K_M            |✔️|  8.2 GB |    4096 | 100% |   32 |   4s |       |                                        |
 | llama3.1:8b-instruct-q5_K_M                   |✔️|  6.2 GB |    4096 | 100% |   48 |   3s |       |                                        |
 | gemma4:e4b-it-q4_K_M-ALEX-8k                  |✔️|   10 GB |    8192 | 100% |   61 |  18s |       |                                        |
 | codestral:22b-v0.1-q4_K_M-ALEX-18k            |✔️| 19.0 GB |   18432 |  81% |      |      |       |                                        |
 | codegemma:7b-instruct-v1.1-q4_K_M             |❌|         |         | 100% |      |      | NO    |                                        | 
 | Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k:latest    |❌|  7.4 GB |         | 100% |   38 |   8s | NO    |                                        |
+| qooba/qwen3-coder-30b-a3b-instruct:q3_k_m     |❌|         |         | 100% |   76 |      | NO    | Context fixed to 16K ? FAST            | 
 
 
 
-
-qwen2.5-coder:14b-instruct-q5_K_M
 deepseek-coder-v2:16b-lite-instruct-q4_K_M
 
 Models to try:
@@ -38,7 +36,6 @@ Models to try:
   + fervent_mcclintock/Qwen3-Coder-30B-A3B-Instruct-Pruned-15B-A3B:Q5_0
   + qwen2.5-coder:14b-instruct-q4_K_M
   + [x] qwen2.5-coder:14b-instruct-q5_K_M  
-  + qooba/qwen3-coder-30b-a3b-instruct:q3_k_m
   + moophlo/Qwen3-Coder-30B-A3B-Instruct-GGUF:Q3_K_M
 - CodeGemma
   + no tools suppoerted ???
