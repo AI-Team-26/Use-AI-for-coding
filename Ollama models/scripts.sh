@@ -58,16 +58,11 @@ test_models() {
         echo -e "${blue} • ${white}$model${reset}"
     done
     echo "${blue}=========================================================${reset}"
-    echo
 
     local results
     results=()
 
     for model in "${__models[@]}"; do
-        echo
-        echo "========================================================="
-        echo "TESTING: ${yellow}$model${reset}"
-        echo "========================================================="
     
         model_result=$(test_model "$model")
         results+=$model_result
@@ -79,10 +74,10 @@ test_models() {
     echo; echo "========================================================="
 
     echo
-    printf "| Model                                         |➖| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |"
+    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |"
     for result in "${results[@]}"; do
         #echo -e $result
-        printf "$result"
+        echo -e "\n$result"
     done
 }
 
@@ -96,6 +91,11 @@ test_model() {
         echo "‼️ test_model was called with empty model"  >&2
         exit 1
     fi
+
+    echo                                                              >&2
+    echo "========================================================="  >&2
+    echo "TESTING: ${yellow}$model${reset}"                           >&2
+    echo "========================================================="  >&2
 
     # 1. Collect data from "Ollama run"
     local run_result
@@ -144,8 +144,8 @@ test_model() {
     result="" #hasPtools + GPU 100%
     
     local exec_time="$(printf "%.1f  s" $(from_nano $total_duration))"
-    echo
-    printf "| Model                                         |➖| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |\n"  >&2
+    echo   >&2
+    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |\n"  >&2
     printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0s |%-1s| %40s |" \
         "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$exec_time" "$tools" ""  >&2
 
@@ -238,9 +238,14 @@ ollama_run() {
 #
 # Output:
 # model=qwen2.5-coder:7b-10k size=5.6 gpu=100 context=10240
+#
+# Note. Does not manage models that use less than a GB, when the SIZE is in "MB" and not "GB"
 ollama_ps() {
     local ps
     ps="$(ollama ps)"
+
+    # NAME                 ID              SIZE     PROCESSOR    CONTEXT    UNTIL
+    # h4rithd/coder:14b    38b4dc91576f    13 GB    100% GPU     16384      4 minutes from now
 
     echo "$ps" | awk '
     /^NAME / { next }
@@ -310,6 +315,42 @@ create_model_Q3() {
     create_model "$1" "$2" $temperature $top_k
 }
 
+## create_model_with_comtext <model> <ctx_k> --test
+create_model_with_cotext() {
+    local base_model="$1"
+    local ctx_k="$2"
+
+    local ctx=$((1024 * ctx_k))
+    local new_model="${base_model}-${ctx_k}k"
+
+    echo ""                                                           >&2
+    echo "========================================================="  >&2
+    echo "CREATE MODEL: ${yellow}$new_model${reset}"                  >&2
+    echo "========================================================="  >&2
+
+    # 1. Start with the original Modelfile content
+    # Note: We use 'FROM $base_model' instead of the hash Ollama might return
+    echo "FROM $base_model" > Modelfile
+
+    # 2. Append everything EXCEPT the original FROM line to preserve TEMPLATE and SYSTEM
+    ollama show "$base_model" --modelfile | grep -v "^FROM" >> Modelfile
+
+    # 3. Append your custom PARAMETERS at the end to override defaults
+    cat >> Modelfile <<EOF
+
+# --- Custom Parameters ---
+PARAMETER num_ctx $ctx
+EOF
+
+    # 4. Build and clean up
+    ollama create "$new_model" -f Modelfile
+    rm Modelfile
+
+    if [ "$3" == "--test" ]; then
+        local _=$(test_model "$new_model")
+        echo "" >&2
+    fi
+}
 
 
 ## create_model <model> <ctx_k> <temperature> <top_k>
