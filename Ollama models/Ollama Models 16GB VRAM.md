@@ -25,6 +25,17 @@ MSI Afterburnet set to flat frequency curve at 900 mV.
 | Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k:latest    |❌|  7.4 GB |         | 100% |   38 |   8s | NO    |                                        |
 | qooba/qwen3-coder-30b-a3b-instruct:q3_k_m     |❌|         |         | 100% |   76 |      | NO    | Context fixed to 16K ? FAST            | 
 
+| Model                                         |〰️| Size  | Context | GPU % | Tk/s | Time   |🔨| Note                                     |
+| :-------------------------------------------- |〰️| ----: | ------: | ----: | ---: | -----: |〰️| :--------------------------------------- |
+| gemma4:e4b                                    |✔️| 10 GB |     8 k |   100 |   62 |        |✔️|                                          |
+| gemma4:e4b-it-q4_K_M                          |✔️| 10 GB |     8 k |   100 |   62 |        |✔️|                                          |
+| h4rithd/coder:14b                             |✔️| 13 GB |    16 k |   100 |   34 |        |✔️|                                          |
+| gemma4:e4b-it-q4_K_M-ALEX-32k                 |✔️| 11 GB |    32 k |   100 |   63 |        |✔️|                                          |
+| gemma4:e4b-it-q4_K_M-256k                     |✔️| 13 GB |   128 k |   100 |   63 |        |✔️|                                          |
+| gemma4:e4b-it-q8_0                            |✔️| 12 GB |     8 k |   100 |   43 |    4 s |✔️|                                          |
+| gemma4:e4b-it-q8_0                            |✔️| 12 GB |     8 k |   100 |   43 |    6 s |✔️|                                          |
+| gemma4:e4b-it-q8_0-128k                       |✔️| 15 GB |   128 k |   100 |   43 |    3 s |✔️|                                          |
+
 
 
 deepseek-coder-v2:16b-lite-instruct-q4_K_M

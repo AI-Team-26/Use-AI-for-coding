@@ -74,7 +74,7 @@ test_models() {
     echo; echo "========================================================="
 
     echo
-    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |"
+    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time   |🔨| Note                                     |"
     for result in "${results[@]}"; do
         #echo -e $result
         echo -e "\n$result"
@@ -120,7 +120,7 @@ test_model() {
 
 
     local ctx_k=$(($context/1024))
-    local eval_s=$(from_nano $eval_duration) #   "$(printf "%.1f s" $(from_nano $eval_duration))"
+    local eval_s="$(from_nano $eval_duration)"
 
     #echo "--------" >&2
     local ctx_k=$(($context/1024))
@@ -130,29 +130,33 @@ test_model() {
     print_value "Context" "$ctx_k k"
     print_value "GPU" "$gpu %"   
     
-    print_value "Total duration" "$(printf "%.1f s" $(from_nano $total_duration))"
-    print_value "Eval duration" "$(printf "%.1f s" $eval_s)"
-    print_value "Eval tokens" $eval_count    
-    print_value "Eval rate     " "$(printf "%.0f t/s" $eval_rate)"
+    print_value "Total duration"  "$(printf "%.1f s" $(from_nano $total_duration))"
+    print_value "Eval duration"  "$(printf "%.1f s"  "$eval_s")"
+    print_value "Eval tokens"  "$eval_count"    
+    print_value "Eval rate"  "$(printf "%.0f t/s" $eval_rate)"
 
     # 3. Create output
 
-    result="❌"
-    if [ $has_tools == "1" && $gpu == "100" ]; then
+    local result="❌"
+    if [[ $has_tools = "1" && $gpu = "100" ]]; then
         result="✔️"
     fi
 
-    result="" #hasPtools + GPU 100%
-    
-    local exec_time="$(printf "%.1f  s" $(from_nano $total_duration))"
+    local toos="❌"
+    if [ $has_tools = "1" ]; then
+        tools="✔️"
+    fi
+
+    #local exec_time=primntf "%4.0 s" $eval_s
+   
     echo   >&2
-    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time |🔨| Note                                     |\n"  >&2
-    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0s |%-1s| %40s |" \
-        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$exec_time" "$tools" ""  >&2
+    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time   |🔨| Note                                     |\n"  >&2
+    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0f s |%s| %40s |" \
+        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""  >&2
 
     # return value
-    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0s |%-1s| %40s |" \
-        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$exec_time" "$has_tools" ""
+    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0f s |%s| %40s |" \
+        "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""
 }
 
 # return "response: <multiline response> total_duration=<total_duration> eval_duration=<eval_duration> eval_count=<eval_count> eval_rate=<eval_rate>"
