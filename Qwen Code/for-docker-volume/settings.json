@@ -1,78 +1,19 @@
 {
   "modelProviders": {
+    "ollama": [
+      
+
+    ],
+
     "openai": [
 
-      // Ollama Local
-      {
-        "id": "qwen2.5-coder:7b-ALEX-20k",
-        "name": "qwen2.5-coder:7b-ALEX-20k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen2.5-coder:7b-ALEX-20k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 20480,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      },
-      {
-        "id": "qwen2.5-coder:7b-20k",
-        "name": "qwen2.5-coder:7b-20k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen2.5-coder:7b-20k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 20480,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      }, 
-      {
-        "id": "codegeex4:9b-all-q4_K_M-ALEX-12k",
-        "name": "codegeex4:9b-all-q4_K_M-ALEX-12k(local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "codegeex4:9b-all-q4_K_M-ALEX-12k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 12288,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      },     
-      {
-        "id": "qwen3:8b-16k",
-        "name": "qwen3:8b-16k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen3:8b-16k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 16384,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      },
-      {
-        "id": "qwen3:8b-20k",
-        "name": "qwen3:8b-20k (local Ollama)",
-        "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen3:8b-20k via local Ollama",
-        "envKey": "LOCAL_OLLAMA",
-        "generationConfig": {
-          "contextWindowSize": 20480,
-          "samplingParams": {
-            "max_tokens": 2048
-          }
-        }
-      },
+      // Ollama Local     
+ 
       {
         "id": "qwen3.5:9b-q4_K_M-8k",
-        "name": "qwen3.5:9b-q4_K_M-8k (local Ollama)",
+        "name": "(local Ollama)",
         "baseUrl": "http://host.docker.internal:11434/v1",
-        "description": "qwen3.5:9b-q4_K_M-8k via local Ollama",
+        "description": "OK. thinking + tools",
         "envKey": "LOCAL_OLLAMA",
         "generationConfig": {
           "contextWindowSize": 8192,
@@ -81,89 +22,21 @@
           }
         }
       },  
-
-      // OpenRouter
       {
-        "id": "qwen/qwen3-coder-flash",
-        "name": "qwen/qwen3-coder-flash (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "qwen/qwen3-coder-flash on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-      {
-        "id": "qwen/qwen3.6-plus",
-        "name": "qwen/qwen3.6-plus (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "qwen/qwen3.6-plus on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-      {
-        "id": "kwaipilot/kat-coder-pro-v2",
-        "name": "kwaipilot/kat-coder-pro-v2 (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "kwaipilot/kat-coder-pro-v2 on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-     {
-        "id": "kwaipilot/kat-coder-pro-v2:free",
-        "name": "kwaipilot/kat-coder-pro-v2:free (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "kwaipilot/kat-coder-pro-v2:free on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-      {
-        "id": "minimax/minimax-m2.7",
-        "name": "minimax/minimax-m2.7 (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "minimax/minimax-m2.7 on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-      {
-        "id": "minimax/minimax-m2.5:free",
-        "name": "minimax/minimax-m2.5:free (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "minimax/minimax-m2.5:free on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
-      },
-      {
-        "id": "google/gemini-3.1-flash-lite",
-        "name": "google/gemini-3.1-flash-lite (Openrouter)",
-        "baseUrl": "https://openrouter.ai/api/v1",
-        "description": "google/gemini-3.1-flash-lite on Openrouter",
-        "envKey": "OPENROUTER_API_KEY"
+        "id": "qooba/qwen3-coder-30b-a3b-instruct:q3_k_m",
+        "name": "qooba/qwen3-coder-30b-a3b-instruct:q3_k_m (local Ollama)",
+        "baseUrl": "http://host.docker.internal:11434/v1",
+        "description": "OK",
+        "envKey": "LOCAL_OLLAMA",
+        "generationConfig": {
+          "contextWindowSize": 16384,
+          "samplingParams": {
+            "max_tokens": 2048
+          }
+        }
       },
 
-      // Ofox
-      {
-        "id": "deepseek/deepseek-v4-flash",
-        "name": "deepseek/deepseek-v4-flash (Ofox.AI)",
-        "baseUrl": "https://api.ofox.ai/v1",
-        "description": "deepseek/deepseek-v4-flash on Ofox.AI",
-        "envKey": "OFOX_API_KEY"
-      },
-      {
-        "id": "bailian/qwen3-coder-next",
-        "name": "bailian/qwen3-coder-next (Ofox)",
-        "baseUrl": "https://api.ofox.ai/v1",
-        "description": "bailian/qwen3-coder-next on Ofox",
-        "envKey": "OFOX_API_KEY"
-      },
-      {
-        "id": "bailian/qwen3-coder-next",
-        "name": "bailian/qwen3-coder-next (Ofox)",
-        "baseUrl": "https://api.ofox.ai/v1",
-        "description": "bailian/qwen3-coder-next on Ofox",
-        "envKey": "OFOX_API_KEY"
-      },
 
-      
-      {
-        "id": "z-ai/glm-4.7-flash:free",
-        "name": "z-ai/glm-4.7-flash:free (Ofox.AI)",
-        "baseUrl": "https://api.ofox.ai/v1",
-        "description": "z-ai/glm-4.7-flash:free on Ofox.AI",
-        "envKey": "OFOX_API_KEY"
-      },
       // Eden
       {
         "id": "google/gemma-4-26b-a4b-it",
