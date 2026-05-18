@@ -8,6 +8,22 @@
             "maxTokens": 2048,
             "reasoning": false
         },
+
+        {   
+            "DOC": "FAIL: Fails to use tool dues to wrapping tools in JSON backticks",
+            "id": "qwen2.5-coder:14b-instruct-q5_K_M",
+            "contextWindow": 4092,
+            "maxTokens": 2048,
+            "_reasoning": false
+        },
+
+        { 
+            "_Note": "Tool call wrapped in JSON",
+            "id": "MFDoom/deepseek-coder-v2-tool-calling:16b ",
+            "contextWindow": 4096,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
           
         {   
             "_Note": "OK",
@@ -25,6 +41,13 @@
             "contextWindow": 12288,
             "maxTokens": 2048,
             "reasoning": false
+        },
+                {   
+            "DOC": "No tools",
+            "id": "deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-14k",
+            "contextWindow": 14336,
+            "maxTokens": 2048,
+            "_reasoning": false
         }
     ]
 }

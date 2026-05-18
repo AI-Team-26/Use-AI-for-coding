@@ -25,22 +25,41 @@ MSI Afterburnet set to flat frequency curve at 900 mV.
 | Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k:latest    |❌|  7.4 GB |         | 100% |   38 |   8s | NO    |                                        |
 | qooba/qwen3-coder-30b-a3b-instruct:q3_k_m     |❌|         |         | 100% |   76 |      | NO    | Context fixed to 16K ? FAST            | 
 
-| Model                                         |〰️| Size  | Context | GPU % | Tk/s | Time   |🔨| Note                                     |
-| :-------------------------------------------- |〰️| ----: | ------: | ----: | ---: | -----: |〰️| :--------------------------------------- |
-| gemma4:e4b                                    |✔️| 10 GB |     8 k |   100 |   62 |        |✔️|                                          |
-| gemma4:e4b-it-q4_K_M                          |✔️| 10 GB |     8 k |   100 |   62 |        |✔️|                                          |
-| h4rithd/coder:14b                             |✔️| 13 GB |    16 k |   100 |   34 |        |✔️|                                          |
-| gemma4:e4b-it-q4_K_M-ALEX-32k                 |✔️| 11 GB |    32 k |   100 |   63 |        |✔️|                                          |
-| gemma4:e4b-it-q4_K_M-256k                     |✔️| 13 GB |   128 k |   100 |   63 |        |✔️|                                          |
-| gemma4:e4b-it-q8_0                            |✔️| 12 GB |     8 k |   100 |   43 |    4 s |✔️|                                          |
-| gemma4:e4b-it-q8_0                            |✔️| 12 GB |     8 k |   100 |   43 |    6 s |✔️|                                          |
-| gemma4:e4b-it-q8_0-128k                       |✔️| 15 GB |   128 k |   100 |   43 |    3 s |✔️|                                          |
+| Model                                              |〰️| Size  | Ctx   | GPU   | Tk/s | Time  |🔨|Pi| Note                                     |
+| :------------------------------------------------- |〰️| ----: | ----: | ----: | ---: | ----: |〰️|〰️| :--------------------------------------- |
+| gemma4:e4b-it-q4_K_M-ALEX_CODE-128k                |✔️| 13 GB | 128 k | 100 % |   62 |   6 s |✔️|〰️|                                          |
+| sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed-28k |✔️| 14 GB |  28 k | 100 % |   70 |  20 s |✔️|〰️| ALEX_CODE                                |
 
+| gemma4:e4b-it-q8_0-ALEX_CODE-128k                  |✔️| 15 GB | 128 k | 100 % |   43 |  19 s |✔️|〰️| Q8                                       |
+| sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed     |✔️| 12 GB |   8 k | 100 % |   74 |  26 s |✔️|〰️|                                          |
+| gemma4:e4b                                         |✔️| 10 GB |   8 k | 100 % |   61 |  16 s |✔️|✔️| Not "it"                                 |
+| gemma4:e4b-ALEX_CODE-128k                          |✔️| 13 GB | 128 k | 100 % |   63 |   4 s |✔️|〰️|  Not "it"                                |
+| gemma4:e4b-it-q4_K_M                               |✔️| 10 GB |   8 k | 100 % |   62 |        |✔️|〰️|                                          |
 
+| gemma4:e4b-it-q8_0                                 |✔️| 12 GB |   8 k | 100 % |   43 |    5 s |✔️|〰️|                                          |
+| gemma4:e4b-it-q8_0-ALEX_CODE-128k                  |✔️| 15 GB | 128 k | 100 % |   43 |    7 s |✔️|〰️|                                          |
 
-deepseek-coder-v2:16b-lite-instruct-q4_K_M
+| h4rithd/coder:14b                                  |✔️| 13 GB |  16 k | 100 % |   34 |        |✔️|〰️|                                          |
+| h4rithd/coder:14b-ALEX_CODE-32k                    |✔️| 17 GB |  32 k | 100 % |   32 |    2 s |✔️|〰️| Capped to 32K                            |
+| hhao/qwen2.5-coder-tools:14b-ALEX_CODE-16k         |✔️| 13 GB |  16 k | 100 % |   29 |    2 s |✔️|〰️|                                          |
+| hhao/qwen2.5-coder-tools:14b-ALEX_CODE-32k         |✔️| 18 GB |  32 k |  82 % |    3 |   17 s |✔️|〰️|                                          |
+| MFDoom/deepseek-coder-v2-tool-calling:16b          |❌| 10 GB |   4 k | 100 % |  100 |    1 s |❌|❌| Tools: Wrapped JSON reeponse             |
+| second_constantine/deepseek-coder-v2:16b           |❌| 11 GB |   8 k | 100 % |   94 |    5 s |❌|❌| Tools: Wrapped JSON reeponse             |
+| gemma4:26b-a4b-it-q4_K_M                           |❌| 20 GB |   8 k |  76 % |    9 |   53 s |✔️|✔️| TOO SLOW                                 |
+| second_constantine/yandex-gpt-5-lite:8b-q5_K_M     |❌| 10 GB |   4 k | 100 % |      |        |❌|❌| Does not support tools                   |
+| deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-12k |❌| 14 GB |    12 k |   100 |  103 |    1 s |❌|                                          |
+| deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-14k |❌| 14 GB |    14 k |   100 |  128 |    1 s |❌|                                          |
+| deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-16k |❌| 15 GB |    16 k |    97 |   25 |    3 s |❌|                                          |
+| deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-32k |❌| 20 GB |    32 k |    70 |   11 |    6 s |❌|                                          |
+| devstral-small-2:24b-instruct-2512-q4_K_M     |❌| 17 GB |     8 k |    88 |    8 |    7 s |❌|                                          |
+| qwen2.5-coder:14b-instruct-q5_K_M-ALEX_CODE-64k |❌| 19 GB |    32 k |    75 |    2 |  195 s |❌|                                          |
+
 
 Models to try:
+
+gemma4:26b-a4b-it-q4_K_M
+
+
 
 - Qwen
   + brnpistone/Qwen3-4B-AgentCoder-q6-k:latest
@@ -67,11 +86,15 @@ Models to try:
   + devstral-small-2:24b-instruct-2512-q4_K_M
   + mistral-nemo:12b-instruct-2407-q5_K_M
   + seamon67/Devstral1.1-2507:24b-q4_K_M
+- Phi
+  + phi4
+  + phi4-reasoning:14b-plus-q4_K_M
 - CYLI310/CodeGPT:latest  
-- h4rithd/coder:14b
+- [x] h4rithd/coder:14b
 - second_constantine/deepseek-coder-v2:16b
 - haervwe/GLM-4.6V-Flash-9B:latest     <-- image
-
+- sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed
+- rnj-1:8b-instruct-q8_0  supposed to be good for coding
 
 
 ## Test

@@ -20,7 +20,7 @@ TEMPLATE """{{- if .Suffix }}<｜fim▁begin｜>{{ .Prompt }}<｜fim▁hole｜>{
 
 {{ if $last }}Assistant:
 {{- end }}
-{{- else if eq .Role "assistant" }}Assistant: {{- if .ToolCalls }}{{ range .ToolCalls }}{"name": "{{ .Function.Name }}", "parameters": {{ .Function.Arguments }}}{{ end }}{{- else }}{{ .Content }}{{- end }}<｜end▁of▁sentence｜>
+{{- else if eq .Role "assistant" }}Assistant: {{- if .ToolCalls }}{{ range .ToolCalls }}{"name": "{{ .Function.Name }}", "arguments": {{ .Function.Arguments }}}{{ end }}{{- else }}{{ .Content }}{{- end }}<｜end▁of▁sentence｜>
 {{- else if eq .Role "tool" }}Tool Output: {{ .Content }}
 {{ if $last }}Assistant:
 {{- end }}
@@ -33,11 +33,10 @@ TEMPLATE """{{- if .Suffix }}<｜fim▁begin｜>{{ .Prompt }}<｜fim▁hole｜>{
 {{- end }}Assistant: {{ .Response }}
 {{- end }}"""
 
-
 PARAMETER stop User:
 PARAMETER stop Assistant:
-
 PARAMETER stop "<｜end▁of▁sentence｜>"
+
 PARAMETER num_ctx 16384
 
 PARAMETER temperature 0.1      

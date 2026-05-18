@@ -1,5 +1,7 @@
-source scripts.sh
+source common.sh
+source test_models_common.sh
 
+modelfiles_folder="modelfiles"
 
 Q3_PARAMETERS=$(cat << 'EOF' 
 # --- Custom Parameters ---
@@ -29,15 +31,17 @@ EOF
 ###      Create Models      ###
 ###############################
 
+# For Q4 and better quantization models (Q5, Q6. Q8)
 ### Usage
-# create_model_Q4 <model> <context_k>
-# create_model_Q4 "qwen3.6:8b" 32
+# create_model_Q4 <model> <context_k> [OPTIONS: --save --test] 
+# create_model_Q4 "qwen3.6:8b" 32  --save --test
 create_model_Q4() {
-    create_model "$1" "$2" "Q4"
+    create_model "$1" "$2" "Q4" "${@:3}"
 }
 
+# For Q3 models
 create_model_Q3() {
-    create_model "$1" "$2" "Q3"
+    create_model "$1" "$2" "Q3" "${@:3}"
 }
 
 ## create_model_with_comtext <model> <ctx_k> --test
@@ -62,7 +66,6 @@ create_model_with_context() {
 
     # 3. Append your custom PARAMETERS at the end to override defaults
     cat >> Modelfile <<EOF
-
 # --- Custom Parameters ---
 PARAMETER num_ctx $ctx
 EOF
@@ -77,9 +80,38 @@ EOF
     fi
 }
 
+# save_modlfile <model> --original
+save_modelfile() {
+    local model="$1"    
 
-## create_model <model> <ctx_k> q_type
-## create_model qwen2.5-coder:14b-instruct-q5_K_M  32  Q3
+    if [ -z "$model" ]; then
+        echo "‼️ save_modelfile was called with empty model"  >&2
+        exit 1
+    fi
+
+    # check the Options
+    local original=""
+    for arg in "$@"; do
+        if [[ "$arg" = "--original" ]]; then
+            original=".original"
+        fi
+    done
+
+    # Replace slash, dot, and colon with underscores, then add suffix
+    local filename="${model//[\/\.:]/_}$original.modelfile"
+
+    ollama show "$model" --modelfile > "$modelfiles_folder/$filename"
+
+    # Remove the LICENSE. Some models  have already duplicated license.
+    awk '/^LICENSE """/{skip=1; next} /^"""$/ && skip{skip=0; next} !skip' "$modelfiles_folder/$filename" > "$modelfiles_folder/$filename".tmp
+    mv "$modelfiles_folder/$filename".tmp "$modelfiles_folder/$filename"
+
+    printf "Modelfile ${yellow}%s${reset} saved in %s \n" $filename $modelfiles_folder >&2
+}
+
+
+## create_model <model> <ctx_k> <options>  (OPTIONS: --save --test)
+## create_model qwen2.5-coder:14b-instruct-q5_K_M  32  Q3  --save  --test
 create_model() {
     local base_model="$1"
     local ctx_k="$2"
@@ -94,24 +126,69 @@ create_model() {
     # Note: We use 'FROM $base_model' instead of the hash Ollama might return
     echo "FROM $base_model" > Modelfile
     
-    # 2. Append everything EXCEPT the original FROM line to preserve TEMPLATE and SYSTEM
-    ollama show "$base_model" --modelfile | grep -v "^FROM" >> Modelfile
+    # 2. Append everything EXCEPT the original FROM line to preserve TEMPLATE and SYSTEM    
+    ollama show "$base_model" --modelfile  | grep -v "^FROM" >> Modelfile
+
+    # Remove the LICENSE. Some models  have already duplicated license.
+    awk '/^LICENSE """/{skip=1; next} /^"""$/ && skip{skip=0; next} !skip' Modelfile > Modelfile.tmp
+    mv Modelfile.tmp Modelfile
 
     # 3. Append your custom PARAMETERS at the end to override defaults
     if [ $q_type == "Q3" ]; then
+        echo  "Apply Q3 parameters" >&2
         echo "$Q3_PARAMETERS" >> Modelfile
     elif [ $q_type == "Q4" ]; then
+        echo  "Apply Q4 parameters" >&2
         echo "$Q4_PARAMETERS" >> Modelfile
     else
-        echo "‼️ create_model was called with unknown q_type"  >&2
+        echo "\n❌ create_model was called with unknown q_type"  >&2
         exit 1
     fi
 
+    echo "PARAMETER num_ctx $ctx" >> Modelfile 
+
     # 4. Build and clean up
     ollama create "$new_model" -f Modelfile
-    rm Modelfile
+    #rm Modelfile
 
-    #ollama show $new_model --modelfile
+    #ollama show $new_model --modelfile  >&2
 
-    test_model "$new_model"
+    # cehck the Options
+    for arg in "$@"; do
+        if [[ "$arg" = "--save" ]]; then
+            # Replace slash, dot, and colon with underscores, then add suffix
+            local filename="${new_model//[\/\.:]/_}.modelfile"
+            ollama show "$new_model" --modelfile > "$modelfiles_folder/$filename"
+            printf "Modelfile ${yellow}%s${reset} saved in %s" $filename $modelfiles_folder >&2
+
+        elif [[ "$arg" == "--test" ]]; then
+            result=$(test_model "$new_model") # >&2
+        fi
+    done
+}
+
+# create_model_from_modelfile <modelfile> <model_name>
+create_model_from_modelfile() {
+    local modelfile="$1" 
+    local model_name="$2" 
+
+    if [ -z "$modelfile" ]; then
+        echo "\n‼️ create_model_from_modelfile was called with empty modelfile"  >&2
+        exit 1
+    fi
+
+    if [ -z "$model_name" ]; then
+        echo "\n‼️ create_model_from_modelfile was called with empty model_name"  >&2
+        exit 1
+    fi
+
+    local modelfile_path="$modelfiles_folder/$modelfile"
+    if [ ! -f "$modelfile_path" ]; then
+        echo "\n❌ Error: Modelfile not found at path: '$modelfile_path'" >&2
+        return 1
+    fi
+  
+    ollama create  "$model_name" -f "$modelfile_path"
+
+    test_model "$model_name" 
 }

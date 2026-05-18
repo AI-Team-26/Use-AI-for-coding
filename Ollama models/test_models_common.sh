@@ -1,4 +1,6 @@
-## source "scripts.sh"
+source "common.sh"
+
+test_code_file="test_code_1.fs"
 
 prompt_tool=$(cat << 'PROMPT_END'
 You are a coding assistant that may or may not have access to external tools such as a code runner or a file system.
@@ -26,15 +28,6 @@ let rec fact n =
 PROMPT_END
 )
 
-
-# $'' makes the inteprets to be done at assignation time, so it doesn't require "-e" whan used in echo command
-
-yellow=$'\033[33m'
-gray_light=$'\033[37m'
-gray=$'\033[90m'
-white=$'\033[97m'
-blue=$'\033[0;34m'
-reset=$'\033[0m'
 
 
 ###############################
@@ -65,7 +58,7 @@ test_models() {
     for model in "${__models[@]}"; do
     
         model_result=$(test_model "$model")
-        results+=$model_result
+        results+=("$model_result")
 
         echo ""
         ollama stop "$model"     # Force the unload immediately
@@ -74,10 +67,10 @@ test_models() {
     echo; echo "========================================================="
 
     echo
-    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time   |🔨| Note                                     |"
+    printf "| Model                                              |〰️| Size  | Ctx  | GPU %% | Tk/s | Time  |🔨|Pi| Note                                     |\n"
     for result in "${results[@]}"; do
         #echo -e $result
-        echo -e "\n$result"
+        echo -e "$result"
     done
 }
 
@@ -99,18 +92,21 @@ test_model() {
 
     # 1. Collect data from "Ollama run"
     local run_result
-    run_result=$(run_with_spinner "(Ollama RUN)" ollama_run $model "$prompt_tool")
+    #run_result=$(run_with_spinner "(Ollama RUN)" ollama_run_simple $model "$prompt_tool")
+
+    local code_payload=$(cat $test_code_file)
+    local run_result=$(run_with_spinner "(Ollama RUN)" ollama_run_full "$model" "$code_payload")
 
     # read a line and use the 2 values that are separated by the "=", setting them into "key" and "value"
     while IFS='=' read -r key value; do
         declare "$key=$value"
         print_value $key $value
-    done < <(tr ' ' '\n' <<< "$run_result")  # convert space (' ') oin new-line ('\n')
+    done < <(tr ' ' '\n' <<< "$run_result")  # convert space (' ') to new-line ('\n')
 
     
     # 2. Collect data from "ollama ps"
     local ps_result
-    ps_result=$(ollama_ps)
+    ps_result=$(ollama_ps $model)
 
     #eval "$ps_result" # model, size, context, gpu
     while IFS='=' read -r key value; do
@@ -142,7 +138,7 @@ test_model() {
         result="✔️"
     fi
 
-    local toos="❌"
+    local tools="❌"
     if [ $has_tools = "1" ]; then
         tools="✔️"
     fi
@@ -150,17 +146,17 @@ test_model() {
     #local exec_time=primntf "%4.0 s" $eval_s
    
     echo   >&2
-    printf "| Model                                         |〰️| Size  | Context | GPU %% | Tk/s | Time   |🔨| Note                                     |\n"  >&2
-    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0f s |%s| %40s |" \
+    printf "| Model                                              |〰️| Size  | Ctx   | GPU    | Tk/s | Time  |🔨|Pi| Note                                     |\n"  >&2
+    printf "| %-50s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
         "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""  >&2
 
     # return value
-    printf "| %-45s |%-2s| %2s GB | %5s k | %5s | %4.0f | %4.0f s |%s| %40s |" \
+    printf "| %-50s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
         "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""
 }
 
 # return "response: <multiline response> total_duration=<total_duration> eval_duration=<eval_duration> eval_count=<eval_count> eval_rate=<eval_rate>"
-ollama_run() {
+ollama_run_simple() {
     #echo "##### ollama_run"  >&2
     local model="$1"
     local prompt="$2"    
@@ -198,7 +194,9 @@ ollama_run() {
     response=$(jq -rs 'map(.response) | join("")' <<< "$raw")
 
     #printf "%s\n" "$response" >&2   
-    #print_value "Response" "$response"
+    print_value "Response" "$response"
+
+    ### Bug? Some models return the JSON of the tool call, but there is an empy space at the beginning: " ```json" (instead of "```json")
 
     local has_tools=0
     if [[ $response == '```json'* ]]; then
@@ -234,6 +232,120 @@ ollama_run() {
 }
 
 
+# return "total_duration=... eval_duration=... eval_count=... eval_rate=... has_tools=..."
+ollama_run_full() {
+    local model="$1"
+    local code_content="$2"    
+
+    if [ -z "$model" ]; then
+        echo "‼️ ollama_run_full was called with empty model" >&2
+        exit 1
+    fi
+
+    if [ -z "$code_content" ]; then
+        echo "‼️ ollama_run_full was called with empty prompt/code" >&2
+        exit 1
+    fi
+
+    # 1. Build the payload using native tool call mapping for /api/chat
+    json_payload=$(jq -n \
+        --arg model "$model" \
+        --arg code "$code_content" \
+        '{
+            model: $model,
+            messages: [
+                {
+                    role: "user",
+                    content: ("Fix the bug in the bytesToHex function of this code, then execute the corrected script using your available code runner tool to verify it:\n\n" + $code)
+                }
+            ],
+            tools: [
+                {
+                    type: "function",
+                    function: {
+                        name: "run_code",
+                        description: "Executes a given script on the local machine environment runner",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                language: { type: "string", description: "The programming language, e.g., fsharp" },
+                                code: { type: "string", description: "The complete corrected script code to execute" }
+                            },
+                            required: ["language", "code"]
+                        }
+                    }
+                }
+            ]
+        }')
+   
+    # 2. Query the Chat endpoint (Streaming is true by default)
+    local raw    
+    raw=$(curl -s http://localhost:11434/api/chat -d "$json_payload")
+
+    # Safety Check: Did Ollama return a hard error?
+    local error_msg
+    error_msg=$(jq -r '.error // empty' <<< "$raw")
+    if [ -n "$error_msg" ]; then
+        echo -e "\n❌ OLLAMA API ERROR: $error_msg" >&2
+        return
+    fi
+   
+    # 3. Extract text dialogue
+    text_response=$(jq -rs 'map(.message.content // "") | join("")' <<< "$raw")
+
+    # 4. Extract code from the tool argument if the model invoked a tool
+    tool_code=$(jq -rs 'map(.message.tool_calls // empty) | flatten | .[0].function.arguments.code // ""' <<< "$raw")
+
+    # Merge them so you can see the complete output in your logs
+    if [ -n "$tool_code" ]; then
+        response="${text_response}${text_response:+$'\n\n'}[EXECUTING TOOL: run_code]\n${tool_code}"
+    else
+        response="$text_response"
+    fi
+    print_value "Response" "$response"
+
+    # 5. Check structurally across chunks for native tool execution
+    local has_tools=0
+    if jq -e -rs 'any(.[]; .message.tool_calls != null and (.message.tool_calls | length) > 0)' <<< "$raw" >/dev/null; then
+        has_tools=1
+    fi
+
+    # 6. Performance Statistics Processing (Last Line Parsing)
+    local last_line
+    last_line=$(tail -1 <<< "$raw")
+
+    local total_duration load_duration prompt_eval_duration eval_duration
+    total_duration=$(grep -o '"total_duration":[0-9]*'              <<< "$last_line" | cut -d: -f2)    
+    load_duration=$(grep -o '"load_duration":[0-9]*'                <<< "$last_line" | cut -d: -f2)
+    prompt_eval_duration=$(grep -o '"prompt_eval_duration":[0-9]*'  <<< "$last_line" | cut -d: -f2)
+    eval_duration=$(grep -o '"eval_duration":[0-9]*'                <<< "$last_line" | cut -d: -f2)
+
+    local prompt_eval_count eval_count
+    prompt_eval_count=$(grep -o '"prompt_eval_count":[0-9]*'        <<< "$last_line" | cut -d: -f2)
+    eval_count=$(grep -o '"eval_count":[0-9]*'                      <<< "$last_line" | cut -d: -f2)    
+
+    # Guard clause against zero/null to prevent math errors
+    local eval_rate=0
+    if [ -n "$eval_duration" ] && [ "$eval_duration" -gt 0 ]; then
+        eval_rate=$(( $eval_count * 1000000000 / $eval_duration )) 
+    fi
+
+    # Output
+    printf "total_duration=%s eval_duration=%s eval_count=%s eval_rate=%s has_tools=%s" \
+        "$total_duration" "$eval_duration" "$eval_count" "$eval_rate" "$has_tools"
+}
+
+ollama_run_deep() {
+
+    # test prompt_eval_rate (Tests Context Loading Speed)
+    ollama run $model "Analyze this F# code and explain what the processAndHashSecurely function does step-by-step" < $test_file --verbose >&2
+
+    # test eval_rate (Tests Reasoning & Generation Speed)
+    ollama run $model "There is a logical bug in the bytesToHex function in this F# code that corrupts the hex output for certain byte values. Find it and explain how to fix it:" < stress_test.fs --verbose
+
+
+}
+
 # Input:
 # NAME                    ID              SIZE     PROCESSOR    CONTEXT    UNTIL
 # qwen2.5-coder:7b-10k    ab4c0411a393    14 GB    100% GPU     20480      4 minutes from now
@@ -243,6 +355,15 @@ ollama_run() {
 #
 # Note. Does not manage models that use less than a GB, when the SIZE is in "MB" and not "GB"
 ollama_ps() {
+    local model="$1"
+
+    if [ -z "$model" ]; then
+        echo "‼️ ollama_ps was called with empty model"  >&2
+        exit 1
+    fi
+
+    #ollama run $model Test --verbose >&2
+
     local ps
     ps="$(ollama ps)"
 
@@ -295,71 +416,3 @@ ollama_ps() {
         printf "model=%s size=%s context=%s gpu=%s\n", model, size, context, gpu
     }'
 }
-
-
-
-###############################
-###        Utilities        ###
-###############################
-
-# print_key_value "AAA" 123
-print_value() {
-    printf '%s%-20s : %s%s%s\n' \
-        "$gray_light" "$1" "$yellow" "$2" "$reset" >&2
-}
-
-from_nano() {
-    # echo $(echo "scale=9; $1 / 1000000000" | bc)  ## requires bc          
-    local seconds=$(($1/ 1000000000))
-    local nanoseconds=$(($1 % 1000000000))
-    printf "%.9f\n" $((seconds)).$(printf "%09d" $((nanoseconds)))
-}
-
-
-# https://antofthy.gitlab.io/info/ascii/Spinners.txt
-run_with_spinner() {
-    local label="$1"
-    shift
-
-    local tmp_out tmp_err pid status
-    tmp_out=$(mktemp) || return 1
-    tmp_err=$(mktemp) || { rm -f "$tmp_out"; return 1; }
-
-    cleanup() {
-        printf '\033[?25h' >&2
-        printf '\r\033[0m\033[K' >&2
-    }
-
-    trap 'cleanup; rm -f "$tmp_out" "$tmp_err"; trap - INT; return 130' INT
-
-    "$@" >"$tmp_out" 2>"$tmp_err" &
-    pid=$!
-
-    local frames="⠁⠂⠄⡀⡈⡐⡠⣀⣁⣂⣄⣌⣔⣤⣥⣦⣮⣶⣷⣿⡿⠿⢟⠟⡛⠛⠫⢋⠋⠍⡉⠉⠑⠡⢁"    
-    local i=0
-    local l=${#frames}
-
-    printf '\033[?25l' >&2
-
-    while kill -0 "$pid" 2>/dev/null; do
-        i=$(( (i + 1) % l ))
-        printf '\r%s%s%s %s%s%s' \
-            "$yellow" "${frames:i:1}" "$reset" \
-            "$gray" "$label" "$reset" >&2
-        sleep 0.1
-    done
-
-    wait "$pid"
-    status=$?
-
-    cleanup
-
-    cat "$tmp_err" >&2
-    cat "$tmp_out"
-
-    rm -f "$tmp_out" "$tmp_err"
-    trap - INT
-
-    return "$status"
-}
-

@@ -83,11 +83,22 @@ PARAMETER repeat_last_n 256
 # PARAMETER num_predict 64     
 ```
 
+### Tool capability issue
+
+devstral-small-2:24b-instruct-2512-q4_K_M
+hhao/qwen2.5-coder-tools:14b-ALEX_CODE-32k
 
 ### Gemma4
 
 _E2B_ and _E4B_ have a absolute native architectural limit of the context size of 128k.
 _E26B_ and _E31B_ are capped to 256k.  
+
+
+### Ministral
+
+
+
+
 
 
 

@@ -12,72 +12,40 @@
             }
         ]
     },
-    "ollama": {
+    "Ollama": {
       "baseUrl_DOC": "original: http://localhost:11434/v1",
       "baseUrl": "http://host.docker.internal:11434/v1",
       "api": "openai-completions",
       "apiKey": "ollama",
-      "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 ",
-      "models": [        
-
-        {   
-            "DOC": "",
-            "id": "qwen2.5-coder:14b-instruct-q5_K_M",
-            "contextWindow": 4092,
-            "maxTokens": 2048,
-            "_reasoning": false
-        },
-        {   
-            "DOC": "",
-            "id": "qwen2.5-coder:7b-instruct-q5_K_M-ALEX-64k",
-            "contextWindow": 65536,
-            "maxTokens": 2048,
-            "reasoning": false
-        },
-
-        {   
-            "DOC": "",
-            "id": "qwen2.5-coder:14b-instruct-q5_K_M-ALEX-12k",
-            "contextWindow": 12288,
-            "maxTokens": 2048,
-            "reasoning": false
-        },
-
-       {   
-            "DOC": "",
-            "id": "qwen2.5-coder:14b-instruct-q5_K_M-ALEX-CTX-16k",
-            "contextWindow": 12288,
-            "maxTokens": 2048,
-            "_reasoning": true
-        },
-
-               
+      "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 32768 65536 131072",
+      "models": [
         
-        {   
-            "_Note": "not tested",
-            "id": "qooba/qwen3-coder-30b-a3b-instruct:q3_k_m",
+
+
+
+        { 
+             "_test": "OK",
+            "id": "sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed",
             "contextWindow": 8192,
             "maxTokens": 2048,
             "reasoning": false
         },
 
-        {   
-            "_Note": "not tested",
-            "id": "codestral:22b-v0.1-q4_K_M-ALEX-8k",
-            "contextWindow": 8192,
+                { 
+             "_test": "OK",
+            "id": "sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed-ALEX_CODE-28k",
+            "contextWindow": 32768,
             "maxTokens": 2048,
             "reasoning": false
         },
 
-        {   
-            "_Note": "Reasoning & Testing",
-            "id": "Qwen3.5-9b-Sushi-Coder-RL.Q4_K_M-8k",
-            "contextWindow": 8192,
+        { 
+            "id": "gemma4:e4b",
+            "name": "Jonny",
+            "contextWindow": 4096,
             "maxTokens": 2048,
             "reasoning": false
-        },
-
-
+        }, 
         { 
             "_Note": "OK",
             "id": "second_constantine/deepseek-coder-v2:16b",
@@ -94,28 +62,8 @@
             "maxTokens": 2048,
             "reasoning": false
         },
+      
 
-        { 
-            "id": "gemma4:e4b-it-q4_K_M",
-            "name": "Jonny",
-            "contextWindow": 4096,
-            "maxTokens": 2048,
-            "reasoning": false
-        },      
-        { 
-            "id": "gemma4:e4b-it-q4_K_M-ALEX-8k",
-            "name": "Jonny",
-            "contextWindow": 8192,
-            "maxTokens": 2048,
-            "reasoning": false
-        },        
-        { 
-            "id": "llama3-groq-tool-use:8b-q5_0",
-            "name": "Jonny",
-            "contextWindow": 8192,
-            "maxTokens": 2048,
-            "reasoning": false
-        },
 
         { 
             "id": "mistral-nemo:12b-instruct-2407-q4_0",
