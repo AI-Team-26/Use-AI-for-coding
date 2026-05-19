@@ -33,21 +33,32 @@
             "maxTokens": 2048,
             "reasoning": false
         },
+            
 
         { 
-            "_Note": "OK",
-            "id": "qwen3:8b-ALEX-16k",
-            "name": "Qwen 1",
-            "contextWindow": 12288,
+             "_test": "FAIL, stupid and lying without executing right tools",
+            "id": "granite4.1:30b-q3_K_S-ALEX_CODE-6k",
+            "contextWindow": 6144,
             "maxTokens": 2048,
             "reasoning": false
         },
-                {   
-            "DOC": "No tools",
-            "id": "deepseek-coder-v2:16b-lite-instruct-q4_K_M-ALEX_CODE-14k",
-            "contextWindow": 14336,
+      
+
+
+        { 
+             "_test": "It works but it don't complete the task, kind of stop at a point before doing the work",
+            "id": "moophlo/Qwen3-Coder-30B-A3B-Instruct-GGUF:Q3_K_M-ALEX_CODE-10k",
+            "contextWindow": 10240,
             "maxTokens": 2048,
-            "_reasoning": false
+            "reasoning": false
+        },
+
+        { 
+             "_test": "OK, but too rigid, if you look for TODO, it ONLY looks for that precise name.",
+            "id": "rnj-1:8b-instruct-q4_K_M",
+            "contextWindow": 8192,
+            "maxTokens": 2048,
+            "reasoning": false
         }
     ]
 }

@@ -17,60 +17,85 @@
       "baseUrl": "http://host.docker.internal:11434/v1",
       "api": "openai-completions",
       "apiKey": "ollama",
-      "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 32768 65536 131072",
+      "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 28672 32768 65536 131072",
       "models": [
         
-
+  
 
 
         { 
-             "_test": "OK",
-            "id": "sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed",
-            "contextWindow": 8192,
-            "maxTokens": 2048,
-            "reasoning": false
-        },
-
-                { 
-             "_test": "OK",
-            "id": "sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed-ALEX_CODE-28k",
+            "_test": "",
+            "id": "qwen3.5:9b-q8_0-ALEX_CODE-64k",
+            "name": "to be tested",
             "contextWindow": 32768,
             "maxTokens": 2048,
             "reasoning": false
-        },
+        }, 
 
         { 
-            "id": "gemma4:e4b",
-            "name": "Jonny",
-            "contextWindow": 4096,
+            "_test": "",
+            "id": "qwen3:14b-q4_K_M-ALEX_CODE-32k",
+            "name": "to be tested",
+            "contextWindow": 32768,
             "maxTokens": 2048,
             "reasoning": false
         }, 
         { 
-            "_Note": "OK",
-            "id": "second_constantine/deepseek-coder-v2:16b",
-            "contextWindow": 4096,
+            "_test": "",
+            "id": "gemma4:26b-a4b-it-q4_K_M",
+            "name": "to be tested",
+            "contextWindow": 8192,
             "maxTokens": 2048,
             "reasoning": false
-        },       
+        },  
+
+
+
 
         { 
-             "_test": "OK",
-            "id": "qwen3.5:9b-q4_K_M-12k",
-            "name": "Qwen 1",
-            "contextWindow": 12288,
+            "_test": "Ok, good reasoning",
+            "id": "pdurugyan/qwen3.5-9b-deepseek-v4-flash-Q4_K_M:latest-ALEX_CODE-216k",
+            "contextWindow": 221184,
+            "maxTokens": 2048,
+            "reasoning": false
+        },    
+        { 
+             "_test": "Ok, good and fast",
+            "id": "qwen3.5:9b-q4_K_M-ALEX_CODE-152k",
+            "contextWindow": 155648,
             "maxTokens": 2048,
             "reasoning": false
         },
-      
-
-
         { 
-            "id": "mistral-nemo:12b-instruct-2407-q4_0",
-            "contextWindow": 4096,
+            "_test": "OK",
+            "id": "sparksammy/glm-4.7-flash-unsloth:small-hotfixed-ALEX_CODE-16k",
+            "contextWindow": 16384,
             "maxTokens": 2048,
             "reasoning": false
-        } 
+        },
+        { 
+            "_test": "Ok",
+            "id": "sparksammy/glm-4.7-flash-unsloth:tiny-hotfixed-ALEX_CODE-28k",
+            "contextWindow": 28672,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+        { 
+            "_test": "",
+            "id": "gemma4:e4b-it-q8_0-ALEX_CODE-128k",
+            "name": "Jonny 2",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": false
+        },
+        { 
+            "_test": "OK, very good anf fasrt",
+            "id": "gemma4:e4b-it-q4_K_M-ALEX_CODE-128k",
+            "name": "Jonny Be Good",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": false
+        }
       ]
     }
   }

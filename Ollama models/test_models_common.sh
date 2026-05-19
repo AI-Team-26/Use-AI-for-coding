@@ -67,7 +67,7 @@ test_models() {
     echo; echo "========================================================="
 
     echo
-    printf "| Model                                              |〰️| Size  | Ctx  | GPU %% | Tk/s | Time  |🔨|Pi| Note                                     |\n"
+    printf "| Model                                                        |〰️| Size  | Ctx  | GPU  | Tk/s | Time  |🔨|Pi| Note                                     |\n"
     for result in "${results[@]}"; do
         #echo -e $result
         echo -e "$result"
@@ -103,6 +103,10 @@ test_model() {
         print_value $key $value
     done < <(tr ' ' '\n' <<< "$run_result")  # convert space (' ') to new-line ('\n')
 
+    if [[ "$error" ]]; then
+        printf "error=$error\n"
+        return 
+    fi
     
     # 2. Collect data from "ollama ps"
     local ps_result
@@ -144,14 +148,17 @@ test_model() {
     fi
 
     #local exec_time=primntf "%4.0 s" $eval_s
+
+    local note=""
+
    
     echo   >&2
-    printf "| Model                                              |〰️| Size  | Ctx   | GPU    | Tk/s | Time  |🔨|Pi| Note                                     |\n"  >&2
-    printf "| %-50s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
+    printf "| Model                                                        |〰️| Size  | Ctx   | GPU    | Tk/s | Time  |🔨|Pi| Note                                     |\n"  >&2
+    printf "| %-60s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
         "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""  >&2
 
     # return value
-    printf "| %-50s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
+    printf "| %-60s |%-2s| %2s GB | %3s k | %3s %% | %4.0f | %3.0f s |%s|〰️| %40s |\n" \
         "$model" "$result" "$size" "$ctx_k" "$gpu" "$eval_rate" "$eval_s" "$tools" ""
 }
 
@@ -232,7 +239,7 @@ ollama_run_simple() {
 }
 
 
-# return "total_duration=... eval_duration=... eval_count=... eval_rate=... has_tools=..."
+# return "error=... total_duration=... eval_duration=... eval_count=... eval_rate=... has_tools=..."
 ollama_run_full() {
     local model="$1"
     local code_content="$2"    
@@ -287,6 +294,7 @@ ollama_run_full() {
     error_msg=$(jq -r '.error // empty' <<< "$raw")
     if [ -n "$error_msg" ]; then
         echo -e "\n❌ OLLAMA API ERROR: $error_msg" >&2
+        printf "error=No Ollama tools capability"
         return
     fi
    
@@ -331,7 +339,7 @@ ollama_run_full() {
     fi
 
     # Output
-    printf "total_duration=%s eval_duration=%s eval_count=%s eval_rate=%s has_tools=%s" \
+    printf "error= total_duration=%s eval_duration=%s eval_count=%s eval_rate=%s has_tools=%s" \
         "$total_duration" "$eval_duration" "$eval_count" "$eval_rate" "$has_tools"
 }
 
