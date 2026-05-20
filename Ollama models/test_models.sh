@@ -1,9 +1,9 @@
 source test_models_common.sh
 
-models=(         
-    #granite4.1:30b-q3_K_S
-    qwen3:14b-q4_K_M
-    
+models=(       
+    qwen2.5-coder:7b-instruct-q4_K_M
+    gemma4:26b-a4b-it-q4_K_M-ALEX_CODE-8k
+    gemma4:26b-a4b-it-q4_K_M-ALEX_CODE-16k
     
     #h4rithd/coder:14b # ❌
     #gemma4:e4b  # ✔️

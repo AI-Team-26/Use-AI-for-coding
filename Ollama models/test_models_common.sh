@@ -113,6 +113,7 @@ test_model() {
     ps_result=$(ollama_ps $model)
 
     #eval "$ps_result" # model, size, context, gpu
+    echo "$ps_result" >&2
     while IFS='=' read -r key value; do
         declare "$key=$value"
         print_value $key $value

@@ -2,9 +2,10 @@ source create_models_common.sh
 
 ### create_model_Q4 & create_model_Q3
 
-create_model_Q4 qwen3:14b-q4_K_M 36  --test
-#create_model_Q4 qwen3.5:9b-q8_0 64  --test
-create_model_Q4 gemma4:26b-a4b-it-q4_K_M 8 --test
+create_model_Q4 granite4.1:8b 36 --test
+
+create_model_Q4 qwen3:14b-q4_K_M 36 --test
+
 
 ### save_modelfile
 

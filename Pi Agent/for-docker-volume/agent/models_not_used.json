@@ -1,5 +1,13 @@
 {
 "models": [
+            { 
+            "_test": "OK",
+            "id": "granite4.1:8b-ALEX_CODE-36k",
+            "name": "Very fast",
+            "contextWindow": 36864,
+            "maxTokens": 2048,
+            "reasoning": false
+        }, 
         {  
             "_Note": "FASTER and GREATER CONTEXT",
             "id": "qwen2.5-coder:7b-instruct-q4_K_M-ALEX-22k",
@@ -8,6 +16,17 @@
             "maxTokens": 2048,
             "reasoning": false
         },
+
+        { 
+            "_test": "too small context, slow",
+            "id": "gemma4:26b-a4b-it-q4_K_M",
+            "name": "to be tested",
+            "contextWindow": 8192,
+            "maxTokens": 2048,
+            "reasoning": false
+        },  
+
+
 
         {   
             "DOC": "FAIL: Fails to use tool dues to wrapping tools in JSON backticks",

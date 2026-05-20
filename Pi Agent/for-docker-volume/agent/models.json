@@ -22,36 +22,23 @@
         
   
 
-
         { 
-            "_test": "",
+            "_test": "OK",
             "id": "qwen3.5:9b-q8_0-ALEX_CODE-64k",
-            "name": "to be tested",
+            "name": "Fast and smart",
             "contextWindow": 32768,
             "maxTokens": 2048,
             "reasoning": false
         }, 
 
         { 
-            "_test": "",
-            "id": "qwen3:14b-q4_K_M-ALEX_CODE-32k",
-            "name": "to be tested",
-            "contextWindow": 32768,
+            "_test": "Ok. Slow but smart.",
+            "id": "qwen3:14b-q4_K_M-ALEX_CODE-36k",
+            "name": "Slow but smart.",
+            "contextWindow": 36864,
             "maxTokens": 2048,
             "reasoning": false
         }, 
-        { 
-            "_test": "",
-            "id": "gemma4:26b-a4b-it-q4_K_M",
-            "name": "to be tested",
-            "contextWindow": 8192,
-            "maxTokens": 2048,
-            "reasoning": false
-        },  
-
-
-
-
         { 
             "_test": "Ok, good reasoning",
             "id": "pdurugyan/qwen3.5-9b-deepseek-v4-flash-Q4_K_M:latest-ALEX_CODE-216k",
@@ -60,7 +47,7 @@
             "reasoning": false
         },    
         { 
-             "_test": "Ok, good and fast",
+            "_test": "Ok, good and fast",
             "id": "qwen3.5:9b-q4_K_M-ALEX_CODE-152k",
             "contextWindow": 155648,
             "maxTokens": 2048,
