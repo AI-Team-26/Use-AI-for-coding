@@ -57,7 +57,6 @@ At the moment I'm not switching user, so the tool runs with _root_.
 [TODO]
 ** It will be good to switch to use a not-root user. **   
 
-
 ## :octocat: GIT & GitHub
 
 ### Credentials

@@ -14,6 +14,7 @@
 | Eden.ai     |               |      |          5 | ❔          |                   |                                   |
 | TokenMix    |               |      |          5 | ❔          |                   |                                   |
 | Novita.ai   |         20.00 | Yes  |          5 |             | many, cheap       | good                              |
+| Kiro.dev    |               |      |            | ❔          |                   |                                   | 
 
 
 ## Mono-provider

@@ -53,3 +53,4 @@ docker run -it \
     -e OLLAMA_HOST=http://host.docker.internal:11434 \
     pi-agent:2
 ```
+

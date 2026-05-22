@@ -20,10 +20,18 @@
         { 
             "_test": "",
             "id": "unsloth_gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
-            "_contextWindow": 16384,
+            "name": "Gemma4 e26b 16K",            
             "contextWindow": 16384,
             "maxTokens": 2048,
             "reasoning": false
+        },
+         { 
+            "_test": "",
+            "id": "unsloth_gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+            "name": "Gemma4 e26b 32K",            
+            "contextWindow": 32768,
+            "maxTokens": 4096,
+            "reasoning": true
         }    
         ]
     },
