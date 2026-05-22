@@ -13,7 +13,7 @@
 | Ofox.ai     |               |      |         10 | ✔️         |                   |                                   |
 | Eden.ai     |               |      |          5 | ❔          |                   |                                   |
 | TokenMix    |               |      |          5 | ❔          |                   |                                   |
-| Novita.ai   |         20.00 |     | Yes  |          5 |             | many, cheap       | good                              |
+| Novita.ai   |         20.00 | Yes  |          5 |             | many, cheap       | good                              |
 
 
 ## Mono-provider

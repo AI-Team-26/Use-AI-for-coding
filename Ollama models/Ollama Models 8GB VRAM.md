@@ -60,39 +60,6 @@ Q4_K_M and Q6_K
 https://huggingface.co/TheBloke/MAmmoTH-Coder-13B-GGUF?show_file_info=mammoth-coder-13b.Q4_K_M.gguf
 
 
-## Test
-
-```bash
-# on separate shell
-export OLLAMA_KEEP_ALIVE=3s; ollama serve ; export OLLAMA_KEEP_ALIVE=5m
-
-# Test
-read -r -d '' prompt <<'EOF'
-Given this F# function, find the bug and fix it:
-let rec fact n = if n = 0 then 0 else n * fact (n - 1)
-EOF
-
-models=(
-    "deepseek-coder-v2:16b-lite-base-q3_K_S"
-)
-
-for model in "${models[@]}"; do
-    echo
-    echo "========================================================="
-    echo "TESTING: $model"
-    echo "========================================================="
-    
-    # Run the model
-    ollama run "$model" --verbose "$prompt"    
-    ollama ps
-    echo "==============================================================================================================="
-    ollama stop "$model"     # Force the unload immediately
-    sleep 5                  # Give the GPU a moment to clear the memory buffers
-done
-echo; echo "--------------------------------------------------------------"
-
-```
-
 ## Note on models
 
 CodeGeeX4:9B-all-q5_K_M is very likely the better fit than Qwen2.5-Coder:7B for your 8GB local use case, especially if your main pain point was tool-call reliability rather than raw benchmark score. CodeGeeX4-ALL-9B is explicitly described as a code-focused model for software development scenarios, including function calling and repository-level Q&A, and the GGUF Q5_K_M build is a compact ~7.14 GB file

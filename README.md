@@ -1,7 +1,25 @@
 # Use AI for Coding
 
 What I was working on? --> [TODO](TODO.md).  
+
+This repository contains documentation, notes, scripts about the use of AI for coding assistance.  
+In the end I started to work with AI "tools" that runs on Docker containers.  
+The Docker containers can be customized to stisfy basic stuff (Git + GitHub auth) and particular requirements (customized prompt for particular languages, predefined skills etc...).  
+Currently I found **Pi Agent** the best tool.   
+**Qwen Code** too is a very good tool, but due to its huge system context is very unpractical with local LLM and I assume more tokens-consuming.
   
+I tried many difefrent LLM providers and also local LLM.    
+I did tests using my graphic cards VRAM, initially 8GB and now 16GB.  
+I obviously started with Ollama and then moved/added llama.cpp.  
+Here my experiments:  
+- [Ollama](Ollama&%20models)
+- [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp)
+
+The _scripts/_ folder contains Bash script to create adn test models.  
+Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions.  
+
+## Considerations about the different ways to use AI
+
 There are three types of tools:
 - IDE plugins........... ❌ Can do potentially everything in your PC
 - Web based tools ...... ❌ Too limited, models prone to mistakes, time-wasting.
@@ -37,7 +55,7 @@ I run the tools in a Docker container and Binded Volumes to store the projects (
 The way to create the bind volume is with the *-v** parameter of _docker run_, because it needs to NOT be created by the Docker build or you can have permissions issues.  
 At the moment I'm not switching user, so the tool runs with _root_.  
 [TODO]
-** It will be good to switch to use a nomn-root user. **   
+** It will be good to switch to use a not-root user. **   
 
 
 ## :octocat: GIT & GitHub

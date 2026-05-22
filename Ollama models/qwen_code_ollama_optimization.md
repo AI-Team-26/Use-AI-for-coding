@@ -22,7 +22,7 @@ Location: ~/.qwen/settings.json (project .qwen/settings.json overrides)
 ```
 
 8GB: maxOutputTokens: 1024-2048, contextWindowSize: 8192-16384  
-16GB: maxOutputTokens: 4096, contextWindowSize: 32768
+16GB: maxOutputTokens: 4096, contextWindowSize: 32768+
 
 ## Ollama Modelfile (qwen3:8b -> qwen3.5:9b)
 ```
@@ -59,12 +59,3 @@ exec qwen --continue
 ENV QWEN_SANDBOX=false
 ENV OLLAMA_HOST=http://host.docker.internal:11434
 ```
-
-## Performance Gains
-- 20-30% faster inference
-- No double calls (fastModel disabled)
-- No sandbox overhead
-- Stable 8GB (full offload)
-- Future-proof 16GB
-
-Verify: :debug config + /about

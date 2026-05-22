@@ -1,9 +1,8 @@
 # GPU on rent website
 
-
 - Test what is capable of a GPU with 16GB, 32GB, 48GB
-- Practivce how to secure and use a rented GPU
-- Test what it can cost
+- Verify how to secure and use a rented GPU
+- Test what it can cost in a week/month of usage
 
 
 ## 32GB
@@ -18,9 +17,8 @@ DeepSeek:
 Codestral: 
   codestral:22b-v0.1-q6_K: 18GB
   codestral:22b-v0.1-q8_0: 24GB
-CodeLlam: ❌
+CodeLlama: ❌
   codellama:34b-code-q6_K: ❌ Not as powerful as the latest DeepSeek Coder V2 or Qwen models for some tasks
-
 
 
 
@@ -40,6 +38,8 @@ reddit.com
 
 ### Runpod
 
+Not properly tested yet.
+
 
 ### Ollama vs vLLM vs Exllama
 
@@ -54,3 +54,4 @@ GTX 1070 is too old for vLLM (minimum RTX 20-series/Pascal+), but upgrade target
 
 ### Deploy a model and expose Ollama with authentication
 
+[TODO]

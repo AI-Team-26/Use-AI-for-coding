@@ -32,7 +32,7 @@ Model Coding evaluation
 | Ofox        | gemini-3.1-flash-image-preview | 0.25 / 1.50 |            |                                                                                |  
 | Ofox        | z-ai/glm-4.7-flash:free        | FREE        |            |                                                                                |  
 | Eden.ai     | amazon/zai.glm-4.7-flash       |             | ❌         | Duplicated files, not good reasoning, failed to use tools, lie                 | 
-| Eden.ai     | google/gemma-4-26b-a4b-it      |             | ❌         | Not event respons!                                                             |
+| Eden.ai     | google/gemma-4-26b-a4b-it      |             | ❌         | Not event responds!                                                             |
 | Xiaomi      | mimo-v2-flash                  |             | ❌         |                                                                                |        
 | TokenMix    | deepseek-v4-flash              | 0.14 / 0.28 |            |                                                                                 |
 | Novita.ai   | kwaipilot/kat-coder-pro        | 0.30 / 1.20 |            |                                                                                 | 
@@ -75,6 +75,3 @@ Model Coding evaluation
   - It applied changes without proper plan and with old informations (wanted t ocreate a folder that was already there)
 
       
-
-
-
