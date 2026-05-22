@@ -12,6 +12,21 @@
             }
         ]
     },
+    "Llama.cpp": {
+        "baseUrl": "http://host.docker.internal:8001/v1",  
+        "api": "openai-completions",
+        "apiKey": "Llama.cpp",
+        "models": [
+        { 
+            "_test": "",
+            "id": "unsloth_gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+            "_contextWindow": 16384,
+            "contextWindow": 16384,
+            "maxTokens": 2048,
+            "reasoning": false
+        }    
+        ]
+    },
     "Ollama": {
       "baseUrl_DOC": "original: http://localhost:11434/v1",
       "baseUrl": "http://host.docker.internal:11434/v1",
