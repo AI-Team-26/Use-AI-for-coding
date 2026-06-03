@@ -1,12 +1,29 @@
 # How to
 
-
 ## SHIFT button for multiline prompt
 
 By default it uses CTRL to add a new-line character in the prompt. Hot to switch to the more conventional SHIF ?
 
 
+## Directly execute shell commands
 
+Use the "!" in the prompt, and the command will be executed directly in the shell.  
+``! echo "this is a test" > test.txt``
+``! ls -al``
+ 
+
+## Switch local Model
+
+Local models run on llama.cpp (or Ollama) and are exposed to the Pi container on _http://host.docker.internal:8001/v1_.  
+When llama-server is strated and customized for a specific model A, and Pi switch to model B, it sends the model name and use a different context size as defined in _model.json_, 
+but actually the model loaded in llama.cpp server remains the same!  
+
+Solution 1: Use a Host Listener Script that monitor a "Model switch" file that is written by the guest (Pi container).  
+Leave this script running in the teerminal. 
+Teach Pi Agent to change the "Model switch" file to trigegr the server start of the new model.  
+
+
+Solution 2: Use proxy that intercept the requests, and if it find out the model is changed, call the script to start the server with the new model. 
 
 
 ## Sessions

@@ -4,23 +4,24 @@ What I was working on? --> [TODO](TODO.md).
 
 This repository contains documentation, notes, scripts about the use of AI for coding assistance.  
 In the end I started to work with AI "tools" that runs on Docker containers.  
-The Docker containers can be customized to stisfy basic stuff (Git + GitHub auth) and particular requirements (customized prompt for particular languages, predefined skills etc...).  
-Currently I found **Pi Agent** the best tool.   
-**Qwen Code** too is a very good tool, but due to its huge system context is very unpractical with local LLM and I assume more tokens-consuming.
+The Docker containers can be customized to satisfy basic stuff (Git + GitHub auth) and specific requirements (customized prompt for particular languages, predefined skills etc...).  
+For my specific situation, I found **Pi Agent** the best tool I can use.   
+**Qwen Code** is a very good tool too, but, due to its huge system context, it is too limited with local LLM and, probably, also more tokens-consuming.
   
-I tried many difefrent LLM providers and also local LLM.    
-I did tests using my graphic cards VRAM, initially 8GB and now 16GB.  
-I obviously started with Ollama and then moved/added llama.cpp.  
+I tried local LLM and also different LLM providers.      
+I did tests using my graphic cards with limited VRAM, initially 8GB and now 16GB.  
+I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance with all the models.  
 Here my experiments:  
 - [Ollama](Ollama&%20models)
-- [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp)
+- [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
 
-The _scripts/_ folder contains Bash script to create adn test models.  
-Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions.  
+The _scripts/_ folder contains Bash scripts to create and test the models.  
+Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions to use.  
+
 
 ## Considerations about the different ways to use AI
 
-There are three types of tools:
+There are three categories of tools:
 - IDE plugins........... ❌ Can do potentially everything in your PC
 - Web based tools ...... ❌ Too limited, models prone to mistakes, time-wasting.
 - Standalone programs .. ✔️ The perfect solution when run on container
@@ -42,20 +43,24 @@ Their connector are a little bit fragile and sometimes doesn't work.
 **Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
 They have a CLI and sometime a web UI exposed on the guest.  
 
-- [Aider](Aider/Aider.md) ❌ Found an issue very earlier and abandoned before having it really working
-- [OpenCode](OpenCode/OpenCode.md)   ❔ Abandoned before having it setup neither once
-- [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md)    ✔️ Really good
-- [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)       ✔️ Still setting it up but seems good
-- Mistral Vibe               ❔ Neither started
+
+| [Aider](Aider/Aider.md)                          | ❌ Found an issue very earlier and abandoned before having it really working |
+| [OpenCode](OpenCode/OpenCode.md)                 | ❔ Abandoned before having it setup neither once                              |
+| [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Really good                                                               |
+| [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)    | ✔️ SFantastic!                                                               |
+| Mistral Vibe                                     | ❔ Never tried                                                                |
 
 
 ## 🐳 Docker
 
-I run the tools in a Docker container and Binded Volumes to store the projects (GitHub repositories) and tool settings/customization, so that I can easily access all within the host. This allows to open the projects with local IDE (usefull to check changes in a branch) and update settings/customization easily.   
-The way to create the bind volume is with the *-v** parameter of _docker run_, because it needs to NOT be created by the Docker build or you can have permissions issues.  
+I run the tools in a Docker container and Binded Volumes to store the projects (GitHub repositories) and tool settings/customization, so that I can easily access all within the host. This allows to open the projects with local IDE (usefull to check the changes done by the AI tool) and update settings/customization easily.   
+The way to create the bind volume is with the _--mount type=bind_ of _docker run_ command (*-v** parameter also works, but is the old way), because it needs to NOT be created by the Docker build or you can have permissions issues (this happens if you create the volume in the Dockerfile).  
 At the moment I'm not switching user, so the tool runs with _root_.  
-[TODO]
-** It will be good to switch to use a not-root user. **   
+[TODO] ** It will be good to switch to use a not-root user. **   
+
+Once a container is created, it is not possible to attach a new volume to it.  
+For this reason I use _/project_ folder as bind  volume, where I can add project/repositories any time.  
+
 
 ## :octocat: GIT & GitHub
 

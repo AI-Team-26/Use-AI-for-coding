@@ -80,3 +80,7 @@ Bullet list points
 | ☆ |  
 | ★ |  
 | ⋆ |  
+
+Arrows up/down
+ASCII:  ↑ ↓
+Unicode: ↑ ↓

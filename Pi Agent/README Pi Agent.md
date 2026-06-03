@@ -1,6 +1,6 @@
 # Pi Agent
 
-A minimalist terminal coding agent setup for F# development, optimized for graphic card  with 8GB or 16GB RAM.  
+A minimalist terminal coding agent setup for F# development, optimized for graphic card 16GB RAM.  
 
 ## Build the Docker Image
 ```bash
@@ -38,7 +38,6 @@ cp for-docker-volume/system.md "$docker_volume/.pi/system.md"
 # set secret keys
 sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT_LOCAL/g" "$docker_volume/.pi/agent/models.json"
 #cat "$docker_volume/.pi/agent/models.json" | grep API_KEY
-
 ```
 
 ### Run the Container
@@ -48,9 +47,13 @@ export MSYS_NO_PATHCONV=1
 docker run -it \
     --name PiAgent_v2 \
     --label "description=Pi Agent for GitHub projects" \
-    -v "$docker_volume/.pi:/root/.pi" \
-    -v "$docker_volume/projects:/projects" \
+    --mount type=bind,src="$docker_volume/.pi",dst=/root/.pi \
+    --mount type=bind,src="$docker_volume/projects",dst=/projects \    
     -e OLLAMA_HOST=http://host.docker.internal:11434 \
     pi-agent:2
+
+# legacy syntax
+# -v "$docker_volume/.pi:/root/.pi" \
+# -v "$docker_volume/projects:/projects" \
 ```
 
