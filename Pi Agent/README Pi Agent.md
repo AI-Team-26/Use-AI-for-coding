@@ -6,7 +6,8 @@ A minimalist terminal coding agent setup for F# development, optimized for graph
 ```bash
 docker build \
     --label "Pi Agent for coding" \
-    -t pi-agent:2 \
+    -t pi-agent:3 \
+    -f Dockerfile_v2 \
     .
 ```
 
@@ -42,15 +43,15 @@ sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT_LOCAL/g" "$docker_volu
 
 ### Run the Container
 ```bash
-export MSYS_NO_PATHCONV=1
+#export MSYS_NO_PATHCONV=1  setup in .bashrc
 
 docker run -it \
-    --name PiAgent_v2 \
+    --name PiAgent_v3 \
     --label "description=Pi Agent for GitHub projects" \
     --mount type=bind,src="$docker_volume/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volume/projects",dst=/projects \    
+    --mount type=bind,src="$docker_volume/projects",dst=/projects \
     -e OLLAMA_HOST=http://host.docker.internal:11434 \
-    pi-agent:2
+    pi-agent:3
 
 # legacy syntax
 # -v "$docker_volume/.pi:/root/.pi" \

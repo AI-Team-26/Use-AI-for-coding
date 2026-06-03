@@ -19,13 +19,13 @@
         "models": [
 
         { 
-            "_test": "??",
+            "_test": "OK",
             "id": "barozp_Qwen3.6-28B-REAP20-A3B-Q4_K_M.gguf ",
-            "name": "Qwen 3.6 28B REAP20 128K",   
-            "description": "Qwen 3.6 27B on steroids!",
+            "name": "Qwen 3.6 28B REAP20 128K",
             "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
+            "maxTokens": 131072,
+            "reasoning": true,
+            "input": [ "text", "image" ]
         },
 
         { 
