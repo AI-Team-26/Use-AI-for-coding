@@ -1,9 +1,30 @@
 # How to
 
-## SHIFT button for multiline prompt
+## CTRL + SHIFT for multiline prompt
 
-By default it uses CTRL to add a new-line character in the prompt. Hot to switch to the more conventional SHIF ?
+In GitBash shell of Windows Terminalm, by default it uses CTRL to add a new-line character in the prompt.   
+Hot to switch to the more conventional SHIF ?  
 
+Windows Terminal, Configuration, open JSON.  
+
+1. Add this to the "actions" array:
+```json
+{
+    "command": {
+        "action": "sendInput",
+        "input": "\u001b[13;5u"
+    },
+    "id": "User.sendCtrlEnter"
+}
+```
+
+2. Add this to the "keybindings" array:
+```json
+{
+    "id": "User.sendCtrlEnter",
+    "keys": "shift+enter"
+}
+```
 
 ## Directly execute shell commands
 
