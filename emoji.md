@@ -11,6 +11,7 @@ https://gist.github.com/rxaviers/7360908
 | 🟢 | :green_circle:         | OK status (explicit green)      |
 | 🔴 | :red_circle:           | Error status (explicit red)     |
 | ℹ️ | :informatio_source:    | Info/Informational notes        |
+| ⛔ | :no_entry:             |                                 |        
 | 🧠 | :brain:                | Thinking/Processing             |
 | 🚀 | :rocket:               | Deployment/Speed                |
 | 🚨 | :rotating_light:       | Critical alert                  |
@@ -22,6 +23,8 @@ https://gist.github.com/rxaviers/7360908
 | 🐳 |                        |                                 |
 | 🏗️ |                        |                                 |
 | 🔍 |                        |                                 |
+| 🎤 |                        |                                 | 
+| 🔉 |                        |                                 |
 | 🌐 |                        |                                 |
 | 🔒 | :lock:                 |                                 |
 | 📦 |                        |                                 |
@@ -41,6 +44,7 @@ https://gist.github.com/rxaviers/7360908
 | 💔 |                        | Expired free quota              |
 | 💥 |                        |                                 |
 | ➕ |                        |                                 |
+| ➖ |                        | Empty                           |
 | 🎲 |                        |                                 |
 | ❔ |                        |                                 |
 | 💻 |                        | Shell                           |
@@ -51,7 +55,6 @@ https://gist.github.com/rxaviers/7360908
 | ⭐ |                        |                                 |
 | 🥇 |                        |                                 |
 | 〰️ |                        | Empty                           |
-| ➖ |                        | Empty                           |
 | 🔳 |                        |                                 |
 | 👉 |                        |                                 |
 | 👈 |                        |                                 |
@@ -68,6 +71,9 @@ https://gist.github.com/rxaviers/7360908
 | :octocat: |                        |                                 |
 | 🔑 |                        |                                 |
 | 💡 |                        |                                 |
+| 🔹 |                        |                                 | 
+| 🔸 |                        |                                 |
+| 🎵 |                        |                                 | 
 
 
 Bullet list points 
@@ -80,6 +86,11 @@ Bullet list points
 | ☆ |  
 | ★ |  
 | ⋆ |  
+
+Squares: 🟥 🟧 🟨 🟩 🟦 🟪 🟫
+Circles: 🔴 🟠 🟡 🟢 🔵 🟣 🟤
+Hearths: ❤️ 🧡 💛 💚 💙 💜 🤎
+
 
 Arrows up/down
 ASCII:  ↑ ↓

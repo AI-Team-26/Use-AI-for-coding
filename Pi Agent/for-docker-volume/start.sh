@@ -31,7 +31,9 @@ setup_github_cli() {
     if [[ -f ~/.git-credentials ]]; then
         local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
         if [[ -n "$repo_path" ]]; then
-            export GH_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+            export GITHUB_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+            #echo $GH_TOKEN | gh auth login --with-token
+            gh auth status
             echo -e "${GREEN}🐙 GitHub CLI configured for ${repo_path}!${NC}"
         fi
     fi
@@ -69,12 +71,12 @@ select_project() {
     fi
 
     echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
-    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" "💻 Shell" "❌ Exit"; do
+    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" ">_ Shell" "❌ Exit"; do
         if [[ "$proj" == "➕ Clone a new project" ]]; then
             clone_project; select_project; break
         elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
             add_github_pat; select_project; break
-        elif [[ "$proj" == "💻 Shell" ]]; then
+        elif [[ "$proj" == ">_ Shell" ]]; then 
             show_help
             /bin/bash
             #break
@@ -90,7 +92,11 @@ select_project() {
 
             # Launch Pi Agent (adjust flags as needed)
             # Example: pi-agent --model <model_name> --api-key <your_key>
-            pi
+            #pi echo "use /resume to pick a previous session"
+            echo "check GH auth again..."
+            gh auth status
+            pi --resume
+            
             break
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"

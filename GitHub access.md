@@ -26,8 +26,8 @@ The same if a SSH key is used for authentication.
 
 ## Collaborator on the main Account repo ❌
 
-I haven't explored this solution, because I believe that is the same of the Organization way, but it potentially exposes also other absolutely not-wanted-to-share repositories to the shadow account.  
-The only benefit can be the possibility to access to existing repo.
+I haven't explored this solution, because I believe that it is the same of the Organization way, but it potentially exposes also other absolutely not-wanted-to-share repositories to the shadow account.  
+The only benefit can be the possibility to access to existing repositories.
 
 
 ## Fine-grained permissions PAT on the main account for organization repo ✔️

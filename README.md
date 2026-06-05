@@ -30,7 +30,7 @@ There are three categories of tools:
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets very easily.
 - GitHub Copilot (VS & VS Code)
 - Continue.DEV
-- Cline
+- [Cline](Cline/README.md)
 - LllamaCode
 - CodeGeeX 
 
@@ -78,7 +78,17 @@ echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
 
 This one requires its own authentication.  
 I automatically provide it generating an environment variable on-the-fly when we select the project.  
-See _start.sh_ scripts in difefrent tools (Qwen Code or Pi Agent for example).  
+See _start.sh_ scripts in different tools (Qwen Code or Pi Agent for example).  
+
+To check auth:
+```bash
+gh auth status 2>/dev/null || echo "gh not authenticated"
+```
+
+To manually login using hte token:
+```bash
+
+```
 
 
 ### PAT
