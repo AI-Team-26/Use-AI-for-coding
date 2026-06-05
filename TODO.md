@@ -2,8 +2,8 @@
 
 ## Doing
 
-- 5 proxy bridge to start requested model on llama-server
 - 5 script to launch different model with its settings
+- 5 proxy bridge to start requested model on llama-server
   step 1: the script that used defined model in the models_configuration,json
   step 2: proxy that intecepts the request and start the server with the new model.
 - 5 Figure out why Pi Agent is not able to use gh due to auth not working.

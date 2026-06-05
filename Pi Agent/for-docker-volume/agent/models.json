@@ -8,7 +8,8 @@
         "models": [
             {
                 "id": "deepseek/deepseek-v4-flash",
-                "maxTokens": 2048
+                "maxTokens": 2048,
+                "reasoning": true
             }
         ]
     },
@@ -19,32 +20,33 @@
         "models": [
 
         { 
-            "_test": "OK",
-            "id": "barozp_Qwen3.6-28B-REAP20-A3B-Q4_K_M.gguf ",
-            "name": "Qwen 3.6 28B REAP20 128K",
-            "contextWindow": 131072,
-            "maxTokens": 131072,
+            "_test": "OK (SUPER)",
+            "id": "barozp_Qwen3.6-28B-REAP20-A3B-Q4_K_M.gguf",
+            "name": "Qwen 3.6 28B REAP20",
+            "contextWindow": 65536,
+            "maxTokens": 4096,
             "reasoning": true,
             "input": [ "text", "image" ]
         },
 
         { 
-            "_test": "OK",
-            "id": "unsloth_gpt-oss-20b-Q4_K_M.gguf",
-            "name": "GPT OSS 20B 128K",            
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": false
+            "_test": "??",
+            "id": "unsloth_gpt-oss-20b-Q8_0.gguf",
+            "name": "GPT OSS 20B",            
+            "contextWindow": 65536,
+            "maxTokens": 4096,
+            "reasoning": true
         },
+
 
         { 
             "_test": "Good",
             "id": "noctrex_gemma-4-26B-A4B-it-MXFP4_MOE.gguf",
             "name": "Gemma4 e26b 128K (by noctrex)",  
             "description": "Gemma 4 e26b 128K (by noctrex)",          
-            "contextWindow": 131072,
+            "contextWindow": 65536,
             "maxTokens": 2048,
-            "reasoning": false
+            "reasoning": true
         },
         { 
             "_test": "OK",

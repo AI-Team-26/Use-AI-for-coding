@@ -1,5 +1,35 @@
 {
-"models": [
+"providers": {
+    "Llama.cpp": [
+        { 
+            "_test": "XXXXX Rubbish answers and errors after some chat",
+            "id": "unsloth_GLM-4.7-Flash-REAP-23B-A3B-Q4_K_M.gguf",
+            "name": "GLM 4.7 Flash 23B REAP",
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+          "_test": "XXXXX Rubbish answers and errors after some chat",
+          "id": "unsloth_GLM-4.7-Flash-REAP-23B-A3B-UD-Q4_K_XL.gguf",
+          "name": "GLM 4.7 Flash 23B REAP UD",
+          "contextWindow": 65536,
+          "maxTokens": 2048,
+          "reasoning": true
+       },
+        { 
+            "_test": "XXXXX Too slow and rubbish after some messages",
+            "id": "unsloth_GLM-4.7-Flash-Q4_K_M.gguf",
+            "name": "GLM 4.7 Flash",
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        }
+
+    ]
+},
+
+    "Ollama": [
             { 
             "_test": "OK",
             "id": "granite4.1:8b-ALEX_CODE-36k",

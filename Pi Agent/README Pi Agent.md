@@ -30,15 +30,15 @@ mkdir -p "$docker_volume/projects"
 # 2. Copy startup scripts and configurations
 cp ../scripts/start_common.sh "$docker_volume/projects/start_common.sh"
 cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
-# Copy any custom Pi skills or environment files to the config volume
-cp for-docker-volume/agent/models.json "$docker_volume/.pi/agent/models.json"
 cp for-docker-volume/system.md "$docker_volume/.pi/system.md"
-# cp for-docker-volume/my_custom_skill.ts "$docker_volume/.pi/skills/"
+cp -r for-docker-volume/agent/skills/* "$docker_volume/.pi/agent/skills/"
+cp -r for-docker-volume/agent/skills-disabled/* "$docker_volume/.pi/agent/skills-disabled/"
 # cp for-docker-volume/.env "$docker_volume/.pi/.env"
 
+cp for-docker-volume/agent/models.json "$docker_volume/.pi/agent/models.json"
 # set secret keys
 sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT_LOCAL/g" "$docker_volume/.pi/agent/models.json"
-#cat "$docker_volume/.pi/agent/models.json" | grep API_KEY
+
 ```
 
 ### Run the Container
