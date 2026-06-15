@@ -1,13 +1,15 @@
 # Pi Agent
 
 A minimalist terminal coding agent setup for F# development, optimized for graphic card 16GB RAM.  
+It lets use root user to Pi Agent. Container is not accessible/exposed to internet.  
+It shares settings and projects folder (using a bind mount volume) within the host so settings and code are easy to read and change.  
 
 ## Build the Docker Image
 ```bash
 docker build \
     --label "Pi Agent for coding" \
     -t pi-agent:3 \
-    -f Dockerfile_v2 \
+    -f v3.Dockerfile \
     .
 ```
 

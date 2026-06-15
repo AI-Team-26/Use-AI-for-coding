@@ -10,6 +10,21 @@
                 "id": "deepseek/deepseek-v4-flash",
                 "maxTokens": 2048,
                 "reasoning": true
+            },
+                        {
+                "id": "baidu/cobuddy ",
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
+                "id": "nex-agi/nex-n2-pro",
+                "maxTokens": 4096,
+                "reasoning": true
+            },
+            {
+                "id": "xiaomimimo/mimo-v2.5",
+                "maxTokens": 2048,
+                "reasoning": true
             }
         ]
     },
@@ -34,6 +49,22 @@
             "id": "unsloth_gpt-oss-20b-Q8_0.gguf",
             "name": "GPT OSS 20B",            
             "contextWindow": 65536,
+            "maxTokens": 4096,
+            "reasoning": true
+        },
+        { 
+            "_test": "?",
+            "id": "unsloth_gpt-oss-20b-UD-Q8_K_XL.gguf",
+            "name": "GPT OSS 20B UD Q8_K_XL",            
+            "contextWindow": 65536,
+            "maxTokens": 4096,
+            "reasoning": true
+        },
+        { 
+            "_test": "Super fast but it makes long and wrong reasoning",
+            "id": "davidau_OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL.gguf",
+            "name": "GPT-OSS-20B_IQ4_NL",            
+            "contextWindow": 131072,
             "maxTokens": 4096,
             "reasoning": true
         },

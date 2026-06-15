@@ -41,6 +41,10 @@ Model Coding evaluation
 | Novita.ai   | google/gemma-3-27b-it          | 0.12 / 0.20 |            |                                                                                 | 
 | Novita.ai   | xiaomimimo/mimo-v2-flash       | 0.10 / 0.30 |            |                                                                                |
 | Novita.ai   | deepseek/deepseek-v4-flash     | 0.14 / 0.28 |            |                                                                                |    
+| Novita.ai   | zai-org/glm-4.7-flash          | 0.07 / 0.40 |            |                                                                                |
+| Novita.ai   | baidu/cobuddy                  | FREE        |            |                                                                                |
+| Novita.ai   | nex-agi/nex-n2-pro             | FREE        |            |                                                                                |
+
 
 
 ## Evaluating
