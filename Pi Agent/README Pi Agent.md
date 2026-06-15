@@ -7,7 +7,7 @@ It shares settings and projects folder (using a bind mount volume) within the ho
 ## Build the Docker Image
 ```bash
 docker build \
-    --label "Pi Agent for coding" \
+    --label description="Pi Agent for coding" \
     -t pi-agent:3 \
     -f v3.Dockerfile \
     .
@@ -46,13 +46,13 @@ sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT_LOCAL/g" "$docker_volu
 ### Run the Container
 ```bash
 #export MSYS_NO_PATHCONV=1  setup in .bashrc
+    #-e OLLAMA_HOST=http://host.docker.internal:11434 \
 
-docker run -it \
+docker run \
     --name PiAgent_v3 \
     --label "description=Pi Agent for GitHub projects" \
     --mount type=bind,src="$docker_volume/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volume/projects",dst=/projects \
-    -e OLLAMA_HOST=http://host.docker.internal:11434 \
     pi-agent:3
 
 # legacy syntax

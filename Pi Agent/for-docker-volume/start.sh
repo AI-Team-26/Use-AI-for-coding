@@ -10,18 +10,26 @@ source start_common.sh
 echo -e "${bold}=== Pi Agent ==="
 echo -e "${bold}================${NC}"
 
+git_account="(not set)"
 
 # --- Git Setup ---
 setup_git() {
     if ! git config --global user.name >/dev/null 2>&1; then
         echo -e "${YELLOW}${GIT_EMOJI} Git not configured. Set up credentials:${NC}"
-        read -p "GitHub username (does NOT require to match account): " git_username
+        read -p "GitHub account: " git_account
+        read -p "GitHub user name (Commit author username): " git_username
         read -p "GitHub email: " git_email
         read -s -p "GitHub PAT (hidden): " git_pat; echo
+
+        export GITHUB_ACCOUNT=$git_account
+
         git config --global user.name "$git_username"
         git config --global user.email "$git_email"
         git config --global credential.helper store
-        echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
+        #echo "https://$git_account:$git_pat@github.com" > ~/.git-credentials
+        # credentials.useHttpPath = true
+        # Set the 
+        echo "https://$git_account:$git_pat@github.com" >> ~/.git-credentials
         echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
     fi
 }
@@ -30,12 +38,22 @@ setup_git() {
 setup_github_cli() {
     if [[ -f ~/.git-credentials ]]; then
         local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-        if [[ -n "$repo_path" ]]; then
-            export GITHUB_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+        echo -e "Repository: $repo_path"
+
+        # look for ...project.git record in credentials
+        export GITHUB_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
+
+        if [[ -n "$GITHUB_TOKEN" ]]; then
             #echo $GH_TOKEN | gh auth login --with-token
-            gh auth status
             echo -e "${GREEN}🐙 GitHub CLI configured for ${repo_path}!${NC}"
+        else
+            # look for default credentials
+            export GITHUB_TOKEN=$(grep '@github.com$' ~/.git-credentials | head -n1 | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+            echo -e "${GREEN}🐙 GitHub CLI configuredwith default credentials${NC}"
         fi
+
+        echo -e "GITHUB_TOKEN: ${GITHUB_TOKEN:0:15}***${GITHUB_TOKEN: -5}"
+        gh auth status
     fi
 }
 
@@ -93,9 +111,9 @@ select_project() {
             # Launch Pi Agent (adjust flags as needed)
             # Example: pi-agent --model <model_name> --api-key <your_key>
             #pi echo "use /resume to pick a previous session"
-            echo "check GH auth again..."
+            echo "Check GH auth again..."
             gh auth status
-            pi --resume
+            exec pi --resume
             
             break
         else
