@@ -75,6 +75,9 @@ clone_project() {
     }
     echo -e "${GREEN}${GIT_EMOJI} Cloned successfully!${NC}"
 
+    sleep 2
+    cd "/projects/$dir_name"
+    pi --name "Start"
     # Optional: Add Git hooks (e.g., pre-push) if needed
     # cp git_hook_pre_push.sh "/projects/$dir_name/.git/hooks/pre-push"
     # chmod +x "/projects/$dir_name/.git/hooks/pre-push"
@@ -87,14 +90,13 @@ select_project() {
     if [ ${#projects[@]} -eq 0 ]; then
         echo -e "${YELLOW}${FOLDER_EMOJI} No projects found. Clone one first!${NC}"
         clone_project
-        select_project
         return 0
     fi
 
     echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
     select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" "😎 No-session Chat" ">_ Shell" "❌ Exit"; do
         if [[ "$proj" == "➕ Clone a new project" ]]; then
-            clone_project; select_project; break
+            clone_project; break
         elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
             add_github_pat; select_project; break
         elif [[ "$proj" == "😎 No-session Chat" ]]; then
@@ -119,6 +121,7 @@ select_project() {
 
             echo "Select what to do:"
             select choice in continue resume new no-session; do
+                #clear
                 if [[ "$choice" == "continue" ]]; then
                     pi --continue ; break
                 elif [[ "$choice" == "resume" ]]; then

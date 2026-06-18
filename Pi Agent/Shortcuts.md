@@ -1,5 +1,7 @@
 # Shortcuts
 
+https://pi.dev/docs/latest/usage  
+
 ## TUI commands
 
 | Command             | Description                                                                    | 
@@ -10,8 +12,8 @@
 | /recap              | Create a recap of the current session                                          |
 | /compact            | Compact the current session                                                    |
 | /new                | Start a new session                                                            |
-| /fork               |                                                                                |
-| /tree               |                                                                                |
+| /fork               | Create a new session from a previous user message                              |
+| /tree               | Jump to any point in the session and continue from there                       |
 | /clone              |                                                                                |
 
 
