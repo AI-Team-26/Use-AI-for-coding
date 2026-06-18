@@ -12,152 +12,15 @@ from urllib.error import HTTPError
 # ── Config ──────────────────────────────────────────────────────────────────
 
 EXA_API_KEY = os.environ.get("EXA_API_KEY", "")
-#CONFIG_PATH = Path.home() / ".pi" / "web-search.json"
-CONFIG_PATH = Path(__file__).parent / "config.json"
-EXA_MCP_URL = "https://mcp.exa.ai/mcp"
-
-
-def get_api_key():
-    """Get EXA API key from env var or config file."""
-    if EXA_API_KEY:
-        return EXA_API_KEY
-    if CONFIG_PATH.exists():
-        try:
-            with open(CONFIG_PATH) as f:
-                config = json.load(f)
-            return config.get("exaApiKey", "")
-        except (json.JSONDecodeError, IOError):
-            pass
-    return None
-
-
-def has_api_key():
-    """Check if an EXA API key is available."""
-    return get_api_key() is not None
-
-
-# ── EXA MCP client (zero-config) ────────────────────────────────────────────
-
-def call_exa_mcp(query):
-    """Call EXA MCP tool and return parsed text result."""
-
-    tool_name = "web_search_exa"
-    args = {
-        "query": query,
-        "numResults": 5,
-        "livecrawl": "fallback",
-        "type": "auto",
-        "contextMaxCharacters": 3000,
-    }
-
-    '''
-
-    # No API key → use MCP as fallback (zero-config)
-    if not api_key:
-        print("  [Using EXA MCP — zero config, no API key needed]\n")
-        try:
-            mcp_text = call_exa_mcp("web_search_exa", {
-                "query": query,
-                "numResults": 5,
-                "livecrawl": "fallback",
-                "type": "auto",
-                "contextMaxCharacters": 3000,
-            })
-            # Parse MCP output into structured results
-            blocks = mcp_text.split("(?=^Title: )") if "(?=^Title: )" in mcp_text else [mcp_text]
-            # Try to parse Title:/URL:/Text: format
-            results = []
-            current = {}
-            for line in mcp_text.split("\n"):
-                if line.startswith("Title: "):
-                    if current.get("url"):
-                        results.append(current)
-                    current = {"title": line[7:].strip()}
-                elif line.startswith("URL: "):
-                    current["url"] = line[5:].strip()
-                elif line.startswith("Text: ") or line.startswith("Highlights:"):
-                    current["text"] = line.split(":", 1)[1].strip() if ":" in line else ""
-            if current.get("url"):
-                results.append(current)
-
-            if not results:
-                print(f"\n{'='*60}")
-                print(f"  RESULTS (via EXA MCP)")
-                print(f"{'='*60}")
-                print(mcp_text)
-                return
-
-            print(f"\n{'='*60}")
-            print(f"  RESULTS ({len(results)} found, via EXA MCP)")
-            print(f"{'='*60}")
-            for i, r in enumerate(results, 1):
-                title = r.get("title", "Untitled")
-                url = r.get("url", "")
-                text = r.get("text", "")
-                print(f"\n  {i}. {title}")
-                if url:
-                    print(f"     {url}")
-                if text:
-                    print(f"     {text[:200]}")
-        except RuntimeError as e:
-            print(f"ERROR: {e}")
-            print("Set EXA_API_KEY or create ~/.pi/web-search.json for direct API access.")
-        return
-    '''
-
-    body = json.dumps({
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "tools/call",
-        "params": {"name": tool_name, "arguments": args},
-    }).encode()
-
-    req = Request(EXA_MCP_URL, data=body,
-                  headers={"Content-Type": "application/json"}, method="POST")
-    try:
-        with urlopen(req, timeout=60) as resp:
-            raw = resp.read().decode()
-    except HTTPError as e:
-        raise RuntimeError(f"EXA MCP error: HTTP {e.code}")
-    except Exception as e:
-        raise RuntimeError(f"EXA MCP error: {e}")
-
-    # Parse SSE stream or plain JSON
-    for line in raw.split("\n"):
-        if line.startswith("data:"):
-            payload = line[5:].strip()
-            if not payload:
-                continue
-            try:
-                data = json.loads(payload)
-            except json.JSONDecodeError:
-                continue
-            if data.get("error"):
-                msg = data["error"].get("message", "Unknown error")
-                raise RuntimeError(f"EXA MCP error: {msg}")
-            result = data.get("result", {})
-            content = result.get("content", [])
-            for item in content:
-                if isinstance(item, dict) and item.get("type") == "text":
-                    text = item["text"].strip()
-                    if text:
-                        #print(f"\n{'='*60}")
-                        #print(f"  ANSWER (via EXA MCP)")
-                        #print(f"{'='*60}")
-                        print(text)
-                        
-    raise RuntimeError("EXA MCP returned empty response")
-
 
 # ── EXA Answer endpoint ─────────────────────────────────────────────────────
 
-def search_answer(query):
+def call_answer(query):
     """Use EXA's /answer endpoint for synthesized answers with citations."""
-    api_key = get_api_key()
-
+    
     url = "https://api.exa.ai/answer"
     headers = {
-        "x-api-key": api_key,
+        "x-api-key": EXA_API_KEY,
         "Content-Type": "application/json",
     }
     body = json.dumps({"query": query, "text": True}).encode()
@@ -199,13 +62,12 @@ def search_answer(query):
 
 # ── EXA Search endpoint ─────────────────────────────────────────────────────
 
-def search_search(query):
+def call_search(query):
     """Use EXA's /search endpoint for ranked URL results."""
-    api_key = get_api_key()
 
     url = "https://api.exa.ai/search"
     headers = {
-        "x-api-key": api_key,
+        "x-api-key": EXA_API_KEY,
         "Content-Type": "application/json",
     }
     body = json.dumps({
@@ -276,24 +138,18 @@ Examples:
         parser.print_help()
         sys.exit(1)
 
-    # No API key → use MCP as fallback (zero-config)
-    if not has_api_key():
-        print("[Using EXA MCP]\n")
-        call_exa_mcp(args.query)
-    
-    else:
-        print("[Using EXA API]\n")
-        # Determine which mode(s) to run
-        use_answer = bool(args.answer or (args.query and not args.search))
-        use_search = bool(args.search or (args.query and not args.answer))
 
-        query = args.answer or args.search or args.query
+    # Determine which mode(s) to run
+    use_answer = bool(args.answer or (args.query and not args.search))
+    use_search = bool(args.search or (args.query and not args.answer))
 
-        if use_answer:
-            search_answer(query)
+    query = args.answer or args.search or args.query
 
-        if use_search:
-            search_search(query)
+    if use_answer:
+        call_answer(query)
+
+    if use_search:
+        call_search(query)
 
 
 if __name__ == "__main__":

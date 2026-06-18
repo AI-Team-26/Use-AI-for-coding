@@ -6,6 +6,9 @@
 
 cd /projects
 source start_common.sh
+if [[ -f set_api_keys.sh ]]; then 
+    source set_api_keys.sh
+fi
 
 echo -e "${bold}=== Pi Agent ==="
 echo -e "${bold}================${NC}"
@@ -85,7 +88,7 @@ select_project() {
         echo -e "${YELLOW}${FOLDER_EMOJI} No projects found. Clone one first!${NC}"
         clone_project
         select_project
-        return
+        return 0
     fi
 
     echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
@@ -115,7 +118,7 @@ select_project() {
             #pi echo "use /resume to pick a previous session"
 
             echo "Select what to do:"
-            select choice in continue resume new n0-session; do
+            select choice in continue resume new no-session; do
                 if [[ "$choice" == "continue" ]]; then
                     pi --continue ; break
                 elif [[ "$choice" == "resume" ]]; then

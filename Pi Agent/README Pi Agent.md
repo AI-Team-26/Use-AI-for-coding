@@ -17,7 +17,7 @@ docker build \
 
 We run the container passing 2 Volumes:
 - /root/.pi   -> for the settings, skills etc...
-- /projects   -> for the GIT repositories and other files (start.sh, README)
+- /projects   -> for the GIT repositories, local projects and other files (start.sh, set_api_keys.sh, README)
 
 ### Setup
 
