@@ -30,20 +30,26 @@ Model Coding evaluation
 | Ofox        | z-ai/glm-5.1                   | 1.40 / 4.40 |            |                                                                                |  
 | Ofox        | minimax/minimax-m2.7           | 0.30 / 1.20 |            |                                                                                |  
 | Ofox        | gemini-3.1-flash-image-preview | 0.25 / 1.50 |            |                                                                                |  
-| Ofox        | z-ai/glm-4.7-flash:free        | FREE        |            |                                                                                |  
+| Ofox        | z-ai/glm-4.7-flash:free        | 🔥 FREE     |            |                                                                                |  
 | Eden.ai     | amazon/zai.glm-4.7-flash       |             | ❌         | Duplicated files, not good reasoning, failed to use tools, lie                 | 
-| Eden.ai     | google/gemma-4-26b-a4b-it      |             | ❌         | Not event responds!                                                             |
+| Eden.ai     | google/gemma-4-26b-a4b-it      |             | ❌         | Not event responds!                                                            |
 | Xiaomi      | mimo-v2-flash                  |             | ❌         |                                                                                |        
-| TokenMix    | deepseek-v4-flash              | 0.14 / 0.28 |            |                                                                                 |
-| Novita.ai   | kwaipilot/kat-coder-pro        | 0.30 / 1.20 |            |                                                                                 | 
-| Novita.ai   | google/gemma-4-26b-a4b-it      | 0.13 / 0.40 |            |                                                                                 | 
-| Novita.ai   | google/gemma-4-31b-it          | 0.40 / 0.40 |            |                                                                                 | 
-| Novita.ai   | google/gemma-3-27b-it          | 0.12 / 0.20 |            |                                                                                 | 
-| Novita.ai   | xiaomimimo/mimo-v2-flash       | 0.10 / 0.30 |            |                                                                                |
-| Novita.ai   | deepseek/deepseek-v4-flash     | 0.14 / 0.28 |            |                                                                                |    
+| TokenMix    | deepseek-v4-flash              | 0.14 / 0.28 |            |                                                                                |
+| Novita.ai   | kwaipilot/kat-coder-pro        | 0.30 / 1.20 |            |                                                                                | 
+| Novita.ai   | google/gemma-4-26b-a4b-it      | 0.13 / 0.40 |            |                                                                                | 
+| Novita.ai   | google/gemma-4-31b-it          | 0.40 / 0.40 |            |                                                                                | 
+| Novita.ai   | google/gemma-3-27b-it          | 0.12 / 0.20 |            |                                                                                | 
+| Novita.ai   | xiaomimimo/mimo-v2-flash       | 0.10 / 0.30 |            | ❌ NOT AVAILABLE ANYMORE                                                      |
+| Novita.ai   | xiaomimimo/mimo-v2.5           | 0.17 / 0.34 |            |                                                                                |
+| Novita.ai   | deepseek/deepseek-v4-flash     | 0.14 / 0.28 |            |                                                                                |  
+| Novita.ai   | zai-org/glm-5.2                | 1.40 / 4.40 |            |                                                                                |    
 | Novita.ai   | zai-org/glm-4.7-flash          | 0.07 / 0.40 |            |                                                                                |
-| Novita.ai   | baidu/cobuddy                  | FREE        |            |                                                                                |
-| Novita.ai   | nex-agi/nex-n2-pro             | FREE        |            |                                                                                |
+| Novita.ai   | baidu/cobuddy                  | 🔥 FREE     |            |                                                                                |
+| Novita.ai   | nex-agi/nex-n2-pro             | 🔥 FREE     |            |                                                                                |
+| Novita.ai   | moonshotai/kimi-k2.7-code      | 0.95 / 4.00 |            |                                                                                |
+
+
+moonshotai/kimi-k2.7-code
 
 
 

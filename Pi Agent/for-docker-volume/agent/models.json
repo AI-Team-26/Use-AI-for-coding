@@ -11,7 +11,7 @@
                 "maxTokens": 2048,
                 "reasoning": true
             },
-                        {
+            {
                 "id": "baidu/cobuddy ",
                 "maxTokens": 2048,
                 "reasoning": true
@@ -23,6 +23,17 @@
             },
             {
                 "id": "xiaomimimo/mimo-v2.5",
+                "contextWindow": 262144,
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
+                "id": "zai-org/glm-5.2",
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
+                "id": "moonshotai/kimi-k2.7-code",
                 "maxTokens": 2048,
                 "reasoning": true
             }
@@ -32,11 +43,29 @@
         "baseUrl": "http://host.docker.internal:8001/v1",  
         "api": "openai-completions",
         "apiKey": "Llama.cpp",
+        "models_inactive": [
+            {
+                "_test": "Ok but slow",
+                "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",
+                "name": "QWEN 3.6 35B A3B - UD Q4_K_M",
+                "contextWindow": 65536,
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+                    { 
+            "_test": "",
+            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
+            "name": "Qwen 2.5 Coder 64K",            
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        }  
+        ],
         "models": [
 
         { 
             "_test": "OK (SUPER)",
-            "id": "barozp_Qwen3.6-28B-REAP20-A3B-Q4_K_M.gguf",
+            "id": "Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
             "name": "Qwen 3.6 28B REAP20",
             "contextWindow": 65536,
             "maxTokens": 4096,
@@ -46,7 +75,7 @@
 
         { 
             "_test": "??",
-            "id": "unsloth_gpt-oss-20b-Q8_0.gguf",
+            "id": "GPT-OSS-20b-Q8_0_unsloth.gguf",
             "name": "GPT OSS 20B",            
             "contextWindow": 65536,
             "maxTokens": 4096,
@@ -54,7 +83,7 @@
         },
         { 
             "_test": "?",
-            "id": "unsloth_gpt-oss-20b-UD-Q8_K_XL.gguf",
+            "id": "GPT-OSS-20b-UD-Q8_K_XL_unsloth.gguf",
             "name": "GPT OSS 20B UD Q8_K_XL",            
             "contextWindow": 65536,
             "maxTokens": 4096,
@@ -62,18 +91,28 @@
         },
         { 
             "_test": "Super fast but it makes long and wrong reasoning",
-            "id": "davidau_OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL.gguf",
+            "id": "OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL_davidau.gguf",
             "name": "GPT-OSS-20B_IQ4_NL",            
             "contextWindow": 131072,
             "maxTokens": 4096,
             "reasoning": true
         },
 
+        {
+            "_test": "???",
+                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
+                "name": "Gemma4 12B IQ4_NL",
+                "contextWindow": 131072,
+                "maxTokens": 2048,
+                "reasoning": true,
+                "input": [ "text" ]
+        },
+
 
         { 
             "_test": "Good",
-            "id": "noctrex_gemma-4-26B-A4B-it-MXFP4_MOE.gguf",
-            "name": "Gemma4 e26b 128K (by noctrex)",  
+            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
+            "name": "Gemma4 e26b 64K (by noctrex)",  
             "description": "Gemma 4 e26b 128K (by noctrex)",          
             "contextWindow": 65536,
             "maxTokens": 2048,
@@ -81,7 +120,7 @@
         },
         { 
             "_test": "OK",
-            "id": "unsloth_gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
             "name": "Gemma4 e26b 16K",            
             "contextWindow": 16384,
             "maxTokens": 2048,
@@ -89,21 +128,12 @@
         },
         { 
             "_test": "OK",
-            "id": "unsloth_gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
             "name": "Gemma4 e26b 64K",            
             "contextWindow": 65536,
             "maxTokens": 4096,
             "reasoning": true
-        },
-        { 
-            "_test": "",
-            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
-            "name": "Qwen 2.5 Coder 64K",            
-            "contextWindow": 65536,
-            "maxTokens": 2048,
-            "reasoning": true
-        }   
-
+        }
         
         ]
     },

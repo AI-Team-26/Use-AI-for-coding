@@ -6,10 +6,10 @@ This repository contains documentation, notes, scripts about the use of AI for c
 In the end I started to work with AI "tools" that runs on Docker containers.  
 The Docker containers can be customized to satisfy basic stuff (Git + GitHub auth) and specific requirements (customized prompt for particular languages, predefined skills etc...).  
 For my specific situation, I found **Pi Agent** the best tool I can use.   
-**Qwen Code** is a very good tool too, but, due to its huge system context, it is too limited with local LLM and, probably, also more tokens-consuming.
+**Qwen Code** is a very good tool too, but, due to its huge system context + tools, it is too limited with local LLM and, probably, also more tokens-consuming.
   
 I tried local LLM and also different LLM providers.      
-I did tests using my graphic cards with limited VRAM, initially 8GB and now 16GB.  
+I did tests using my old graphic card with 16GB of VRAM.  
 I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance with all the models.  
 Here my experiments:  
 - [Ollama](Ollama&%20models)
@@ -133,7 +133,8 @@ The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generi
 
 ```bash
 docker ps
-docker exec -it <conainer> //bin//bash    ## double slash to prevent GitBash to correct the path
+container=
+docker exec -it $container //bin//bash    ## double slash to prevent GitBash to correct the path
 ```
 
 To read the current credentials: 

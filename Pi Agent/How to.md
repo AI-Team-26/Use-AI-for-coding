@@ -63,7 +63,9 @@ Solution 2: Use proxy that intercept the requests, and if it find out the model 
 **At start**:
 - ``pi -r`` (``pi --resume``) will show a menu where to pick a session.  
 - ``pi -c`` (``pi --continue``) will pick the most recent session. 
+- ``pi --name <session_name>`` will start a new session and give it a name.
 - ``pi --session <session-id>``
+- ``pi --no-session `` Start Pi with an ephemeral session.
 
 
 **While opened**: ``/session`` will allow to manage sessions and change current session.

@@ -28,7 +28,7 @@ setup_git() {
         git config --global credential.helper store
         #echo "https://$git_account:$git_pat@github.com" > ~/.git-credentials
         # credentials.useHttpPath = true
-        # Set the 
+        # Set the default credentials (repository owner)
         echo "https://$git_account:$git_pat@github.com" >> ~/.git-credentials
         echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
     fi
@@ -49,10 +49,10 @@ setup_github_cli() {
         else
             # look for default credentials
             export GITHUB_TOKEN=$(grep '@github.com$' ~/.git-credentials | head -n1 | sed -n 's|.*:\([^@]*\)@.*|\1|p')
-            echo -e "${GREEN}🐙 GitHub CLI configuredwith default credentials${NC}"
+            echo -e "${GREEN}🐙 GitHub CLI configured with default credentials${NC}"
         fi
 
-        echo -e "GITHUB_TOKEN: ${GITHUB_TOKEN:0:15}***${GITHUB_TOKEN: -5}"
+        #echo -e "GITHUB_TOKEN: ${GITHUB_TOKEN:0:15}***${GITHUB_TOKEN: -5}"
         gh auth status
     fi
 }
@@ -89,17 +89,19 @@ select_project() {
     fi
 
     echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
-    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" ">_ Shell" "❌ Exit"; do
+    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" "😎 No-session Chat" ">_ Shell" "❌ Exit"; do
         if [[ "$proj" == "➕ Clone a new project" ]]; then
             clone_project; select_project; break
         elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
             add_github_pat; select_project; break
+        elif [[ "$proj" == "😎 No-session Chat" ]]; then
+            pi --no-session
         elif [[ "$proj" == ">_ Shell" ]]; then 
             show_help
             /bin/bash
             #break
             #select_project
-            exit 0            
+            break          
         elif [[ "$proj" == "❌ Exit" ]]; then
             exit 0
         elif [[ -n "$proj" ]]; then
@@ -111,11 +113,22 @@ select_project() {
             # Launch Pi Agent (adjust flags as needed)
             # Example: pi-agent --model <model_name> --api-key <your_key>
             #pi echo "use /resume to pick a previous session"
-            echo "Check GH auth again..."
-            gh auth status
-            exec pi --resume
+
+            echo "Select what to do:"
+            select choice in continue resume new n0-session; do
+                if [[ "$choice" == "continue" ]]; then
+                    pi --continue ; break
+                elif [[ "$choice" == "resume" ]]; then
+                    pi --resume ; break
+                elif [[ "$choice" == "new" ]]; then
+                    pi --name "main" ; break
+                else
+                    pi --no-session ; break
+                fi
+            done
             
-            break
+            echo -e "Pi Agent session closed. Bye!"
+            break 
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
         fi
