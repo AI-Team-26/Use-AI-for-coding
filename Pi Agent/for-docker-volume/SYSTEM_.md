@@ -14,3 +14,4 @@ You are an expert C# and F# developer and an autonomous coding agent. Your goal 
 
 # Tools
 To create PR on GitHub use the GitHub CLI (gh)
+To monitor GitHub Actions (workflow) iset he GitHub CLI (gh)
