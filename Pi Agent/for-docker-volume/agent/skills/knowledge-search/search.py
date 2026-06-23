@@ -1,4 +1,5 @@
 import urllib.request
+import urllib.error
 import json
 import sys
 import urllib.parse
@@ -9,17 +10,24 @@ def search_wikipedia(query):
     headers = {'User-Agent': 'PiAgent/1.0 (contact: user@example.com)'}
     try:
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 print(f"Title: {data.get('title')}")
                 print(f"Summary: {data.get('extract')}")
                 if data.get('thumbnail'):
                     print(f"Image: {data.get('thumbnail', {}).get('source')}")
-            elif response.status == 404:
-                print("No Wikipedia page found for this topic.")
             else:
                 print(f"Wikipedia error: Status {response.status}")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            print("No Wikipedia page found for this topic.")
+        else:
+            # Try to read the response body for more context
+            body = e.read().decode('utf-8', errors='ignore')
+            print(f"Wikipedia error: Status {e.code}")
+            if body:
+                print(f"Response body: {body}")
     except Exception as e:
         print(f"Error searching Wikipedia: {e}")
 
@@ -29,7 +37,7 @@ def search_duckduckgo_instant(query):
     headers = {'User-Agent': 'PiAgent/1.0 (contact: user@example.com)'}
     try:
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode())
             if data.get('AbstractText'):
                 print(f"Abstract: {data['AbstractText']}")
@@ -42,6 +50,11 @@ def search_duckduckgo_instant(query):
                 print("\nRelated Topics:")
                 for topic in data['RelatedTopics'][:3]:
                     print(f"- {topic.get('Text')} ({topic.get('FirstURL')})")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            print("No DuckDuckGo result found for this query.")
+        else:
+            print(f"DuckDuckGo error: Status {e.code}")
     except Exception as e:
         print(f"Error searching DuckDuckGo: {e}")
 
