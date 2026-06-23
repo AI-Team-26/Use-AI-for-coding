@@ -110,9 +110,6 @@ curl -X POST \
 | `curl -X POST .../requested_reviewers -d '{"reviewers":["user"]}'` | **Requests/assigns a reviewer** | (Re-)assigning a reviewer to a PR |
 
 
-## Commands
-   - `/clean` - Clean the current session, removing all messages but keeping the session header. Agent needs to use the "clean-session" skill
-
 ## Summary
 
 These guidelines ensure that all changes are traceable, reviewed, and documented, while giving the user flexibility to override the default branch-and-PR workflow when needed.

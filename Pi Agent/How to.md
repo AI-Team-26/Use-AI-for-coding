@@ -84,3 +84,11 @@ Since you are currently in a session, you can easily get its unique identifier o
 This will display the Session ID, the file path where it is stored, and other metadata like token usage and cost.
 
 
+## !!! WIP !!! Use the voice for the prompt
+
+```
+pi install npm:pi-voice-stt
+```
+
+It needs ffmpeg installed in the contaginer.  
+It needs access to a microphone in the host.

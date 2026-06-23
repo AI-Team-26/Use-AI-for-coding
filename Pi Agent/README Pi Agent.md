@@ -28,6 +28,8 @@ cd "/d/Programming/AI/Use AI for coding/Pi Agent"
 docker_volume=/d/Programming/PROJECTS/PiAgent_Container
 mkdir -p "$docker_volume/.pi"
 mkdir -p "$docker_volume/projects"
+mkdir -p "$docker_volume/.pi/agent/skills"
+mkdir -p "$docker_volume/.pi/agent/extensions"
 
 # 2. Copy startup scripts and configurations
 cp ../scripts/start_common.sh "$docker_volume/projects/start_common.sh"
@@ -35,7 +37,7 @@ cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
 cp for-docker-volume/AGENTS.md "$docker_volume/.pi/agent/AGENTS.md"
 cp for-docker-volume/SYSTEM.md "$docker_volume/.pi/agent/SYSTEM.md"
 cp -r for-docker-volume/agent/skills/* "$docker_volume/.pi/agent/skills/"
-#cp -r for-docker-volume/agent/skills-disabled/* "$docker_volume/.pi/agent/skills-disabled/"
+cp -r for-docker-volume/agent/extensions/* "$docker_volume/.pi/agent/extensions/"
 # cp for-docker-volume/.env "$docker_volume/.pi/.env"
 
 cp for-docker-volume/agent/models.json "$docker_volume/.pi/agent/models.json"
