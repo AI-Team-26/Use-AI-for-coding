@@ -10,6 +10,9 @@ if [[ -f set_api_keys.sh ]]; then
     source set_api_keys.sh
 fi
 
+
+LLAMACPP_URL="http://host.docker.internal:8001"
+
 echo -e "${bold}=== Pi Agent ==="
 echo -e "${bold}================${NC}"
 
@@ -115,21 +118,40 @@ select_project() {
 
             setup_github_cli
 
-            # Launch Pi Agent (adjust flags as needed)
-            # Example: pi-agent --model <model_name> --api-key <your_key>
-            #pi echo "use /resume to pick a previous session"
+            ### TODO: Highlight (and pass over) the current llama.cpp loaded model
+            # find local running model
+            local gguf_loaded
+            #gguf_loaded=$(curl -s $LLAMACPP_URL/v1/models \
+            #    | jq -r '.data[] | select(.loaded==true) | .model' \
+            #    | grep '\.gguf$' )
+
+            # no jq installed... use Python
+            # debug: echo -e $(curl -s "$LLAMACPP_URL/v1/models")
+            #gguf_loaded=$(curl -s "$LLAMACPP_URL/v1/models" | python3 -c ' \
+            #    import sys,json; \
+            #    print(next((m.get("id", m.get("model")) for m in json.load(sys.stdin).get("data", []) if m.get("loaded") and m.get("id", m.get("model", "")).endswith(".gguf")), ""))')
+
+
+            # Launch Pi Agent
+            # --models Comma-separated model patterns for Ctrl+P cycling. Supports globs (anthropic/*, *sonnet*) and fuzzy matching
+
+            local model_param=""
+            if [[ $gguf_loaded != "" ]]; then 
+                model_param="--model Llama.cpp/$gguf_loaded"
+                echo -e "Found this llama.cpp model loaded: $gguf_loaded"
+            fi
 
             echo "Select what to do:"
             select choice in continue resume new no-session; do
                 #clear
                 if [[ "$choice" == "continue" ]]; then
-                    pi --continue ; break
+                    pi $model_param --continue ; break
                 elif [[ "$choice" == "resume" ]]; then
-                    pi --resume ; break
+                    pi $model_param --resume ; break
                 elif [[ "$choice" == "new" ]]; then
-                    pi --name "main" ; break
+                    pi $model_param --name "main" ; break
                 else
-                    pi --no-session ; break
+                    pi $model_param --no-session ; break
                 fi
             done
             
