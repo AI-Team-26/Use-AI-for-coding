@@ -180,20 +180,20 @@ chmod 600 ~/.git-credentials
 ``cat ~/.git-credentials``  ("github_pat_" is part of the key)
 
 
-### Troubleshooting: Terminal Freeze & Unresponsive Container
+### 🚨 Troubleshooting: Terminal Freeze & Unresponsive Container
 
-#### 📌 Symptoms
+#### Symptoms
 * The interactive container terminal hangs with a blinking cursor. It accepts text input but provides no prompt or output.
 * Running `docker exec -it <container> /bin/bash` works for internal commands (like `ps` or `echo`), but running `ls` or accessing the shared project directory freezes that new terminal session instantly.
 
-#### 🔍 Root Cause: Bind Mount Break
+#### Root Cause: Bind Mount Break
 The issue is a **hard breakdown of the filesystem bridge (9p protocol)** between the Windows host and the WSL2/Docker Linux VM. This typically occurs when:
 1. Windows enters a low-power state, sleep, or Modern Standby (`S0`).
 2. The WSL2 backend runs idle RAM/disk compaction after hours of inactivity, dropping the virtual connection to the host.
 
 When this bridge breaks, any process trying to read or write to the shared host folder (`/projects`) is forced into a **`D` state (Uninterruptible Sleep)**. Because the process is trapped at the kernel level waiting for Windows disk I/O that will never respond, **it cannot be killed (even with `kill -9`) or bypassed from inside the container.**
 
-#### 🛠️ Recovery Procedure
+#### Recovery Procedure
 This cannot be resolved from inside the container. You must reset it from the Windows host:
 
 **Forcefully restart the container:**

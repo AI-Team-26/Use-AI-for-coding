@@ -59,12 +59,31 @@
             "contextWindow": 65536,
             "maxTokens": 2048,
             "reasoning": true
-        }  
-        ],
-        "models": [
-
+        } ,
+        {
+            "_test": "???",
+                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
+                "name": "Gemma4 12B IQ4_NL",
+                "contextWindow": 131072,
+                "maxTokens": 2048,
+                "reasoning": true,
+                "input": [ "text" ]
+        },
         { 
-            "_test": "OK (SUPER)",
+            "test": "❌ Liar, Hallucinate, Loop, Slow",
+            "id": "Gemma-4-12B-v2-Q4_K_M_yuxinlu1.gguf",
+            "name": "Gemma4 12B v2-Q4_K_M_yuxinlu1",
+            "contextWindow": 262144,
+            "maxTokens": 2048,
+            "reasoning": true,
+            "input": [ "text" ]
+        }
+
+        ],
+
+        "models": [
+        { 
+            "test": "✔️ OK (SUPER)",
             "id": "Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
             "name": "Qwen 3.6 28B REAP20",
             "contextWindow": 65536,
@@ -72,6 +91,37 @@
             "reasoning": true,
             "input": [ "text", "image" ]
         },
+
+        { 
+            "_test": "OK",
+            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
+            "_name": "Gemma4 e26b 16K",            
+            "_contextWindow": 16384,
+            "name": "Gemma4 e26b 64K",            
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+            "_test": "Good",
+            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
+            "name": "Gemma4 e26b 64K (by noctrex)",         
+            "contextWindow": 65536,
+            "_name": "Gemma4 e26b 128K (by noctrex) name",        
+            "_contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+
+        { 
+            "_test": "???",
+            "id": "Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
+            "name": "Gemma4 e26b 64K (UD-IQ4_NL)",         
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        
 
         { 
             "_test": "??",
@@ -96,46 +146,32 @@
             "contextWindow": 131072,
             "maxTokens": 4096,
             "reasoning": true
-        },
-
-        {
-            "_test": "???",
-                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
-                "name": "Gemma4 12B IQ4_NL",
-                "contextWindow": 131072,
-                "maxTokens": 2048,
-                "reasoning": true,
-                "input": [ "text" ]
-        },
-
-
-        { 
-            "_test": "Good",
-            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
-            "name": "Gemma4 e26b 64K (by noctrex)",  
-            "description": "Gemma 4 e26b 128K (by noctrex)",          
-            "contextWindow": 65536,
-            "maxTokens": 2048,
-            "reasoning": true
-        },
-        { 
-            "_test": "OK",
-            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
-            "name": "Gemma4 e26b 16K",            
-            "contextWindow": 16384,
-            "maxTokens": 2048,
-            "reasoning": false
-        },
-        { 
-            "_test": "OK",
-            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
-            "name": "Gemma4 e26b 64K",            
-            "contextWindow": 65536,
-            "maxTokens": 4096,
-            "reasoning": true
-        }
-        
+        }        
         ]
+    },
+    "google": {
+      "apiKey": "$GOOGLE_AI_API_KEY",
+      "models": [
+        {
+          "id": "gemma-4-31b-it",
+          "name": "Gemma 4 31B IT",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 32768,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        }
+      ],
+      "api": "google-generative-ai",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta"
     },
     "Ollama": {
       "baseUrl_DOC": "original: http://localhost:11434/v1",
@@ -143,9 +179,7 @@
       "api": "openai-completions",
       "apiKey": "ollama",
       "model_DOC": "ctx 4096 6144 8192 10240 12288 16384 18432 20480 22528 24576 28672 32768 65536 131072",
-      "models": [
-        
-  
+      "models___hide": [          
 
         { 
             "_test": "OK",

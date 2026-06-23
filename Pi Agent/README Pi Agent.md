@@ -35,7 +35,7 @@ cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
 cp for-docker-volume/AGENTS.md "$docker_volume/.pi/agent/AGENTS.md"
 cp for-docker-volume/SYSTEM.md "$docker_volume/.pi/agent/SYSTEM.md"
 cp -r for-docker-volume/agent/skills/* "$docker_volume/.pi/agent/skills/"
-cp -r for-docker-volume/agent/skills-disabled/* "$docker_volume/.pi/agent/skills-disabled/"
+#cp -r for-docker-volume/agent/skills-disabled/* "$docker_volume/.pi/agent/skills-disabled/"
 # cp for-docker-volume/.env "$docker_volume/.pi/.env"
 
 cp for-docker-volume/agent/models.json "$docker_volume/.pi/agent/models.json"
