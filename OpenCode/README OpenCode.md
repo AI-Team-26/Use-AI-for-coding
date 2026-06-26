@@ -1,5 +1,7 @@
 # OpenCode
 
+** PAUSED **  
+
 https://opencode.ai/download
 
 https://opencode.ai/docs/#install

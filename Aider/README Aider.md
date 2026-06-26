@@ -1,5 +1,7 @@
 # Aider
 
+** PAUSED **  
+
 https://aider.chat/docs/config/editor.html
 
 ## Docker

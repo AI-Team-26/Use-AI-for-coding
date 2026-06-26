@@ -1,6 +1,6 @@
 # GPU on rent website
 
-- Test what is capable of a GPU with 16GB, 32GB, 48GB
+- Test what is capable of a GPU with 32GB or 48GB
 - Verify how to secure and use a rented GPU
 - Test what it can cost in a week/month of usage
 

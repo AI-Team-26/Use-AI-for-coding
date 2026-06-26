@@ -10,9 +10,6 @@ if [[ -f set_api_keys.sh ]]; then
     source set_api_keys.sh
 fi
 
-
-LLAMACPP_URL="http://host.docker.internal:8001"
-
 echo -e "${bold}=== Pi Agent ==="
 echo -e "${bold}================${NC}"
 
@@ -32,8 +29,10 @@ setup_git() {
         git config --global user.name "$git_username"
         git config --global user.email "$git_email"
         git config --global credential.helper store
+        git config --global credential.useHttpPath true
         #echo "https://$git_account:$git_pat@github.com" > ~/.git-credentials
         # credentials.useHttpPath = true
+
         # Set the default credentials (repository owner)
         echo "https://$git_account:$git_pat@github.com" >> ~/.git-credentials
         echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
@@ -44,7 +43,7 @@ setup_git() {
 setup_github_cli() {
     if [[ -f ~/.git-credentials ]]; then
         local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-        echo -e "Repository: $repo_path"
+        echo -e "Repository: $repo_path\n"
 
         # look for ...project.git record in credentials
         export GITHUB_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
@@ -60,6 +59,7 @@ setup_github_cli() {
 
         #echo -e "GITHUB_TOKEN: ${GITHUB_TOKEN:0:15}***${GITHUB_TOKEN: -5}"
         gh auth status
+        echo "exit setup_github_cli"
     fi
 }
 
@@ -84,83 +84,6 @@ clone_project() {
     # Optional: Add Git hooks (e.g., pre-push) if needed
     # cp git_hook_pre_push.sh "/projects/$dir_name/.git/hooks/pre-push"
     # chmod +x "/projects/$dir_name/.git/hooks/pre-push"
-}
-
-# --- Select or Clone a Project ---
-select_project() {
-    mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
-
-    if [ ${#projects[@]} -eq 0 ]; then
-        echo -e "${YELLOW}${FOLDER_EMOJI} No projects found. Clone one first!${NC}"
-        clone_project
-        return 0
-    fi
-
-    echo -e "${YELLOW}${FOLDER_EMOJI} Select a project:${NC}"
-    select proj in "${projects[@]}" "➕ Clone a new project" "🔑 Add GitHub PAT for a repo" "😎 No-session Chat" ">_ Shell" "❌ Exit"; do
-        if [[ "$proj" == "➕ Clone a new project" ]]; then
-            clone_project; break
-        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
-            add_github_pat; select_project; break
-        elif [[ "$proj" == "😎 No-session Chat" ]]; then
-            pi --no-session
-        elif [[ "$proj" == ">_ Shell" ]]; then 
-            show_help
-            /bin/bash
-            #break
-            #select_project
-            break          
-        elif [[ "$proj" == "❌ Exit" ]]; then
-            exit 0
-        elif [[ -n "$proj" ]]; then
-            echo -e "${GREEN}${ROCKET_EMOJI} Running Pi Agent in project: $proj${NC}"
-            cd "/projects/$proj" || exit 1
-
-            setup_github_cli
-
-            ### TODO: Highlight (and pass over) the current llama.cpp loaded model
-            # find local running model
-            local gguf_loaded
-            #gguf_loaded=$(curl -s $LLAMACPP_URL/v1/models \
-            #    | jq -r '.data[] | select(.loaded==true) | .model' \
-            #    | grep '\.gguf$' )
-
-            # no jq installed... use Python
-            # debug: echo -e $(curl -s "$LLAMACPP_URL/v1/models")
-            #gguf_loaded=$(curl -s "$LLAMACPP_URL/v1/models" | python3 -c ' \
-            #    import sys,json; \
-            #    print(next((m.get("id", m.get("model")) for m in json.load(sys.stdin).get("data", []) if m.get("loaded") and m.get("id", m.get("model", "")).endswith(".gguf")), ""))')
-
-
-            # Launch Pi Agent
-            # --models Comma-separated model patterns for Ctrl+P cycling. Supports globs (anthropic/*, *sonnet*) and fuzzy matching
-
-            local model_param=""
-            if [[ $gguf_loaded != "" ]]; then 
-                model_param="--model Llama.cpp/$gguf_loaded"
-                echo -e "Found this llama.cpp model loaded: $gguf_loaded"
-            fi
-
-            echo "Select what to do:"
-            select choice in continue resume new no-session; do
-                #clear
-                if [[ "$choice" == "continue" ]]; then
-                    pi $model_param --continue ; break
-                elif [[ "$choice" == "resume" ]]; then
-                    pi $model_param --resume ; break
-                elif [[ "$choice" == "new" ]]; then
-                    pi $model_param --name "main" ; break
-                else
-                    pi $model_param --no-session ; break
-                fi
-            done
-            
-            echo -e "Pi Agent session closed. Bye!"
-            break 
-        else
-            echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
-        fi
-    done
 }
 
 # --- Main ---

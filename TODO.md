@@ -2,10 +2,10 @@
 
 ## Doing
 
-- Issue: Pi/Docker guest frooze when not used for a while
-
 
 ## Backlog
+
+- web-search skill to make parallel api calls (like the knowledge-search skill)
 
 - 5 script to launch different model with its settings
 - 5 proxy bridge to start requested model on llama-server
@@ -28,5 +28,4 @@
 - Figure out why Pi Agent is not able to use gh due to auth not working.
 - Create models script
 - Test models script
-
-
+- Issue: Pi/Docker guest frooze when not used for a while. Solved switching to WSL (it uses VirtioFS I think)

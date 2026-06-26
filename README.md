@@ -12,8 +12,8 @@ I tried local LLM and also different LLM providers.
 I did tests using my old graphic card with 16GB of VRAM.  
 I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance with all the models.  
 Here my experiments:  
-- [Ollama](Ollama&%20models)
-- [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
+- 👌 [Ollama](Ollama&%20models)
+- 💪 [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
 
 The _scripts/_ folder contains Bash scripts to create and test the models.  
 Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions to use.  
@@ -102,7 +102,7 @@ Create a fine-grained access token for the owner of the repo, using the followin
   + Actions: Read  (to check execution result)
   + (Metadata: added automatically)
 
-Generate teh PAT and copy it.  
+Generate the PAT and copy it.  
 Store it in a environment variable: `setx GITHUB_PAT_<ACCOUNT>_<USE CASE> <GITHUB_PAT>`  
 
 On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
@@ -180,11 +180,17 @@ chmod 600 ~/.git-credentials
 ``cat ~/.git-credentials``  ("github_pat_" is part of the key)
 
 
-### 🚨 Troubleshooting: Terminal Freeze & Unresponsive Container
+
+### 🚨 Issue: Pi Terminal Freeze & Unresponsive Container
+
+** SOLVED switching to WSL for Docker, instead of Hyper-V **  
 
 #### Symptoms
 * The interactive container terminal hangs with a blinking cursor. It accepts text input but provides no prompt or output.
-* Running `docker exec -it <container> /bin/bash` works for internal commands (like `ps` or `echo`), but running `ls` or accessing the shared project directory freezes that new terminal session instantly.
+or 
+* The user can write the prompt but nothing happens when send it (press ENTER)
+
+Test: Running `docker exec -it <container> /bin/bash` works for internal commands (like `ps` or `echo`), but running `ls` or accessing the shared project directory freezes that new terminal session instantly.
 
 #### Root Cause: Bind Mount Break
 The issue is a **hard breakdown of the filesystem bridge (9p protocol)** between the Windows host and the WSL2/Docker Linux VM. This typically occurs when:
@@ -209,7 +215,7 @@ wsl --shutdown
 **You need to restart Docker Desktop.**
 
 
-### Prevent/Avoid hang up
+#### Prevent/Avoid hang up
 
 The issue can be prevented (probably) avoiding the disk to go in low-power mode (sort of "sleep") and actually cause the bind mount break.  
 Avoiding the "sleep mode" is possible with a keep-alive scritpt, but is not a nice thing if the PC is left unattended for hours or for the full night.  

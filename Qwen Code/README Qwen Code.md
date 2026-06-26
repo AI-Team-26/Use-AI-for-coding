@@ -1,5 +1,7 @@
 # Qwen Code
 
+** PAUSED **  
+
 Docs:
 - Qwen Code: https://github.com/QwenLM/qwen-code
 - Docker image: https://github.com/QwenLM/qwen-code/pkgs/container/qwen-code

@@ -4,13 +4,13 @@ https://gist.github.com/rxaviers/7360908
 
 | Emoji | Markdown Syntax        | Use Case                        |
 |-------|------------------------|---------------------------------|
-| ✅ | :white_check_mark:     | Success/OK status               |
-| ✔️ | :heav_check_mark:      | Confirmation checkmark          |
+| ✅ | ``:white_check_mark:``     | Success/OK status               |
+| ✔️ | :heavy_check_mark:      | Confirmation checkmark          |
 | ❌ | :x:                    | Error/Failure                   |
 | ⚠️ | :warning:              | Warning/Notice                  |
 | 🟢 | :green_circle:         | OK status (explicit green)      |
 | 🔴 | :red_circle:           | Error status (explicit red)     |
-| ℹ️ | :informatio_source:    | Info/Informational notes        |
+| ℹ️ | :information_source:    | Info/Informational notes        |
 | ⛔ | :no_entry:             |                                 |        
 | 🧠 | :brain:                | Thinking/Processing             |
 | 🚀 | :rocket:               | Deployment/Speed                |
@@ -30,7 +30,7 @@ https://gist.github.com/rxaviers/7360908
 | 📦 |                        |                                 |
 | ⚙️ |                        |                                 |
 | 🎯 |                        |                                 |
-| 📜 |                        |                                 |
+| 📜 |                        | Menu                            |
 | 📌 |                        |                                 |
 | ⏳ |                        |                                 |
 | 🔽 |                        |                                 |

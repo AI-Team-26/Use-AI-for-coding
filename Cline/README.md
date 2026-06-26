@@ -1,10 +1,14 @@
 # Cline
 
+** PAUSED **
+
+I'm actually using it just to write commits description at the moment, because it has a super accessible button that does all with a click on VS Code Git panel.  
+
 
 ## Bad things
 
 - It stays in the ridiculous small VS Code add-on panel, practically unusable.
-- I can configure an API at a time... if I want to switch provider I have to serch the API key again... really umpractical.
+- You can configure only one API at a time... if I want to switch provider I have to search the API key again... really impractical.
 - Selecting AliBaba provider, the list of models has only old models. I have free quota for at least 20 new models and I can't use them, why?
 - In Plan mode it is not able to search the web. 
   I asked how to do something. I received a long response with "guessings" and "you should loook at...", so I asked it to look at the documentation.  
