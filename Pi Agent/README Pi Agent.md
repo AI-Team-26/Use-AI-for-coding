@@ -1,65 +1,49 @@
 # Pi Agent
 
-A minimalist terminal coding agent setup for F# development, optimized for graphic card 16GB RAM.  
+A minimalist terminal coding agent.  
 It lets use root user to Pi Agent. Container is not accessible/exposed to internet.  
-It shares settings and projects folder (using a bind mount volume) within the host so settings and code are easy to read and change.  
+It shares settings and projects folder (using a bind mount volume) within the host, so settings and code are easy to read and change.  
 
 ## Build the Docker Image
 ```bash
+cd "Pi Agent"
 docker build \
     --label description="Pi Agent for coding" \
-    -t pi-agent:3 \
-    -f v3.Dockerfile \
+    -t pi-agent:5 \
+    -f Dockerfile \
     .
 ```
 
 ## Run the Container
 
-We run the container passing 2 Volumes:
-- /root/.pi   -> for the settings, skills etc...
-- /projects   -> for the GIT repositories, local projects and other files (start.sh, set_api_keys.sh, README)
-
 ### Setup
 
+Run the _setup.sh_ script.  
 ```bash
-cd "/d/Programming/AI/Use AI for coding/Pi Agent"
-
-# 1. Prepare settings and project volumes
-docker_volume=/d/Programming/PROJECTS/PiAgent_Container
-
-# Prepare the settings and projects volumes
-mkdir -p "$docker_volume/.pi"
-mkdir -p "$docker_volume/.pi/agent/skills"
-mkdir -p "$docker_volume/.pi/agent/extensions"
-mkdir -p "$docker_volume/projects"
-
-# 2. Copy startup scripts and configurations
-cp ../scripts/start_common.sh "$docker_volume/projects/start_common.sh"
-cp for-docker-volume/start.sh "$docker_volume/projects/start.sh"
-cp for-docker-volume/AGENTS.md "$docker_volume/.pi/agent/AGENTS.md"
-cp for-docker-volume/SYSTEM.md "$docker_volume/.pi/agent/SYSTEM.md"
-cp -r for-docker-volume/agent/skills/* "$docker_volume/.pi/agent/skills/"
-cp -r for-docker-volume/agent/extensions/* "$docker_volume/.pi/agent/extensions/"
-# cp for-docker-volume/.env "$docker_volume/.pi/.env"
-
-cp for-docker-volume/agent/models.json "$docker_volume/.pi/agent/models.json"
-
-# Set secret keys
-sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT_LOCAL/g" "$docker_volume/.pi/agent/models.json"
-
+cd "Pi Agent"
+cd "for-docker-volume"
+docker_volumes="/p/PiAgent_Container"
+./setup.sh "$docker_volumes"
 ```
 
 ### Run the Container
 
-```bash
+We create the container within two volumes:
+- /root/.pi   -> for the settings, skills etc...
+- /projects   -> for the GIT repositories, local projects and other utility files (start script, .env, README etc...)
 
-# Docker runs as root
+```bash
+cd "Pi Agent"
+docker_volumes="/p/PiAgent_Container"
+
+# Docker runs as root  (don't forget the -it parameters)
 docker run \
-    --name PiAgent_v3 \
+    -it \
+    --name PiAgent \
     --label "description=Pi Agent for GitHub projects" \
-    --mount type=bind,src="$docker_volume/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volume/projects",dst=/projects \
-    pi-agent:3
+    --mount type=bind,src="$docker_volumes/.pi",dst=/root/.pi \
+    --mount type=bind,src="$docker_volumes/projects",dst=/projects \
+    pi-agent:5
 
 # legacy syntax
 # -v "$docker_volume/.pi:/root/.pi" \

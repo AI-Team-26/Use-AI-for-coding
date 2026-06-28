@@ -2,12 +2,8 @@
 
 ## Doing
 
-
 ## Backlog
 
-- web-search skill to make parallel api calls (like the knowledge-search skill)
-
-- 5 script to launch different model with its settings
 - 5 proxy bridge to start requested model on llama-server
   step 1: the script that used defined model in the models_configuration,json
   step 2: proxy that intecepts the request and start the server with the new model.
@@ -29,3 +25,5 @@
 - Create models script
 - Test models script
 - Issue: Pi/Docker guest frooze when not used for a while. Solved switching to WSL (it uses VirtioFS I think)
+- Pi: Added auto-select of the current locaed model in local llama.cpp provider
+- Pi web-search skill to make parallel api calls (like the knowledge-search skill)

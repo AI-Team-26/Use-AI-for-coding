@@ -7,14 +7,15 @@ The possible options are:
 - Member of a GitHub Organization
 - Collaborator on the GitHub Organization repo
 - Collaborator on the main Account repo
-- ✔️ Fine-grained permissions PAT on the main Account
+- ✔️ Fine-grained permissions PAT on the main Account. Note. All the commits and the PR will be done by the main Account, so it can Merge the PR imemdiately
 
 
 ## Member of a GitHub Organization 
 
+(The organization is created by the main Account and the GitHub shadow account is a Member)  
 As a member it needs "Write" basic role/permission on the organization.  
 It can access with a PAT token pointing to the organization.  
-To be used it requires "=true" and to save the credentials per-repo in .  git-credentials (no wildcard)  
+To be used it requires "=true" and to save the credentials per-repo in . git-credentials (no wildcard)  
 In this way it has access to the repository secrets. ** That is a concern because a mistakes allows potentially to access to secrets and other private info **
 
 

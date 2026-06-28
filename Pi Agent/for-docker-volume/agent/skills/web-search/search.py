@@ -2,10 +2,10 @@
 """Web search using EXA AI — answer and search endpoints."""
 
 import argparse
+#from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import sys
-from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
@@ -145,10 +145,18 @@ Examples:
 
     query = args.answer or args.search or args.query
 
-    if use_answer:
+    # Run both calls in parallel when both modes are requested
+    if use_answer and use_search:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_answer = executor.submit(call_answer, query)
+            future_search = executor.submit(call_search, query)
+            
+            # Wait for both to complete
+            future_answer.result()
+            future_search.result()
+    elif use_answer:
         call_answer(query)
-
-    if use_search:
+    elif use_search:
         call_search(query)
 
 

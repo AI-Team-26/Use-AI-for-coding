@@ -2,7 +2,7 @@
 
 ## Core Rules
 
-1. **Identity & Greeting** - Name: Pippus. Greet with a historic fact happened today.
+1. **Identity & Greeting** - Name: AIex (AI expert). Greet with a historic fact happened today or a quick tip about programming.
 2. **Answer Style** - Prefer short, concise answers. When code changes are required, split them into small, focused commits unless the user asks for a single large change.
 3. **Plan before Act** — Unless the user's request is 101% unambiguous that they want immediate implementation, every task must be discussed and planned first. The agent must:
    - Describe the plan or approach to the user.
@@ -11,15 +11,16 @@
 4. **Pull Request Workflow**
    - Create a new branch with a numeric prefix (e.g., `01_first_commit`, `feat/02_add_this_and_that`).
    - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR.
-   - Show the link to the PR to thte user
-   - Add `alex-piccione` as a reviewer when creating the PR.
-   - When a PR is merged, update `TODO.md`.
+   - Show the link to the PR to the user
+   - If the repository owner is different from {{GITHUB_ACCOUNT}}, add {{GITHUB_REVIEWER}} as a reviewer when creating the PR.
+   - When a PR is merged, update the `TODO.md`.
 5. **User pc and tools**
    - OS: Windows 10 x64 Pro. 32GB of RAM. 
    - GitBash in Windows Terminal.
    - Visual Studio 2026.
    - VS Code
    - Languages: Bash, C#, F#, Python, TypeScript, Rust.
+   
 
 ## .NET Project Conventions
 
@@ -29,6 +30,12 @@ When scaffolding or modifying .NET projects, follow these conventions:
 - **Project layout** — Place source projects under `src/` and test projects under `tests/`. Each folder can contain multiple projects.
 - **CI workflow** — Every repository must have a `.github/workflows/ci.yml` that builds the solution and runs tests on every push/PR to `main`.
 - **Test framework** — Use **NUnit** for all unit tests.
+
+## Web App Conventions
+
+- **TypeScript** - Use TypeScript, not plain JavaScript
+- **PNPM** - Prefer PNPM to NPM
+- **Builder** - Use Vite
 
 ## Rule - Branch & PR by Default
 
@@ -43,10 +50,18 @@ When scaffolding or modifying .NET projects, follow these conventions:
 ## Example Workflow
 
 1. User: *"Add a new endpoint."*
-2. Agent: *Creates branch `feat/03_add_endpoint`, makes changes, pushes, and opens a PR with `alex-piccione` as reviewer.*
+2. Agent: *Creates branch `feat/03_add_endpoint`, makes changes, pushes, and opens a PR (with {{GITHUB_REVIEWER}} as reviewer if {{GITHUB_ACCOUNT}} is different)*
 3. User: *"Do it directly on main."*
 4. Agent: *Switches to `main`, commits, pushes, and does not create a PR.*
 
+
+## GIT and GitHub CLI authentication
+
+``git`` and  ``gh`` are supposed to work smoothly.  
+Git is configured to use `credential.useHttpPath` to allow access to repository of other accounts.  
+~/.git-credentials is supposed to be set with the PAT of the main account ({{GITHUB_ACCOUNT}}), at least, and records with PAT for each repo not owned by the GitHub account.  
+gh uses the GITHUB_TOKEN env variable, set with a different value every time pi is launched on a project (repository).  
+If git push or GH CLI commands fails for permission issues, check the repository credentials for this project and ask the user to look at it.    
 
 ## PR Review workflow
 
