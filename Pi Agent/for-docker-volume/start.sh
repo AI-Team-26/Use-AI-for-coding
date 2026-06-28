@@ -20,21 +20,13 @@ if [[ -z "$EXA_API_KEY" ]]; then
     echo -e "${RED} EXA_API_KEY is not found. Set it in the .env file or some functionalities will not work${NC}"
 fi
 
-echo -e "\n${BOLD_PURPLE}================${NC}"
-echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
-echo -e "${BOLD_PURPLE}================${NC}"
-
+# set API KEYS and other secrets
+export EXA_API_KEY=$EXA_API_KEY
 
 start_project() {
     local proj=$1
 
-    clear
-
-    echo ""
-    echo -e "${GREEN}${ROCKET_EMOJI} Running Pi Agent in project: $proj${NC}"
-    cd "/projects/$proj" || exit 1
-
-    setup_github_cli
+    #clear    
 
     ### Pass over the current llama.cpp loaded model
     # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
@@ -69,8 +61,10 @@ start_project() {
 
 
 # --- Main ---
-setup_git
+echo -e "\n${BOLD_PURPLE}================${NC}"
+echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
+echo -e "${BOLD_PURPLE}================${NC}"
 
-#while true; do
-    select_project
-#done
+setup_git_global
+
+select_project

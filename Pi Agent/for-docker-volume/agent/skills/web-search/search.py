@@ -2,7 +2,7 @@
 """Web search using EXA AI — answer and search endpoints."""
 
 import argparse
-#from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import sys

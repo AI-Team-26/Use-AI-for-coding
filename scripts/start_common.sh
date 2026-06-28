@@ -8,8 +8,8 @@ FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠�
 LLAMACPP_URL=${LLAMACPP_HOST:-"http://host.docker.internal:8001"} # host.docker.internal: syntax to get the localhost from the docker container
 
 
-# --- Git Setup ---
-setup_git() {
+# --- Git Setup for main account ---
+setup_git_global() {
     local force=${1:-0}
 
     if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
@@ -25,49 +25,65 @@ setup_git() {
         git config --global credential.useHttpPath true
 
         # Set the default credentials (repository owner)
-        echo "# GitHub Account (fallback)"
-        echo "https://$GITHUB_ACCOUNT:$git_pat@github.com" > ~/.git-credentials
+        echo "https://xxx:$git_pat@github.com/$GITHUB_ACCOUNT" > ~/.git-credentials
         echo ""
         echo -e "${YELLOW}GIT credentials${NC}"
         cat ~/.git-credentials
         echo ""
-        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"
+        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"                
     fi
+
+    #return 0
 }
 
 
-# --- GitHub CLI Setup ---
-setup_github_cli() {
-    if [[ -f ~/.git-credentials ]]; then
-        local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-
-        if [[ -z "$repo_path" ]]; then
-            echo -e "${YELLOW}This is not a GIT repository ${NC}"
-            return 1        
+setup_git_for_repo() {    
+    local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+    if [[ -n "$repo_path" ]]; then
+        # check for GIT credentials of this repo account (account or organization)
+        if [[ ! -f ~/.git-credentials ]]; then
+            touch ~/.git-credentials
         fi
 
-        echo -e "Repository: ${YELLOW}$repo_path${NC}\n"
+        local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
+        local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
 
-        # look for ...project.git record in credentials
-        export GITHUB_TOKEN=$(grep "$repo_path" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
+        if [[ -z "$git_pat" ]]; then
+            echo ""
+            echo -e "❌ Git credentials record for ${YELLOW}$git_pat${NC} not found"
 
-        if [[ -n "$GITHUB_TOKEN" ]]; then
-            #echo $GH_TOKEN | gh auth login --with-token
-            echo -e "${GREEN}🐙 GitHub CLI configured for ${repo_path}!${NC}"
-        else
-            # look for default credentials
-            export GITHUB_TOKEN=$(grep '@github.com$' ~/.git-credentials | head -n1 | sed -n 's|.*:\([^@]*\)@.*|\1|p')
-            echo -e "${GREEN}🐙 GitHub CLI configured with default credentials${NC}"
+            echo ""
+            read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (do you have the PAT)? [Yy]es/[N]o " choice
+            case "$choice" in
+                Y|y|Yes|yes) 
+                read -s -p "GitHub PAT (hidden): " git_pat
+                echo "https://xxx:$git_pat@github.com/$git_account_of_repo" >> ~/.git-credentials
+                echo ""
+                echo -e "${YELLOW}GIT credentials${NC}"
+                cat ~/.git-credentials
+                echo ""
+                ;;                
+                *)
+                return 1
+            esac            
         fi
 
-        #echo -e "GITHUB_TOKEN: ${GITHUB_TOKEN:0:15}***${GITHUB_TOKEN: -5}"
-        gh auth status
-
-        ### TEMP
         echo ""
-        echo -e "${YELLOW}GIT credentials${NC}"
-        cat ~/.git-credentials
+        echo -e "✔️ Git credentials found/set for \"@github.com/$git_account_of_repo\" ${NC}"
+        
+        # set the auth token for GitHub CLI, override existing one
+        export GITHUB_TOKEN="$git_pat"
+        #gh auth status
+        #if ! $(gh auth status 2>/dev/null); then
+        if [[ ! $(gh auth status) ]]; then
+            echo -e "${RED}❌ Error: FAiled to lauthenticate GitHub CLI ${NC}"
+            return 1
+        fi
+    else
+        echo "This project doesn't have a GIT repository"
     fi
+    
+    return 0
 }
 
 
@@ -140,14 +156,15 @@ select_project() {
     #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
     PS3=$'\e[34mSelect a project/action: \e[0m'
     COLUMNS=1  # ← force one item per line
-    select proj in "${projects[@]}" "➕ Clone a repo" ">_ Shell"  "🔑 Add GitHub PAT for a repo" "🐙 Check GIT credentials" "❌ Exit" ; do
+    select proj in "${projects[@]}" "➕ Clone a repo" ">_ Shell"  "🐙 Check GIT credentials" "❌ Exit" ; do
         if [[ "$proj" == "➕ Clone a repo" ]]; then
             clone_repo
             break
         elif [[ "$proj" == ">_ Shell" ]]; then 
             /bin/bash
             break  
-        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
+        # TODO: no more used (and updated)
+        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then            
             add_github_pat
             #select_project
             break     
@@ -156,17 +173,28 @@ select_project() {
             cat ~/.git-credentials
 
             echo ""
-            read -p "Do you want to set GIT crdentials? ([Yy]es/[N]o) " choice
+            read -p "Do you want to set the global GIT credentials? [Yy]es/[N]o " choice
             case "$choice" in
-                Y|y|Yes|yes) setup_git 1 ;;
+                Y|y|Yes|yes) setup_git_global 1 ;;
             esac
 
             break
         elif [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
+
+            clear
+
+            echo ""
+            echo -e "${GREEN}${ROCKET_EMOJI} Open project: ${YELLOW}$proj${NC}"
+            cd "/projects/$proj" || exit 1
+
+            if ! setup_git_for_repo ; then
+                return 1
+            fi
+
             # custom tool function            
-            start_project $proj
+            start_project $proj4
             break
         else
             echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"

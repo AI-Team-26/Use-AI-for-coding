@@ -66,20 +66,23 @@ For this reason I use _/project_ folder as bind  volume, where I can add project
 
 ### Credentials
 
-The GitHub credentials to execute "git" can be set with these commands:
+The generic GIT credentials to execute `git` can be set with these commands:
 ```bash
 git config --global user.name "$git_username"
 git config --global user.email "$git_email"
 git config --global credential.helper store
 echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
 ```
+The start scripts contains these commands.  
+For more details, look at [GitHub access.md]("GitHub access.md").  
+
 
 ### GitHub CLI
 
 GitHub CLI requires its own authentication, it doesn't use .git-credentials.    
-It actually use the **GITHUB_TOKEN** environment variable and the file (... host.yaml , I forgot the path).  
-I automatically populate the variable with teh right token on-the-fly when teh user select a project.  
-See _start.sh_ scripts in different tools (Pi Agent for example).  
+It can use the **GITHUB_TOKEN** environment variable, so we will set it.  
+The start scripts automatically populate the variable with the right token on-the-fly when a project with a repository is selected.    
+See _start_common.sh_ script.  
 
 To check the GH CLI authentication:
 ```bash
@@ -87,9 +90,10 @@ gh auth status 2>/dev/null || echo "gh not authenticated"
 ```
 
 
-### PAT
+### GitHub PAT
 
-Create a fine-grained access token for the owner of the repo, using the following data:
+We use fine-grained access tokens.  
+Use the following permissions for the owned repositories:
 - Owner: ``<GitHub account name>``
 - Repositories: All  
 - Permissions:
@@ -102,14 +106,14 @@ Create a fine-grained access token for the owner of the repo, using the followin
 Generate the PAT and copy it.  
 Store it in a environment variable: `setx GITHUB_PAT_<ACCOUNT>_<USE CASE> <GITHUB_PAT>`  
 
-On the first call of ``git config --global credential.helper store`` it will ask for a PAT,
+The start script or the first call of ``git config --global credential.helper store`` will ask for a PAT,
 and it will store it in ~/git-credentials on a single line like this:
 ``https://<username>:<GITHUB_PAT>S@github.com``
 
 _Note_: When paste in bash shell with right click, **CLICK ONLY ONCE** (it will not show nothing so you tend to right-click again!)
 
 
-### Use Multiple PAT
+### Use Multiple GitHub PAT
 
 The fine-grained GitHub PAT is created for a the user or an organiztion they have access to; you have to choose it.       
 If you created a PAT attached to the user, it does not allow you to work with the organization repositories, and vice-versa.  
@@ -131,7 +135,7 @@ The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generi
 ```bash
 docker ps
 container=
-docker exec -it $container //bin//bash    ## double slash to prevent GitBash to correct the path
+docker exec -it $container /bin//bash    ## double slash to prevent GitBash to correct the path
 ```
 
 To read the current credentials: 

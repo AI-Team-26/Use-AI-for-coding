@@ -43,44 +43,7 @@
         "baseUrl": "http://host.docker.internal:8001/v1",  
         "api": "openai-completions",
         "apiKey": "Llama.cpp",
-        "models_inactive": [
-            {
-                "_test": "Ok but slow",
-                "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",
-                "name": "QWEN 3.6 35B A3B - UD Q4_K_M",
-                "contextWindow": 65536,
-                "maxTokens": 2048,
-                "reasoning": true
-            },
-                    { 
-            "_test": "",
-            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
-            "name": "Qwen 2.5 Coder 64K",            
-            "contextWindow": 65536,
-            "maxTokens": 2048,
-            "reasoning": true
-        } ,
-        {
-            "_test": "???",
-                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
-                "name": "Gemma4 12B IQ4_NL",
-                "contextWindow": 131072,
-                "maxTokens": 2048,
-                "reasoning": true,
-                "input": [ "text" ]
-        },
-        { 
-            "test": "❌ Liar, Hallucinate, Loop, Slow",
-            "id": "Gemma-4-12B-v2-Q4_K_M_yuxinlu1.gguf",
-            "name": "Gemma4 12B v2-Q4_K_M_yuxinlu1",
-            "contextWindow": 262144,
-            "maxTokens": 2048,
-            "reasoning": true,
-            "input": [ "text" ]
-        }
-
-        ],
-
+       
         "models": [
         { 
             "test": "✔️ OK (SUPER)",
@@ -147,6 +110,44 @@
             "maxTokens": 4096,
             "reasoning": true
         }        
+        ],
+
+         "models_inactive": [
+            {
+                "_test": "Ok but slow",
+                "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",
+                "name": "QWEN 3.6 35B A3B - UD Q4_K_M",
+                "contextWindow": 65536,
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+                    { 
+            "_test": "",
+            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
+            "name": "Qwen 2.5 Coder 64K",            
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        } ,
+        {
+            "_test": "???",
+                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
+                "name": "Gemma4 12B IQ4_NL",
+                "contextWindow": 131072,
+                "maxTokens": 2048,
+                "reasoning": true,
+                "input": [ "text" ]
+        },
+        { 
+            "test": "❌ Liar, Hallucinate, Loop, Slow",
+            "id": "Gemma-4-12B-v2-Q4_K_M_yuxinlu1.gguf",
+            "name": "Gemma4 12B v2-Q4_K_M_yuxinlu1",
+            "contextWindow": 262144,
+            "maxTokens": 2048,
+            "reasoning": true,
+            "input": [ "text" ]
+        }
+
         ]
     },
     "google": {
