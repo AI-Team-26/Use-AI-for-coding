@@ -24,7 +24,36 @@
             "contextWindow": 65536,
             "maxTokens": 2048,
             "reasoning": true
+        },
+      { 
+          "_test": "X a lot of mistakes",
+          "id": "Qwythos-9B-Claude-Mythos-5-1M-Q4_K_M_emperoai.gguf",
+          "name": "Qwythos 9B Claude Mythos 5 (emperor-ai)",
+          "contextWindow": 262144,
+          "maxTokens": 2048,
+          "reasoning": true
+      },
+      { 
+          "_test": "X a lot of mistakes",
+          "id": "Qwythos-9B-Claude-Mythos-5-1M-MTP-Q4_K_M_emperoai.gguf",
+          "name": "Qwythos 9B Claude Mythos 5 - MTP (emperor-ai)",
+          "contextWindow": 262144,
+          "maxTokens": 2048,
+          "reasoning": true
+      },
+
+{"id": "Gemma 4 26B"},
+        { 
+            "_test": "OK",
+            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
+            "_name": "Gemma4 26b 16K",
+            "_contextWindow": 16384,
+            "name": "Gemma4 26b 64K",
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
         }
+
 
     ]
 },

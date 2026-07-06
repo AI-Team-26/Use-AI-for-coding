@@ -18,6 +18,7 @@ EXA_API_KEY = os.environ.get("EXA_API_KEY", "")
 def call_answer(query):
     """Use EXA's /answer endpoint for synthesized answers with citations."""
     
+    # doc: https://exa.ai/docs/reference/answer
     url = "https://api.exa.ai/answer"
     headers = {
         "x-api-key": EXA_API_KEY,
@@ -70,8 +71,12 @@ def call_search(query):
         "x-api-key": EXA_API_KEY,
         "Content-Type": "application/json",
     }
+    # highlights true >  Text snippets the LLM identifies as most relevant from each page. = EXA documentation says it helps LLM Agents.
     body = json.dumps({
         "query": query,
+        "contents": {
+            "highlights": True
+        },
         "type": "auto",
         "numResults": 5,
     }).encode()

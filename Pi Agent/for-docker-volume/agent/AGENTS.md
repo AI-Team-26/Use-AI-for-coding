@@ -13,7 +13,7 @@
    - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR.
    - Show the link to the PR to the user
    - If the repository owner is different from {{GITHUB_ACCOUNT}}, add {{GITHUB_REVIEWER}} as a reviewer when creating the PR.
-   - When a PR is merged, update the `TODO.md`.
+   - When a PR is merged, update `CHANGELOG.md` and clean up `TODO.md` (see Project File Management section).
 5. **User pc and tools**
    - OS: Windows 10 x64 Pro. 32GB of RAM. 
    - GitBash in Windows Terminal.
@@ -47,6 +47,44 @@ When scaffolding or modifying .NET projects, follow these conventions:
   4. Push to `origin/main`, if user approved.
 - The agent should still ask for confirmation if the user's instruction is ambiguous.
 
+## Project File Management (Git-Native Agile)
+
+The project uses a lightweight, branch-aware file system to track work. No external Kanban tools—Git branches *are* the Kanban board.
+
+### Files
+
+| File | Lives on | Purpose |
+| :--- | :--- | :--- |
+| `TODO.md` | Every branch | Context-aware task list. Content changes based on which branch you're on. |
+| `CHANGELOG.md` | `main` only | Historical record of completed features. Updated on merge. |
+
+### `TODO.md` Behavior by Branch
+
+**On `main` (Backlog View):**
+- Contains only a simple `## Backlog` section with high-level future tasks.
+- No active work details—those live on the feature branches.
+
+**On a `feat/` branch (Sprint View):**
+- The top section becomes `## In Progress: <Feature Name>`.
+- Includes:
+  - **Goal:** One-sentence description of what this branch achieves.
+  - **Context / Mental Picture:** Technical notes, libraries used, approach, gotchas.
+  - **Steps:** Granular checklist of sub-tasks.
+  - **Notes:** Command syntax, API references, links, anything an agent needs to resume work.
+
+### On Merge (PR is merged into `main`)
+
+1. Add a summary entry to `CHANGELOG.md` on `main`.
+2. Remove the completed task from `TODO.md`'s Backlog on `main`.
+3. The branch's detailed `TODO.md` is discarded (overwritten by `main`'s clean version during merge).
+4. Delete the local and remote branch.
+
+### Seeing What's In Progress
+
+- Run `git branch -r` to see open feature branches.
+- Branch names must be descriptive (e.g., `feat/03_mp3_splitting`).
+- Switch to a branch and read its `TODO.md` to get full context.
+
 ## Example Workflow
 
 1. User: *"Add a new endpoint."*
@@ -78,28 +116,27 @@ gh api repos/<owner>/<repo>/pulls/<pr_id>/comments   # Shows individual inline r
 
 The `id` field from the second command is the `<comment_id>` you need for replying.
 
-### Step 2 — Reply to each review comment
+### Step 2 — Reply to individual review comments
 
-**IMPORTANT:** You MUST reply to each individual review comment using the `/replies` API endpoint below.
-
-**DO NOT use these commands to reply to a review comment:**
-- `gh pr comment <pr_id> -b "done"` → posts a **general PR comment**, not a reply to a review comment
-- `gh pr review <pr_id> -c -b "done"` → creates a **new review comment**, not a reply to an existing one
-
-Only use `gh pr comment` for general PR-level messages (e.g. "Please re-review").
-
-**Correct way to reply to a review comment:**
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.  
+  
+**DO NOT** use `gh pr comment` (posts a general PR comment) or `gh pr review` (creates a new top-level review).  
+  
+**Correct Syntax (Form Fields):**  
+The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.  
+**WARNING:** Do NOT use JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.  
 
 ```bash
+# Example: Replying to comment ID 1234567890
 gh api \
-  repos/<owner>/<repo>/pulls/<pr_id>/comments/<comment_id>/replies \
-  -X POST \
-  -f body="done"
+repos/<owner>/<repo>/issues/12345678/comments/123456790/replies \
+-X POST \
+-f "body=Thanks for catching that typo! Fixed it."
 ```
 
-- `<comment_id>` — the numeric ID of the reviewer's comment (from Step 1)
-- `/replies` — tells GitHub you're posting a reply to that specific comment
-- `-f body="done"` — the reply text
+- <comment_id> — The numeric ID found in Step 1.
+- -f "body=..." — Plain text value. Wrap in quotes if it contains spaces.
+
 
 ### Step 3 — Request the reviewer to review again
 

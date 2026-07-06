@@ -8,7 +8,7 @@ FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠�
 LLAMACPP_URL=${LLAMACPP_HOST:-"http://host.docker.internal:8001"} # host.docker.internal: syntax to get the localhost from the docker container
 
 
-# --- Git Setup for main account ---
+# --- Global GIT setup ---
 setup_git_global() {
     local force=${1:-0}
 
@@ -36,51 +36,66 @@ setup_git_global() {
     #return 0
 }
 
-
+# --- set GIT credentials and GitHub CLI auth token for the repository --- 
+# <repo_url> argument must be in format "github.com/account/repo.git"
 setup_git_for_repo() {    
-    local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-    if [[ -n "$repo_path" ]]; then
-        # check for GIT credentials of this repo account (account or organization)
-        if [[ ! -f ~/.git-credentials ]]; then
-            touch ~/.git-credentials
-        fi
+    local repo_url=${1:?The repository URL must be specified}
 
-        local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
-        local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
+    # Check git_repo starts with "https://", if not error message
+    if [[ ! "$repo_url" =~ ^https:// ]]; then
+        echo -e "${RED}❌ Error: Repository URL must start with https:// ${NC}"
+        return 1
+    fi
 
-        if [[ -z "$git_pat" ]]; then
-            echo ""
-            echo -e "❌ Git credentials record for ${YELLOW}$git_pat${NC} not found"
+    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
 
-            echo ""
-            read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (do you have the PAT)? [Yy]es/[N]o " choice
-            case "$choice" in
-                Y|y|Yes|yes) 
-                read -s -p "GitHub PAT (hidden): " git_pat
-                echo "https://xxx:$git_pat@github.com/$git_account_of_repo" >> ~/.git-credentials
-                echo ""
-                echo -e "${YELLOW}GIT credentials${NC}"
-                cat ~/.git-credentials
-                echo ""
-                ;;                
-                *)
-                return 1
-            esac            
-        fi
+    if [[ -z "$repo_path" ]]; then
+        echo -e "${RED}❌ Error: Failed to extract account/repo_path from \"${repo_url}\" ${NC}"
+        return 1
+    fi
+
+    # check for GIT credentials of this repo account (account or organization)
+    if [[ ! -f ~/.git-credentials ]]; then
+        touch ~/.git-credentials
+    fi
+
+    local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
+    local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
+
+    if [[ -z "$git_pat" ]]; then
+        echo ""
+        echo -e "❌ Git credentials record for ${YELLOW}$repo_path${NC} not found"
 
         echo ""
-        echo -e "✔️ Git credentials found/set for \"@github.com/$git_account_of_repo\" ${NC}"
-        
-        # set the auth token for GitHub CLI, override existing one
-        export GITHUB_TOKEN="$git_pat"
-        #gh auth status
-        #if ! $(gh auth status 2>/dev/null); then
-        if [[ ! $(gh auth status) ]]; then
-            echo -e "${RED}❌ Error: FAiled to lauthenticate GitHub CLI ${NC}"
-            return 1
-        fi
+        read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (do you have the PAT)? [Yy]es / [N]o " choice
+        case "$choice" in
+            Y|y|Yes|yes) 
+            read -s -p "GitHub PAT (hidden): " git_pat
+            echo "https://xxx:$git_pat@github.com/$git_account_of_repo" >> ~/.git-credentials
+            echo ""
+            echo -e "${YELLOW}GIT credentials${NC}"
+            cat ~/.git-credentials
+            echo ""
+            echo -e "✔️ Git credentials set for \"@github.com/$git_account_of_repo\" ${NC}"
+            ;; 
+            *)
+            git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
+            echo -e "${YELLOW}The \"default\" account GIT credentials will be used, this works iif you are a colalborator of the repo${NC}"
+            #return 1
+        esac
     else
-        echo "This project doesn't have a GIT repository"
+        echo ""
+        echo -e "✔️ Git credentials found for \"@github.com/$git_account_of_repo\" ${NC}"
+    fi
+
+   
+    # set the auth token for GitHub CLI, override existing one
+    export GITHUB_TOKEN="$git_pat"
+    gh auth status
+    #if ! $(gh auth status 2>/dev/null); then
+    if [[ ! $(gh auth status) ]]; then
+        echo -e "${RED}❌ Error: Failed to authenticate GitHub CLI ${NC}"
+        return 1
     fi
     
     return 0
@@ -121,7 +136,8 @@ add_github_pat() {
     read -s -p "GitHub PAT (hidden): " git_pat; echo    
 
     echo "https://$git_username:$git_pat@$repo_path" >> ~/.git-credentials
-    echo -e "${GREEN}${GIT_EMOJI} GitHub repository credentials configured!${NC}"
+    echo -e "✔️ GitHub repository credentials configured!"
+    #echo -e "${GREEN}${GIT_EMOJI} GitHub repository credentials configured!${NC}"
 }
 
 
@@ -140,12 +156,13 @@ if models:
 
 # --- Select or Clone a Project ---
 select_project() {
-    clear
+    #sleep 10
+    #clear
 
     mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     if [ ${#projects[@]} -eq 0 ]; then
-        echo -e "${YELLOW}No projects found. Clone a repo first!${NC}"
+        echo -e "${YELLOW}No projects found. Clone a repository first!${NC}"
         clone_repo
         #continue
         #return 0
@@ -189,15 +206,19 @@ select_project() {
             echo -e "${GREEN}${ROCKET_EMOJI} Open project: ${YELLOW}$proj${NC}"
             cd "/projects/$proj" || exit 1
 
-            if ! setup_git_for_repo ; then
-                return 1
+            #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
+            local repo_url=$(git remote get-url origin 2>/dev/null)   
+            if [[ -n "$repo_url" ]]; then
+                if ! setup_git_for_repo "$repo_url" ; then
+                    return 1
+                fi
             fi
 
             # custom tool function            
-            start_project $proj4
+            start_project "$proj"
             break
         else
-            echo -e "${RED}${WARNING_EMOJI} Invalid selection.${NC}"
+            echo -e "${WARNING_EMOJI} Invalid selection. Retry."
         fi
     done
 
@@ -208,36 +229,46 @@ select_project() {
 
 # --- Clone a repository and create a new Project ---
 clone_repo() {
+    echo ""
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
     read -p "Directory name (leave blank for repo name): " proj_dir
     local proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
     if [ -d "/projects/$proj_dir" ]; then
-        echo -e "${RED}${WARNING_EMOJI} Directory '/projects/$dir_name' exists!${NC}"
-        return 
+        echo -e "${RED}${WARNING_EMOJI} Directory '/projects/$dir_name' already exists!${NC}"
+        return 1
     fi
 
-    echo -e "${YELLOW}${GIT_EMOJI} Cloning into /projects/$proj_dir...${NC}"
+    # Extract owner and repo from the URL
+    local repo_path=$(echo "$repo_url" | sed -E 's|https://github\.com/([^/]+)/([^/.]+)(\.git)?|\1/\2|')
+    #local repo_account = 
+    local api_url="https://api.github.com/repos/$repo_path"
 
-    #read -p "Do you have a GitHub PAT for this repo? (y/n): " add_pat
-    #if [[ "$add_pat" =~ ^[Yy]$ ]]; then
-    #    add_github_pat
-    #fi
+    # Query the GitHub API to check if the repo is public
+    local response=$(curl -s -o /dev/null -w "%{http_code}" "$api_url")
 
-    git clone "$repo_url" "/projects/$proj_dir" || {
-        echo -e "${RED}${WARNING_EMOJI} Failed to clone!${NC}"
-        return
+    if [ "$response" -eq 200 ]; then
+        # Repository is public
+        echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"        
+    else
+        #if ! setup_git_for_repo "$repo_url" >&2 
+        setup_git_for_repo "$repo_url"
+    fi
+
+    # if .git-credentials is not ok for this repo, it will ask username/password to authenticate !!!
+    #git clone "$repo_url" "/projects/$proj_dir" || {
+    #    echo -e "❌ Failed to clone!"
+    #    return 1
+    #}
+
+    gh repo clone "$repo_url" "/projects/$proj_dir" || {
+        # Error is PAT has no permission on this repo: 
+        # > GraphQL: Could not resolve to a Repository with the name 'AI-Team-26/game.Creatures'. (repository)
+        echo -e "❌ Failed to clone!"
+        return 1
     }
-    echo -e "${GREEN}${GIT_EMOJI} Cloned successfully!${NC}"
 
-    #read -p "Do you want to add a GitHub PAT for this repo? (y/n): " add_pat
-    #if [[ "$add_pat" =~ ^[Yy]$ ]]; then
-    #    add_github_pat
-    #fi
+    echo -e "✔️ GitHub repository cloned!"
 
-    # Optional: Add Git hooks (e.g., pre-push) if needed
-    # cp git_hook_pre_push.sh "/projects/$dir_name/.git/hooks/pre-push"
-    # chmod +x "/projects/$dir_name/.git/hooks/pre-push"
-
-    # call cuctom function of specific ai-tool
-    start_project $proj_dir
+    cd "/projects/$proj_dir" || exit 1
+    start_project "$proj_dir"
 }

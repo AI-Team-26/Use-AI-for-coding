@@ -1,6 +1,33 @@
 {
   "DOC": "https://pi.dev/docs/latest/models#model-configuration",
   "providers": {
+
+    "Gemini": {
+        "_baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/", 
+        "_api": "openai-completions",
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+        "api": "google-generative-ai",
+        "apiKey": "{{GEMINI_API_KEY}}",
+        "models": [
+            {
+                "id": "gemini-3.5-flash",
+                "name": "Gemini 3.5 Flash",
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
+                "id": "gemini-3.1-flash-lite",
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
+            "id": "gemini-3.1-pro-preview",
+            "name": "Gemini 3.1 Pro",
+            "maxTokens": 8192,
+            "reasoning": true
+            }
+        ]
+    },
     "Novita AI": {
         "baseUrl": "https://api.novita.ai/openai",
         "api": "openai-completions",
@@ -33,6 +60,11 @@
                 "reasoning": true
             },
             {
+                "id": "zai-org/glm-4.7-flash",
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+            {
                 "id": "moonshotai/kimi-k2.7-code",
                 "maxTokens": 2048,
                 "reasoning": true
@@ -45,74 +77,131 @@
         "apiKey": "Llama.cpp",
        
         "models": [
+{ "id": "=== Qwen 3.6 27B ==="},
         { 
             "test": "✔️ OK (SUPER)",
             "id": "Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
-            "name": "Qwen 3.6 28B REAP20",
-            "contextWindow": 65536,
-            "maxTokens": 4096,
+            "name": "Qwen 3.6 28B REAP20 (by barozp)",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
             "reasoning": true,
             "input": [ "text", "image" ]
         },
+      { 
+         "_test": "???",
+          "id": "Qwen3.6-27B-Esper3.1.Q4_K_M_mr_radermacher.gguf",
+          "name": "Qwen 3.6 27B Exper3.1",
+          "contextWindow": 32000,
+          "maxTokens": 2048,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
 
-        { 
-            "_test": "OK",
-            "id": "Gemma-4-26B-A4B-it-UD-Q4_K_M_unsloth.gguf",
-            "_name": "Gemma4 e26b 16K",            
-            "_contextWindow": 16384,
-            "name": "Gemma4 e26b 64K",            
-            "contextWindow": 65536,
+{ "id": "=== Qwen 3.6 35B A3B ===" },
+      { 
+          "_test": "???",
+          "id": "Qwen3.6-35B-A3B-MOE384-pruned-Q4_K_M_tipe.gguf",
+          "name": "QWEN 3.6 35B A3B - MOE384 pruned Q4_K_M (by tipe) for #100",
+          "contextWindow": 65536,
+          "maxTokens": 2048,
+          "reasoning": true
+      },
+
+            { 
+          "_test": "OK",
+          "id": "qwen3.6-35b-reap-pruned-ratio-0.3-q4_k_m_amazeble.gguf",
+          "name": "QWEN 3.6 35B A3B - qwen3.6-35b-reap-pruned-ratio-0.3-q4_k_m_amazeble.gguf",
+          "contextWindow": 65536,
+          "maxTokens": 2048,
+          "reasoning": true
+      },
+
+{ "id": "=== Gemma 4 26B ==="},
+       { 
+            "_test": "???",
+            "id": "Gemma-4-26B_Q4_0-it_google.gguf",
+            "name": "Gemma4 26B 128K - Q4_0 (by Google)",
+            "contextWindow": 131072,
             "maxTokens": 2048,
             "reasoning": true
         },
-        { 
+        {
             "_test": "Good",
-            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
-            "name": "Gemma4 e26b 64K (by noctrex)",         
-            "contextWindow": 65536,
-            "_name": "Gemma4 e26b 128K (by noctrex) name",        
-            "_contextWindow": 131072,
+            "id": "Gmma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
+            "name": "Gemma4 26B 128K - MXFP4 MOE (by noctrex)",
+            "contextWindow": 131072,
             "maxTokens": 2048,
             "reasoning": true
         },
-
         { 
             "_test": "???",
             "id": "Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
-            "name": "Gemma4 e26b 64K (UD-IQ4_NL)",         
+            "name": "Gemma4 26B 64K - UD-IQ4_NL (by Unsloth)",
             "contextWindow": 65536,
             "maxTokens": 2048,
             "reasoning": true
         },
-        
 
+{ "id": "=== GLM 4.7 Flash ==="},
+      { 
+          "_test": "???",
+          "id": "GLM-4.7-Flash-REAP-23B-A3B-UD-Q4_K_XL_unsloth.gguf",
+          "name": "GLM 4.7 Flash 23B REAP UD (Unsloth)",
+          "contextWindow": 65536,
+          "maxTokens": 2048,
+          "reasoning": true
+      },
+      
+
+{"id": "=== GPT-OSS 20B ==="},
         { 
-            "_test": "??",
-            "id": "GPT-OSS-20b-Q8_0_unsloth.gguf",
-            "name": "GPT OSS 20B",            
-            "contextWindow": 65536,
-            "maxTokens": 4096,
+            "_test": "?",
+            "id": "GPT-OSS-20b-UD-Q8_K_XL_unsloth.gguf",
+            "name": "GPT OSS 20B UD Q8_K_XL (by Unsloth)",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
             "reasoning": true
         },
         { 
             "_test": "?",
-            "id": "GPT-OSS-20b-UD-Q8_K_XL_unsloth.gguf",
-            "name": "GPT OSS 20B UD Q8_K_XL",            
-            "contextWindow": 65536,
-            "maxTokens": 4096,
+            "id": "GPT-OSS-20b-UD-Q6_K_XL_unsloth.gguf",
+            "name": "GPT OSS 20B UD Q6_K_XL (by Unsloth)",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
             "reasoning": true
         },
         { 
             "_test": "Super fast but it makes long and wrong reasoning",
             "id": "OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL_davidau.gguf",
-            "name": "GPT-OSS-20B_IQ4_NL",            
+            "name": "GPT-OSS-20B_IQ4_NL",
             "contextWindow": 131072,
-            "maxTokens": 4096,
+            "maxTokens": 2048,
             "reasoning": true
-        }        
+        }
+
         ],
 
          "models_inactive": [
+
+{"id": "=== ERNIE 4.5 21B A3B Thinking ==="},
+        { 
+            "_test": "?",
+            "id": "ERNIE-4.5-21B-A3B-Thinking-Q4_K_M_unsloth.gguf",
+            "name": "ERNIE-4.5-A3B-Thinking by Unsloth",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+            "_test": "?",
+            "id": "ERNIE-4.5-21B-A3B-Thinking-MXFP4_MOE_noctrex.gguf",
+            "name": "ERNIE-4.5-A3B-Thinking by noctrex",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+
+        
             {
                 "_test": "Ok but slow",
                 "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",

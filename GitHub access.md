@@ -27,8 +27,17 @@ The same if a SSH key is used for authentication.
 
 ## Collaborator on the main Account repo ❌
 
-I haven't explored this solution, because I believe that it is the same of the Organization way, but it potentially exposes also other absolutely not-wanted-to-share repositories to the shadow account.  
-The only benefit can be the possibility to access to existing repositories.
+Ths is not the favorite way, but it add the possibility to access to existing repositories.  
+Tested a public repository but should work also for private ones.  
+
+Prerequisites: a **Classic PAT** with permissions on "repo" and "read:org" (required by some commands like ``gh pr view <pr>`` and ``gh pr edit <pr>``)
+
+1. Add the shadow account as Collaborator. In the repo Settings > Collaborators create an invite for the shadow account.
+2. In the shadow account, open the email and accept the invitation (can be done also in GitHub account, you have the invite in the notifications)
+Done.
+  
+Edit of worflows (.github/workflows/deploy.yaml): ?  (there is a "workflow" checkbox for the classic PAT)  
+Access to Actions (workflow run is successful): ? 
 
 
 ## Fine-grained permissions PAT on the main account for organization repo ✔️

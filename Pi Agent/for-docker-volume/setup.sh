@@ -5,21 +5,14 @@ source .env
 
 required_vars=("GITHUB_ACCOUNT" "GITHUB_REVIEWER" "GITHUB_TOKEN")
 
-# TODO: compete this reusable loop
-
 for var in "${required_vars[@]}" ; do
-    echo "required var: $var"
+    if [[ -z "${!var}" ]]; then
+        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
+        exit 1
+    else
+        echo "✅ $var is set."
+    fi
 done
-
-if [[ -z "$GITHUB_ACCOUNT" ]]; then
-    echo -e "${RED}⛔ GITHUB_ACCOUNT is not found. Set it in the .env file${NC}"
-    exit 1
-fi
-
-if [[ -z "$GITHUB_REVIEWER" ]]; then
-    echo -e "${RED}⛔ GITHUB_REVIEWER is not found. Set it in the .env file${NC}"
-    exit 1
-fi
 
 
 # Prepare the settings and projects volumes
@@ -39,8 +32,9 @@ cp -r agent/skills/* "$docker_volumes/.pi/agent/skills/"
 cp -r agent/extensions/* "$docker_volumes/.pi/agent/extensions/"
 
 # Set secret keys
-# NOVITAAI_API_KEY_PI_AGENT is an environment variable
+# XXX_API_KEY_PI_AGENT are environment variables
 sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT/g" "$docker_volumes/.pi/agent/models.json"
+sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volumes/.pi/agent/models.json"
 
 # Set accounts on SYSTEM.md
 sed -i "s/{{GITHUB_ACCOUNT}}/$GITHUB_ACCOUNT/g" "$docker_volumes/.pi/agent/SYSTEM.md"   
