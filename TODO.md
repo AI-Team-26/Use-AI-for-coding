@@ -16,6 +16,13 @@
 - 1 Organize Qwen Code settings to use different providers, if possible
 - 1 Try SmallCode tool: https://github.com/Doorman11991/smallcode IF IT IS WORTH
 
+- In the menu of existing projects format the record for the projects to show:
+  + folder icon
+  + Name/Folder 
+  + Private/Public repo (if is a repo)
+  + Repo account (if is a repo)
+  + "not a GIT repo" if it is not a repo
+
 ## Done
 
 - ai-coding launch script can ask for list the sessions, continue last session, etc... 
