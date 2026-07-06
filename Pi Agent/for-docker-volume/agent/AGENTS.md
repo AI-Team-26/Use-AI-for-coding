@@ -10,10 +10,11 @@
    - Act always follows a Plan.
 4. **Pull Request Workflow**
    - Create a new branch with a numeric prefix (e.g., `01_first_commit`, `feat/02_add_this_and_that`).
-   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR.
-   - Show the link to the PR to the user
+   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR. Request to review and re-review and say "Waiting for Review".
+   - Show a clickable link to the PR to the user
    - If the repository owner is different from {{GITHUB_ACCOUNT}}, add {{GITHUB_REVIEWER}} as a reviewer when creating the PR.
    - When a PR is merged, update `CHANGELOG.md` and clean up `TODO.md` (see Project File Management section).
+   - When you push fixes in response to CHANGES_REQUESTED, automatically request re-review (see PR Review workflow section).
 5. **User pc and tools**
    - OS: Windows 10 x64 Pro. 32GB of RAM. 
    - GitBash in Windows Terminal.
@@ -104,19 +105,56 @@ If git push or GH CLI commands fails for permission issues, check the repository
 ## PR Review workflow
 
 When user said it reviewed the PR, check if they approved and merged or if they rejected the PR.  
-Address all the user comments with a reply (or ask for clarification). "Done." is perfect when the correction is straightforward.  
+**CRITICAL** Address all the user comments with a reply (or ask for clarification). "Done." is perfect when the correction is straightforward.  
 After addressing the PR review, request the reviewer to review again (see snippet below).  
+Don't rush to do things, always wait for user approval of done work before moving to the next step.
 
-### Step 1 — Find review comments
+### Step 0 — Find unresolved comments (GraphQL)
 
-```bash
-gh pr view <pr_id> --json reviews          # Shows review submissions (approve / request changes / comment)
-gh api repos/<owner>/<repo>/pulls/<pr_id>/comments   # Shows individual inline review comments with their IDs
+**CRITICAL:** The REST API (`gh api .../pulls/<pr_id>/comments`) does **NOT** reliably show whether a comment thread is resolved. Use the **GitHub GraphQL API** which has an `isResolved` field on review threads.
+
+The algorithm:
+1. Fetch all review threads via GraphQL `reviewThreads { isResolved, comments { ... } }`.
+2. Filter for `isResolved == false`.
+3. For each unresolved thread, check the last speaker:
+   - If `last_speaker == reviewer` → **Needs author action** (reply with fix/clarification or ask for precision).
+   - If `last_speaker == author` → **Waiting for reviewer to resolve** (no action needed from agent).
+4. A thread is considered **Resolved** when:
+   - The reviewer clicks the "Resolved" button in the UI (`isResolved == true`).
+   - **OR** the author replied with a clear acknowledgment/fix AND the reviewer agrees.
+5. Even if the last speaker is the reviewer, if they wrote something like "Well done!" and resolved it, it's resolved.
+
+```graphql
+query {
+  repository(owner: "<owner>", name: "<repo>") {
+    pullRequest(number: <pr>) {
+      reviewThreads(first: 50) {
+        nodes {
+          isResolved
+          comments(first: 50) {
+            nodes {
+              id
+              body
+              author { login }
+              createdAt
+              url
+            }
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
-The `id` field from the second command is the `<comment_id>` you need for replying.
+Execute via:
+```bash
+gh api graphql -f query='...'
+```
 
-### Step 2 — Reply to individual review comments
+**Never guess** which comments need action. Always run the GraphQL query first.
+
+### Step 1 — Reply to individual review comments
 
 **CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.  
   
@@ -126,19 +164,27 @@ The `id` field from the second command is the `<comment_id>` you need for replyi
 The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.  
 **WARNING:** Do NOT use JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.  
 
+**Important:** PR review comments live under `/pulls/`, NOT `/issues/`.
+
 ```bash
 # Example: Replying to comment ID 1234567890
 gh api \
-repos/<owner>/<repo>/issues/12345678/comments/123456790/replies \
+repos/<owner>/<repo>/pulls/7/comments/1234567890/replies \
 -X POST \
 -f "body=Thanks for catching that typo! Fixed it."
 ```
 
-- <comment_id> — The numeric ID found in Step 1.
-- -f "body=..." — Plain text value. Wrap in quotes if it contains spaces.
+- `<comment_id>` — The numeric comment ID (the `id` field from the GraphQL comments). Note: GraphQL IDs are base64-encoded node IDs like `PRRC_...`. To get the numeric ID, look at the `url` field in the GraphQL response (e.g., `.../pulls/comments/3529114528` — the number at the end is the `<comment_id>`).
+- `-f "body=..."` — Plain text value. Wrap in quotes if it contains spaces.
+
+**How to get the numeric `<comment_id>` from GraphQL:**
+The GraphQL response includes a `url` field for each comment. Extract the numeric ID from the URL:
+```
+https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
+```
 
 
-### Step 3 — Request the reviewer to review again
+### Step 2 — Request the reviewer to review again
 
 ```bash
 curl -X POST \

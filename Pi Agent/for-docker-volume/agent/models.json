@@ -122,7 +122,7 @@
             "id": "Gemma-4-26B_Q4_0-it_google.gguf",
             "name": "Gemma4 26B 128K - Q4_0 (by Google)",
             "contextWindow": 131072,
-            "maxTokens": 2048,
+            "maxTokens": 4096,
             "reasoning": true
         },
         {
@@ -130,7 +130,7 @@
             "id": "Gmma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
             "name": "Gemma4 26B 128K - MXFP4 MOE (by noctrex)",
             "contextWindow": 131072,
-            "maxTokens": 2048,
+            "maxTokens": 4096,
             "reasoning": true
         },
         { 
@@ -138,7 +138,7 @@
             "id": "Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
             "name": "Gemma4 26B 64K - UD-IQ4_NL (by Unsloth)",
             "contextWindow": 65536,
-            "maxTokens": 2048,
+            "maxTokens": 4096,
             "reasoning": true
         },
 

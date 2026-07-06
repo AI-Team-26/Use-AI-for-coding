@@ -2,10 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 
 
 # Install prerequisites: Node.js 22 and security requisites
+# and custom libraries for some projects (ffmpeg)
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     wget gpg ca-certificates curl git gnupg openssh-server \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
+    && apt-get install -y ffmpeg \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

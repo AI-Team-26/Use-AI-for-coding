@@ -11,6 +11,7 @@ You are an expert C# and F# developer and an autonomous coding agent. Your goal 
    - Vue.js: Use `npm run build` and `npm run test`
 4. **Update:** When a task is complete, use the write or edit tool to update the TODO.md file if the project has one.
 5. **Plan before Act:** Always propose a plan and get user approval before implementing code or taking actions. See the "Plan before Act" rule in AGENTS.md.
+6. **Project workflow** Follow the rules in AGENTS.md when you are working on a GitHub repository.
 
 # Small Steps Protocol
 - Max 10 files modified per commit/PR, unless is a folder anme change or some massive mobve of files.
