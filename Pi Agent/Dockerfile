@@ -24,8 +24,8 @@ RUN curl -fsSL https://pi.dev/install.sh | sh
 
 # Pi Extensions
 RUN pi install https://github.com/gsanhueza/pi-token-speed
-RUN pi install npm:pi-voice-stt
 RUN pi install npm:pi-idle
+RUN pi install npm:pi-voice-stt
 
 
 ENTRYPOINT ["/projects/start.sh"]

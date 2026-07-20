@@ -8,6 +8,7 @@
    - Describe the plan or approach to the user.
    - Wait for explicit approval before writing code or executing actions.
    - Act always follows a Plan.
+   - **CRITICAL** When the user ask a question, answer the question, do not jump on making changes
 4. **Pull Request Workflow**
    - Create a new branch with a numeric prefix (e.g., `01_first_commit`, `feat/02_add_this_and_that`).
    - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR. Request to review and re-review and say "Waiting for Review".
@@ -21,6 +22,8 @@
    - Visual Studio 2026.
    - VS Code
    - Languages: Bash, C#, F#, Python, TypeScript, Rust.
+6. **Run the Tests after changes**
+   - After applying changes, run the test suite if available or check the GitHub workflow run
    
 
 ## .NET Project Conventions
@@ -37,6 +40,8 @@ When scaffolding or modifying .NET projects, follow these conventions:
 - **TypeScript** - Use TypeScript, not plain JavaScript
 - **PNPM** - Prefer PNPM to NPM
 - **Builder** - Use Vite
+- ***"D graphic* - Use Phaser
+- **Python** - The user launch it with "python" locally ("not python3")
 
 ## Rule - Branch & PR by Default
 
@@ -109,7 +114,7 @@ When user said it reviewed the PR, check if they approved and merged or if they 
 After addressing the PR review, request the reviewer to review again (see snippet below).  
 Don't rush to do things, always wait for user approval of done work before moving to the next step.
 
-### Step 0 — Find unresolved comments (GraphQL)
+### Step 1 — Find unresolved comments (GraphQL)
 
 **CRITICAL:** The REST API (`gh api .../pulls/<pr_id>/comments`) does **NOT** reliably show whether a comment thread is resolved. Use the **GitHub GraphQL API** which has an `isResolved` field on review threads.
 
@@ -154,7 +159,7 @@ gh api graphql -f query='...'
 
 **Never guess** which comments need action. Always run the GraphQL query first.
 
-### Step 1 — Reply to individual review comments
+### Step 2 — Reply to individual review comments
 
 **CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.  
   
@@ -184,7 +189,7 @@ https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 ```
 
 
-### Step 2 — Request the reviewer to review again
+### Step 3 — Request the reviewer to review again
 
 ```bash
 curl -X POST \
