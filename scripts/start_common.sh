@@ -1,4 +1,5 @@
-# COMMON script fo the start.sh in the different tools
+# COMMON script fo the start.sh in the different tools (pi.dev, Qwen-Coder ...)
+# The start_project function is defined in the single tool because it has to be tool-specific 
 
 # --- Config ---
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; PURPLE_LIGHT=$'\033[0;31m'; BOLD_PURPLE=$'\033[1;35m'; NC=$'\033[0m'
@@ -173,15 +174,32 @@ select_project() {
     #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
     PS3=$'\e[34mSelect a project/action: \e[0m'
     COLUMNS=1  # ← force one item per line
-    select proj in "${projects[@]}" "➕ Clone a repo" ">_ Shell"  "🐙 Check GIT credentials" "❌ Exit" ; do
-        if [[ "$proj" == "➕ Clone a repo" ]]; then
+
+    projects+=(
+       "➕ Clone a repsitory"
+       "➕ Create a new project"
+       "➖ Delete a project"
+       ">_ Shell"
+       # "🔑 Add GitHub PAT for a repo"
+       "🐙 Check GIT credentials"
+       "❌ Exit"
+    )
+    
+    select proj in "${projects[@]}" ; do
+        if [[ "$proj" == "➕ Clone a repsitory" ]]; then
             clone_repo
+            break
+        elif [[ "$proj" == "➕ Create a new project" ]]; then
+            create_new_proj
+            break
+        elif [[ "$proj" == "➖ Delete a project" ]]; then
+            delete_proj
             break
         elif [[ "$proj" == ">_ Shell" ]]; then 
             /bin/bash
             break  
         # TODO: no more used (and updated)
-        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then            
+        elif [[ "$proj" == "🔑 Add GitHub PAT for a repo" ]]; then
             add_github_pat
             #select_project
             break     
@@ -214,7 +232,7 @@ select_project() {
                 fi
             fi
 
-            # custom tool function            
+            # custom tool function
             start_project "$proj"
             break
         else
@@ -271,4 +289,30 @@ clone_repo() {
 
     cd "/projects/$proj_dir" || exit 1
     start_project "$proj_dir"
+}
+
+# --- Create a new project that is not (yet) linked to a repository ---
+create_new_proj() {
+    echo ""
+    read -p "Name of the new project?" proj_name
+    cd "/projects/$proj_name" || exit 1
+    pi
+}
+
+# --- Delete the project ---
+delete_proj() {
+    mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
+
+    echo $'\n\e[34m------------------------------------------------\e[0m'
+
+    PS3=$'\e[34mSelect the project to delete: \e[0m'
+    COLUMNS=1  # ← force one item per line
+
+    select proj in "${projects[@]}" "❌ Exit" ; do
+        if [[ "$proj" == "❌ Exit" ]]; then
+            return 0
+        elif [[ -n "$proj" ]]; then
+            rm -f "/projects/$proj"
+        fi
+    done
 }

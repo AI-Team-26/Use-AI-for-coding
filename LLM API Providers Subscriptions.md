@@ -61,6 +61,25 @@ Pricing:
 
 ### Openrouter
 
+```bash
+  curl https://openrouter.ai/api/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY_PI_AGENT" \
+    -d '{
+    "model": "poolside/laguna-m.1:free",
+    "messages": [
+      {
+        "role": "user",
+        "content": "How many r`s are in the word `strawberry?`"
+      }
+    ],
+    "reasoning": {
+      "enabled": true
+    }
+}'
+```
+
+
 
 ### Eden.ai 
 

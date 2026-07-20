@@ -55,12 +55,24 @@ They have a CLI and sometime a web UI exposed on the guest.
 
 I run the tools in a Docker container and Binded Volumes to store the projects (GitHub repositories) and tool settings/customization, so that I can easily access all within the host. This allows to open the projects with local IDE (usefull to check the changes done by the AI tool) and update settings/customization easily.   
 The way to create the bind volume is with the _--mount type=bind_ of _docker run_ command (*-v** parameter also works, but is the old way), because it needs to NOT be created by the Docker build or you can have permissions issues (this happens if you create the volume in the Dockerfile).  
-At the moment I'm not switching user, so the tool runs with _root_.  
-[TODO] ** It will be good to switch to use a not-root user. **   
 
 Once a container is created, it is not possible to attach a new volume to it.  
 For this reason I use _/project_ folder as bind  volume, where I can add project/repositories any time.  
 
+### root user
+
+At the moment I'm not switching user, so the tool runs with _root_.  
+[TODO] ** It will be good to switch to use a not-root user. **   
+
+Pros
+ + With root user the agent can use apt-get and install whenever it needs a library (ffmpeg, )
+ + Easy to work with
+   - no special permisisons for /projects folder
+   - can edit the AHGENTS.md and SYSTEM.md and also the skills and extensions
+   
+Cons
+- the agent can see every file in the container
+- the agent can update a file in a way that when executed ...
 
 ## :octocat: GIT & GitHub
 
