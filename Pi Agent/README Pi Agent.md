@@ -4,6 +4,11 @@ A minimalist terminal coding agent.
 It lets use root user to Pi Agent. Container is not accessible/exposed to internet.  
 It shares settings and projects folder (using a bind mount volume) within the host, so settings and code are easy to read and change.  
 
+TODO:
+- Add a simple and light web-ui:  https://github.com/ygncode/pi-web
+- Add a multi-sesison web-ui manager: https://github.com/04mg/caw
+
+
 ## Build the Docker Image
 ```bash
 cd "Pi Agent"

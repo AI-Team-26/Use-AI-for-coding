@@ -176,7 +176,7 @@ select_project() {
     COLUMNS=1  # ← force one item per line
 
     projects+=(
-       "➕ Clone a repsitory"
+       "➕ Clone a repository"
        "➕ Create a new project"
        "➖ Delete a project"
        ">_ Shell"
@@ -186,7 +186,7 @@ select_project() {
     )
     
     select proj in "${projects[@]}" ; do
-        if [[ "$proj" == "➕ Clone a repsitory" ]]; then
+        if [[ "$proj" == "➕ Clone a repository" ]]; then
             clone_repo
             break
         elif [[ "$proj" == "➕ Create a new project" ]]; then
@@ -294,7 +294,13 @@ clone_repo() {
 # --- Create a new project that is not (yet) linked to a repository ---
 create_new_proj() {
     echo ""
-    read -p "Name of the new project?" proj_name
+    read -p "Name of the new project: " proj_name
+    if [[ -z "$proj_name" ]]; then
+        echo "(cancelled)"
+        return 0
+    fi
+
+    mkdir "/projects/$proj_name" 
     cd "/projects/$proj_name" || exit 1
     pi
 }

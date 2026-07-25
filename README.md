@@ -8,47 +8,49 @@ The Docker containers can be customized to satisfy basic stuff (Git + GitHub aut
 For my specific situation, I found **Pi Agent** the best tool I can use.   
 **Qwen Code** is a very good tool too, but, due to its huge system context + tools, it is too limited with local LLM and, probably, also more tokens-consuming.
   
-I tried local LLM and also different LLM providers.      
+I tried local LLM and also different LLM providers.  
 I did tests using my old graphic card with 16GB of VRAM.  
-I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance with all the models.  
+I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance.  
 Here my experiments:  
 - 👌 [Ollama](Ollama&%20models)
 - 💪 [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
 
-The _scripts/_ folder contains Bash scripts to create and test the models.  
+The _scripts_ folder contains Bash scripts to create and test the models.  
 Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions to use.  
 
 
 ## Considerations about the different ways to use AI
 
 There are three categories of tools:
-- IDE plugins........... ❌ Can do potentially everything in your PC
-- Web based tools ...... ❌ Too limited, models prone to mistakes, time-wasting.
-- Standalone programs .. ✔️ The perfect solution when run on container
 
-**IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and github trought it.
+| IDE plugins         | ❌ Can do potentially everything in your PC (when run on local IDE). Limited in choices (models/providers/UI). Easy to use.              |
+| Web based tools     | ❌ Too limited in models and procedures and time-wasting for start. You became coupled to specific provider tool.                        |
+| Standalone programs | ✔️ Extremely customizable, can use any model (local or from providers) but needs. The perfect solution when run on container.            |
+
+**IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and GitHub trought it.
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets very easily.
 - GitHub Copilot (VS & VS Code)
 - Continue.DEV
 - [Cline](Cline/README.md)
 - LllamaCode
 - CodeGeeX 
+  
+There are good ones for VS Code, but I haven't found one for Visual Studio (apart Copilot).
 
 **Web based tools** are nice, but I find out too fragile and you can't usually use the provider and model of your choice.  
 For this tools I use a shadow GitHub account, that doen't have access to my real account.  
 Their connector are a little bit fragile and sometimes doesn't work.
 - AliBaba Qwen Coder
-- Mistral Chat
+- Mistral Chat (renamed Mistral Vibe?)
 
 **Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
 They have a CLI and sometime a web UI exposed on the guest.  
 
-
 | [Aider](Aider/Aider.md)                          | ❌ Found an issue very earlier and abandoned before having it really working |
 | [OpenCode](OpenCode/OpenCode.md)                 | ❔ Abandoned before having it fully setup                                     |
-| [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Really good                                                               |
+| [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Good                                                                      |
 | [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)    | ✔️ Fantastic!                                                                |
-| Mistral Vibe                                     | ❔ Never tried                                                                |
+| Mistral Vibe (local)                             | ❔ Never tried                                                                |
 
 
 ## 🐳 Docker
@@ -75,6 +77,8 @@ Cons
 - the agent can update a file in a way that when executed ...
 
 ## :octocat: GIT & GitHub
+
+Refer to [GitHub access for Agent](GitHub%20access.md) to know how to give the Agent access to the GitHub repositories.  
 
 ### Credentials
 
