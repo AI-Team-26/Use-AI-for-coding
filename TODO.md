@@ -1,8 +1,18 @@
 # TODO
 
-## Doing
+## In Progress
 
 ## Backlog
+
+- 🐞 GIT token for not-owned repositories.
+  Currently, when you open a project where the repository is not-owned, it presents a message like this: 
+  "❌ Git credentials record for <an-account>/<a project> not found"
+  "Do you want to set the GIT credentials for "an-account" (do you have the PAT)? [Yy]es / [N]o"
+
+  I reply "No" and this is the next message: 
+  The "default" account GIT credentials will be used, this works iif you are a colalborator of the repo
+
+- 🐞 When "continue" and it requires project selection, it doesn't show the list !
 
 - 5 proxy bridge to start requested model on llama-server
   step 1: the script that used defined model in the models_configuration,json
