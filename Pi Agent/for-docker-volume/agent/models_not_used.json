@@ -79,14 +79,14 @@
 
 {"id": "=== Qwen 3.6 35B A3B ==="},
       { 
-         "_test": "✔️ Really good but only 64k",
-          "id": "Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
-          "name": "Qwen 3.6 28B REAP20 96k",
-          "contextWindow": 65536,
+          "_test": "⚠️ OK, but too much work for a simple task and it overdo and possibly touch what it is not supposed to do. Write filesand file s are empty. Edit skills instead of using them. Inconclusive and Dangerous!",
+          "_speed": "40 t/s",
+          "id": "Qwen3.6-27B-A3B-Coder-CD-Q4_K_M_mannix.gguf",
+          "name": "Qwen 3.6 35B Coder-CD (ManniX)",
+          "contextWindow": 131072,
           "maxTokens": 8192,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
+          "reasoning": true
+      }, 
       { 
           "_test": "❌ stuck in loop ✔️ Good analyzing and writing code",
           "id": "Qwen3.6-35B-A3B-MOE384-pruned-Q4_K_M_tipe.gguf",

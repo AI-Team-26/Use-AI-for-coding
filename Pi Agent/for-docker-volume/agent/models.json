@@ -23,7 +23,7 @@
             {
                 "id": "gemini-3.1-pro-preview",
                 "name": "Gemini 3.1 Pro",
-                "maxTokens": 8192,
+                "maxTokens": 4096,
                 "reasoning": true
             },
             {
@@ -32,7 +32,7 @@
                 "reasoning": true,
                 "input": ["text", "image"],
                 "contextWindow": 262144,
-                "maxTokens": 32768,
+                "maxTokens": 4096,
                 "cost": {
                     "input": 0,
                     "output": 0,
@@ -50,7 +50,24 @@
             {
                 "id": "deepseek/deepseek-v4-flash",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-07-27",
+                    "input": 0.14,
+                    "output": 0.28,
+                    "cacheRead": 0.028
+                }
+            },
+            {
+                "id": "mindai/macaron-v1-venti",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-07-27",
+                    "input": 0,
+                    "output": 0,
+                    "cacheRead": 0
+                }
             },
             {
                 "id": "qwen/qwen3-coder-next",
@@ -91,7 +108,13 @@
             {
                 "id": "zai-org/glm-4.7-flash",
                 "maxTokens": 2048,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-07-27",
+                    "input": 0.07,
+                    "output": 0.4,
+                    "cacheRead": 0.01
+                }
             },
             {
                 "id": "moonshotai/kimi-k2.7-code",
@@ -173,7 +196,7 @@
             "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
             "name": "Gemma4 26B 128K - MXFP4 MOE (by noctrex)",
             "contextWindow": 131072,
-            "maxTokens": 4096,
+            "maxTokens": 8192,
             "reasoning": true
         },
 
@@ -187,16 +210,18 @@
           "_contextWindow": 96000,
           "maxTokens": 8192,
           "reasoning": true
-      },
+      },      
       { 
-          "_test": "⚠️ OK, but too much work for a simple task and it overdo and possibly touch what it is not supposed to do",
-          "_speed": "40 t/s",
-          "id": "Qwen3.6-27B-A3B-Coder-CD-Q4_K_M_mannix.gguf",
-          "name": "Qwen 3.6 35B Coder-CD (ManniX)",
-          "contextWindow": 131072,
+         "_test": "✔️ Really good but only 64k",
+         "_speed": "?? t/s",
+          "id": "Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
+          "name": "Qwen 3.6 28B REAP20 96k",
+          "contextWindow": 65536,
           "maxTokens": 8192,
-          "reasoning": true
-      }, 
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+
 
 
 { "id": "=== Qwen 3 Coder ==="},

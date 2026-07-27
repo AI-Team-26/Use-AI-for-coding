@@ -41,7 +41,6 @@ https://gist.github.com/rxaviers/7360908
 | ‼️ |                        |                                 |
 | ❗ |                        |                                 |
 | ☑️ |                        |                                 |
-| 💔 |                        | Expired free quota              |
 | 💥 |                        |                                 |
 | ➕ |                        |                                 |
 | ➖ |                        | Empty                           |
@@ -60,9 +59,6 @@ https://gist.github.com/rxaviers/7360908
 | 👈 |                        |                                 |
 | 💪 |                        |                                 |
 | 👌 |                        |                                 |
-| 💙 |                        |                                 |
-| 💚 |                        |                                 |
-| 💛 |                        |                                 |
 | ❤️ |                        |                                 |
 | 💔 |                        |                                 |
 | 👀 |                        |                                 |
@@ -71,8 +67,6 @@ https://gist.github.com/rxaviers/7360908
 | :octocat: |                        |                                 |
 | 🔑 |                        |                                 |
 | 💡 |                        |                                 |
-| 🔹 |                        |                                 | 
-| 🔸 |                        |                                 |
 | 🎵 |                        |                                 | 
 
 
@@ -87,11 +81,20 @@ Bullet list points
 | ★ |  
 | ⋆ |  
 
-Squares: 🟥 🟧 🟨 🟩 🟦 🟪 🟫
-Circles: 🔴 🟠 🟡 🟢 🔵 🟣 🟤
-Hearths: ❤️ 🧡 💛 💚 💙 💜 🤎
+Squares:       🟥 🟧 🟨 🟩 🟦 🟪 🟫
+Circles:       🔴 🟠 🟡 🟢 🔵 🟣 🟤
+Hearths:       ❤️ 🧡 💛 💚 💙 💜 🤎
 
+Diamonds:      ♦️🔶🔷
+Small diamonds: 🔸🔹 
+
+🍓🍒🍄🦀🐞
+📂
+
+✰✯★🌟⭐
 
 Arrows up/down
-ASCII:  ↑ ↓
-Unicode: ↑ ↓
+ASCII:     ↑ ↓
+Unicode:   ↑ ↓ 
+Triangles:🔺🔻
+
