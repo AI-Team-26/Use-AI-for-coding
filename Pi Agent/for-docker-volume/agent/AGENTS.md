@@ -36,6 +36,12 @@
   - After applying changes, run the test suite if available or check the GitHub workflow run
    
 
+## Languages Tooling
+  Use appropriate build and test commands based on the project:
+  - C# & F#: Use `dotnet build` and `dotnet test`
+  - Rust: Use `cargo build` and `cargo test`
+  - Vue.js: Use `pnpm run build` and `pnpm run test`
+
 ## .NET Project Conventions
 
 When scaffolding or modifying .NET projects, follow these conventions:
@@ -43,19 +49,21 @@ When scaffolding or modifying .NET projects, follow these conventions:
 - **Central package management** — Use `Directory.Build.props` (with `<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>`) and `Directory.Packages.props` to declare all package versions in a single place. Project files (`*.fsproj`, `*.csproj`) must reference packages without the `Version` attribute.
 - **Project layout** — Place source projects under `src/` and test projects under `tests/`. Each folder can contain multiple projects.
 - **CI workflow** — Every repository must have a `.github/workflows/ci.yml` that builds the solution and runs tests on every push/PR to `main`.
-- **Test framework** — Use **NUnit** for all unit tests.
+- **Test framework** — Use `NUnit` for all unit tests and `Unquote`.
+- F# Projects: Always explicitly add the FSharp.Core package.
+- Versions: Never downgrade packages unless planned.
+- On initial stage of the project (after creation or new project added), don't rely on "dotnet build" alone; also verify with "dotnet run".
 
 ## Web App Conventions
 
 - **TypeScript** - Use TypeScript, not plain JavaScript
 - **PNPM** - Prefer PNPM to NPM
 - **Builder** - Use Vite
-- ***"D graphic* - Use Phaser
-- **Python** - The user launch it with "python" locally ("not python3")
+- **2D/3D graphic* - Use Phaser
 
 ## Rule - Branch & PR by Default
 
-- **Always** work on a new branch and create a PR for any change, unless the user explicitly says *"do it directly on main"* or *"skip PR"*.
+- **Always** work on a new branch and create a PR for any change, unless the user asks for a direct change on main branch or ask to skip the PR, or this is not a GIT repository.
 - If the user requests a direct commit to `main`, the agent should:
   1. Switch to `main`.
   2. Commit the changes.
@@ -65,13 +73,13 @@ When scaffolding or modifying .NET projects, follow these conventions:
 
 ## Project File Management (Git-Native Agile)
 
-The project uses a lightweight, branch-aware file system to track work. No external Kanban tools—Git branches *are* the Kanban board.
+The project uses a lightweight, branch-aware file system to track work. No external Kanban tools; Git branches *are* the Kanban board.
 
 ### Files
 
 | File | Lives on | Purpose |
 | :--- | :--- | :--- |
-| `TODO.md` | Every branch | Context-aware task list. Content changes based on which branch you're on. |
+| `TODO.md` | Every branch | Context-aware task list. Content changes based on which branch you're on. The Done/Complete section should be at the end. |
 | `CHANGELOG.md` | `main` only | Historical record of completed features. Updated on merge. |
 
 ### `TODO.md` Behavior by Branch
@@ -87,6 +95,11 @@ The project uses a lightweight, branch-aware file system to track work. No exter
   - **Context / Mental Picture:** Technical notes, libraries used, approach, gotchas.
   - **Steps:** Granular checklist of sub-tasks.
   - **Notes:** Command syntax, API references, links, anything an agent needs to resume work.
+
+**TODO contains the GIT branch definition an progress**
+- When a branch is created it has to be documented in the TODO "In Progress" section.  
+- The branch desription has to be clear and useful at any time to understand the goal and the work to do in that branch
+
 
 ### On Merge (PR is merged into `main`)
 
