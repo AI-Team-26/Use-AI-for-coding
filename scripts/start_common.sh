@@ -65,10 +65,10 @@ setup_git_for_repo() {
 
     if [[ -z "$git_pat" ]]; then
         echo ""
-        echo -e "❌ Git credentials record for ${YELLOW}$repo_path${NC} not found"
+        echo -e "Git credentials record for ${YELLOW}$repo_path${NC} not found"
 
         echo ""
-        read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (do you have the PAT)? [Yy]es / [N]o " choice
+        read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (you need the PAT)? [Yy]es / [N]o " choice
         case "$choice" in
             Y|y|Yes|yes) 
             read -s -p "GitHub PAT (hidden): " git_pat
@@ -81,7 +81,7 @@ setup_git_for_repo() {
             ;; 
             *)
             git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
-            echo -e "${YELLOW}The \"default\" account GIT credentials will be used, this works iif you are a colalborator of the repo${NC}"
+            echo -e "${YELLOW}The \"default\" account GIT credentials will be used, this works iif you are a collaborator of the repository${NC}"
             #return 1
         esac
     else

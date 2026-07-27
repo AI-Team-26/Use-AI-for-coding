@@ -40,20 +40,17 @@ start_project() {
         echo -e "Found this llama.cpp model loaded: ${YELLOW} $llamacpp_model ${NC}"
     fi
 
-    # Launch Pi Agent    
+    # Launch Pi Agent
     echo -e "\e[34m-------------------\e[0m"
     PS3=$'\e[34mSelect an option: \e[0m'
-    select choice in Continue Resume New No-session; do
-        #clear
-        if [[ "$choice" == "Continue" ]]; then
-            pi $model_param --continue ; break
-        elif [[ "$choice" == "Resume" ]]; then
-            pi $model_param --resume ; break
-        elif [[ "$choice" == "New" ]]; then
-            pi $model_param --name "Main" ; break
-        else
-            pi $model_param --no-session ; break
-        fi
+    select choice in Continue Resume New ; do
+        # use exec so when the host shell close the pi process is killed
+        case "$choice" in
+            Continue)  exec pi $model_param --continue ;;
+            Resume)    exec pi $model_param --resume ;;
+            New)       exec pi $model_param --name "Main" ;;
+            #No-session|*) exec pi $model_param --no-session ;;
+        esac
     done
             
     echo -e "Pi Agent session closed. Bye!"
