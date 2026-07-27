@@ -80,6 +80,15 @@ Cons
 
 Refer to [GitHub access for Agent](GitHub%20access.md) to know how to give the Agent access to the GitHub repositories.  
 
+### Diff
+
+Windows uses `CRLF`, Linux `LF`, [TODO]
+
+When a file is edited both from the Agent (Linux) and the Host (Windows) it is possible it result changed in Linux and not in Windows.  
+`git status` can say that a file is modified only on hte Linux side and inspecting it, the difefrence is that it has lost the executable permission (set by Linux) wjhen edited in Windows (755 -> 644).   
+`git config core.fileMode false` Will set GIT to ignore permissions changes of files.
+
+
 ### Credentials
 
 The generic GIT credentials to execute `git` can be set with these commands:
