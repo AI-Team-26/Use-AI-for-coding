@@ -1,14 +1,22 @@
 # GitHub access for Agent
 
-The goal is to use GIT and GitHub CLI to create branches, PR, and check GitHub Actions for repositories owned by a personal account or its GitHub organization, from a machine where an AI Agent is operating.  
-I have created a shadow GitHub account for this purpose, this account is used by the AI Agent.  
-  
+The goal is to use GIT and GitHub CLI to create branches, create PR, review PR, and check GitHub Action runs for repositories owned by a personal account or its GitHub organization, from a machine where an AI Agent is operating.  
+I have created a shadow GitHub account for this purpose, this account is used by the AI Agent, 
+so, in this document we will refer to **Main [GH] Account** and **Agent [GH] Account**.  
+I will use solutions accessible to Free GitHub accounts.  
+
 The possible options are:
+- **[To Be Testes]** Agent GH account is a **Collaborator** of the Main GH account repository
 - ✔️ Fine-grained permissions PAT on the main Account. Note. All the commits and the PR will be done by the main Account, so it can Merge the PR immediately.
 - Member of a GitHub Organization
 - Collaborator on the GitHub Organization repo
 - Collaborator on the main Account repository
 - New repository in the Agent GitHub account
+
+
+## **[Not tested]** Agent GH account is a collaborator of the Main GH account repository
+
+
 
 
 ## Fine-grained permissions PAT on the main account for organization repository ✔️
