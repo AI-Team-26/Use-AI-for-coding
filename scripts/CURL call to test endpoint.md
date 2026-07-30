@@ -3,11 +3,14 @@
 
 ## OpenAI-compatible endpoint
 
+
+### Mistral
+
 ```bash
 # OpenAI-compatible path
 BASE_URL=https://codestral.mistral.ai/v1/chat/completions
 # key from Codestral
-API_KEY=$MISTRAL_CODESTRAL_API_KEY_ALEX
+API_KEY=$MISTRAL_CODESTRAL_API_KEY
 MODEL="codestral-2508"
 
 PAYLOAD=$(cat <<EOF
@@ -32,7 +35,9 @@ curl -X POST "$BASE_URL" \
 https://codestral.mistral.ai/v1/fim/completions
 https://codestral.mistral.ai/v1/chat/completions
 
+### AliBaba
 
+[TODO]
 
 ## Anthropic-compatible endpoint
 

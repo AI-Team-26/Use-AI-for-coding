@@ -35,7 +35,7 @@ start_project() {
     if [[ -n "$llamacpp_model" ]]; then
         # "Llama.cpp" is the provider used for local llama.cpp server
         # --model.... singular, for a single model
-        model_param="--model Llama.cpp/$llamacpp_model"
+        model_param="--model Llama.cpp/$llamacpp_model"        
         echo ""
         echo -e "Found this llama.cpp model loaded: ${YELLOW} $llamacpp_model ${NC}"
     fi
