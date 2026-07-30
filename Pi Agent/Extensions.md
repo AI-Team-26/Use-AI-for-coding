@@ -9,3 +9,6 @@
   ``pi install npm:pi-idle``
   Shows a ✓ checkmark in the terminal title when Pi is idle and displays a spinner while Pi is actively working.
 
+- [pi-llama-cpp-stats](https://pi.dev/packages/pi-llama-cpp-stats)
+  ``pi install npm:pi-llama-cpp-stats``
+  Shows a progress bar and and estimation of duration when llama.cpp is "Prefilling".

@@ -80,7 +80,12 @@ Cons
 
 Refer to [GitHub access for Agent](GitHub%20access.md) to know how to give the Agent access to the GitHub repositories.  
 
-### Diff
+### Default branch name
+
+`git config --global init.defaultBranch main`
+
+
+### Unwanted version diff
 
 Windows uses `CRLF`, Linux `LF`, [TODO]
 

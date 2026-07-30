@@ -17,6 +17,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | g
     && apt-get update && apt-get install -y gh \
     && rm -rf /var/lib/apt/lists/*
 
+#--- GIT settings
+RUN git config --global init.defaultBranch main
+RUN git config --global core.fileMode false
+RUN git config --global credential.useHttpPath true
+
 #--- Pi Agent
 
 # Pi Installation
@@ -26,6 +31,7 @@ RUN curl -fsSL https://pi.dev/install.sh | sh
 RUN pi install https://github.com/gsanhueza/pi-token-speed
 RUN pi install npm:pi-idle
 RUN pi install npm:pi-voice-stt
+RUN pi install npm:pi-llama-cpp-stats
 
 
 ENTRYPOINT ["/projects/start.sh"]
