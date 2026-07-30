@@ -1,6 +1,5 @@
-# COMMON script fo the start.sh in the different tools (pi.dev, Qwen-Coder ...)
-# The start_project function is defined in the single tool because it has to be tool-specific 
-
+# COMMON script for the start.sh script in the different tools folders (pi.dev, Qwen-Coder ...)
+# The start_project function is defined in the single tool because it can use specific commands of the tool
 # --- Config ---
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; PURPLE_LIGHT=$'\033[0;31m'; BOLD_PURPLE=$'\033[1;35m'; NC=$'\033[0m'
 HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
@@ -14,7 +13,7 @@ setup_git_global() {
     local force=${1:-0}
 
     if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
-        echo -e "${YELLOW}${GIT_EMOJI} Git is not configured for \"${GITHUB_ACCOUNT}\". Set up credentials:${NC}"
+        echo -e "${YELLOW}${GIT_EMOJI} GIT is not configured for \"${GITHUB_ACCOUNT}\". Set up credentials:${NC}"
 
         read -p "GitHub user name (Commit author username): " git_username
         read -p "GitHub email: " git_email
@@ -31,7 +30,7 @@ setup_git_global() {
         echo -e "${YELLOW}GIT credentials${NC}"
         cat ~/.git-credentials
         echo ""
-        echo -e "${GREEN}${GIT_EMOJI} Git configured!${NC}"                
+        echo -e "${GREEN}${GIT_EMOJI} GIT configured!${NC}"                
     fi
 
     #return 0
@@ -65,7 +64,7 @@ setup_git_for_repo() {
 
     if [[ -z "$git_pat" ]]; then
         echo ""
-        echo -e "Git credentials record for ${YELLOW}$repo_path${NC} not found"
+        echo -e "GIT credentials record for ${YELLOW}$repo_path${NC} not found"
 
         echo ""
         read -p "Do you want to set the GIT credentials for \"$git_account_of_repo\" (you need the PAT)? [Yy]es / [N]o " choice
@@ -77,7 +76,7 @@ setup_git_for_repo() {
             echo -e "${YELLOW}GIT credentials${NC}"
             cat ~/.git-credentials
             echo ""
-            echo -e "✔️ Git credentials set for \"@github.com/$git_account_of_repo\" ${NC}"
+            echo -e "✔️ GIT credentials set for \"@github.com/$git_account_of_repo\" ${NC}"
             ;; 
             *)
             git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
@@ -86,7 +85,7 @@ setup_git_for_repo() {
         esac
     else
         echo ""
-        echo -e "✔️ Git credentials found for \"@github.com/$git_account_of_repo\" ${NC}"
+        echo -e "✔️ GIT credentials found for \"@github.com/$git_account_of_repo\" ${NC}"
     fi
 
    
@@ -105,7 +104,7 @@ setup_git_for_repo() {
 
 # --- Add GitHub PAT ---
 add_github_pat() {
-    echo -e "${YELLOW}${GIT_EMOJI} Add a new PAT to the Git credentials:${NC}"
+    echo -e "${YELLOW}${GIT_EMOJI} Add a new PAT to the GIT credentials:${NC}"
     
     # look for current GitHub username
     local git_username_default=$(git config --global user.name)
