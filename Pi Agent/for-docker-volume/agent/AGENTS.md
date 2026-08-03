@@ -29,7 +29,7 @@
   - Create a new branch with a numeric prefix (e.g., `01_first_commit`, `feat/02_add_this_and_that`).
   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR. Request to review and re-review and say "Waiting for Review".
   - Show a clickable link to the PR to the user
-  - If the repository owner is different from {{GITHUB_REVIEWER}}, add {{GITHUB_REVIEWER}} as a reviewer when creating the PR.
+  - If the PR creator is not {{GITHUB_REVIEWER}}, add {{GITHUB_REVIEWER}} as a reviewer.
   - When a PR is merged, update `CHANGELOG.md` and clean up `TODO.md` (see Project File Management section).
   - When you push fixes in response to CHANGES_REQUESTED, automatically request re-review (see PR Review workflow section).
 5. **Run the Tests after changes**
@@ -117,7 +117,7 @@ The project uses a lightweight, branch-aware file system to track work. No exter
 ## Example Workflow
 
 1. User: *"Add a new endpoint."*
-2. Agent: *Creates branch `feat/03_add_endpoint`, makes changes, pushes, and opens a PR (with {{GITHUB_REVIEWER}} as reviewer if {{GITHUB_ACCOUNT}} is different)*
+2. Agent: *Creates branch `feat/03_add_endpoint`, makes changes, pushes, and opens a PR (with {{GITHUB_REVIEWER}} as reviewer)*
 3. User: *"Do it directly on main."*
 4. Agent: *Switches to `main`, commits, pushes, and does not create a PR.*
 

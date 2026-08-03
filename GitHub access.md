@@ -24,7 +24,7 @@ Use AI chats to get suggestions/corrections about GitHub workflows.
 Exising repository on Main account:
 - (A) ❌ Agent account as a **Collaborator** of the Main GH account repository
 - (B1) ✔️ Move repository into an organization and have old path <main-account/repo> redirected to <org/repo> then follow (C) or (D) solution
-- (C1) ? Use Main account PAT
+- (C) ➖ Use Main account PAT
 
 New Repository:
 - (B) ✔️ Member of Organization and Fine-grained PAT
@@ -144,6 +144,12 @@ When update the PAT adding a new repository of the organization, it generates a 
 To find it:  
 ``Org Settings → Personal access tokens → Pending requests``
 
+
+## C. ➖ Use Main account fine-grained PAT
+
+There is no real advantage on doing this if not just being a quick solution.  
+Also, it doesn't make a clean PR reviews mechainism.
+Moving the repository under a organization seems a simple solution.
 
 
 ## D. ❌ Collaborator on the GitHub Organization repository 

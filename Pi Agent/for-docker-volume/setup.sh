@@ -23,6 +23,7 @@ mkdir -p "$docker_volumes/projects"
 
 # Copy startup scripts and configurations
 cp ../../scripts/start_common.sh "$docker_volumes/projects/start_common.sh"
+cp ../../scripts/git_common.sh "$docker_volumes/projects/git_common.sh"
 cp start.sh "$docker_volumes/projects/start.sh"
 cp .env "$docker_volumes/projects/.env"
 cp agent/AGENTS.md "$docker_volumes/.pi/agent/AGENTS.md"

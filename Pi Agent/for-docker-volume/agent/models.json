@@ -248,6 +248,28 @@
           "input": [ "text", "image" ]
       },
 
+{ "id": "=== Qwen 3.6 27B ===" },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
+          "name": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
+          "contextWindow": 96000,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.6-27B-IQ4_XS_unsloth.gguf",
+          "name": "Qwen3.6 27B IQ4_XS (Unsloth) 64k",
+          "contextWindow": 64000,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+
 { "id": "=== Qwen 3.6 35B A3B ===" },
       { 
          "_test": "✔️ Really good",

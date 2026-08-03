@@ -1,5 +1,5 @@
 #!/bin/bash
-# 📁 Pi Agent Project Manager: Select or clone a GitHub project, then run it with Pi Agent.
+# Pi Agent Project Manager: Select or clone a GitHub project, then run it with Pi Agent.
 #   - Sets up Git credentials if missing.
 #   - Lists projects in /projects (bind-mounted from host).
 #   - Allows cloning new repos interactively.
@@ -26,7 +26,7 @@ export EXA_API_KEY=$EXA_API_KEY
 start_project() {
     local proj=$1
 
-    #clear    
+    #clear
 
     ### Pass over the current llama.cpp loaded model
     # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
@@ -35,7 +35,7 @@ start_project() {
     if [[ -n "$llamacpp_model" ]]; then
         # "Llama.cpp" is the provider used for local llama.cpp server
         # --model.... singular, for a single model
-        model_param="--model Llama.cpp/$llamacpp_model"        
+        model_param="--model Llama.cpp/$llamacpp_model"
         echo ""
         echo -e "Found this llama.cpp model loaded: ${YELLOW} $llamacpp_model ${NC}"
     fi
@@ -48,7 +48,7 @@ start_project() {
         case "$choice" in
             Continue)  exec pi $model_param --continue ;;
             Resume)    exec pi $model_param --resume ;;
-            New)       exec pi $model_param --name "Main" ;;
+            New)       exec pi $model_param --name $(date +%y.%m.%d) ;; # YY.MM.DD
             #No-session|*) exec pi $model_param --no-session ;;
         esac
     done

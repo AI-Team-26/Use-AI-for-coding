@@ -13,8 +13,8 @@ TODO:
 ```bash
 cd "Pi Agent"
 docker build \
-    --label description="Pi Agent for coding" \
-    -t pi-agent:5 \
+    --label description="Pi Agent Coder" \
+    -t pi-agent:6 \
     -f Dockerfile \
     .
 ```
@@ -48,7 +48,7 @@ docker run \
     --label "description=Pi Agent for GitHub projects" \
     --mount type=bind,src="$docker_volumes/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/projects",dst=/projects \
-    pi-agent:5
+    pi-agent:6
 
 # legacy syntax
 # -v "$docker_volume/.pi:/root/.pi" \
