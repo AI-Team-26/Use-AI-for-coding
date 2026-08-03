@@ -26,7 +26,8 @@
   - Act always follows a Plan.
   - **CRITICAL** When the user ask a question, answer the question, do not jump on making changes, do not take initiative without having user approval.
 4. **Pull Request Workflow**
-  - Create a new branch with a numeric prefix (e.g., `01_first_commit`, `feat/02_add_this_and_that`).
+  - When start a task, decide the branch in advance, use a numeric prefix (e.g., `feat/02_add_this_and_that`, `fix/03_price_calculation_bug`).
+  - Document it in the TODO (branch name and purpose) in the main branch, so that when on main we know the branch of each started task.
   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR. Request to review and re-review and say "Waiting for Review".
   - Show a clickable link to the PR to the user
   - If the PR creator is not {{GITHUB_REVIEWER}}, add {{GITHUB_REVIEWER}} as a reviewer.
@@ -34,7 +35,7 @@
   - When you push fixes in response to CHANGES_REQUESTED, automatically request re-review (see PR Review workflow section).
 5. **Run the Tests after changes**
   - After applying changes, run the test suite if available or check the GitHub workflow run
-   
+
 
 ## Languages Tooling
   Use appropriate build and test commands based on the project:
@@ -99,6 +100,7 @@ The project uses a lightweight, branch-aware file system to track work. No exter
 **TODO contains the GIT branch definition an progress**
 - When a branch is created it has to be documented in the TODO "In Progress" section.  
 - The branch desription has to be clear and useful at any time to understand the goal and the work to do in that branch
+- Update TODO after each sub-task, not just at the end.** Every time you finish a checklist item, mark it `[x]` *before* committing or pushing. Each commit/PR therefore carries an accurate snapshot of exactly what changed. Reviewers reading the PR + TODO together never have to guess which steps were included.
 
 
 ### On Merge (PR is merged into `main`)
