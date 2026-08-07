@@ -43,7 +43,8 @@ export default function todoExtension(pi: ExtensionAPI) {
         })
 
         // Second message: recap prompt
-        pi.sendUserMessage('Please recap the TODO and propose the next step.')
+        pi.sendUserMessage('Please recap the TODO and propose the next step. \
+            Also, verify the current branch status: is all the job done and all the changes committed? There is a PR?')
 
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
