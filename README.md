@@ -87,11 +87,28 @@ Refer to [GitHub access for Agent](GitHub%20access.md) to know how to give the A
 
 ### Unwanted version diff
 
-Windows uses `CRLF`, Linux `LF`, [TODO]
+**CRLF vs LF**  
+Windows uses `CRLF`, Linux `LF`.  
+GIT, by default consider 2 files different if the end-line style is not the same.  
+To avoid this instruct GIT to [TODO].
 
-When a file is edited both from the Agent (Linux) and the Host (Windows) it is possible it result changed in Linux and not in Windows.  
-`git status` can say that a file is modified only on hte Linux side and inspecting it, the difefrence is that it has lost the executable permission (set by Linux) wjhen edited in Windows (755 -> 644).   
-`git config core.fileMode false` Will set GIT to ignore permissions changes of files.
+**File mode**  
+When a file is edited both from the Agent (Linux) and the Host (Windows) it is possible it result changed because it get a different permissions set.   
+`git status` says that a file is modified but openeing it doesn't show any difference. Using `git diff` the problem is clear.  
+
+```sh
+$ git diff file.txt
+diff --git a/file.txt b/file.txt
+old mode 100755
+new mode 100644
+```
+
+To instruct GIT to ignore this differnce
+only on hte Linux side and inspecting it, the difefrence is that it has lost the executable permission (set by Linux) wjhen edited in Windows (755 -> 644).   
+`git config --global core.fileMode false` Will set GIT to ignore permissions changes of files.
+
+If doesn't work, it is possible a more specific config exists on hte repo, find it:
+``git config --list --show-origin | grep -i filemode`` 
 
 
 ### Credentials
