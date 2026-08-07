@@ -31,7 +31,9 @@
   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR. Request to review and re-review and say "Waiting for Review".
   - Show a clickable link to the PR to the user
   - If the PR creator is not {{GITHUB_REVIEWER}}, add {{GITHUB_REVIEWER}} as a reviewer.
-  - When a PR is merged, update `CHANGELOG.md` and clean up `TODO.md` (see Project File Management section).
+
+  - Before creating any branch, the agent must first update the `TODO.md` on `main` with the branch name, task description, and all known sub-steps set in the `In-Progress` section. This planning entry is committed on `main` before branching off.
+  - The `CHANGELOG.md` is optional — only update it if the file exists in the repository.
   - When you push fixes in response to CHANGES_REQUESTED, automatically request re-review (see PR Review workflow section).
 5. **Run the Tests after changes**
   - After applying changes, run the test suite if available or check the GitHub workflow run
@@ -78,37 +80,62 @@ The project uses a lightweight, branch-aware file system to track work. No exter
 
 ### Files
 
-| File | Lives on | Purpose |
-| :--- | :--- | :--- |
-| `TODO.md` | Every branch | Context-aware task list. Content changes based on which branch you're on. The Done/Complete section should be at the end. |
-| `CHANGELOG.md` | `main` only | Historical record of completed features. Updated on merge. |
-
-### `TODO.md` Behavior by Branch
-
-**On `main` (Backlog View):**
-- Contains only a simple `## Backlog` section with high-level future tasks.
-- No active work details—those live on the feature branches.
-
-**On a `feat/` branch (Sprint View):**
-- The top section becomes `## In Progress: <Feature Name>`.
-- Includes:
-  - **Goal:** One-sentence description of what this branch achieves.
-  - **Context / Mental Picture:** Technical notes, libraries used, approach, gotchas.
-  - **Steps:** Granular checklist of sub-tasks.
-  - **Notes:** Command syntax, API references, links, anything an agent needs to resume work.
-
-**TODO contains the GIT branch definition an progress**
-- When a branch is created it has to be documented in the TODO "In Progress" section.  
-- The branch desription has to be clear and useful at any time to understand the goal and the work to do in that branch
-- Update TODO after each sub-task, not just at the end.** Every time you finish a checklist item, mark it `[x]` *before* committing or pushing. Each commit/PR therefore carries an accurate snapshot of exactly what changed. Reviewers reading the PR + TODO together never have to guess which steps were included.
 
 
-### On Merge (PR is merged into `main`)
 
-1. Add a summary entry to `CHANGELOG.md` on `main`.
-2. Remove the completed task from `TODO.md`'s Backlog on `main`.
-3. The branch's detailed `TODO.md` is discarded (overwritten by `main`'s clean version during merge).
-4. Delete the local and remote branch.
+### `TODO.md` description
+
+It has 3 sections:  
+- `In progress` with the feature/fix task that are being implemented at the moment (branch name known)
+- `Backlog` with high-level future tasks (branch name unknown).
+- `Completed` with merged branch records (branch name known)
+
+
+**On a `feat/` or `fix/` branch:**
+- **Goal:** One-sentence description of what this branch achieves.
+- **Context / Mental Picture:** Technical notes, libraries used, approach, gotchas.
+- **Steps:** Granular checklist of sub-tasks.
+- **Notes:** Command syntax, API references, links, anything an agent needs to resume work.
+
+**TODO contains the GIT branch definition and status (In Progress/Completed)**  
+The branch desription has to be clear and useful at any time to understand the goal and the work to do in that branch  
+Update TODO after each sub-task, not just at the end.** Every time you finish a checklist item, mark it `[x]` *before* committing or pushing. Each commit/PR therefore carries an accurate snapshot of exactly what changed. Reviewers reading the PR + TODO together never have to guess which steps were included.
+
+
+### TODO.md Workflow (Branch Lifecycle)
+
+The `TODO.md` follows a strict lifecycle across branches to ensure traceability and automatic updates on merge.
+
+#### 1. Plan on `main` (Before Branching)
+- The agent updates the `TODO.md` on `main` with the branch name, task description, and all known sub-steps.
+- This entry is committed on `main` **before** creating the branch.
+- The entry format on `main` uses `Backlog` with unchecked items:
+  ```markdown
+  - [ ] **[feat/01_project_reorganization]** Move existing code and setup folder structure
+    - [ ] Move existing code to `src/TargetCode/`
+    - [ ] Move existing tests to `tests/TargetCodeTests/`
+    - [ ] Create `src/Evaluator/` (C# Console App)
+  ```
+
+#### 2. Execute on the Branch
+- The branch is created from `main` (which now includes the planning entry).
+- On the branch, the `In Progress` section reflects the current state.
+- Sub-steps can be added, refined, or reorganized as discovery happens during implementation.
+- Each completed sub-step is marked `[x]` before committing.
+
+#### 3. Move to Completed (on the Branch, before PR)
+- Before opening the PR, the agent moves the entire completed block (task + all sub-steps) from `In Progress` to `Completed` at the bottom of the branch's `TODO.md`.
+- All items in the block must be marked `[x]`.
+
+#### 4. Merge Automatically Updates `main`
+- When the PR is merged into `main`, the `Completed` block from the branch is automatically integrated into `main`'s `TODO.md`.
+- No additional commits on `main` are needed to update the TODO after a merge.
+- If `CHANGELOG.md` exists, add a summary entry alongside the TODO update.
+
+#### 5. Local Cleanup
+- Delete the remote branch: `git push origin --delete <branch_name>`
+- Delete the local branch: `git branch -D <branch_name>`
+- Prune stale tracking references: `git fetch -p`
 
 ### Seeing What's In Progress
 
@@ -116,12 +143,7 @@ The project uses a lightweight, branch-aware file system to track work. No exter
 - Branch names must be descriptive (e.g., `feat/03_mp3_splitting`).
 - Switch to a branch and read its `TODO.md` to get full context.
 
-## Example Workflow
 
-1. User: *"Add a new endpoint."*
-2. Agent: *Creates branch `feat/03_add_endpoint`, makes changes, pushes, and opens a PR (with {{GITHUB_REVIEWER}} as reviewer)*
-3. User: *"Do it directly on main."*
-4. Agent: *Switches to `main`, commits, pushes, and does not create a PR.*
 
 
 ## GIT and GitHub CLI authentication
