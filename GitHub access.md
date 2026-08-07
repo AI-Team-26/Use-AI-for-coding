@@ -111,7 +111,6 @@ I prefer the soliution whre the PAT is created on the Agent account so that the 
 
 ```
 
-
 ## B. ✔️ Fine-grained permissions PAT on the Agent account for organization repository 
 
 Using a fine-grained PAT token, created on the Organization allows to have restricted permissions.  
@@ -125,7 +124,7 @@ Pros:
 
 Cons
 - Set the PAT for the repo is a little bit laborious (**Remember to accept the request in the Organization GitHub page**)
-
+- I cannot push directly with my Main Account. despite is the admin ?!
 
 ### Organization
 
@@ -137,13 +136,26 @@ Agent account has access to the repository secrets in the UI. ** Is this a conce
 Fine-grained PAT needs to be enabled on the organization:
 ``Org Settings → Personal access tokens → Settings → Allow access via fine-grained personal access tokens → Save``
 
-### 📌 PAT approval
+### 📌 Remember to approve PAT changes
 
-When update the PAT adding a new repository of the organization, it generates a request.  
+When update the Agent PAT adding a new repository of the organization, it generates a request.  
 **This request is not notified, and not emailed!**  
 To find it:  
 ``Org Settings → Personal access tokens → Pending requests``
 
+### 📌 Main account cannot push
+
+It can happen that the Main account (despite is the admin of the organization) cannot push (403).  
+Adding it as Admin member of the organization, still cannot push (403), and this is not required.    
+The cause is probably that Windows uses **OAuth App** and not .git-credentials, and the stored credentials is not updated.  
+  
+**Solution: Refresh the token/record used for OAuth login**  
+Open Windows "Credentials Manager", select "Windows Credentials" and look for records of "https://github.com".  
+Remove the record, and try git push again.  
+**It will ask for login on GitHub and then it will create a VALID record.**  
+(If you choose "Token" instead of "Sign in with a browser", select "repo" and "workflows", will be enough)
+  
+Note. If the rea more than one record (like https://github.com and https:alex@github.com), the git push will ask to pick one each time! Remove one.
 
 ## C. ➖ Use Main account fine-grained PAT
 
