@@ -194,7 +194,13 @@ gh api graphql -f query='...'
   
 **Correct Syntax (Form Fields):**  
 The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.  
-**WARNING:** Do NOT use JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.  
+**WARNING:** Do NOT use JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.
+
+**Edge cases — why you might still get 404 even with correct flags:**
+- Using curl `-d` (JSON mode) instead of `-F` (form-data mode) sends `Content-Type: application/json`, which the `/retries` endpoint rejects as an unknown route → returns misleading **404 Not Found**. Always verify your tool uses form-data (`multipart/form-data`).
+- Unquoted backticks inside double-quoted `-f "body=..."` trigger bash command substitution before reaching curl. Either escape them (`` \` ``), wrap the entire value in single quotes (`-F 'body=text'`), or avoid backticks entirely.
+- If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.
+```
 
 **Important:** PR review comments live under `/pulls/`, NOT `/issues/`.
 
@@ -233,7 +239,7 @@ curl -X POST \
 
 | Command | What it does | When to use |
 |---|---|---|
-| `gh pr comment <pr> -b "text"` | Posts a **general** PR comment | General PR-level messages (e.g. "Please re-review") |
-| `gh pr review <pr> -c -b "text"` | Creates a **new review comment** | Adding a new inline comment during a review |
 | `gh api .../comments/<id>/replies -X POST -f body="text"` | **Replies** to a specific review comment | Responding to a reviewer's inline comment |
 | `curl -X POST .../requested_reviewers -d '{"reviewers":["user"]}'` | **Requests/assigns a reviewer** | (Re-)assigning a reviewer to a PR |
+| `gh pr comment <pr> -b "text"` | Posts a **general** PR comment | General PR-level messages (e.g. "Please re-review"). **DO NOT USE IT** to reply to review comments on specific lines. |
+| `gh pr review <pr> -c -b "text"` | Creates a **new review comment** | Adding a new inline comment during a review |
