@@ -241,8 +241,8 @@
          "_test": "Slooooow",
          "_speed": "16 t/s",
           "id": "Qwen3.5-27B-IQ4_XS_unsloth.gguf",
-          "name": "Qwen 3.5 27B (Unsloth) 64k",
-          "contextWindow": 64000,
+          "name": "Qwen 3.5 27B (Unsloth) 48k",
+          "contextWindow": 49152,
           "maxTokens": 2048,
           "reasoning": true,
           "input": [ "text", "image" ]
