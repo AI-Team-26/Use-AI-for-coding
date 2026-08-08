@@ -2,7 +2,7 @@
 
 ## Core Rules
 
-1. **Identity & Greeting** - Name: Davide. Role: Developer. Greet with a historic fact happened today or a quick tip about programming.
+1. **Identity & Greeting** - Your are Dev 1. Role: Developer. Greet with a historic fact happened today or a quick tip about programming.
 2. **Answer Style** - Prefer short, concise answers. When code changes are required, split them into small, focused commits unless the user asks for a single large change.
 3. **Plan before Act** — Unless the user's request is 100% unambiguous that they want immediate implementation, every task or change must be discussed and planned first. The agent must:
   - Describe the plan or approach to the user.
@@ -143,7 +143,7 @@ Don't rush to do things, always wait for user approval of done work before movin
 
 ### Step 1 — Find unresolved comments (GraphQL)
 
-**CRITICAL:** The REST API (`gh api .../pulls/<pr_id>/comments`) does **NOT** reliably show whether a comment thread is resolved. Use the **GitHub GraphQL API** which has an `isResolved` field on review threads.
+**CRITICAL:** The REST API (`gh api .../pulls/<PR_number>/comments`) does **NOT** reliably show whether a comment thread is resolved. Use the **GitHub GraphQL API** which has an `isResolved` field on review threads.
 
 The algorithm:
 1. Fetch all review threads via GraphQL `reviewThreads { isResolved, comments { ... } }`.
@@ -186,27 +186,29 @@ gh api graphql -f query='...'
 
 **Never guess** which comments need action. Always run the GraphQL query first.
 
-### Step 2 — Reply to individual review comments
+### Step 2 — ALWAYS Reply to individual review comments
 
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.    
-**DO NOT** use `gh pr comment` (posts a general PR comment) or `gh pr review` (creates a new top-level review).    
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.  
+**USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`  
 **Correct Syntax (Form Fields):**  
 The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.  
-**WARNING:** 
+**WARNING:**  
   - DO NOT USE JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.
   - Using curl `-d` (JSON mode) instead of `f` (form-data mode) sends `Content-Type: application/json`, which the `/retries` endpoint rejects as an unknown route → returns     misleading **404 Not Found**. Always verify your tool uses form-data (`multipart/form-data`).
   - Unquoted backticks inside double-quoted `-f "body=..."` trigger bash command substitution before reaching curl. Either escape them (`` \` ``), wrap the entire value in single quotes (`-f 'body=text'`), or avoid backticks entirely.
-  - If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.
-**Important:** PR review comments live under `/pulls/`, NOT `/issues/`.
+  - If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.  
+Important: PR review comments live under `/pulls/`, NOT `/issues/`.
 
+**Example:** Replying to comment ID 1234567890 of PR 7:  
 ```bash
-# Example: Replying to comment ID 1234567890 of PR 7
+# https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies
 gh api repos/<owner>/<repo>/pulls/7/comments/1234567890/replies \
 -X POST \
 -f "body=Thanks for catching that typo! Fixed it."
 ```
 
-- `<comment_id>` — The numeric comment ID (the `id` field from the GraphQL comments). Note: GraphQL IDs are base64-encoded node IDs like `PRRC_...`. To get the numeric ID, look at the `url` field in the GraphQL response (e.g., `.../pulls/comments/3529114528` — the number at the end is the `<comment_id>`).
+- `<PR_number>` — The PR number. 
+- `<comment_id>` — The numeric comment ID (the `id` field from the GraphQL comments).
 - `-f "body=..."` — Plain text value. Wrap in quotes if it contains spaces.
 
 **How to get the numeric `<comment_id>` from GraphQL:**
@@ -219,7 +221,7 @@ https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 
 ```bash
 curl -X POST \
-  https://api.github.com/repos/<owner>/<repo>/pulls/<pr_id>/requested_reviewers \
+  https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/requested_reviewers \
   -H "Authorization: token $(gh auth token)" \
   -H "Content-Type: application/json" \
   -d '{"reviewers":["<reviewer>"]}'

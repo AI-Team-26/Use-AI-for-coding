@@ -307,6 +307,16 @@
       { 
           "_test": "??",
           "_speed": "? t/s",
+          "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mrradermacher.gguf",
+          "name": "Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mrradermacher) 48k",
+          "alias": "mrradermacher/Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M [48k]",
+          "contextWindow": 48000,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+      { 
+          "_test": "??",
+          "_speed": "? t/s",
           "id": "Qwen3-Coder-30B-A3B-Instruct-UD-Q3_K_XL_unsloth.gguf",
           "name": "Qwen_3_Coder_UD-Q3_K_XL_(Unsloth)_64k",
           "contextWindow": 64000,
