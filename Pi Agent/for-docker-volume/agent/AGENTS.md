@@ -188,26 +188,20 @@ gh api graphql -f query='...'
 
 ### Step 2 — Reply to individual review comments
 
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.  
-  
-**DO NOT** use `gh pr comment` (posts a general PR comment) or `gh pr review` (creates a new top-level review).  
-  
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.    
+**DO NOT** use `gh pr comment` (posts a general PR comment) or `gh pr review` (creates a new top-level review).    
 **Correct Syntax (Form Fields):**  
 The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.  
-**WARNING:** Do NOT use JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.
-
-**Edge cases — why you might still get 404 even with correct flags:**
-- Using curl `-d` (JSON mode) instead of `-F` (form-data mode) sends `Content-Type: application/json`, which the `/retries` endpoint rejects as an unknown route → returns misleading **404 Not Found**. Always verify your tool uses form-data (`multipart/form-data`).
-- Unquoted backticks inside double-quoted `-f "body=..."` trigger bash command substitution before reaching curl. Either escape them (`` \` ``), wrap the entire value in single quotes (`-F 'body=text'`), or avoid backticks entirely.
-- If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.
-```
-
+**WARNING:** 
+  - DO NOT USE JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.
+  - Using curl `-d` (JSON mode) instead of `f` (form-data mode) sends `Content-Type: application/json`, which the `/retries` endpoint rejects as an unknown route → returns     misleading **404 Not Found**. Always verify your tool uses form-data (`multipart/form-data`).
+  - Unquoted backticks inside double-quoted `-f "body=..."` trigger bash command substitution before reaching curl. Either escape them (`` \` ``), wrap the entire value in single quotes (`-f 'body=text'`), or avoid backticks entirely.
+  - If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.
 **Important:** PR review comments live under `/pulls/`, NOT `/issues/`.
 
 ```bash
-# Example: Replying to comment ID 1234567890
-gh api \
-repos/<owner>/<repo>/pulls/7/comments/1234567890/replies \
+# Example: Replying to comment ID 1234567890 of PR 7
+gh api repos/<owner>/<repo>/pulls/7/comments/1234567890/replies \
 -X POST \
 -f "body=Thanks for catching that typo! Fixed it."
 ```
