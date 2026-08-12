@@ -4,12 +4,13 @@
 #   - Lists projects in /projects (bind-mounted from host).
 #   - Allows cloning new repos interactively.
 
-cd /projects
-source start_common.sh
+source /scripts/start_common.sh
+source /scripts/.env
+#cd /projects
 
 # export to the current session all the variabled in .env
 #set -a; source .env; set +a
-source .env
+
 
 if [[ -z "$GITHUB_ACCOUNT" ]]; then
     echo -e "${RED}⛔ GITHUB_ACCOUNT is not found. Set it in the .env file${NC}"
@@ -41,7 +42,7 @@ start_project() {
     fi
 
     # Launch Pi Agent
-    exec pi $model_param --continue ;;
+    exec pi $model_param --continue
 
     # user choice
     #echo -e "\e[34m-------------------\e[0m"

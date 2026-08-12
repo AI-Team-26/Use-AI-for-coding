@@ -247,6 +247,28 @@
           "reasoning": true,
           "input": [ "text", "image" ]
       },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.5-27B-IQ4_XS_unsloth.gguf",
+          "name": "name Qwen3.5 27B IQ4_XS (Unsloth) 64k",
+          "alias": "alias Unsloth/Qwen3.5 27B IQ4_XS [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.5-27B-IQ4_XS_bartowski.gguf",
+          "name": "name Qwen3.5 27B IQ4_XS (bartowski) 64k",
+          "alias": "alias bartowski/Qwen3.5 27B IQ4_XS [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
 
 { "id": "=== Qwen 3.6 27B ===" },
       { 
@@ -307,10 +329,19 @@
       { 
           "_test": "??",
           "_speed": "? t/s",
-          "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mrradermacher.gguf",
-          "name": "Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mrradermacher) 48k",
-          "alias": "mrradermacher/Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M [48k]",
-          "contextWindow": 48000,
+          "id": "Qwen3-Coder-30B-A3B-Instruct-IQ4_XS_unsloth.gguf",
+          "alias": "Unsloth/Qwen3-Coder 30B-A3B Instruct IQ4_XS [96k]",
+          "contextWindow": 98304,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+      { 
+          "_test": "✔️ Very good",
+          "_speed": "22 t/s",
+          "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mradermacher.gguf",
+          "name": "Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mradermacher) 64k",
+          "alias": "mradermacher/Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M [64k]",
+          "contextWindow": 65536,
           "maxTokens": 4096,
           "reasoning": true
       },
@@ -318,9 +349,9 @@
           "_test": "??",
           "_speed": "? t/s",
           "id": "Qwen3-Coder-30B-A3B-Instruct-UD-Q3_K_XL_unsloth.gguf",
-          "name": "Qwen_3_Coder_UD-Q3_K_XL_(Unsloth)_64k",
-          "contextWindow": 64000,
-          "maxTokens": 2048,
+          "alias": "Unsloth/Qwen3 Coder UD-Q3_K_XL [96k]",
+          "contextWindow": 98304,
+          "maxTokens": 4096,
           "reasoning": true
       },
       { 

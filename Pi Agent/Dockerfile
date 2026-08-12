@@ -34,4 +34,4 @@ RUN pi install npm:pi-voice-stt
 RUN pi install npm:pi-llama-cpp-stats
 
 
-ENTRYPOINT ["/projects/start.sh"]
+ENTRYPOINT ["/scripts/start.sh"]

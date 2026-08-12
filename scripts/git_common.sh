@@ -35,7 +35,29 @@ setup_git_global() {
         echo "https://xxx:$git_pat@github.com/$GITHUB_ACCOUNT" > ~/.git-credentials
         echo ""
         echo -e "${YELLOW}GIT credentials${NC}"
-        cat ~/.git-credentials
+        #cat ~/.git-credentials   ### TODO: print it obfuscated
+        i=1
+        while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+                # Obfuscate PAT
+                if [[ "$line" =~ (://[^:]+:)([^@]+)(@) ]]; then
+                    #echo "PAT"
+                    user_pass="${BASH_REMATCH[1]}"
+                    pat="${BASH_REMATCH[2]}"
+                    obfuscated="${pat:0:10}...${pat: -5}"
+                    #echo "obfustaced=${obfuscated}"
+                    obfuscated_line="${line/$pat/$obfuscated}"
+                else
+                    #echo "NOT PAT"
+                    obfuscated_line="$line"
+                fi
+
+                echo "${i}) ${YELLOW}${obfuscated_line}${NC}"
+          
+                ((i++))
+            fi
+        done < ~/.git-credentials
+
         echo ""
         echo -e "${GREEN}${GIT_EMOJI} GIT configured!${NC}"
     fi
@@ -43,7 +65,10 @@ setup_git_global() {
     #return 0
 }
 
-
+obfuscate_pat() {
+    local pat=${1:?PAT is not provided}
+    echo "${pat: 0:10}...${pat: -5}"
+}
 
 
 manage_git_credentials() {

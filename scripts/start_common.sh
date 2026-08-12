@@ -1,15 +1,16 @@
 # COMMON script for the start.sh script in the different tools folders (pi.dev, Qwen-Coder ...)
-# The start_project function is defined in the single tool because it can use specific commands of the tool
+# The start_project function is defined in the single tool because it needs to use specific commands of the tool
 
-source git_common.sh
+source /scripts/git_common.sh
 
 # --- Config ---
+LLAMACPP_URL=${LLAMACPP_HOST:-"http://host.docker.internal:8001"} # host.docker.internal: syntax to get the localhost from the docker container
+
+project_folder="/projects"
+
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; PURPLE_LIGHT=$'\033[0;31m'; BOLD_PURPLE=$'\033[1;35m'; NC=$'\033[0m'
 HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
 FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"; INFO_EMOJI="ℹ️"
-
-LLAMACPP_URL=${LLAMACPP_HOST:-"http://host.docker.internal:8001"} # host.docker.internal: syntax to get the localhost from the docker container
-
 
 
 # --- set GIT credentials and GitHub CLI auth token for the repository --- 
@@ -73,6 +74,8 @@ __set_ () {
 }
 
 
+# Extract the "model" property from llama.cpp running API (from first model)
+# curl -s http://localhost:8001/models | 
 get_llamacpp_loaded_model() {
     local loaded_model
     loaded_model=$(curl -s "$LLAMACPP_URL/models" | python3 -c '
@@ -91,7 +94,7 @@ select_project() {
     #sleep 10
     #clear
 
-    mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
+    mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     if [ ${#projects[@]} -eq 0 ]; then
         echo -e "${YELLOW}No projects found. Clone a repository first!${NC}"
@@ -152,7 +155,7 @@ select_project() {
 
             echo ""
             echo -e "${GREEN}${ROCKET_EMOJI} Open project: ${YELLOW}$proj${NC}"
-            cd "/projects/$proj" || exit 1
+            cd "$project_folder/$proj" || exit 1
 
             #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
             local repo_url=$(git remote get-url origin 2>/dev/null)   
@@ -181,8 +184,8 @@ clone_repo() {
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
     read -p "Directory name (leave blank for repo name): " proj_dir
     local proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
-    if [ -d "/projects/$proj_dir" ]; then
-        echo -e "${RED}${WARNING_EMOJI} Directory '/projects/$dir_name' already exists!${NC}"
+    if [ -d "$project_folder/$proj_dir" ]; then
+        echo -e "${RED}${WARNING_EMOJI} Directory '$project_folder/$dir_name' already exists!${NC}"
         return 1
     fi
 
@@ -226,7 +229,7 @@ clone_repo() {
     esac
 
     # if .git-credentials is not ok for this repo, it will ask username/password to authenticate !!!
-    gh repo clone "$repo_url" "/projects/$proj_dir" || {
+    gh repo clone "$repo_url" "$project_folder/$proj_dir" || {
         # Error is PAT has no permission on this repo: 
         # > GraphQL: Could not resolve to a Repository with the name 'AI-Team-26/game.Creatures'. (repository)
         echo -e "❌ Failed to clone!"
@@ -235,7 +238,7 @@ clone_repo() {
 
     echo -e "✔️ GitHub repository cloned!"
 
-    cd "/projects/$proj_dir" || exit 1
+    cd "$project_folder/$proj_dir" || exit 1
     start_project "$proj_dir"
 }
 
@@ -248,14 +251,14 @@ create_new_proj() {
         return 0
     fi
 
-    mkdir "/projects/$proj_name" 
-    cd "/projects/$proj_name" || exit 1
+    mkdir "$project_folder/$proj_name" 
+    cd "$project_folder/$proj_name" || exit 1
     pi
 }
 
 # --- Delete the project ---
 delete_proj() {
-    mapfile -t projects < <(find /projects -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
+    mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     echo $'\n\e[34m------------------------------------------------\e[0m'
 
@@ -266,7 +269,7 @@ delete_proj() {
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
-            rm -f "/projects/$proj"
+            rm -f "$project_folder/$proj"
         fi
     done
 }
