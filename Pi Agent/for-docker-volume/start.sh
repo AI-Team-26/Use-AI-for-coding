@@ -56,20 +56,32 @@ start_project() {
 
     #clear
 
-    ### Pass over the current llama.cpp loaded model
-    # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
-    local model_param=""
-    local llamacpp_model=$(get_llamacpp_loaded_model)
-    if [[ -n "$llamacpp_model" ]]; then
-        # "Llama.cpp" is the provider used for local llama.cpp server (in models.json)
-        # --model.... singular, for a single model
-        model_param="--model Llama.cpp/$llamacpp_model"
-        echo ""
-        echo -e "Found this llama.cpp model running: ${YELLOW}${llamacpp_model}${NC}"
+    # Pi save the used model in ~/.pi/agent/settings.json file, defaultModel property
+    #If that is NOT set we can try to use the default model for this agent or peek tthe one that is running in local llama.cpp
+
+    # TODO
+    if [[ 1 == 2 ]]; then 
+        ### Pass over the current llama.cpp loaded model
+        # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
+        local model_param=""
+        local llamacpp_model=$(get_llamacpp_loaded_model)
+        if [[ -n "$llamacpp_model" ]]; then
+            # "Llama.cpp" is the provider used for local llama.cpp server (in models.json)
+            # --model.... singular, for a single model
+            model_param="--model Llama.cpp/$llamacpp_model"
+            echo ""
+            echo -e "Found this llama.cpp model running: ${YELLOW}${llamacpp_model}${NC}"
+        fi
+
+        # Launch Pi Agent
+        if [[ -n "$PI_AGENT_DEFAULT_MODEL" ]]; then 
+            model_param="$PI_AGENT_DEFAULT_MODEL"
+        fi
+
+        exec pi "$model_param" --continue
     fi
 
-    # Launch Pi Agent
-    exec pi "$model_param" --continue
+    exec pi --continue
 
     # user choice
     #echo -e "\e[34m-------------------\e[0m"

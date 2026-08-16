@@ -11,8 +11,6 @@
 
 - Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
 
-- 🐞 Sharing the .pi folder makes every /new command to reset the model to the last used (by any model that use the shared folder)
-
 - Complete the documentation for GIT and GitHub setup
 
 - 🐞 GIT token for not-owned repositories.
