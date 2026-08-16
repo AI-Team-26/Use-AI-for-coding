@@ -3,12 +3,12 @@
 The goal is to use GIT and GitHub CLI to create branches, create PR, review PR, and check GitHub Action runs for repositories owned by a personal account or its GitHub organization, from a machine where an AI Agent is operating.  
 I have created a shadow GitHub account for this purpose, this account is used by the AI Agent, 
 so, in this document we will refer to **Main [GH] Account** and **Agent [GH] Account**.  
-I will use solutions accessible to Free GitHub accounts subscriptions.  
+The described solutions work for Free GitHub accounts subscriptions.  
 
 ## Classic vs fine-grained PAT
 
 **DO NOT USE CLASSIC PAT**
-
+---
 The fundamental difference isn't the checkboxes, it's the targeting model. Fine-grained PATs use an allow-list: you pick specific repos at creation time, and the token is permanently bounded to exactly those. Classic PATs use a capability class: `repo` isn't "these three repos," it's "full control of every private repo this account can currently reach — and every one it gains access to later, automatically, with no new consent step." That's the real danger, and it's structural — it doesn't go away no matter how carefully you configure the rest of the screen. If the shadow account ever gets added to a new org, a new repo, anything — this same already-issued token silently expands to cover it. A fine-grained token wouldn't; you'd have to consciously go edit it.
 Your `repo` checkbox is also a bundle you can't partially disable — and one piece of that bundle is worth flagging specifically. Notice `repo:status`, `repo_deployment`, `public_repo`, `repo:invite`, and `security_events` are all greyed out and auto-checked underneath `repo` — that's not optional, it's baked in the moment you check the parent box. `security_events` in particular means this token can read and write Dependabot, code-scanning, and secret-scanning alerts on every private repo it touches — including dismissing an alert. That's a meaningfully sensitive permission to have inherited invisibly, and there's no way to keep code read/write while stripping just that one out of a classic token. A fine-grained PAT would let you grant Contents + Pull requests and explicitly leave "Code scanning alerts" and "Secret scanning alerts" at No access.
 
@@ -18,8 +18,38 @@ Your `repo` checkbox is also a bundle you can't partially disable — and one pi
 **Do not allow the agent to write workflows, it can exfiltrate secrets.**
 Use AI chats to get suggestions/corrections about GitHub workflows.  
 
+##  GIT authentication 
 
-## Solutions
+Stop using ``git config --global credential.useHttpPath true``.  
+It works for records in .git-credentials with the full repository path like `github.com/<user-account>/my_repo.git`.  
+It doesn't work for generic paths like `github.com/<user-account>` or `github.com/<organization>`.  
+It practically consider both the previous record at the same level, valid for github.com, **so it will just pick the first one**.  
+Set and maintain a record in .git-credentials for every repository is inpractical.  
+
+**Solution: use authentication of GitHub CLI**  
+
+This line in _.gitconfig_ you allow the `git` command to authenticate using the GitHub CLI:
+```text
+[credential "https://github.com"]
+helper = !/usr/bin/gh auth git-credential
+```
+TODO: try this simple form:
+helper = !gh auth git-credential
+
+
+``credential.https://github.com.helper = !/usr/bin/gh auth git-credential``
+``credential.https://gist.github.com.helper = !/usr/bin/gh auth git-credential``
+Dockerfile: ``RUN git config --global credential.https://github.com.helper ""``
+Dockerfile: ``RUN git config --global credential.https://github.com.helper "!/usr/bin/gh auth git-credential"``
+
+### How it authenticate to GitHub
+
+The start script, when the user select a folder where the Agent has to work, extracts the repository owhner from teh repository origin UR.  
+It store it in the GITHUB_TOKEN environment variable, and that is used by GH to authenticate.   
+The `github.com.helper` in hte GIT config says to `git`command to use the GH to auuthentucate.  
+
+
+## Account and Credentials solutions
 
 Exising repository on Main account:
 - (A) ❌ Agent account as a **Collaborator** of the Main GH account repository
@@ -32,7 +62,7 @@ New Repository:
 - (E) ❌ New repository in the Agent GitHub account
 
 
-## A. ❌ Collaborator on the main Account repository
+### A. ❌ Collaborator on the main Account repository
 
 **This will work only using GitHub Classic PAT, not fine-grained PAT.**  
 This is currently a well known gap that is not planned to be solved by GitHub yet.  
@@ -85,7 +115,7 @@ I also tried with the proper username in the Classic PAT record: `https://B:ghp_
 Why GIT doesn't use the Classic PAT to login into the repo authomatically???  
 ```
 
-## B1. Move repository to the organization
+### B1. Move repository to the organization
 
 Prerequisites: the main account has an organization.  
 
@@ -111,7 +141,7 @@ I prefer the soliution whre the PAT is created on the Agent account so that the 
 
 ```
 
-## B. ✔️ Fine-grained permissions PAT on the Agent account for organization repository 
+### B. ✔️ Fine-grained permissions PAT on the Agent account for organization repository 
 
 Using a fine-grained PAT token, created on the Organization allows to have restricted permissions.  
 The Agent account must be a Member of the organization.  
@@ -126,7 +156,7 @@ Cons
 - Set the PAT for the repo is a little bit laborious (**Remember to accept the request in the Organization GitHub page**)
 - I cannot push directly with my Main Account. despite is the admin ?!
 
-### Organization
+#### Organization
 
 **The organization is created by the main Account (Owner) and the GitHub shadow account is a Member (requires invitation).**  
 As a member it needs "Write" basic role/permission on the organization.  
@@ -136,14 +166,14 @@ Agent account has access to the repository secrets in the UI. ** Is this a conce
 Fine-grained PAT needs to be enabled on the organization:
 ``Org Settings → Personal access tokens → Settings → Allow access via fine-grained personal access tokens → Save``
 
-### 📌 Remember to approve PAT changes
+#### 📌 Remember to approve PAT changes
 
 When update the Agent PAT adding a new repository of the organization, it generates a request.  
 **This request is not notified, and not emailed!**  
 To find it:  
 ``Org Settings → Personal access tokens → Pending requests``
 
-### 📌 Main account cannot push
+#### 📌 Main account cannot push
 
 It can happen that the Main account (despite is the admin of the organization) cannot push (403).  
 Adding it as Admin member of the organization, still cannot push (403), and this is not required.    
@@ -157,22 +187,28 @@ Remove the record, and try git push again.
   
 Note. If the rea more than one record (like https://github.com and https:alex@github.com), the git push will ask to pick one each time! Remove one.
 
-## C. ➖ Use Main account fine-grained PAT
+### C. ➖ Use Main account fine-grained PAT
 
 There is no real advantage on doing this if not just being a quick solution.  
 Also, it doesn't make a clean PR reviews mechainism.
 Moving the repository under a organization seems a simple solution.
 
 
-## D. ❌ Collaborator on the GitHub Organization repository 
+### D. ❌ Collaborator on the GitHub Organization repository 
 
 A fine-graned PAT (on the shadow account) cannot be created for the organization repositories, because it is not a member of it.  
 Being a collaborator, it can access the repository within a Classic token, but a classic token has not fine-grained permissions and is possibly too "strong".  
 The same if a SSH key is used for authentication.  
 
 
-## E. ❌ New repository in the Agent GitHub account
+### E. ❌ New repository in the Agent GitHub account
 
 The work will not be visible in your Account.  
 Very easy to manage for the Agent... less for you, because you need to use the shadow GitHub account to operate.
 It can be a valid solution for specific requirements.
+
+
+## Troubleshooting
+
+
+## 

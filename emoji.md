@@ -88,7 +88,7 @@ Hearths:       ❤️ 🧡 💛 💚 💙 💜 🤎
 Diamonds:      ♦️🔶🔷
 Small diamonds: 🔸🔹 
 
-🍓🍒🍄🦀🐞
+🍋🥝🍊🍇🍒🍓🍌🥥🍎🍐🍄🦀🐞
 📂
 
 ✰✯★🌟⭐

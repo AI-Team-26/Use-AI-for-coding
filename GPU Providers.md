@@ -9,7 +9,6 @@
 
 ### Novita.ai
 
-I bought 10$ credit with Debit card.
 
 GPU           VRAM                   Type          Price ($/h)  
 ---------------------------------------------------------------

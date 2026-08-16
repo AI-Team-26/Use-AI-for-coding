@@ -105,6 +105,24 @@
       },
       
 { "id": "=== Qwen 3 Coder ==="},
+      { 
+          "_test": "X Chatty. Not able to complete a task.",
+          "_speed": "20 t/s",
+          "id": "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL_unsloth.gguf",
+          "name": "Unsloth/Qwen3 Coder UD-Q4_K_XL [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+      { 
+          "_test": "X Indisciplinate",
+          "_speed": "45 t/s",
+          "id": "Qwen3-Coder-30B-A3B-Instruct-UD-Q3_K_XL_unsloth.gguf",
+          "name": "Unsloth/Qwen3 Coder UD-Q3_K_XL [96k]",
+          "contextWindow": 98304,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
     { 
         "_test": "???",
         "id": "Qwen3-Coder-30B-A3B-instruct_pruned_REAP-15B-A3B-Q4_K_M_lainlives.gguf",

@@ -4,6 +4,17 @@
 
 ## Backlog
 
+
+- "Manage GitHub credentials" has to manage the new file instead of .git-credentials
+
+- Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
+
+- Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
+
+- 🐞 Sharing the .pi folder makes every /new command to reset the model to the last used (by any model that use the shared folder)
+
+- Complete the documentation for GIT and GitHub setup
+
 - 🐞 GIT token for not-owned repositories.
   Currently, when you open a project where the repository is not-owned, it presents a message like this: 
   "❌ Git credentials record for <an-account>/<a project> not found"
@@ -16,11 +27,10 @@
 
 - 5 proxy bridge to start requested model on llama-server
   step 1: the script that used defined model in the models_configuration,json
-  step 2: proxy that intecepts the request and start the server with the new model.
+  step 2: proxy that intercepts the request and start the server with the new model.
 
 - 3 https://pi.dev/packages/pi-voice-stt
 
-- 3 ai-coding launch script lack the ability to enter Pi Agent container shell. 
 - 3 [Qwen Code huge initial context] document the problem properly an study possible solutions
 
 - 1 Organize Qwen Code settings to use different providers, if possible
@@ -35,6 +45,11 @@
 
 ## Done
 
+- GIT credentials can be stored in a more clear file with owner-PAT-expiration date for each record (instead of .git-credentials)
+- GIT credentials (.git-credentials) has to be autorenewed with a simple script
+- GIT credentials (.git-credentials) has to be autofilled with tokens from environment variable
+- Show the name of current Agent in Pi shell, on title (so it is visible in the taskbar) and in the footer.
+- ai-coding launch script let you choose between launching Pi (attach to main process) or open and independent shell
 - ai-coding launch script can ask for list the sessions, continue last session, etc... 
 - Study Pi Agent skills
 - Figure out how to set Shift+Enter as new-line command in the TUI of Pi Agent

@@ -23,9 +23,9 @@ Essentially the *create_models.sh* and the *test_models.sh* are the one with _pu
 
 There are three categories of tools:
 
-| IDE plugins         | ❌ Can do potentially everything in your PC (when run on local IDE). Limited in choices (models/providers/UI). Easy to use.              |
-| Web based tools     | ❌ Too limited in models and procedures and time-wasting for start. You became coupled to specific provider tool.                        |
-| Standalone programs | ✔️ Extremely customizable, can use any model (local or from providers) but needs. The perfect solution when run on container.            |
+| IDE plugins         | ❌ Can do potentially everything in your PC (when run on local IDE). Limited in choices (models/providers/UI). Easy. |
+| Web based tools     | ❌ Too limited in models and procedures and time-wasting for start. You became coupled to specific provider tool.    |
+| Standalone programs | ✔️ Extremely customizable, can use any model (local and from providers). The perfect solution when run on container. |
 
 **IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and GitHub trought it.
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets very easily.
@@ -67,23 +67,24 @@ At the moment I'm not switching user, so the tool runs with _root_.
 [TODO] ** It will be good to switch to use a not-root user. **   
 
 Pros
- + With root user the agent can use apt-get and install whenever it needs a library (ffmpeg, )
+ + The agent can use apt-get and install whenever it needs a library (ffmpeg for example)
+ + The agent can chnge "itself". It can edit SYSTEM.md. AGENTS.md, skills, extensions, setup scripts
  + Easy to work with
    - no special permisisons for /projects folder
    - can edit the AHGENTS.md and SYSTEM.md and also the skills and extensions
-   
 Cons
-- the agent can see every file in the container
-- the agent can update a file in a way that when executed ...
+- The agent can see every file in the container, also secrets (.git-credentials)
+
 
 ## :octocat: GIT & GitHub
 
-Refer to [GitHub access for Agent](GitHub%20access.md) to know how to give the Agent access to the GitHub repositories.  
+GIT and GitHub is a too big argument to be described here.  
+Refer to [GIT credentials](GIT.md) for the GIT credentials setup.  
+Refer to [GitHub access for Agent](GitHub%20access%20for%20Agent.md) to know how to give the Agent access to the GitHub repositories.  
 
 ### Default branch name
 
 `git config --global init.defaultBranch main`
-
 
 ### Unwanted version diff
 
@@ -109,124 +110,6 @@ only on hte Linux side and inspecting it, the difefrence is that it has lost the
 
 If doesn't work, it is possible a more specific config exists on hte repo, find it:
 ``git config --list --show-origin | grep -i filemode`` 
-
-
-### Credentials
-
-The generic GIT credentials to execute `git` can be set with these commands:
-```bash
-git config --global user.name "$git_username"
-git config --global user.email "$git_email"
-git config --global credential.helper store
-echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
-```
-The start scripts contains these commands.  
-For more details, look at [GitHub access.md]("GitHub access.md").  
-
-
-### GitHub CLI
-
-GitHub CLI requires its own authentication, it doesn't use .git-credentials.    
-It can use the **GITHUB_TOKEN** environment variable, so we will set it.  
-The start scripts automatically populate the variable with the right token on-the-fly when a project with a repository is selected.    
-See _start_common.sh_ script.  
-
-To check the GH CLI authentication:
-```bash
-gh auth status 2>/dev/null || echo "gh not authenticated"
-```
-
-
-### GitHub PAT
-
-We use fine-grained access tokens.  
-Use the following permissions for the owned repositories:
-- Owner: ``<GitHub account name>``
-- Repositories: All  
-- Permissions:
-  + Contents: Read & Write
-  + Pull Requests: Read & Write
-  + Actions: Read (to check execution result, using gh ?) 
-  + Workflows: Read & Write (to push changes to the .github/workflows folder)
-  + (Metadata: added automatically)
-
-Generate the PAT and copy it.  
-Store it in a environment variable: `setx GITHUB_PAT_<ACCOUNT>_<USE CASE> <GITHUB_PAT>`  
-
-The start script or the first call of ``git config --global credential.helper store`` will ask for a PAT,
-and it will store it in ~/git-credentials on a single line like this:
-``https://<username>:<GITHUB_PAT>S@github.com``
-
-_Note_: When paste in bash shell with right click, **CLICK ONLY ONCE** (it will not show nothing so you tend to right-click again!)
-
-
-### Use Multiple GitHub PAT
-
-The fine-grained GitHub PAT is created for a the user or an organiztion they have access to; you have to choose it.       
-If you created a PAT attached to the user, it does not allow you to work with the organization repositories, and vice-versa.  
-
-There is a way to use a specific PAT in the github credentials ?
-
-To differentiate the PAT to use, based on the repository, you need to enable this property:
-```sh 
-#  Enable path-based matching
-git config --global credential.useHttpPath true
-``` 
-
-Then you can add multiple PAT, for specific repositories.  
-The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generic using part of the path (TO VERIFY) or wildcard.  
-
-
-### 📌 Edit credentials
-
-```bash
-docker ps
-container=
-docker exec -it $container /bin//bash    ## double slash to prevent GitBash to correct the path
-```
-
-To read the current credentials: 
-``cat ~/.git-credentials``
-
-```bash
-# git config --global credential.useHttpPath true    # at this point should be already set
-
-# Clear the file (creates it if it doesn't exist)
-# Using ':' is a clean way to truncate a file to 0 bytes
-: > ~/.git-credentials
-
-# ...or delete specific lines:
-sed -i '1d' ~/.git-credentials
-
-## Get env variables with tokens
-env | grep GITHUB | sort
-
-# Add PAT for owned repositories of Account or Organization
-
-USER_TOKEN=
-USERNAME=
-GITHUB_ACCOUNT=
-GITHUB_ORG=
-echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ACCOUNT" >> ~/.git-credentials
-echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ORG" >> ~/.git-credentials
-
-# Add PAT for NOT-owned repo
-TOKEN_2=$GITHUB_PAT_FOR_COLLABORATOR
-USERNAME=...
-echo "https://$USER$:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
-echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials           ## DOES NOT WORK (wildcard NOT accepted)
-# practically you need to use the full repo path
-
-# 5. Secure the file
-chmod 600 ~/.git-credentials
-```
-
-### Recover GitHub credentials to migrate to a new container
-
-``git config --global user.name``  
-``git config --global user.email``  
-``cat ~/.git-credentials``  ("github_pat_" is part of the key)
-
 
 
 ## Ollama

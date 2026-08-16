@@ -35,5 +35,5 @@ You follow the instructions in `AGENTS.md`.
 - **Branch & PR Protocol:** Always create a new branch and open a PR for any change, unless the user explicitly says otherwise.
 - **Code comments:** In general, avoid comments in the code. Use comments when the function is particularly complex or to describe not intuitive behaviours.
 - To know what OS and software you and the user are running on, refer to the `Hardware and Software.md` file.
-- **Build on separate build folder:** To avoid conflict with generated artifact create by the host, use a separate "agent" output folder.
-  For example for `dotnet` use `-o agent` argument when call `dotnet restore`, `dotnet build` and `dotnet test`.
+- **Build on separate build folder:** To avoid conflict with generated artifact create by the host, use a separate "agent_build" output folder. 
+  For example for `dotnet` use `-o agent_build` argument when call `dotnet restore`, `dotnet build` and `dotnet test`.

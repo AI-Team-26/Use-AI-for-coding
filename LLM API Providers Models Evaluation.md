@@ -44,8 +44,11 @@ Model Coding evaluation
 | Novita.ai   | deepseek/deepseek-v4-flash        | 0.14 / 0.28 |            |                                                                                |  
 | Novita.ai   | zai-org/glm-5.2                   | 1.40 / 4.40 |            |                                                                                |    
 | Novita.ai   | zai-org/glm-4.7-flash             | 0.07 / 0.40 |            |                                                                                |
+| Novita.ai   | inclusionai/ling-3.0-flash        | 🔥 FREE     |            |                                                                                |
+| Novita.ai   | mindai/macaron-v1-venti           | 🔥 FREE     |            |                                                                                |
 | Novita.ai   | baidu/cobuddy                     | 🔥 FREE     |            |                                                                                |
 | Novita.ai   | nex-agi/nex-n2-pro                | 🔥 FREE     |            |                                                                                |
+
 | Novita.ai   | moonshotai/kimi-k2.7-code         | 0.95 / 4.00 |            |                                                                                |
 | Openrouter  | nvidia/nemotron-3-super-120b-a12b | FREE        |            | ❌ Too much thinking. Act  without plan.                                       |
 

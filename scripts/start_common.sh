@@ -8,70 +8,13 @@ LLAMACPP_URL=${LLAMACPP_HOST:-"http://host.docker.internal:8001"} # host.docker.
 
 project_folder="/projects"
 
-RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; PURPLE_LIGHT=$'\033[0;31m'; BOLD_PURPLE=$'\033[1;35m'; NC=$'\033[0m'
+RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; BLUE=$'\033[0;34m'; PURPLE=$'\033[0;35m'; BOLD_PURPLE=$'\033[1;35m'; NC=$'\033[0m'
 HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
 FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"; INFO_EMOJI="ℹ️"
 
 
-# --- set GIT credentials and GitHub CLI auth token for the repository --- 
-# <repo_url> argument must be in format "github.com/account/repo.git"
-setup_git_for_repo() {    
-    local repo_url=${1:?The repository URL must be specified}
-
-    # Check git_repo starts with "https://", if not error message
-    if [[ ! "$repo_url" =~ ^https:// ]]; then
-        echo -e "${RED}❌ Error: Repository URL must start with https:// ${NC}"
-        return 1
-    fi
-
-    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-
-    if [[ -z "$repo_path" ]]; then
-        echo -e "${RED}❌ Error: Failed to extract account/repo_path from \"${repo_url}\" ${NC}"
-        return 1
-    fi
-
-    # check for GIT credentials of this repo account (account or organization)
-    if [[ ! -f ~/.git-credentials ]]; then
-        touch ~/.git-credentials
-    fi
-
-    local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
-    local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
-
-    if [[ -z "$git_pat" ]]; then
-        # Asking every time if want to set credentials in annoying and confusing so we just try to use default auth
-        echo ""
-        echo -e "GIT specific credentials for ${YELLOW}$repo_path${NC} were not found. Use account default GitHub token."
-
-        local git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
-    else
-        echo ""
-        echo -e "✔️ GIT credentials found for \"@github.com/$git_account_of_repo\" ${NC}"
-    fi
-   
-    # set the auth token for GitHub CLI, override existing one
-    export GITHUB_TOKEN="$git_pat"
-    gh auth status
-    if [[ ! $(gh auth status) ]]; then
-        echo -e "${RED}❌ Error: Failed to authenticate GitHub CLI ${NC}"
-        return 1
-    fi
-    
-    return 0
-}
-
-
-# set the GITHUB_TOKEN variable with the @github.com credentials
-__set_ () {
-    read -s -p "GitHub PAT (hidden): " git_pat
-    echo "https://xxx:$git_pat@github.com/$git_account_of_repo" >> ~/.git-credentials
-    echo ""
-    echo -e "${YELLOW}GIT credentials${NC}"
-    cat ~/.git-credentials
-    echo ""
-    echo -e "✔️ GIT credentials set for \"@github.com/$git_account_of_repo\" ${NC}"
-}
+echo "Replace {{PI_AGENT_NAME}} with '$PI_AGENT_NAME'"
+sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$HOME/.pi/agent/AGENTS.md"
 
 
 # Extract the "model" property from llama.cpp running API (from first model)
@@ -94,14 +37,12 @@ select_project() {
     #sleep 10
     #clear
 
-    mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
-
-    if [ ${#projects[@]} -eq 0 ]; then
-        echo -e "${YELLOW}No projects found. Clone a repository first!${NC}"
-        clone_repo
-        #continue
-        #return 0
+    if [[ ! -d "$project_folder" ]]; then
+        # create projects directory
+        mkdir "$project_folder"
     fi
+
+    mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     echo $'\n\e[34m------------------------------------------------\e[0m'
 
@@ -116,7 +57,7 @@ select_project() {
        ">_ Shell"
        "🔑 Manage GitHub credentials"
        # "🔑 Add GitHub PAT for a repo"
-       "🐙 Check GIT credentials"       
+       #"🐙 Check GIT credentials"       
        "❌ Exit"
     )
     
@@ -136,17 +77,17 @@ select_project() {
         elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
             manage_git_credentials
             break
-        elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
-            echo -e "${YELLOW}GIT credentials${NC}"12
-            cat ~/.git-credentials
-
-            echo ""
-            read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
-            case "$choice" in
-                Y|y|Yes|yes) setup_git_global 1 ;;
-            esac
-
-            break
+        #elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
+        #    echo -e "${YELLOW}GIT credentials${NC}"
+        #    cat ~/.git-credentials
+        #
+        #    echo ""
+        #    read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
+        #    case "$choice" in
+        #        Y|y|Yes|yes) setup_git_global 1 ;;
+        #    esac
+        #
+        #    break
         elif [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
@@ -154,13 +95,13 @@ select_project() {
             clear
 
             echo ""
-            echo -e "${GREEN}${ROCKET_EMOJI} Open project: ${YELLOW}$proj${NC}"
+            echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
             cd "$project_folder/$proj" || exit 1
 
             #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
             local repo_url=$(git remote get-url origin 2>/dev/null)   
             if [[ -n "$repo_url" ]]; then
-                if ! setup_git_for_repo "$repo_url" ; then
+                if ! set_github_auth_for_repo "$repo_url" ; then
                     return 1
                 fi
             fi
@@ -189,13 +130,13 @@ clone_repo() {
         return 1
     fi
 
-    # Extract owner and repo from the URL (owner/repo)
-    local repo_path
-    repo_path=$(echo "$repo_url" | sed -E 's|https://github\.com/||')  # s|pattern|replacement|
-    repo_path=${repo_path%.git}
-    #local repo_path=$(echo "$repo_url" | sed -E 's|https://github\.com/([^/]+)/([^/.]+)(\.git)?|\1/\2|')  # not working with "." in the repo or account name
+    set_github_auth_for_repo "$repo_url"
 
-    set_github_token && check_repo_access "$repo_path"
+    # "https://github.com/account/repo.git" -> "account/repo"
+    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+
+    check_repo_access "$repo_path"
+
     case $? in
         0)
             # OK, Owner or collaborator, can use it

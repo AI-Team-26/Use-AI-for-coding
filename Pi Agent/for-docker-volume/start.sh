@@ -12,17 +12,44 @@ source /scripts/.env
 #set -a; source .env; set +a
 
 
-if [[ -z "$GITHUB_ACCOUNT" ]]; then
-    echo -e "${RED}⛔ GITHUB_ACCOUNT is not found. Set it in the .env file${NC}"
-    exit 1
-fi
+# check required environment variables are set
+required_vars=("GITHUB_ACCOUNT" "EXA_API_KEY" )
 
-if [[ -z "$EXA_API_KEY" ]]; then
-    echo -e "${RED} EXA_API_KEY is not found. Set it in the .env file or some functionalities will not work${NC}"
-fi
+for var in "${required_vars[@]}" ; do
+    if [[ -z "${!var}" ]]; then
+        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
+        exit 1
+    else
+        echo "✅ $var is set."
+    fi
+done
 
 # set API KEYS and other secrets
 export EXA_API_KEY=$EXA_API_KEY
+
+
+# Restore the .pi folder content that is "masked" by the bind mount (only the first time)
+if [[ -f /root/.pi_backup.tar ]]; then
+    echo "Restoring /root/.pi from TAR backup..."
+
+    # Ensure the target directory exists (it might be masked by volume)
+    mkdir -p /root/.pi
+
+    # Extract the tarball into /root/.pi
+    # -x: Extract
+    # -f: File name
+    # -C: Destination directory
+    if tar -xf /root/.pi_backup.tar -C /root/.pi ; then
+        echo "... Done! Backup removed successfully."
+        rm /root/.pi_backup.tar
+    else
+        echo "CRITICAL ERROR: Tar extraction failed!" >&2
+        exit 1
+    fi
+else
+    echo "No backup found at /root/.pi_backup.tar. Skipping restore."
+fi
+
 
 start_project() {
     local proj=$1
@@ -38,11 +65,11 @@ start_project() {
         # --model.... singular, for a single model
         model_param="--model Llama.cpp/$llamacpp_model"
         echo ""
-        echo -e "Found this llama.cpp model running: ${YELLOW} $llamacpp_model ${NC}"
+        echo -e "Found this llama.cpp model running: ${YELLOW}${llamacpp_model}${NC}"
     fi
 
     # Launch Pi Agent
-    exec pi $model_param --continue
+    exec pi "$model_param" --continue
 
     # user choice
     #echo -e "\e[34m-------------------\e[0m"
@@ -66,6 +93,6 @@ echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
 
-setup_git_global
+#setup_git_global [obsolete]
 
 select_project
