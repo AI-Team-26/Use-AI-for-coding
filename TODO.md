@@ -4,12 +4,9 @@
 
 ## Backlog
 
+- (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
 
-- "Manage GitHub credentials" has to manage the new file instead of .git-credentials
-
-- Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
-
-- Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
+- (loop) Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
 
 - Complete the documentation for GIT and GitHub setup
 
@@ -43,6 +40,7 @@
 
 ## Done
 
+- "Manage GitHub credentials" has to manage the new file instead of .git-credentials
 - GIT credentials can be stored in a more clear file with owner-PAT-expiration date for each record (instead of .git-credentials)
 - GIT credentials (.git-credentials) has to be autorenewed with a simple script
 - GIT credentials (.git-credentials) has to be autofilled with tokens from environment variable

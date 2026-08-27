@@ -65,8 +65,42 @@
           "reasoning": true
       },
 
+      
+{ "id": "===== Qwen 3.5 27B =====" },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.5-27B-IQ4_XS_unsloth.gguf",
+          "name": "name Qwen3.5 27B IQ4_XS (Unsloth) 64k",
+          "alias": "alias Unsloth/Qwen3.5 27B IQ4_XS [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.5-27B-IQ4_XS_bartowski.gguf",
+          "name": "name Qwen3.5 27B IQ4_XS (bartowski) 64k",
+          "alias": "alias bartowski/Qwen3.5 27B IQ4_XS [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.5-27B-IQ3_M_(gammaception)_128k",
+          "name": "17 tps",
+          "contextWindow": 131072,
+          "maxTokens": 2048,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
 
-{ "id": "=== Qwen 3.6 27B ==="},
+{ "id": "===== Qwen 3.6 27B ====="},
       { 
          "_test": "???",
           "id": "Qwen3.6-27B-Esper3.1.Q4_K_M_mr_radermacher.gguf",
@@ -76,8 +110,28 @@
           "reasoning": true,
           "input": [ "text", "image" ]
       },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
+          "name": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
+          "contextWindow": 96000,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "? t/s",
+          "id": "Qwen3.6-27B-IQ4_XS_unsloth.gguf",
+          "name": "Qwen3.6 27B IQ4_XS (Unsloth) 64k",
+          "contextWindow": 64000,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
 
-{"id": "=== Qwen 3.6 35B A3B ==="},
+{"id": "===== Qwen 3.6 35B A3B ====="},
       { 
           "_test": "⚠️ OK, but too much work for a simple task and it overdo and possibly touch what it is not supposed to do. Write filesand file s are empty. Edit skills instead of using them. Inconclusive and Dangerous!",
           "_speed": "40 t/s",
@@ -104,7 +158,7 @@
           "reasoning": true
       },
       
-{ "id": "=== Qwen 3 Coder ==="},
+{ "id": "===== Qwen 3 Coder ====="},
       { 
           "_test": "X Chatty. Not able to complete a task.",
           "_speed": "20 t/s",
@@ -132,7 +186,37 @@
         "reasoning": true
     },
 
-{ "id": "=== GLM 4.7 Flash ==="},
+{ "id": "===== Qwopus ====="},
+    { 
+        "_test": "???",
+        "id": "Qwopus3.6-35B-A3B-Coder-MTP-Q3_K_M_jackrong.gguf",
+        "name": "Qwopus 3.6 35B A3B Coder MTP Q3_K_M (Jackrong)",
+        "contextWindow": 65536,
+        "maxTokens": 2048,
+        "reasoning": true
+    },
+
+{ "id": "Tiel Coder"},
+      { 
+          "_test": "?",
+          "_speed": "? t/s",
+          "id": "Tiel-Coder-35B-A3B-UD-IQ4_XS_(peculiar)_64k",
+          "name": "Tiel-Coder-35B-A3B UD-IQ4_XS (peculiar) [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+      { 
+          "_test": "?",
+          "_speed": "? t/s",
+          "id": "Tiel-Coder-35B-A3B-UD-IQ4_XS_(peculiar)_SPEC_64k",
+          "name": "Tiel-Coder-35B-A3B UD-IQ4_XS (peculiar) SPEC [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+
+{ "id": "===== GLM 4.7 Flash ====="},
     { 
       "_test": "❌ Gibberish and not valid format",
       "id": "GLM-4.7-flash-Q4_K_M_gaionaus.gguf",

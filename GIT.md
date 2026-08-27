@@ -11,23 +11,6 @@ In this way it is possible to have an approach of close-to-open permissions.
 This is possible using a **fine-grained permissions PAT** for the account.  
 
 
-## GitHub fine-grained permission PAT
-
-Use the following permissions for the owned repositories:
-- Owner: ``<GitHub account name>``
-- Repositories: All  
-- Permissions:
-  + Contents: Read & Write
-  + Pull Requests: Read & Write
-  + Actions: Read (to check execution result, using gh or api) 
-  + Workflows:
-    - Read: this is enough for the agent to know (you cannot commit changes to .github/workflows files or the push fails)
-    - Read & Write (to push changes to the .github/workflows folder) **It exposes to secrets exfiltration if the agent is infected with malicious behaviour** 
-  + (Metadata: added automatically)
-
-**No permissions to read Repository secrets.**
-
-
 ## Repositories owner
 
 Where to create repositories?  
@@ -152,4 +135,24 @@ chmod 600 ~/.git-credentials
 ``git config --global user.name``  
 ``git config --global user.email``  
 ``cat ~/.git-credentials``  ("github_pat_" is part of the key)
+
+
+
+## PR Review account
+
+The Agent Account creates the PR.  
+Anothe ragent (or the same agent) cannot review the PR because an account cannot review its own PR.  
+To make the agent able to review:
+A. Different GitHub account 
+B. GitHub App
+
+I'm trying to use a GitHub App. 
+It was created for hte Organization (Organizatrion -> Settings -> Developer stuff -> GitHub App)  
+URL: same GitHub URL of the Organization. Disable webhook, so no need to set the callbaclk URL.
+Permissions:
+- Metadata (default)
+- Contents: Read only
+- Pull requests: Read & Write
+
+Install for Organization only.  
 

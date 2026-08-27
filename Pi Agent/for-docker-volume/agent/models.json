@@ -47,16 +47,7 @@
         "api": "openai-completions",
         "apiKey": "{{NOVITAAI_API_KEY}}",
         "models": [
-            {
-                "id": "inclusionai/ling-3.0-flash",
-                "maxTokens": 4096,
-                "reasoning": true
-            },
-            {
-                "id": "mindai/macaron-v1-venti",
-                "maxTokens": 4096,
-                "reasoning": true
-            }
+
         ]
     },
     "Novita AI": {
@@ -65,11 +56,11 @@
         "apiKey": "{{NOVITAAI_API_KEY}}",
         "models": [
             {
-                "id": "deepseek/deepseek-v4-flash",
+                "id": "deepseek/deepseek-v4-flash-0731",
                 "maxTokens": 4096,
                 "reasoning": true,
                  "cost": {
-                    "_date": "2026-07-27",
+                    "_date": "2026-08-17",
                     "input": 0.14,
                     "output": 0.28,
                     "cacheRead": 0.028,
@@ -77,24 +68,102 @@
                 }
             },
             {
+                "id": "inclusionai/ling-3.0-flash",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.06,
+                    "output": 0.18,
+                    "cacheRead": 0.012,
+                    "cacheWrite": 0.18
+                }
+            },
+            {
+                "id": "kwaipilot/kat-coder-pro",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.30,
+                    "output": 1.20,
+                    "cacheRead": 0.06,
+                    "cacheWrite": 1.2
+                }
+            },
+
+            {
                 "id": "qwen/qwen3-coder-next",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.20,
+                    "output": 1.50,
+                    "cacheRead": 0.20,
+                    "cacheWrite": 1.50
+                }
             },
             {
                 "id": "minimax/minimax-m3",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.30,
+                    "output": 1.20,
+                    "cacheRead": 0.06,
+                    "cacheWrite": 1.20
+                }
             },
             {
                 "id": "baidu/cobuddy",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.28,
+                    "output": 1.13,
+                    "cacheRead": 0.07,
+                    "cacheWrite": 1.13
+                }
             },
             {
                 "id": "tencent/hy3",
+                "_note": "",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.14,
+                    "output": 0.58,
+                    "cacheRead": 0.04,
+                    "cacheWrite": 0.58
+                }
+            },
+            {
+                "id": "mindai/macaron-v1-venti",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 1.50,
+                    "output": 4.50,
+                    "cacheRead": 0.30,
+                    "cacheWrite": 4.50
+                }
+            },
+            {
+                "id": "mindai/macaron-v1-tall",
+                "maxTokens": 4096,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-08-17",
+                    "input":0.45,
+                    "output": 2.60,
+                    "cacheRead": 0.08,
+                    "cacheWrite": 2.60
+                }
             },
             {
                 "id": "nex-agi/nex-n2-pro",
@@ -110,7 +179,14 @@
             {
                 "id": "zai-org/glm-5.2",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 1.40,
+                    "output": 4.40,
+                    "cacheRead": 0.26,
+                    "cacheWrite": 4.40
+                }
             },
             {
                 "id": "zai-org/glm-4.7-flash",
@@ -127,7 +203,14 @@
             {
                 "id": "moonshotai/kimi-k2.7-code",
                 "maxTokens": 4096,
-                "reasoning": true
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.95,
+                    "output": 4.00,
+                    "cacheRead": 0.19,
+                    "cacheWrite": 4.00
+                }
             },
             {
                 "note": "NOT ABLE TO USE TOOLS",
@@ -137,37 +220,156 @@
             }
         ]
     },
+    "Ofox FREE": {
+        "baseUrl": "https://api.ofox.ai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{OFOX_API_KEY}}",
+        "models": [
+            {
+                "id": "z-ai/glm-4.7-flash:free",
+                "note": "",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.00,
+                    "output": 0.00,
+                    "cacheRead": 0.00,
+                    "cacheWrite": 0.00
+                }
+            }
+        ]
+    },
     "Ofox": {
         "baseUrl": "https://api.ofox.ai/v1",
         "api": "openai-completions",
         "apiKey": "{{OFOX_API_KEY}}",
         "models": [
-
+            {
+                "id": "openai/gpt-5.6-luna",
+                "note": "** TEMP 80% discount **",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.20,
+                    "output": 1.20,
+                    "cacheRead": 0.02,
+                    "cacheWrite": 0.25
+                }
+            },
+            {
+                "id": "bailian/qwen3.8-27b",
+                "note": "** TEMP 10% discount **",
+                "maxTokens": 4096,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-25",
+                    "_note": "",
+                    "input": 0.45,
+                    "output": 3.20,
+                    "cacheRead": 0.05,
+                    "cacheWrite": 0.5625
+                }
+            }
         ]
     },
-    "Openrouter": {
-        "_baseUrl": "https://openrouter.ai/api/v1/chat/completions",
-        "baseUrl": "https://openrouter.ai/api",
+    "Openrouter FREE": {
+        "baseUrl": "https://openrouter.ai/api/v1",
         "api": "openai-completions",
         "apiKey": "{{OPENROUTER_API_KEY}}",
         "models": [
             {
-                "note": "free",
-                "id": "venice/beta",
-                "maxTokens": 8096,
+                "id": "nvidia/nemotron-3.5-lightning:free",
+                "maxTokens": 4096,
                 "reasoning": true
             },
             {
-                "note": "free",
-                "id": "poolside/laguna-m.1:free",
-                "maxTokens": 8096,
+                "id": "z-ai/glm-5.2:free",
+                "maxTokens": 4096,
+                "reasoning": true
+            },
+            {
+                "id": "minimax/minimax-m3:free",
+                 "maxTokens": 4096,
+                "reasoning": true
+            },
+            { 
+                "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+                "note": "",
+                "maxTokens": 4096,
                 "reasoning": true
             },
             {
                 "note": "free",
                 "id": "nvidia/nemotron-3-super-120b-a12b:free",
-                "maxTokens": 8096,
+                "maxTokens": 8192,
                 "reasoning": true
+            },
+            {
+                "note": "free",
+                "id": "cohere/north-mini-code:free",
+                "maxTokens": 8192,
+                "reasoning": true
+            }
+        ]
+    },
+    "Openrouter": {
+        "baseUrl": "https://openrouter.ai/api",
+        "api": "openai-completions",
+        "apiKey": "{{OPENROUTER_API_KEY}}",
+        "models": [
+           {
+                "id": "inclusionai/ling-3.0-flash",
+                "name": "DISCOUNT 65%",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.021,
+                    "output": 0.063,
+                    "cacheRead": 0.0042,
+                    "cacheWrite": 0.03
+                }
+            },
+            {
+                "id": "inclusionai/ling-2.6-flash",
+                "name": "DISCOUNT 90% (59 tps) high traffic",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.01,
+                    "output": 0.03,
+                    "cacheRead": 0.002,
+                    "cacheWrite": 0.03
+                }
+            },
+            {
+                "id": "z-ai/glm-5.2",
+                "name": "DISCOUNT 66% (https://openrouter.ai/z-ai/glm-5.2)",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.47,
+                    "output": 1.49,
+                    "cacheRead": 0.47,
+                    "cacheWrite": 1.49
+                }
+            },
+             {
+                "id": "z-ai/glm-5.3-flash",
+                "name": "DISCOUNT 50% till 9 September (https://openrouter.ai/z-ai/glm-5.3)",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-27",
+                    "input": 0.075,
+                    "output": 0.25,
+                    "cacheRead": 0.015,
+                    "cacheWrite": 0.25
+                }
             }
         ]
     },
@@ -176,11 +378,15 @@
         "baseUrl": "https://ws-ne77ev3gyh866avy.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
         "api": "openai-completions",
         "apiKey": "{{ALIBABA_API_KEY}}",
+        "compat": {
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false
+        },
 
         "models": [
             {
                 "id": "qwen3.7-flash",
-                "maxTokens": 4096,
+                "maxTokens": 8192,
                 "reasoning": true,
                  "cost": {
                     "_date": "2026-07-27",
@@ -189,7 +395,7 @@
                     "cacheRead": 0.038,
                     "cacheWrite": 0.13
                 }
-            },
+            }
         ]
     },
     "Llama.cpp": {
@@ -198,26 +404,17 @@
         "apiKey": "Llama.cpp",
        
         "models": [
- 
+
 { "id": "=== Gemma 4 26B ==="},
     { 
-        "_test": "✔️ Super fast",
+        "_test": "✔️ Intelligent but NOT for coding",
         "_speed": "45 t/s",
-        "id": "Gemma-4-26B_Q4_0-it_google.gguf",
-        "name": "Gemma4 26B - Q4_0 (by Google) 128K",
+        "id": "Gemma-4-26B-Q4_0_(Google)_128k",
+        "name": "Gemma4 26B 128K - Q4_0 (Google) [120k]",
         "contextWindow": 131072,
         "maxTokens": 4096,
         "reasoning": true
-    },
-    { 
-        "_test": "✔️ Good",
-        "_speed": "35 t/s",
-        "id": "XXX_Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
-        "name": "Gemma4 26B 160K - UD-IQ4_NL (by Unsloth)",
-        "contextWindow": 163840,
-        "maxTokens": 4096,
-        "reasoning": true
-    },    
+    }, 
     { 
         "_test": "✔️ Good",
         "_speed": "45 t/s",
@@ -236,86 +433,59 @@
             "reasoning": true
         },
 
-{ "id": "Qwen 3.8 27B" },
+{ "id": "==== Qwen 3.8 27B =====" },
       { 
-         "_test": "",
-         "_speed": "16 t/s",
-          "id": "Qwen3.8-27B-IQ4_XS_unsloth.gguf",
-          "name": "Qwen 3.8 27B (Unsloth) [64k]",
-          "contextWindow": 65536,
+         "_test": "🥇",
+         "_speed": "?? t/s",
+          "id": "Qwen3.8-27B_UD-Q3-K-XL_Unsloth_[80k]",
+          "name": "Qwen 3.8 27B (Unsloth) Q3-K-XL [80k]",
+          "contextWindow": 81920,
           "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-
-
-{ "id": "=== Qwen 3.5 27B ===" },
-      { 
-         "_test": "Slooooow",
-         "_speed": "16 t/s",
-          "id": "Qwen3.5-27B-IQ4_XS_unsloth.gguf",
-          "name": "Qwen 3.5 27B (Unsloth) 48k",
-          "contextWindow": 49152,
-          "maxTokens": 2048,
           "reasoning": true,
           "input": [ "text", "image" ]
       },
       { 
          "_test": "?",
-         "_speed": "? t/s",
-          "id": "Qwen3.5-27B-IQ4_XS_unsloth.gguf",
-          "name": "name Qwen3.5 27B IQ4_XS (Unsloth) 64k",
-          "alias": "alias Unsloth/Qwen3.5 27B IQ4_XS [64k]",
+         "_speed": "20-45 t/s",
+          "id": "Qwen3.8-27B-UD-IQ4_XS_(peculiar)_64k",
+          "name": "Qwen 3.8 27B UD-IQ4_XS (peculiar) [64k]",
           "contextWindow": 65536,
           "maxTokens": 4096,
           "reasoning": true,
           "input": [ "text", "image" ]
       },
       { 
-         "_test": "?",
+         "_test": "✔️Really good",
          "_speed": "? t/s",
-          "id": "Qwen3.5-27B-IQ4_XS_bartowski.gguf",
-          "name": "name Qwen3.5 27B IQ4_XS (bartowski) 64k",
-          "alias": "alias bartowski/Qwen3.5 27B IQ4_XS [64k]",
+          "id": "Qwen3.8-27B-Uncensored-Aggressive-IQ3_M_(HauhauCS)_[128k]",
+          "name": "Qwen 3.8 27B (HauhauCS) IQ3_M [128k]",
+          "contextWindow": 131072,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "🥇",
+         "_speed": "20-40 t/s",
+          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[80k]",
+          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k]",
+          "contextWindow": 81920,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "Good",
+         "_speed": "",
+          "id": "Qwen3.8-27B-Abliterated-IQ4-MIX-MTP_finex666_[64k]",
+          "name": "Qwen3.8-27B Abliterated IQ4-MIX-MTP (finex666)[64k]",
           "contextWindow": 65536,
           "maxTokens": 4096,
           "reasoning": true,
           "input": [ "text", "image" ]
       },
 
-{ "id": "=== Qwen 3.6 27B ===" },
-      { 
-         "_test": "?",
-         "_speed": "? t/s",
-          "id": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
-          "name": "Qwen3.6-27B-Cerebellum-v5-Q2_K_deucebucket.gguf",
-          "contextWindow": 96000,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-         "_test": "?",
-         "_speed": "? t/s",
-          "id": "Qwen3.6-27B-IQ4_XS_unsloth.gguf",
-          "name": "Qwen3.6 27B IQ4_XS (Unsloth) 64k",
-          "contextWindow": 64000,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-
-{ "id": "=== Qwen 3.6 35B A3B ===" },
-      { 
-         "_test": "✔️ Really good",
-         "_speed": "35 t/s",
-          "id": "__Qwen3.6-28B-REAP20-A3B-Q4_K_M_barozp.gguf",
-          "name": "Qwen 3.6 28B REAP20 (barozp) 96k",
-          "contextWindow": 98304,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
+{ "id": "===== Qwen 3.6 35B A3B =====" },
       { 
          "_test": "✔️Really good",
          "_speed": "35 t/s",
@@ -337,12 +507,12 @@
           "reasoning": true
       },
 
-{ "id": "=== Qwen 3 Coder ==="},
+{ "id": "===== Qwen 3 Coder ====="},
       { 
           "_test": "??",
           "_speed": "? t/s",
           "id": "Qwen3-Coder-30B-A3B-Instruct-IQ4_XS_unsloth.gguf",
-          "alias": "Unsloth/Qwen3-Coder 30B-A3B Instruct IQ4_XS [96k]",
+          "name": "Qwen3-Coder 30B-A3B Instruct IQ4_XS (Unsloth) [96k]",
           "contextWindow": 98304,
           "maxTokens": 4096,
           "reasoning": true
@@ -352,7 +522,6 @@
           "_speed": "22 t/s",
           "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mradermacher.gguf",
           "name": "NAME Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mradermacher) 64k",
-          "alias": "ALIAS mradermacher/Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M [64k]",
           "contextWindow": 65536,
           "maxTokens": 4096,
           "reasoning": true
@@ -367,26 +536,39 @@
           "reasoning": true
       },
 
-{ "id": "=== Qwopus ==="},
-    { 
-        "_test": "???",
-        "id": "Qwopus3.6-35B-A3B-Coder-MTP-Q3_K_M_jackrong.gguf",
-        "name": "Qwopus 3.6 35B A3B Coder MTP Q3_K_M (Jackrong)",
-        "contextWindow": 65536,
-        "maxTokens": 2048,
-        "reasoning": true
-    },
+{ "id": "===== Qwopus ====="},
 
-{ "id": "=== KAT Coder ==="},
+{ "id": "===== Nemotron 3.5 Lightning ====="},
        { 
-            "_test": "✔️ Good",
-            "_speed": "50 t/s",
-            "id": "KAT-Coder-V2.5-Dev-Cerebellum-14GB-v2_deucebucket.gguf",
-            "name": "KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]",
-            "contextWindow": 131072,
+            "_test": "?",
+            "_speed": "? t/s",
+            "id_help": "it has to be the alias of llama.cpp",
+            "id": "Nemotron-3.5-Lightning_(bartowski)_96k",
+            "name": "Nemotron-3.5-Lightning (bartowski) [96k]",
+            "contextWindow": 98304,
             "maxTokens": 4096,
             "reasoning": true
-    },
+       },
+
+{ "id": "===== KAT Coder ====="},
+       { 
+            "_test": "✔️ Very Good",
+            "_speed": "50 t/s",
+            "id": "KAT-Coder-V2.5-Dev-Cerebellum-14GB-v2_deucebucket_160k",
+            "name": "KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "_test": "✔️ Good and super fast",
+            "_speed": "60 t/s",
+            "id": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU_(offmonreal)_160k",
+            "name": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU (offmonreal) [160k]",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
 
 { "id": "=== GLM 4.7 Flash ==="},
       { 
@@ -427,19 +609,9 @@
 
         ],
 
-
         
          "models_inactive": [
 { "id": "=== Ornith ==="},
-      { 
-         "_test": "❌ a idiot",
-          "id": "Ornith-1.0-35B-GGUF-IQ3_M_liodonai.gguf",
-          "name": "Ornith 1.0 35B 64k",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text" ]
-      },
 
 {"id": "=== ERNIE 4.5 21B A3B Thinking ==="},
         { 

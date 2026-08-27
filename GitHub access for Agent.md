@@ -1,9 +1,10 @@
 # GitHub access for Agent
 
-The goal is to use GIT and GitHub CLI to create branches, create PR, review PR, and check GitHub Action runs for repositories owned by a personal account or its GitHub organization, from a machine where an AI Agent is operating.  
-I have created a shadow GitHub account for this purpose, this account is used by the AI Agent, 
-so, in this document we will refer to **Main [GH] Account** and **Agent [GH] Account**.  
-The described solutions work for Free GitHub accounts subscriptions.  
+The goal is to use GIT and GitHub CLI to create branches, create PR, review PR, and check GitHub Action runs for repositories owned by a personal account or its GitHub organizations, from a machine where an AI Agent is operating.  
+I have created 2 shadow GitHub account for this purpose, one for write code and one for review PRs. These account are used by the AI Agent, 
+so, in this document we will refer to **Main [GH] Account** and **Agent [GH] Account (Dev/Reviewer)**.  
+The described solutions work for Free GitHub accounts subscriptions (pay subscriptions have more choices).  
+
 
 ## Classic vs fine-grained PAT
 
@@ -13,40 +14,56 @@ The fundamental difference isn't the checkboxes, it's the targeting model. Fine-
 Your `repo` checkbox is also a bundle you can't partially disable — and one piece of that bundle is worth flagging specifically. Notice `repo:status`, `repo_deployment`, `public_repo`, `repo:invite`, and `security_events` are all greyed out and auto-checked underneath `repo` — that's not optional, it's baked in the moment you check the parent box. `security_events` in particular means this token can read and write Dependabot, code-scanning, and secret-scanning alerts on every private repo it touches — including dismissing an alert. That's a meaningfully sensitive permission to have inherited invisibly, and there's no way to keep code read/write while stripping just that one out of a classic token. A fine-grained PAT would let you grant Contents + Pull requests and explicitly leave "Code scanning alerts" and "Secret scanning alerts" at No access.
 
 
+### GitHub fine-grained permission PAT
+
+Use the following permissions for the owned repositories:
+- Owner: ``<GitHub account name>``
+- Repositories: All  
+- Permissions:
+  + Contents: Read & Write
+  + Pull Requests: Read & Write
+  + Actions: Read (to check execution result, using gh or api) 
+  + Workflows:
+    - Read: this is enough for the agent to know (you cannot commit changes to .github/workflows files or the push fails)
+    - Read & Write (to push changes to the .github/workflows folder) **It exposes to secrets exfiltration if the agent is infected with malicious behaviour** 
+  + (Metadata: added automatically)
+
+**No permissions to read Repository secrets.**
+
 ## Workflows
 
 **Do not allow the agent to write workflows, it can exfiltrate secrets.**
 Use AI chats to get suggestions/corrections about GitHub workflows.  
 
+
 ##  GIT authentication 
 
 Stop using ``git config --global credential.useHttpPath true``.  
-It works for records in .git-credentials with the full repository path like `github.com/<user-account>/my_repo.git`.  
+It works for records in .git-credentials ONLY with the full repository path like `github.com/<user-account>/my_repo.git`.  
 It doesn't work for generic paths like `github.com/<user-account>` or `github.com/<organization>`.  
-It practically consider both the previous record at the same level, valid for github.com, **so it will just pick the first one**.  
+It practically consider both the previous records at the same level, valid for github.com, **so it will just pick the first one**.  
 Set and maintain a record in .git-credentials for every repository is inpractical.  
 
 **Solution: use authentication of GitHub CLI**  
 
-This line in _.gitconfig_ you allow the `git` command to authenticate using the GitHub CLI:
+This line in _.gitconfig_ allows the `git` command to authenticate using the GitHub CLI:
 ```text
 [credential "https://github.com"]
 helper = !/usr/bin/gh auth git-credential
 ```
-TODO: try this simple form:
+[TODO: try this simple form:]
 helper = !gh auth git-credential
 
 
 ``credential.https://github.com.helper = !/usr/bin/gh auth git-credential``
-``credential.https://gist.github.com.helper = !/usr/bin/gh auth git-credential``
-Dockerfile: ``RUN git config --global credential.https://github.com.helper ""``
 Dockerfile: ``RUN git config --global credential.https://github.com.helper "!/usr/bin/gh auth git-credential"``
 
-### How it authenticate to GitHub
+### How GitHub authentication works
 
-The start script, when the user select a folder where the Agent has to work, extracts the repository owhner from teh repository origin UR.  
-It store it in the GITHUB_TOKEN environment variable, and that is used by GH to authenticate.   
-The `github.com.helper` in hte GIT config says to `git`command to use the GH to auuthentucate.  
+GitHub PAT are stored in custom file (**/scripts/github_pat**) instead of the cumbersome .git-credentials.  
+When the user select a project, the script extracts the repository owner (from the repository remote origin URL) and get the PAT from the file.  
+It set the **GITHUB_TOKEN** environment variable, and that is used by GitHub CLI to authenticate.  
+The `github.com.helper` in the GIT config says to the `git` command to use the GitHub CLI to authentucate.  
 
 
 ## Account and Credentials solutions

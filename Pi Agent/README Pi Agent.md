@@ -70,8 +70,8 @@ docker run \
 # Agent Dev-1
 docker run \
     -it \
-    --name PiAgent-Dev-1 \
-    --label "description=Pi Agent Dev 1" \
+    --name "PiAgent-Dev-1" \
+    --label "description=Pi Agent Dev-1" \
     -e PI_AGENT_NAME="🍋 Pi Lemon" \
     -e PI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \

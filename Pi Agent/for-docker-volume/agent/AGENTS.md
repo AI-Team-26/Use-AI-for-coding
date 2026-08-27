@@ -10,8 +10,9 @@
   - Act always follows a Plan.
   - **CRITICAL** When the user ask a question, answer the question, do not jump on making changes, do not take initiative without having user approval.
 4. **Pull Request Workflow**
-  - When start a task, decide the branch in advance, use a numeric prefix (e.g., `feat/02_add_this_and_that`, `fix/03_price_calculation_bug`).
-  - Before creating any branch, the agent must first update the `TODO.md` on `main` with the branch name, task description, and all known sub-steps set in the `In Progress` section. This planning entry is committed on `main` before branching off, so that when on main we know the branch of each started task.
+  - When start a task, define the branch in advance, use a numeric prefix (e.g., `feat/02_add_this_and_that`, `fix/03_price_calculation_bug`).
+  - Before starting any job on a new branch we need to update the `TODO.md` on `main` with the branch name, task description, and all known sub-steps set in the `In Progress` section. This planning entry is committed on `main` before branching off, so that when on main we know the branch of each started task.
+  - Since agent cannot push changes on main branch, create a `doc/plan_feat_02` branch and a PR so user can merge it and agent can start to work on feat branch (it can update from main any time).
   - After making changes, create a PR. If unsure, ask the user. Put a short description in the PR.
   - Show a clickable link to the PR to the user
   - If the PR creator is not {{GITHUB_REVIEWER}}, add {{GITHUB_REVIEWER}} as a reviewer and say "Waiting for Review".
