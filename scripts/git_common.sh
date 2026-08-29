@@ -12,7 +12,7 @@ set_github_auth_for_repo() {
 
     # Check that repository URL us in HTTP format
     if [[ ! "$repo_url" =~ ^https://github.com ]]; then
-        echo -e "${RED}❌ Repository URL must start with https://github.com ${NC}"
+        echo -e "${RED}❌ Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
         return 1
     fi
 
@@ -66,7 +66,7 @@ _setup_git_for_repo() {
 
     # Check git_repo starts with "https://", if not error message
     if [[ ! "$repo_url" =~ ^https://github.com ]]; then
-        echo -e "${RED}❌ Error: Repository URL must start with https://github.com ${NC}"
+        echo -e "${RED}❌ Error: Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
         return 1
     fi
 

@@ -78,16 +78,6 @@
           "input": [ "text", "image" ]
       },
       { 
-         "_test": "?",
-         "_speed": "20-45 t/s",
-          "id": "Qwen3.8-27B-UD-IQ4_XS_(peculiar)_64k",
-          "name": "Qwen 3.8 27B UD-IQ4_XS (peculiar) [64k]",
-          "contextWindow": 65536,
-          "maxTokens": 8192,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
          "_test": "✔️Really good",
          "_speed": "? t/s",
           "id": "Qwen3.8-27B-Uncensored-Aggressive-IQ3_M_(HauhauCS)_[128k]",
@@ -101,8 +91,29 @@
          "_test": "🥇",
          "_speed": "20-40 t/s",
           "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[80k]",
-          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k]",
+          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k] Q4",
           "contextWindow": 81920,
+          "maxTokens": 4096,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "",
+         "_speed": " t/s",
+          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[48k]_Q8",
+          "name": "Qwen 3.8 27B UD-IQ4_XS (Unsloth) [48k] Q8/Q4",
+          "contextWindow": 49152,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+
+      { 
+         "_test": "?",
+         "_speed": "20-45 t/s",
+          "id": "Qwen3.8-27B-UD-IQ4_XS_(peculiar)_64k",
+          "name": "Qwen 3.8 27B UD-IQ4_XS (peculiar) [64k]",
+          "contextWindow": 65536,
           "maxTokens": 8192,
           "reasoning": true,
           "input": [ "text", "image" ]
