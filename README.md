@@ -10,7 +10,7 @@ For my specific situation, I found **Pi Agent** the best tool I can use.
   
 I tried local LLM and also different LLM providers.  
 I did tests using my old graphic card with 16GB of VRAM.  
-I started with Ollama and then moved to llama.cpp, that allowed me to obtain better performance.  
+I started with Ollama and then moved to **llama.cpp**, that allowed me to obtain better performance.  
 Here my experiments:  
 - 👌 [Ollama](Ollama&%20models)
 - 💪 [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
@@ -23,6 +23,7 @@ Essentially the *create_models.sh* and the *test_models.sh* are the one with _pu
 
 There are three categories of tools:
 
+| --- | --- |
 | IDE plugins         | ❌ Can do potentially everything in your PC (when run on local IDE). Limited in choices (models/providers/UI). Easy. |
 | Web based tools     | ❌ Too limited in models and procedures and time-wasting for start. You became coupled to specific provider tool.    |
 | Standalone programs | ✔️ Extremely customizable, can use any model (local and from providers). The perfect solution when run on container. |
@@ -46,6 +47,7 @@ Their connector are a little bit fragile and sometimes doesn't work.
 **Standalone programs** can run locally or on a Docker container, so they can be almost 100% secure.  
 They have a CLI and sometime a web UI exposed on the guest.  
 
+| --- | --- |
 | [Aider](Aider/Aider.md)                          | ❌ Found an issue very earlier and abandoned before having it really working |
 | [OpenCode](OpenCode/OpenCode.md)                 | ❔ Abandoned before having it fully setup                                     |
 | [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Good                                                                      |
@@ -64,21 +66,23 @@ For this reason I use _/project_ folder as bind  volume, where I can add project
 ### root user
 
 At the moment I'm not switching user, so the tool runs with _root_.  
-[TODO] ** It will be good to switch to use a not-root user. **   
+[TODO] ** It will be good to switch to use a not-root user, but tehre are limitations and extra setup. Not a priority for now.**   
 
 Pros
  + The agent can use apt-get and install whenever it needs a library (ffmpeg for example)
- + The agent can chnge "itself". It can edit SYSTEM.md. AGENTS.md, skills, extensions, setup scripts
+ + The agent can change "itself". It can edit SYSTEM.md, AGENTS.md, skills, extensions, setup scripts
  + Easy to work with
-   - no special permisisons for /projects folder
-   - can edit the AHGENTS.md and SYSTEM.md and also the skills and extensions
+   - no special permissions for /projects folder
+   - can edit the AGENTS.md and SYSTEM.md and also the skills and extensions
 Cons
-- The agent can see every file in the container, also secrets (.git-credentials)
+- The agent can see and edit every file in the container, also secrets (.git-credentials)
+- A compromised agent (compromised skill/extensio) can hide dangerous files...
 
 
 ## :octocat: GIT & GitHub
 
-GIT and GitHub is a too big argument to be described here.  
+GIT and GitHub is a too big argument to be covered here.  
+[TODO] Create a single clear file instead of 2-3 separate ones.
 Refer to [GIT credentials](GIT.md) for the GIT credentials setup.  
 Refer to [GitHub access for Agent](GitHub%20access%20for%20Agent.md) to know how to give the Agent access to the GitHub repositories.  
 

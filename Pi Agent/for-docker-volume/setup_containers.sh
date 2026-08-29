@@ -11,7 +11,7 @@ required_vars=("GITHUB_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_ACCOUNT_E
 #required_vars=("NOVITAAI_API_KEY" "OPENROUTER_API_KEY")
 # PAT for PI AGENT GitHub account and Organization
 required_vars=("PI_AGENT_GITHUB_ACCOUNT_PAT" "PI_AGENT_GITHUB_ORG_PAT")
-required_vars=("NOVITAAI_API_KEY_PI_AGENT" "OPENROUTER_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT")
+required_vars=("NOVITAAI_API_KEY_PI_AGENT" "OPENROUTER_API_KEY_PI_AGENT" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT")
 
 for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
@@ -31,6 +31,7 @@ cp ../../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
 cp ../../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
 cp start.sh "$docker_volumes/scripts/start.sh"
 cp .env "$docker_volumes/scripts/.env"
+cp run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 
 # Set GitHub PAT (for Agent Account and Organization)
 account_pat="$GITHUB_ACCOUNT_PAT"  # Read from .env
@@ -57,6 +58,24 @@ fi
 
 echo "$GITHUB_ACCOUNT:$account_pat" > "$docker_volumes/scripts/github_pat"  # Write
 echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"  # Append
+
+# GITHUB_MAIN_ACCOUNT is optional (it allows access to personal GitHub account repositories)
+if [[ -n "$GITHUB_MAIN_ACCOUNT" ]]; then
+
+    main_account_pat="$GITHUB_MAIN_ACCOUNT_PAT"  # Read from .env
+    if [[ $main_account_pat == ENV:* ]]; then
+        var_name="${main_account_pat#ENV:}"  # Remove "ENV:"
+        main_account_pat="${!var_name}"
+    fi
+
+    if [[ -z "$main_account_pat" ]]; then
+        echo -e "${RED}⛔ Failed to get optional GitHub MAIN account PAT from GITHUB_MAIN_ACCOUNT_PAT ${NC}"
+        exit 1
+    fi
+
+    echo "$GITHUB_MAIN_ACCOUNT:$main_account_pat" >> "$docker_volumes/scripts/github_pat"  # Append
+fi
+
 chmod 600 "$docker_volumes/scripts/github_pat"
 
 
@@ -79,7 +98,7 @@ for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
     cp agent/models.json "$docker_volume_pi_agent/models.json"
     
     # Set accounts on SYSTEM.md
-    sed -i "s/{{GITHUB_ACCOUNT}}/$GITHUB_ACCOUNT/g" "$docker_volume_pi_agent/SYSTEM.md"   
+    sed -i "s/{{GITHUB_ACCOUNT}}/$GITHUB_ACCOUNT/g" "$docker_volume_pi_agent/SYSTEM.md" 
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_pi_agent/SYSTEM.md"
 
     # Set accounts on AGENTS.md
@@ -94,6 +113,7 @@ for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
     # XXX_API_KEY_PI_AGENT are environment variables
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{OPENROUTER_API_KEY}}/$OPENROUTER_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
 

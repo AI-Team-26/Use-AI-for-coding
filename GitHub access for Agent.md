@@ -36,7 +36,7 @@ Use the following permissions for the owned repositories:
 Use AI chats to get suggestions/corrections about GitHub workflows.  
 
 
-##  GIT authentication 
+## GIT authentication 
 
 Stop using ``git config --global credential.useHttpPath true``.  
 It works for records in .git-credentials ONLY with the full repository path like `github.com/<user-account>/my_repo.git`.  

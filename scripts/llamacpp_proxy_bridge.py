@@ -1,5 +1,6 @@
 ### WIP ###
 
+## [OBSOLETE] this idea was abandoned
 
 import json
 import os

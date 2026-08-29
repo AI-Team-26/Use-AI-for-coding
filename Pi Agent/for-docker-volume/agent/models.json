@@ -1,7 +1,316 @@
 {
   "DOC": "https://pi.dev/docs/latest/models#model-configuration",
   "providers": {
+    "Llama.cpp": {
+        "baseUrl": "http://host.docker.internal:8001/v1",  
+        "api": "openai-completions",
+        "apiKey": "Llama.cpp",
+       
+        "models": [
 
+{ "id": "===== KAT Coder ====="},
+       { 
+            "_test": "✔️ Very Good",
+            "_speed": "50 t/s",
+            "id": "KAT-Coder-V2.5-Dev-Cerebellum-14GB-v2_deucebucket_160k",
+            "name": "KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "_test": "✔️ Good and super fast",
+            "_speed": "60 t/s",
+            "id": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU_(offmonreal)_160k",
+            "name": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU (offmonreal) [160k]",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "_test": "Good",
+            "_speed": "40 t/s",
+            "id": "KAT-Coder-V2.5-Dev_Q3_K_M_imatrix_MTP_(offmonreal)_64k",
+            "name": "KAT-Coder-V2.5-Dev Q3_K_M imatrix MTP (offmonreal) [64k]",
+            "contextWindow": 65536,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "_test": "Good",
+            "_speed": "40 t/s",
+            "id": "KAT-Coder-V2.5-Dev_Q3_K_M_imatrix_MTP_(offmonreal)_64k_Q8",
+            "name": "KAT-Coder-V2.5-Dev Q3_K_M imatrix MTP (offmonreal) [64k]",
+            "contextWindow": 53248,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       {
+           "_test": "?",
+            "_speed": "? t/s",
+            "id": "KAT-Coder-V2.5-Dev-APEX-dynamic-v2_(myric)_192k",
+            "name": "KAT-Coder-V2.5-Dev APEX dynamic-v2 (myric) [192k]",
+            "contextWindow": 163840,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+
+{ "id": "=== Gemma 4 26B ==="},
+    { 
+        "_test": "✔️ Intelligent but NOT for coding",
+        "_speed": "45 t/s",
+        "id": "Gemma-4-26B-Q4_0_(Google)_128k",
+        "name": "Gemma4 26B 128K - Q4_0 (Google) [120k]",
+        "contextWindow": 131072,
+        "maxTokens": 4096,
+        "reasoning": true
+    }, 
+
+{ "id": "==== Qwen 3.8 27B =====" },
+      { 
+         "_test": "🥇",
+         "_speed": "?? t/s",
+          "id": "Qwen3.8-27B_UD-Q3-K-XL_Unsloth_[80k]",
+          "name": "Qwen 3.8 27B (Unsloth) Q3-K-XL [80k]",
+          "contextWindow": 81920,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "?",
+         "_speed": "20-45 t/s",
+          "id": "Qwen3.8-27B-UD-IQ4_XS_(peculiar)_64k",
+          "name": "Qwen 3.8 27B UD-IQ4_XS (peculiar) [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "✔️Really good",
+         "_speed": "? t/s",
+          "id": "Qwen3.8-27B-Uncensored-Aggressive-IQ3_M_(HauhauCS)_[128k]",
+          "name": "Qwen 3.8 27B (HauhauCS) IQ3_M [128k]",
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "🥇",
+         "_speed": "20-40 t/s",
+          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[80k]",
+          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k]",
+          "contextWindow": 81920,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "Good",
+         "_speed": "",
+          "id": "Qwen3.8-27B-Abliterated-IQ4-MIX-MTP_finex666_[64k]",
+          "name": "Qwen3.8-27B Abliterated IQ4-MIX-MTP (finex666)[64k]",
+          "contextWindow": 65536,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+
+{ "id": "===== Qwen 3.6 35B A3B =====" },
+      { 
+         "_test": "✔️ Good",
+         "_speed": "35 t/s",
+          "id": "Qwen_3.6_28b_reap_20_(barozp)_128k_Q4",
+          "name": "Qwen 3.6 28B REAP20 (barozp) [128k] Q4",
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+         "_test": "✔️ Really good",
+         "_speed": "35 t/s",
+          "id": "Qwen_3.6_28b_reap_20_(barozp)_96k_Q8",
+          "name": "Qwen 3.6 28B REAP20 (barozp) [96k] Q8",
+          "contextWindow": 98304,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text", "image" ]
+      },
+      { 
+          "_test": "✔️ OK, chatty with open ended questions",
+          "_speed": "30 t/s",
+          "id": "Qwen3.6-35B-A3B-Unc-Genesis-V3-APEX-Compact_luffythefox.gguf",
+          "name": "Qwen 3.6 35B Genesis v3 APEX (luffythefox)",
+          "contextWindow": 131072,
+          "_contextWindow": 96000,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+
+{ "id": "===== Qwen 3 Coder ====="},
+      { 
+          "_test": "??",
+          "_speed": "? t/s",
+          "id": "Qwen3-Coder-30B-A3B-Instruct-IQ4_XS_unsloth.gguf",
+          "name": "Qwen3-Coder 30B-A3B Instruct IQ4_XS (Unsloth) [96k]",
+          "contextWindow": 98304,
+          "maxTokens": 4096,
+          "reasoning": true
+      },     
+      { 
+          "_test": "✔️ Very good",
+          "_speed": "22 t/s",
+          "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mradermacher.gguf",
+          "name": "NAME Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mradermacher) 64k",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+      { 
+          "_test": "??",
+          "_speed": "? t/s",
+          "id": "Qwen3-Coder-REAP-25B-A3B-Q4_K_M_bartowski.gguf",
+          "name": "Qwen_3_Coder_REAP-25B_(bartowski)_64k",
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "reasoning": true
+      },
+
+{ "id": "===== Qwopus ====="},
+
+{ "id": "===== Nemotron 3.5 Lightning ====="},
+       { 
+            "_test": "?",
+            "_speed": "? t/s",
+            "id_help": "it has to be the alias of llama.cpp",
+            "id": "Nemotron-3.5-Lightning_(bartowski)_96k",
+            "name": "Nemotron-3.5-Lightning (bartowski) [96k]",
+            "contextWindow": 98304,
+            "maxTokens": 4096,
+            "reasoning": true
+       },
+
+{ "id": "=== GLM 4.7 Flash ==="},
+      { 
+        "_test": "?",
+        "_speed": "? t/s",
+        "id": "GLM-4.7-Flash-UD-Q3_K_XL_unsloth.gguf",
+        "name": "GLM 4.7 Flash UD Q3_K_XL (Unsloth) 128K",
+        "contextWindow": 131072,
+        "maxTokens": 4096,
+        "reasoning": true
+      },
+
+{"id": "=== GPT-OSS 20B ==="},
+        { 
+            "_test": "?",
+            "id": "GPT-OSS-20b-UD-Q8_K_XL_unsloth.gguf",
+            "name": "GPT OSS 20B UD Q8_K_XL (by Unsloth)",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+            "_test": "?",
+            "id": "GPT-OSS-20b-UD-Q6_K_XL_unsloth.gguf",
+            "name": "GPT OSS 20B UD Q6_K_XL (by Unsloth)",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+            "_test": "Super fast but it makes long and wrong reasoning",
+            "id": "OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL_davidau.gguf",
+            "name": "GPT-OSS-20B_IQ4_NL",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        }
+
+    ],
+
+        
+         "models_INACTIVE": [
+{ "id": "=== Gemma4 ==="},
+    { 
+        "_test": "✔️ Good",
+        "_speed": "45 t/s",
+        "id": "Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
+        "name": "Gemma4 26B 64K - UD-IQ4_NL (by Unsloth)",
+        "contextWindow": 64000,
+        "maxTokens": 4096,
+        "reasoning": true
+    },
+       { 
+            "_test": "Good",
+            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
+            "name": "Gemma4 26B 128K - MXFP4 MOE (by noctrex)",
+            "contextWindow": 131072,
+            "maxTokens": 4096,
+            "reasoning": true
+        },
+
+{ "id": "=== Ornith ==="},
+
+{"id": "=== ERNIE 4.5 21B A3B Thinking ==="},
+        { 
+            "_test": "?",
+            "id": "ERNIE-4.5-21B-A3B-Thinking-Q4_K_M_unsloth.gguf",
+            "name": "ERNIE-4.5-A3B-Thinking by Unsloth",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+        { 
+            "_test": "?",
+            "id": "ERNIE-4.5-21B-A3B-Thinking-MXFP4_MOE_noctrex.gguf",
+            "name": "ERNIE-4.5-A3B-Thinking by noctrex",
+            "contextWindow": 131072,
+            "maxTokens": 2048,
+            "reasoning": true
+        },
+
+        
+            {
+                "_test": "Ok but slow",
+                "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",
+                "name": "QWEN 3.6 35B A3B - UD Q4_K_M",
+                "contextWindow": 65536,
+                "maxTokens": 2048,
+                "reasoning": true
+            },
+                    { 
+            "_test": "",
+            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
+            "name": "Qwen 2.5 Coder 64K",            
+            "contextWindow": 65536,
+            "maxTokens": 2048,
+            "reasoning": true
+        } ,
+        {
+            "_test": "???",
+                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
+                "name": "Gemma4 12B IQ4_NL",
+                "contextWindow": 131072,
+                "maxTokens": 2048,
+                "reasoning": true,
+                "input": [ "text" ]
+        },
+        { 
+            "test": "❌ Liar, Hallucinate, Loop, Slow",
+            "id": "Gemma-4-12B-v2-Q4_K_M_yuxinlu1.gguf",
+            "name": "Gemma4 12B v2-Q4_K_M_yuxinlu1",
+            "contextWindow": 262144,
+            "maxTokens": 2048,
+            "reasoning": true,
+            "input": [ "text" ]
+        }
+
+        ]
+    },
     "Google": {
         "_baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/", 
         "_api": "openai-completions",
@@ -281,23 +590,28 @@
         "models": [
             {
                 "id": "nvidia/nemotron-3.5-lightning:free",
-                "maxTokens": 4096,
+                "maxTokens": 8192,
                 "reasoning": true
             },
             {
                 "id": "z-ai/glm-5.2:free",
-                "maxTokens": 4096,
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "minimax/minimax-m2.7:free",
+                "name": "34 t/s",
+                "maxTokens": 8192,
                 "reasoning": true
             },
             {
                 "id": "minimax/minimax-m3:free",
-                 "maxTokens": 4096,
+                "maxTokens": 8192,
                 "reasoning": true
             },
             { 
                 "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
-                "note": "",
-                "maxTokens": 4096,
+                "maxTokens": 8192,
                 "reasoning": true
             },
             {
@@ -315,13 +629,13 @@
         ]
     },
     "Openrouter": {
-        "baseUrl": "https://openrouter.ai/api",
+        "baseUrl": "https://openrouter.ai/api/v1",
         "api": "openai-completions",
         "apiKey": "{{OPENROUTER_API_KEY}}",
         "models": [
            {
                 "id": "inclusionai/ling-3.0-flash",
-                "name": "DISCOUNT 65%",
+                "name": "124B-AsB | DISCOUNT 65%",
                 "maxTokens": 8192,
                 "reasoning": true,
                 "cost": {
@@ -343,6 +657,19 @@
                     "output": 0.03,
                     "cacheRead": 0.002,
                     "cacheWrite": 0.03
+                }
+            },
+            {
+                "id": "thinkingmachines/inkling-small",
+                "name": "262B A12B **USED FOR TRAINING MODELS - DO NOT SEND PRIVATE DATA",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.45,
+                    "output": 1.20,
+                    "cacheRead": 0.10,
+                    "cacheWrite": 1.20
                 }
             },
             {
@@ -369,6 +696,31 @@
                     "output": 0.25,
                     "cacheRead": 0.015,
                     "cacheWrite": 0.25
+                }
+            },
+            {
+                "id": "z-ai/glm-5.3",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-27",
+                    "input": 1.40,
+                    "output": 4.40,
+                    "cacheRead": 0.26,
+                    "cacheWrite": 4.40
+                }
+            },
+            {
+                "id": "qwen/qwen3.8-2.4t-a95b",
+                "name": "2.4T-A95B",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-27",
+                    "input": 2.0,
+                    "output": 6.0,
+                    "cacheRead": 2.0,
+                    "cacheWrite": 6.0
                 }
             }
         ]
@@ -398,277 +750,7 @@
             }
         ]
     },
-    "Llama.cpp": {
-        "baseUrl": "http://host.docker.internal:8001/v1",  
-        "api": "openai-completions",
-        "apiKey": "Llama.cpp",
-       
-        "models": [
 
-{ "id": "=== Gemma 4 26B ==="},
-    { 
-        "_test": "✔️ Intelligent but NOT for coding",
-        "_speed": "45 t/s",
-        "id": "Gemma-4-26B-Q4_0_(Google)_128k",
-        "name": "Gemma4 26B 128K - Q4_0 (Google) [120k]",
-        "contextWindow": 131072,
-        "maxTokens": 4096,
-        "reasoning": true
-    }, 
-    { 
-        "_test": "✔️ Good",
-        "_speed": "45 t/s",
-        "id": "Gemma-4-26B-A4B-it-UD-IQ4_NL_unsloth.gguf",
-        "name": "Gemma4 26B 64K - UD-IQ4_NL (by Unsloth)",
-        "contextWindow": 64000,
-        "maxTokens": 4096,
-        "reasoning": true
-    },
-       { 
-            "_test": "Good",
-            "id": "Gemma-4-26B-A4B-it-MXFP4_MOE_noctrex.gguf",
-            "name": "Gemma4 26B 128K - MXFP4 MOE (by noctrex)",
-            "contextWindow": 131072,
-            "maxTokens": 4096,
-            "reasoning": true
-        },
-
-{ "id": "==== Qwen 3.8 27B =====" },
-      { 
-         "_test": "🥇",
-         "_speed": "?? t/s",
-          "id": "Qwen3.8-27B_UD-Q3-K-XL_Unsloth_[80k]",
-          "name": "Qwen 3.8 27B (Unsloth) Q3-K-XL [80k]",
-          "contextWindow": 81920,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-         "_test": "?",
-         "_speed": "20-45 t/s",
-          "id": "Qwen3.8-27B-UD-IQ4_XS_(peculiar)_64k",
-          "name": "Qwen 3.8 27B UD-IQ4_XS (peculiar) [64k]",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-         "_test": "✔️Really good",
-         "_speed": "? t/s",
-          "id": "Qwen3.8-27B-Uncensored-Aggressive-IQ3_M_(HauhauCS)_[128k]",
-          "name": "Qwen 3.8 27B (HauhauCS) IQ3_M [128k]",
-          "contextWindow": 131072,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-         "_test": "🥇",
-         "_speed": "20-40 t/s",
-          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[80k]",
-          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k]",
-          "contextWindow": 81920,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-         "_test": "Good",
-         "_speed": "",
-          "id": "Qwen3.8-27B-Abliterated-IQ4-MIX-MTP_finex666_[64k]",
-          "name": "Qwen3.8-27B Abliterated IQ4-MIX-MTP (finex666)[64k]",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-
-{ "id": "===== Qwen 3.6 35B A3B =====" },
-      { 
-         "_test": "✔️Really good",
-         "_speed": "35 t/s",
-          "id": "barozp/Qwen 3.6 28B-REAP20-A3B Q4_K_M [64k]",
-          "name": "Qwen 3.6 28B REAP20 (barozp) 64k",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true,
-          "input": [ "text", "image" ]
-      },
-      { 
-          "_test": "✔️ OK, chatty with open ended questions",
-          "_speed": "30 t/s",
-          "id": "Qwen3.6-35B-A3B-Unc-Genesis-V3-APEX-Compact_luffythefox.gguf",
-          "name": "Qwen 3.6 35B Genesis v3 APEX (luffythefox)",
-          "contextWindow": 131072,
-          "_contextWindow": 96000,
-          "maxTokens": 4096,
-          "reasoning": true
-      },
-
-{ "id": "===== Qwen 3 Coder ====="},
-      { 
-          "_test": "??",
-          "_speed": "? t/s",
-          "id": "Qwen3-Coder-30B-A3B-Instruct-IQ4_XS_unsloth.gguf",
-          "name": "Qwen3-Coder 30B-A3B Instruct IQ4_XS (Unsloth) [96k]",
-          "contextWindow": 98304,
-          "maxTokens": 4096,
-          "reasoning": true
-      },     
-      { 
-          "_test": "✔️ Very good",
-          "_speed": "22 t/s",
-          "id": "Qwen3-Coder-Next-REAP-40B-A3B.i1-IQ3_M_mradermacher.gguf",
-          "name": "NAME Qwen3-Coder-Next REAP-40B-A3B i1 IQ3_M (mradermacher) 64k",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true
-      },
-      { 
-          "_test": "??",
-          "_speed": "? t/s",
-          "id": "Qwen3-Coder-REAP-25B-A3B-Q4_K_M_bartowski.gguf",
-          "name": "Qwen_3_Coder_REAP-25B_(bartowski)_64k",
-          "contextWindow": 65536,
-          "maxTokens": 4096,
-          "reasoning": true
-      },
-
-{ "id": "===== Qwopus ====="},
-
-{ "id": "===== Nemotron 3.5 Lightning ====="},
-       { 
-            "_test": "?",
-            "_speed": "? t/s",
-            "id_help": "it has to be the alias of llama.cpp",
-            "id": "Nemotron-3.5-Lightning_(bartowski)_96k",
-            "name": "Nemotron-3.5-Lightning (bartowski) [96k]",
-            "contextWindow": 98304,
-            "maxTokens": 4096,
-            "reasoning": true
-       },
-
-{ "id": "===== KAT Coder ====="},
-       { 
-            "_test": "✔️ Very Good",
-            "_speed": "50 t/s",
-            "id": "KAT-Coder-V2.5-Dev-Cerebellum-14GB-v2_deucebucket_160k",
-            "name": "KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]",
-            "contextWindow": 163840,
-            "maxTokens": 8192,
-            "reasoning": true
-       },
-       { 
-            "_test": "✔️ Good and super fast",
-            "_speed": "60 t/s",
-            "id": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU_(offmonreal)_160k",
-            "name": "KAT-Coder-V2.5-Dev_Q2_K-AllGPU (offmonreal) [160k]",
-            "contextWindow": 163840,
-            "maxTokens": 8192,
-            "reasoning": true
-       },
-
-{ "id": "=== GLM 4.7 Flash ==="},
-      { 
-        "_test": "?",
-        "_speed": "? t/s",
-        "id": "GLM-4.7-Flash-UD-Q3_K_XL_unsloth.gguf",
-        "name": "GLM 4.7 Flash UD Q3_K_XL (Unsloth) 128K",
-        "contextWindow": 131072,
-        "maxTokens": 4096,
-        "reasoning": true
-      },
-
-{"id": "=== GPT-OSS 20B ==="},
-        { 
-            "_test": "?",
-            "id": "GPT-OSS-20b-UD-Q8_K_XL_unsloth.gguf",
-            "name": "GPT OSS 20B UD Q8_K_XL (by Unsloth)",
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
-        },
-        { 
-            "_test": "?",
-            "id": "GPT-OSS-20b-UD-Q6_K_XL_unsloth.gguf",
-            "name": "GPT OSS 20B UD Q6_K_XL (by Unsloth)",
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
-        },
-        { 
-            "_test": "Super fast but it makes long and wrong reasoning",
-            "id": "OpenAI-20B-NEO-CODE2-Plus-Uncensored-IQ4_NL_davidau.gguf",
-            "name": "GPT-OSS-20B_IQ4_NL",
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
-        }
-
-        ],
-
-        
-         "models_inactive": [
-{ "id": "=== Ornith ==="},
-
-{"id": "=== ERNIE 4.5 21B A3B Thinking ==="},
-        { 
-            "_test": "?",
-            "id": "ERNIE-4.5-21B-A3B-Thinking-Q4_K_M_unsloth.gguf",
-            "name": "ERNIE-4.5-A3B-Thinking by Unsloth",
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
-        },
-        { 
-            "_test": "?",
-            "id": "ERNIE-4.5-21B-A3B-Thinking-MXFP4_MOE_noctrex.gguf",
-            "name": "ERNIE-4.5-A3B-Thinking by noctrex",
-            "contextWindow": 131072,
-            "maxTokens": 2048,
-            "reasoning": true
-        },
-
-        
-            {
-                "_test": "Ok but slow",
-                "id": "Qwen3.6-35B-A3B-UD-Q4_K_M_unsloth.gguf",
-                "name": "QWEN 3.6 35B A3B - UD Q4_K_M",
-                "contextWindow": 65536,
-                "maxTokens": 2048,
-                "reasoning": true
-            },
-                    { 
-            "_test": "",
-            "id": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
-            "name": "Qwen 2.5 Coder 64K",            
-            "contextWindow": 65536,
-            "maxTokens": 2048,
-            "reasoning": true
-        } ,
-        {
-            "_test": "???",
-                "id": "Gemma-4-12b-it-IQ4_NL_unsloth.gguf",
-                "name": "Gemma4 12B IQ4_NL",
-                "contextWindow": 131072,
-                "maxTokens": 2048,
-                "reasoning": true,
-                "input": [ "text" ]
-        },
-        { 
-            "test": "❌ Liar, Hallucinate, Loop, Slow",
-            "id": "Gemma-4-12B-v2-Q4_K_M_yuxinlu1.gguf",
-            "name": "Gemma4 12B v2-Q4_K_M_yuxinlu1",
-            "contextWindow": 262144,
-            "maxTokens": 2048,
-            "reasoning": true,
-            "input": [ "text" ]
-        }
-
-        ]
-    },
     "Ollama": {
       "baseUrl_DOC": "original: http://localhost:11434/v1",
       "baseUrl": "http://host.docker.internal:11434/v1",
