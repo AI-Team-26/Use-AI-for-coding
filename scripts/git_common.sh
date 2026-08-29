@@ -1,7 +1,7 @@
 github_pat_file="/scripts/github_pat"
 
 if [[ ! -r "$github_pat_file" ]]; then
-   echo -e "${RED}❌ PAT file '${github_pat_file}' not readable.${NC}"
+   echo -e "${RED}❌ The PAT file '${github_pat_file}' is not readable.${NC}"
    #return 1
 fi
 
@@ -56,243 +56,6 @@ set_default_github_token() {
     local obfuscated_pat="$(obfuscate_pat $pat)"
     echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${GITHUB_ACCOUNT}${NC}"
     export GITHUB_TOKEN=$pat
-}
-
-
-# --- set GIT credentials and GitHub CLI auth token for the repository --- 
-# <repo_url> argument must be in format "github.com/account/repo.git"
-_setup_git_for_repo() {
-    local repo_url=${1:?The repository URL must be specified}
-
-    # Check git_repo starts with "https://", if not error message
-    if [[ ! "$repo_url" =~ ^https://github.com ]]; then
-        echo -e "${RED}❌ Error: Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
-        return 1
-    fi
-
-    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
-
-    if [[ -z "$repo_path" ]]; then
-        echo -e "${RED}❌ Error: Failed to extract account/repo_path from \"${repo_url}\" ${NC}"
-        return 1
-    fi
-
-    local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
-
-    # from git_common
-    set_default_github_token $git_account_of_repo
-
-
-    # [OBSOLETE: keep for reference]
-    # check for GIT credentials of this repo account (account or organization)
-    #if [[ ! -f ~/.git-credentials ]]; then
-    #    touch ~/.git-credentials
-    #fi
-
-    #local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
-
-    if [[ -z "$git_pat" ]]; then
-        # Asking every time if want to set credentials in annoying and confusing so we just try to use default auth
-        echo ""
-        echo -e "GIT specific credentials for ${YELLOW}$repo_path${NC} were not found. Use account default GitHub token."
-
-        # try just @github.com  # "@github.com$", note the final "$"
-        git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
-        # then try get the first one # "@github.com/", note the final "$"
-        if [[ -z "$git_pat" ]]; then
-            git_pat=$(grep "@github.com" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com"
-        fi
-
-        if [[ -z "$git_pat" ]]; then
-            echo -e "${RED}❌ Error: Failed to find a record for github.con in GIT credentials ${NC}"
-            return 1
-        fi
-    else
-        echo ""
-        echo -e "✔️ GIT credentials found for \"github.com/$git_account_of_repo\" ${NC}"
-    fi
-   
-    # set the auth token for GitHub CLI, override existing one
-    export GITHUB_TOKEN="$git_pat"
-    gh auth status
-    if [[ ! $(gh auth status) ]]; then
-        local pat_obfuscated=$(obfuscate_pat "$git_pat")
-        echo -e "${RED}❌ Error: Failed to authenticate GitHub CLI with found token ($pat_obfuscated) ${NC}"
-        return 1
-    fi
-    
-    return 0
-}
-
-
-# [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
-_set_default_github_token() {
-    #echo "set_github_token()"
-    local token=$(grep "@github.com/${GITHUB_ACCOUNT}$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
-    if [[ -z "$token" ]]; then
-        echo -e "${RED}❌ Failed to get GitHub token from .git-credentials ${NC}"
-        return 1
-    fi
-
-    export GITHUB_TOKEN="$token"
-    #echo "GITHUB_TOKEN set ($token)"
-}
-
-# --- Global GIT setup ---
-# [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
-_setup_git_global() {
-    local force=${1:-0}
-
-    if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
-        echo -e "${YELLOW}${GIT_EMOJI} GIT is not configured for \"${GITHUB_ACCOUNT}\". Set up credentials:${NC}"
-
-        read -p "GitHub user name (name used for commits, use the Agent name): " git_username
-        read -p "GitHub email (leave empty yo use ${GITHUB_ACCOUNT_EMAIL}): " git_email
-        read -s -p "GitHub account PAT (hidden): " git_pat
-
-        if [[ -n "$git_email" ]]; then
-            git_email=${GITHUB_ACCOUNT_EMAIL}
-        fi
-
-        if [[ "$git_pat" != github_pat_* ]]; then 
-            echo -e "${RED}❌ The provided one is not a fine-grained PAT (fine-grained PT starts by \"github_pat_\")"
-            return 1
-        fi
-
-        git config --global user.name "$git_username"
-        git config --global user.email "$git_email"
-
-
-        # Set the default credentials (repository owner)
-        echo "https://xxx:$git_pat@github.com/$GITHUB_ACCOUNT" > ~/.git-credentials
-        echo ""
-        echo -e "${YELLOW}GIT credentials${NC}"
-
-        i=1
-        while IFS= read -r line; do
-            if [[ -n "$line" ]]; then
-                # Obfuscate PAT
-                if [[ "$line" =~ (://[^:]+:)([^@]+)(@) ]]; then
-                    #echo "PAT"
-                    user_pass="${BASH_REMATCH[1]}"
-                    pat="${BASH_REMATCH[2]}"
-                    obfuscated="$(obfuscate_pat $pat)"
-                    #echo "obfustaced=${obfuscated}"
-                    obfuscated_line="${line/$pat/$obfuscated}"
-                else
-                    #echo "NOT PAT"
-                    obfuscated_line="$line"
-                fi
-
-                echo "${i}) ${YELLOW}${obfuscated_line}${NC}"
-          
-                ((i++))
-            fi
-        done < ~/.git-credentials
-
-        echo ""
-        echo -e "${GREEN}${GIT_EMOJI} GIT configured! ${NC}"
-    fi
-
-    #return 0
-}
-
-obfuscate_pat() {
-    local pat=${1:?PAT is not provided}
-    echo "${pat:0:10}...${pat: -5}"
-}
-
-
-manage_git_credentials() {
-    local cred_file="$HOME/.git-credentials"
-
-    # Helper function to load and obfuscate the list without modifying the original file
-    load_and_print_list() {
-        declare -a temp_list
-        if [[ ! -f "$cred_file" ]]; then
-            echo -e "${YELLOW}(No credentials found)${NC}"
-            return
-        fi
-
-        echo ""
-        echo -e "${YELLOW}GIT Credentials:${NC}"
-
-        local i=1
-        while IFS= read -r line || [[ -n "$line" ]]; do
-            [[ -z "$line" ]] && continue
-
-            # Obfuscate PAT using your existing logic
-            if [[ "$line" =~ (://[^:]+:)([^@]+)(@) ]]; then
-                local prefix="${BASH_REMATCH[1]}"
-                local pat="${BASH_REMATCH[2]}"
-                local suffix="${BASH_REMATCH[3]}"
-                local obfuscated="$(obfuscate_pat "$pat")"
-                # Replace ONLY the specific PAT instance
-                local obfuscated_line="${line/$pat/$obfuscated}"
-                temp_list+=("$obfuscated_line")
-            else
-                temp_list+=("$line")
-            fi
-            ((i++))
-        done < $cred_file
-
-        for idx in "${!temp_list[@]}"; do
-            printf "%2d): %s\n" "$((idx + 1))" "${temp_list[$idx]}"
-        done
-    }
-
-    # MAIN LOOP: This solves Problem #2 (Menu disappearing/not updating)
-    while true; do
-        # Refresh the visual list every time the loop repeats
-        load_and_print_list
-
-        echo -e "\n${BLUE}------------------------${NC}"
-        PS3=$'\e[34mSelect an option: \e[0m'
-
-        # Use select inside the while loop
-        select choice in "Show-not-obfuscated" "Add" "Remove" "Exit"; do
-            case "$choice" in
-                "Show-not-obfuscated")
-                    echo -e "\n${GREEN}Raw File Content:${NC}" 
-                    cat $cred_file
-                    break # Break out of 'select', but stay in 'while' to refresh
-                ;;
-                "Add")
-                    read -p "GitHub owner (user or org): " owner
-                    read -p "GitHub repository (leave blank for all repos): " repo
-                    read -s -p "GitHub account PAT (hidden): " pat
-                    echo "" # New line after hidden input
-
-                    local owner_repo="$owner"
-                    [[ -n "$repo" ]] && owner_repo="$owner/$repo"
-
-                    # Append new credential
-                    echo "https://xxx:$pat@github.com/$owner_repo" >> "$cred_file"
-                    echo -e "${GREEN}✓ Credential added!${NC}"
-                    break # Break out of 'select' to trigger reload via 'while'
-                ;;
-                "Remove")
-                    # Re-run print so they see current numbers before choosing
-                    load_and_print_list
-                    read -p "Enter number to remove: " index
-
-                    if [[ "$index" =~ ^[0-9]+$ ]]; then
-                        sed -i "${index}d" "$cred_file"
-                        echo -e "${RED}⚠ Removed.${NC}"
-                    else
-                        echo -e "${RED}Invalid number.${NC}"
-                    fi
-                    break # Break out of 'select' to trigger reload via 'while'
-                ;;
-                "Exit")
-                    return 0
-                    ;;
-                *)
-                    echo -e "${RED}Invalid selection.${NC}"
-                    break ;;
-            esac
-        done
-    done
 }
 
 
@@ -441,3 +204,339 @@ add_github_pat() {
     echo -e "✔️ GitHub repository credentials configured!"
     #echo -e "${GREEN}${GIT_EMOJI} GitHub repository credentials configured!${NC}"
 }
+
+
+obfuscate_pat() {
+    local pat=${1:?PAT is not provided}
+    echo "${pat:0:10}...${pat: -5}"
+}
+
+
+manage_git_credentials() {
+    echo -e "${YELLOW}We use a custom file to manage GitHub PAT (${BLUE}$github_pat_file${NC}${YELLOW}).\n \
+(The usual .git-credentials file is not used because not easy to read and lead to mistakes due to not properly impemented per-HTTP functionality)\n \
+Values are stored as <account>:<PAT>.${NC}"
+
+    # Helper function to load and obfuscate the list without
+    load_and_print_list() {
+        declare -a temp_list
+        if [[ ! -f "$github_pat_file" ]]; then
+            echo -e "${YELLOW}(No credentials found)${NC}"
+            return 0
+        fi
+
+        echo ""
+        echo -e "${YELLOW}GIT Credentials:${NC}"
+
+        local i=1
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            [[ -z "$line" ]] && continue
+
+            # Split the string by ':'
+            IFS=':' read -r account pat <<< "$line"
+            if [[ -z "$account" || -z "$pat" ]]; then
+                echo "‼️ Line $1 in '$github_pat_file' does not have format 'account:PAT'" >&2
+                return 1
+            fi
+
+            local obfuscated="$(obfuscate_pat "$pat")"
+            # Replace ONLY the specific PAT instance
+            local obfuscated_line="${line/$pat/$obfuscated}"
+            temp_list+=("$obfuscated_line")
+
+            ((i++))
+        done < $github_pat_file
+
+        for idx in "${!temp_list[@]}"; do
+            printf "%2d) %s\n" "$((idx + 1))" "${temp_list[$idx]}"
+        done
+    }
+
+    # MAIN LOOP
+    while true; do
+        # Refresh the visual list every time the loop repeats
+        load_and_print_list
+
+        echo -e "\n${BLUE}------------------------${NC}"
+        PS3=$'\e[34mSelect an option: \e[0m'
+
+        # Use select inside the while loop
+        select choice in "Show-not-obfuscated" "Add" "Remove" "Exit"; do
+            case "$choice" in
+                "Show-not-obfuscated")
+                    #echo -e "\n${GREEN}Raw File Content:${NC}" 
+                    cat $github_pat_file
+                    break # Break out of 'select', but stay in 'while' to refresh
+                ;;
+                "Add")
+                    read -p "GitHub account (user or org): " account
+                    read -s -p "GitHub account PAT (hidden): " pat
+                    echo ""
+
+                    local owner_repo="$owner"
+                    if  [[ -n "$account" && -n "$pat" ]]; then 
+                    # Append new credential
+                        echo "${account}:${pat}" >> "$github_pat_file"
+                        echo -e "${GREEN}✓ Credential added!${NC}"
+                    fi
+                    break
+                ;;
+                "Remove")
+                    # Re-run print so they see current numbers before choosing
+                    load_and_print_list
+                    read -p "Enter number to remove: " index
+
+                    if [[ "$index" =~ ^[0-9]+$ ]]; then
+                        sed -i "${index}d" "$github_pat_file"
+                        echo -e "${YELLOW}Removed.${NC}"
+                    else
+                        echo -e "${RED}Invalid number.${NC}"
+                    fi
+                    break
+                ;;
+                "Exit")
+                    return 0
+                    ;;
+                *)
+                    echo -e "${RED}Invalid selection.${NC}"
+                    break ;;
+            esac
+        done
+    done
+}
+
+
+
+# --- Global GIT setup ---
+# [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
+_setup_git_global() {
+    local force=${1:-0}
+
+    if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
+        echo -e "${YELLOW}${GIT_EMOJI} GIT is not configured for \"${GITHUB_ACCOUNT}\". Set up credentials:${NC}"
+
+        read -p "GitHub user name (name used for commits, use the Agent name): " git_username
+        read -p "GitHub email (leave empty yo use ${GITHUB_ACCOUNT_EMAIL}): " git_email
+        read -s -p "GitHub account PAT (hidden): " git_pat
+
+        if [[ -n "$git_email" ]]; then
+            git_email=${GITHUB_ACCOUNT_EMAIL}
+        fi
+
+        if [[ "$git_pat" != github_pat_* ]]; then 
+            echo -e "${RED}❌ The provided one is not a fine-grained PAT (fine-grained PT starts by \"github_pat_\")"
+            return 1
+        fi
+
+        git config --global user.name "$git_username"
+        git config --global user.email "$git_email"
+
+
+        # Set the default credentials (repository owner)
+        echo "https://xxx:$git_pat@github.com/$GITHUB_ACCOUNT" > ~/.git-credentials
+        echo ""
+        echo -e "${YELLOW}GIT credentials${NC}"
+
+        i=1
+        while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+                # Obfuscate PAT
+                if [[ "$line" =~ (://[^:]+:)([^@]+)(@) ]]; then
+                    #echo "PAT"
+                    user_pass="${BASH_REMATCH[1]}"
+                    pat="${BASH_REMATCH[2]}"
+                    obfuscated="$(obfuscate_pat $pat)"
+                    #echo "obfustaced=${obfuscated}"
+                    obfuscated_line="${line/$pat/$obfuscated}"
+                else
+                    #echo "NOT PAT"
+                    obfuscated_line="$line"
+                fi
+
+                echo "${i}) ${YELLOW}${obfuscated_line}${NC}"
+          
+                ((i++))
+            fi
+        done < ~/.git-credentials
+
+        echo ""
+        echo -e "${GREEN}${GIT_EMOJI} GIT configured! ${NC}"
+    fi
+
+    #return 0
+}
+
+
+# [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
+_set_default_github_token() {
+    #echo "set_github_token()"
+    local token=$(grep "@github.com/${GITHUB_ACCOUNT}$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
+    if [[ -z "$token" ]]; then
+        echo -e "${RED}❌ Failed to get GitHub token from .git-credentials ${NC}"
+        return 1
+    fi
+
+    export GITHUB_TOKEN="$token"
+    #echo "GITHUB_TOKEN set ($token)"
+}
+
+
+# [OBSOLETE] # [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
+_manage_gitcredentials_file() {
+    local cred_file="$HOME/.git-credentials"
+
+    # Helper function to load and obfuscate the list without modifying the original file
+    load_and_print_list() {
+        declare -a temp_list
+        if [[ ! -f "$cred_file" ]]; then
+            echo -e "${YELLOW}(No credentials found)${NC}"
+            return
+        fi
+
+        echo ""
+        echo -e "${YELLOW}GIT Credentials:${NC}"
+
+        local i=1
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            [[ -z "$line" ]] && continue
+
+            # Obfuscate PAT using your existing logic
+            if [[ "$line" =~ (://[^:]+:)([^@]+)(@) ]]; then
+                local prefix="${BASH_REMATCH[1]}"
+                local pat="${BASH_REMATCH[2]}"
+                local suffix="${BASH_REMATCH[3]}"
+                local obfuscated="$(obfuscate_pat "$pat")"
+                # Replace ONLY the specific PAT instance
+                local obfuscated_line="${line/$pat/$obfuscated}"
+                temp_list+=("$obfuscated_line")
+            else
+                temp_list+=("$line")
+            fi
+            ((i++))
+        done < $cred_file
+
+        for idx in "${!temp_list[@]}"; do
+            printf "%2d): %s\n" "$((idx + 1))" "${temp_list[$idx]}"
+        done
+    }
+
+    # MAIN LOOP: This solves Problem #2 (Menu disappearing/not updating)
+    while true; do
+        # Refresh the visual list every time the loop repeats
+        load_and_print_list
+
+        echo -e "\n${BLUE}------------------------${NC}"
+        PS3=$'\e[34mSelect an option: \e[0m'
+
+        # Use select inside the while loop
+        select choice in "Show-not-obfuscated" "Add" "Remove" "Exit"; do
+            case "$choice" in
+                "Show-not-obfuscated")
+                    echo -e "\n${GREEN}Raw File Content:${NC}" 
+                    cat $cred_file
+                    break # Break out of 'select', but stay in 'while' to refresh
+                ;;
+                "Add")
+                    read -p "GitHub owner (user or org): " owner
+                    read -p "GitHub repository (leave blank for all repos): " repo
+                    read -s -p "GitHub account PAT (hidden): " pat
+                    echo "" # New line after hidden input
+
+                    local owner_repo="$owner"
+                    [[ -n "$repo" ]] && owner_repo="$owner/$repo"
+
+                    # Append new credential
+                    echo "https://xxx:$pat@github.com/$owner_repo" >> "$cred_file"
+                    echo -e "${GREEN}✓ Credential added!${NC}"
+                    break # Break out of 'select' to trigger reload via 'while'
+                ;;
+                "Remove")
+                    # Re-run print so they see current numbers before choosing
+                    load_and_print_list
+                    read -p "Enter number to remove: " index
+
+                    if [[ "$index" =~ ^[0-9]+$ ]]; then
+                        sed -i "${index}d" "$cred_file"
+                        echo -e "${RED}⚠ Removed.${NC}"
+                    else
+                        echo -e "${RED}Invalid number.${NC}"
+                    fi
+                    break # Break out of 'select' to trigger reload via 'while'
+                ;;
+                "Exit")
+                    return 0
+                    ;;
+                *)
+                    echo -e "${RED}Invalid selection.${NC}"
+                    break ;;
+            esac
+        done
+    done
+}
+
+
+# --- set GIT credentials and GitHub CLI auth token for the repository --- 
+# <repo_url> argument must be in format "github.com/account/repo.git"
+_setup_git_for_repo() {
+    local repo_url=${1:?The repository URL must be specified}
+
+    # Check git_repo starts with "https://", if not error message
+    if [[ ! "$repo_url" =~ ^https://github.com ]]; then
+        echo -e "${RED}❌ Error: Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
+        return 1
+    fi
+
+    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+
+    if [[ -z "$repo_path" ]]; then
+        echo -e "${RED}❌ Error: Failed to extract account/repo_path from \"${repo_url}\" ${NC}"
+        return 1
+    fi
+
+    local git_account_of_repo=$(echo "$repo_path" | awk -F'/' '{print $1}' )
+
+    # from git_common
+    set_default_github_token $git_account_of_repo
+
+
+    # [OBSOLETE: keep for reference]
+    # check for GIT credentials of this repo account (account or organization)
+    #if [[ ! -f ~/.git-credentials ]]; then
+    #    touch ~/.git-credentials
+    #fi
+
+    #local git_pat=$(grep "@github.com/$git_account_of_repo" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  
+
+    if [[ -z "$git_pat" ]]; then
+        # Asking every time if want to set credentials in annoying and confusing so we just try to use default auth
+        echo ""
+        echo -e "GIT specific credentials for ${YELLOW}$repo_path${NC} were not found. Use account default GitHub token."
+
+        # try just @github.com  # "@github.com$", note the final "$"
+        git_pat=$(grep "@github.com$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
+        # then try get the first one # "@github.com/", note the final "$"
+        if [[ -z "$git_pat" ]]; then
+            git_pat=$(grep "@github.com" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com"
+        fi
+
+        if [[ -z "$git_pat" ]]; then
+            echo -e "${RED}❌ Error: Failed to find a record for github.con in GIT credentials ${NC}"
+            return 1
+        fi
+    else
+        echo ""
+        echo -e "✔️ GIT credentials found for \"github.com/$git_account_of_repo\" ${NC}"
+    fi
+   
+    # set the auth token for GitHub CLI, override existing one
+    export GITHUB_TOKEN="$git_pat"
+    gh auth status
+    if [[ ! $(gh auth status) ]]; then
+        local pat_obfuscated=$(obfuscate_pat "$git_pat")
+        echo -e "${RED}❌ Error: Failed to authenticate GitHub CLI with found token ($pat_obfuscated) ${NC}"
+        return 1
+    fi
+    
+    return 0
+}
+
