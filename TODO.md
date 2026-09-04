@@ -3,12 +3,14 @@
 ## In Progress
 
 - [ ] **[doc/01_consolidate_workflows]** Consolidate workflow instructions and slim down AGENTS.md/SYSTEM.md
-    - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol
+    - [ ] Read current `AGENTS.md` and `SYSTEM.md` to identify redundancies
+    - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol (PR workflow, TODO lifecycle, Git/GitHub setup)
     - [ ] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
-    - [ ] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
-    - [ ] Refactor `SYSTEM.md` to be leaner
-    - [ ] Context: Consolidating all agent protocols into one place to reduce redundancy in AGENTS.md and SYSTEM.md.
+    - [ ] Refactor `AGENTS.md` to be a lean entry point pointing to `AGENT_WORKFLOW.md`
+    - [ ] Refactor `SYSTEM.md` to be leaner, containing only core system instructions
+    - [ ] Context: Reducing redundancy and centralizing operational protocols for better maintainability.
     - [ ] Steps: (as listed above)
+    - [ ] Notes: Target files are in `./Pi Agent/for-docker-volume/agent/`
 
 ## Backlog
 
