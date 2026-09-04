@@ -24,18 +24,18 @@ Instead of relying on a `In progress` section in `TODO.md` on `main`, the existe
 
 ### 2. Label-based Identity Protocol
 To solve the shared identity problem, agents will use GitHub Labels to claim ownership.
-- **Identity Token**: Each agent uses a unique label: `agent:<name>` (e.g., `agent:kiwi`).
+- **Identity Token**: Each agent uses a unique label including their name and icon: `agent: 🥝 <Name>` (e.g., `agent: 🥝 Pi Kiwi`).
 - **Claiming a Task**:
     1. Create a feature branch (`feat/01_task`).
     2. Open a **Draft PR** immediately.
-    3. Apply the identity label: `gh pr edit <PR_NUMBER> --add-label "agent:<name>"`.
+    3. Apply the identity label: `gh pr edit <PR_NUMBER> --add-label "agent: 🥝 <Name>"`.
 - **Collision Detection Logic**:
     - Scan `Backlog` on `main`.
     - For each task, check `gh pr list --state open`.
     - If a matching PR exists, check its labels.
-    - If `agent:<someone_else>` is present $\rightarrow$ **Skip (Collision)**.
-    - If no `agent:` label is present $\rightarrow$ **Task is Unclaimed/Available**.
-    - If `agent:<my_name>` is present $\rightarrow$ **Continue working**.
+    - If `agent: 🥝 <someone_else>` is present $\rightarrow$ **Skip (Collision)**.
+    - If no `agent: 🥝` label is present $\rightarrow$ **Task is Unclaimed/Available**.
+    - If `agent: 🥝 <my_name>` is present $\rightarrow$ **Continue working**.
 
 ### 3. Refined Lifecycle
 1. **Backlog (on `main`)**: Task is listed.
