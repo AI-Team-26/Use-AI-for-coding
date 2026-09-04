@@ -48,8 +48,8 @@ Use this table to quickly find model names for eBay searches. Focus on boards th
 
 | Model Name | PCIe Configuration (Primary Slots) | Best Use Case | Price Tier |
 | :--- | :--- | :--- | :--- |
-| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** (via bifurcation) | Professional Multi-GPU Workflows | High |
-| **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | High |
+| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** (via bifurcation) | Professional Multi-GPU Workflows | High (New: ~600€, Used: ~450€) |
+| **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | Mid-High (New: ~650€, Used: ?) |
 | **ASRock X670E Taichi** | **x16 / x8 / x8** | Balanced Performance & Value | Mid-High |
 | **ASUS ROG Strix X670E-E Gaming** | **x16 / x8 / x4** | Premium Gaming / Single GPU focus | Mid-High |
 
