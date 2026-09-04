@@ -68,6 +68,15 @@ To solve the shared identity problem, agents will use GitHub Labels to claim own
 - Used for internal tracking across Pi sessions (fresh context = need to remember what was being done)
 - Optional `Backlog` section for related future tasks
 
+### Gradual Cleanup Rule (IMPORTANT)
+The `In Progress` section must be **gradually cleaned up**:
+1. When a sub-step is completed → remove it from the list immediately
+2. When all steps are done → remove the entire `In Progress` section
+3. By the time the PR is ready for review, `In Progress` should be **empty/absent**
+4. This ensures clean state for reviewer approval without requiring manual cleanup
+
+**This rule must be clearly documented in `AGENTS.md`.**
+
 ### File Consolidation
 - **No `AGENT_WORKFLOW.md`** → Keep it simple, avoid adding more files
 - **Refactor `AGENTS.md`** → Include everything: entry point + workflow protocol + TODO lifecycle + Git/GitHub setup
