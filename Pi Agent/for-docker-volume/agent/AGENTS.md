@@ -154,13 +154,35 @@ query {
 ```
 
 ### Step 2 — Reply to Individual Comments
-Reply via `/replies` endpoint:
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.
+**USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`
+
+**Correct Syntax (Form Fields):**
+The `/replies` endpoint expects standard form data. Use `-f body="Text"` directly.
+
+**WARNING:**
+  - DO NOT USE JSON syntax like `{"body": "..."}`. The `-f` flag expects `key=value` pairs only.
+  - Using curl `-d` (JSON mode) instead of `f` (form-data mode) sends `Content-Type: application/json`, which the `/replies` endpoint rejects as an unknown route → returns misleading **404 Not Found**. Always verify your tool uses form-data (`multipart/form-data`).
+  - Unquoted backticks inside double-quoted `-f "body=..."` trigger bash command substitution before reaching curl. Either escape them (`` \` ``), wrap the entire value in single quotes (`-f 'body=text'`), or avoid backticks entirely.
+  - If you get 404 on retry, pause briefly first — rapid identical requests can hit rate-limiting that also manifests as 404.
+  - PR review comments live under `/pulls/`, NOT `/issues/`.
+
+**Example:** Replying to comment ID 1234567890 of PR 7:
 ```bash
-gh api repos/<owner>/<repo>/pulls/<PR_NUMBER>/comments/<COMMENT_ID>/replies \
-  -X POST -f "body=Thanks for catching that! Fixed."
+gh api repos/<owner>/<repo>/pulls/7/comments/1234567890/replies \
+-X POST \
+-f "body=Thanks for catching that typo! Fixed it."
 ```
 
-**Important:** Use `-f` (form-data), not `-d` (JSON).
+- `<PR_number>` — The PR number.
+- `<comment_id>` — The numeric comment ID (the `id` field from the GraphQL comments).
+- `-f "body=..."` — Plain text value. Wrap in quotes if it contains spaces.
+
+**How to get the numeric `<comment_id>` from GraphQL:**
+The GraphQL response includes a `url` field for each comment. Extract the numeric ID from the URL:
+```
+https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
+```
 
 ### Step 3 — Request Re-review
 ```bash
