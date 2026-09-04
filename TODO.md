@@ -2,14 +2,23 @@
 
 ## In Progress
 
-## Backlog
-
-
-- [ ] **[doc/plan_consolidate_workflows]** Consolidate workflow instructions and slim down AGENTS.md/SYSTEM.md
+- [ ] **[doc/01_consolidate_workflows]** Consolidate workflow instructions and slim down AGENTS.md/SYSTEM.md
     - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol
     - [ ] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
     - [ ] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
     - [ ] Refactor `SYSTEM.md` to be leaner
+    - [ ] Context: Consolidating all agent protocols into one place to reduce redundancy in AGENTS.md and SYSTEM.md.
+    - [ ] Steps: (as listed above)
+
+## Backlog
+
+
+- [ ] Consolidate workflow instructions and slim down AGENTS.md/SYSTEM.md
+    - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol
+    - [ ] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
+    - [ ] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
+    - [ ] Refactor `SYSTEM.md` to be leaner
+
 
 - Switch project from inside the project (at the moment it requires quit Pi and restart it)
 
