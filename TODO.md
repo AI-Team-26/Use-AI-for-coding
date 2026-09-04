@@ -17,9 +17,9 @@
 
 - "Manage GitHub credentials" has to manage the new file instead of .git-credentials
 
-- Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
+- (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
 
-- Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
+- (loop) Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
 
 - Complete the documentation for GIT and GitHub setup
 
