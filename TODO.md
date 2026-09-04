@@ -4,13 +4,10 @@
 
 - [x] **[doc/new_computer]** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices
     - [x] Research compatible motherboards and CPUs for dual RTX 3090 setup
-    - [ ] Find reliable power supplies (PSU) capable of handling dual 3090 peaks
-    - [ ] Check case compatibility for dual large GPUs
-    - [ ] Compare prices for components (CPU, MB, RAM, PSU, Case, Cooling)
-    - [ ] Compile a summary of options and estimated total cost
-    - [ ] Context: Building a high-performance workstation for LLM inference/training.
-    - [ ] Steps: (as listed above)
-    - [ ] Notes: Focus on stability and thermal management.
+    - [x] Find reliable power supplies (PSU) capable of handling dual 3090 peaks
+    - [x] Check case compatibility for dual large GPUs
+    - [x] Compare prices for components (CPU, MB, RAM, PSU, Case, Cooling)
+    - [x] Compile a summary of options and estimated total cost
 
 
 - Switch project from inside the project (at the moment it requires quit Pi and restart it)
