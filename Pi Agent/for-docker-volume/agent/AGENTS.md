@@ -39,8 +39,11 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 1. Create branch: `git checkout -b feat/01_task_name`
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
-4. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
-5. This signals to other agents: "I'm working on this"
+4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
+5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
+6. This signals to other agents: "I'm working on this"
+
+**Important:** We do NOT update `main/TODO.md`. Branch + PR = active signal. `main` only has `Backlog`.
 
 ## TODO.md Structure
 
