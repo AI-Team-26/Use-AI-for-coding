@@ -16,8 +16,11 @@ Discussion regarding the optimal workflow for autonomous agents (specifically Pi
 
 ## Proposed Solutions
 
-### 1. The "Draft PR" Signal
-Instead of relying on a `In progress` section in `TODO.md` on `main`, the existence of an **Open Pull Request** (specifically a **Draft Pull Request**) serves as the primary signal that a task is active.
+### 1. The "Branch Publication" Signal (Crucial)
+The very first step of any task must be the creation and **publication** (pushing) of the feature branch to the remote repository. This acts as the primary visibility signal. Even before a Draft PR is opened, the presence of a remote branch (e.g., `origin/feat/01_task`) dictates that the task has been taken by an agent. This prevents other agents from attempting to start the same work.
+
+### 2. The "Draft PR" Signal
+Instead of relying on a `In progress` section in `TODO.md` on `main`, the existence of an **Open Pull Request** (specifically a **Draft Pull Request**) serves as the secondary, more formal signal that a task is active.
 
 ### 2. Label-based Identity Protocol
 To solve the shared identity problem, agents will use GitHub Labels to claim ownership.
