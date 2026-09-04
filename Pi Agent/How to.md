@@ -84,11 +84,18 @@ Since you are currently in a session, you can easily get its unique identifier o
 This will display the Session ID, the file path where it is stored, and other metadata like token usage and cost.
 
 
-## !!! WIP !!! Use the voice for the prompt
+## Models
+
+To select a model use the command `/model`.  
+To set the model as **default** use `CTRL+S` when you are in /model command.   
+Everytime you call  `/new` it will start with the **default** model.  
+
+
+## [TODO] Use the voice for the prompt
 
 ```
 pi install npm:pi-voice-stt
 ```
 
-It needs ffmpeg installed in the contaginer.  
-It needs access to a microphone in the host.
+- [v] It needs ffmpeg installed in the container.  
+- [ ] It needs access to a microphone in the host.

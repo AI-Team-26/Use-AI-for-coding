@@ -4,6 +4,10 @@
 
 ## Backlog
 
+- Switch project from inside the project (at the moment it requires quit Pi and restart it)
+
+- Select the Pi container should show the Agent name and icon
+
 - (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
 
 - (loop) Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"

@@ -1,16 +1,21 @@
 #FROM debian:bookworm-slim
 FROM mcr.microsoft.com/dotnet/sdk:10.0 
 
-# Install prerequisites: Node.js 22 and security requisites
+# Install prerequisites: Node.js 24 and security requisites
+# and libs for Rust 
 # and custom libraries for some projects (ffmpeg)
-# removed openssh-server (was it required for ... ?)
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     wget gpg ca-certificates curl git gnupg jq \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    build-essential pkg-config libssl-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs \
     && apt-get install -y ffmpeg \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+#--- Rust
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="${PATH}:/root/.cargo/bin"
 
 #--- Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg \

@@ -65,6 +65,14 @@
         "maxTokens": 4096,
         "reasoning": true
     }, 
+     { 
+        "_test": "???",
+        "id": "Gemma-4-26B-UD-IQ4_NL_(Unsloth)_[104k]",
+        "name": "Gemma4 26B - UD-IQ4_NL (Unsloth) 104K",
+        "contextWindow": 106496,
+        "maxTokens": 8192,
+        "reasoning": true
+      },
 
 { "id": "==== Qwen 3.8 27B =====" },
       { 
@@ -90,22 +98,32 @@
       { 
          "_test": "🥇",
          "_speed": "20-40 t/s",
-          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[80k]",
-          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [80k] Q4",
-          "contextWindow": 81920,
-          "maxTokens": 4096,
+          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[64k]",
+          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [64k]",
+          "contextWindow": 65536,
+          "maxTokens": 8192,
           "reasoning": true,
-          "input": [ "text", "image" ]
+          "input": [ "text" ]
+      },
+      { 
+         "_test": "🥇",
+         "_speed": "20-40 t/s",
+          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[48k]_Q8",
+          "name": "🥇 Qwen 3.8 27B UD-IQ4_XS (Unsloth) [64k]",
+          "contextWindow": 49152,
+          "maxTokens": 8192,
+          "reasoning": true,
+          "input": [ "text" ]
       },
       { 
          "_test": "",
          "_speed": " t/s",
-          "id": "Qwen3.8_27B_UD-IQ4_XS_(Unsloth)_[48k]_Q8",
-          "name": "Qwen 3.8 27B UD-IQ4_XS (Unsloth) [48k] Q8/Q4",
-          "contextWindow": 49152,
+          "id": "Qwen3.8-27B-i1-IQ4_XS-GGUF-Smaller_(jrell)_Q8-Q8_[56k]",
+          "name": "Qwen 3.8 27B IQ4_XS (jrell) Q8/Q8 [56k]",
+          "contextWindow": 57344,
           "maxTokens": 8192,
           "reasoning": true,
-          "input": [ "text", "image" ]
+          "input": [ "text"]
       },
 
       { 
@@ -119,14 +137,14 @@
           "input": [ "text", "image" ]
       },
       { 
-         "_test": "Good",
+         "_test": "",
          "_speed": "",
           "id": "Qwen3.8-27B-Abliterated-IQ4-MIX-MTP_finex666_[64k]",
           "name": "Qwen3.8-27B Abliterated IQ4-MIX-MTP (finex666)[64k]",
           "contextWindow": 65536,
           "maxTokens": 8192,
           "reasoning": true,
-          "input": [ "text", "image" ]
+          "input": [ "text"]
       },
 
 { "id": "===== Qwen 3.6 35B A3B =====" },
@@ -320,6 +338,28 @@
             "input": [ "text" ]
         }
 
+        ]
+    },
+    "Groq FREE": {
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{GROQ_API_KEY}}",
+        "models": [
+            {
+                "id": "qwen/qwen3.8-27b",
+                "name": "Qwen 3.8 27B",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "input": [ "text", "image" ]
+            },
+            {
+                "id": "openai/gpt-oss-120b",
+                "name": "GPT OSS 120B",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "input": [ "text", "image" ]
+            }
+            
         ]
     },
     "Google": {
@@ -600,12 +640,17 @@
         "apiKey": "{{OPENROUTER_API_KEY}}",
         "models": [
             {
-                "id": "nvidia/nemotron-3.5-lightning:free",
+                "id": "inclusionai/ling-3.0-flash-fin:free",
                 "maxTokens": 8192,
                 "reasoning": true
             },
             {
-                "id": "z-ai/glm-5.2:free",
+                "id": "z-ai/glm-5.3-flash",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "nvidia/nemotron-3.5-lightning:free",
                 "maxTokens": 8192,
                 "reasoning": true
             },
@@ -637,6 +682,13 @@
                 "maxTokens": 8192,
                 "reasoning": true
             }
+        ],
+        "models_unrelayable": [
+            {
+                "id": "z-ai/glm-5.2:free",
+                "maxTokens": 8192,
+                "reasoning": true
+            }
         ]
     },
     "Openrouter": {
@@ -644,6 +696,19 @@
         "api": "openai-completions",
         "apiKey": "{{OPENROUTER_API_KEY}}",
         "models": [
+            {
+                "id": "upstage/solar-pro4",
+                "name": "Upstage Solar Pro 4 | Discount 90%",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "cost": {
+                    "_date": "2026-08-17",
+                    "input": 0.03,
+                    "output": 0.12,
+                    "cacheRead": 0.006,
+                    "cacheWrite": 0.12
+                }
+            },
            {
                 "id": "inclusionai/ling-3.0-flash",
                 "name": "124B-AsB | DISCOUNT 65%",

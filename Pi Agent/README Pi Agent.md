@@ -17,7 +17,7 @@ Use the "Pi Agent" text in the label, because the script to start ai agents look
 cd "Pi Agent"
 docker build \
     --label description="Pi Agent" \
-    -t pi-agent:13 \
+    -t pi-agent:14 \
     -f Dockerfile \
     .
 ```
@@ -54,7 +54,7 @@ The bind-mount volumes:
 ```bash
 cd "Pi Agent"
 docker_volumes="/p/PiAgent_Container"
-docker_image="pi-agent:13"
+docker_image="pi-agent:14"
 
 # Agent Manager 
 # Use shared /projects folder soit is accessible also from host for agent-driven coding
