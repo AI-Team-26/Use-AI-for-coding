@@ -2,16 +2,6 @@
 
 ## In Progress
 
-- [ ] **[doc/01_consolidate_workflows]** Consolidate workflow instructions and slim down AGENTS.md/SYSTEM.md
-    - [ ] Read current `AGENTS.md` and `SYSTEM.md` to identify redundancies
-    - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol (PR workflow, TODO lifecycle, Git/GitHub setup)
-    - [ ] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
-    - [ ] Refactor `AGENTS.md` to be a lean entry point pointing to `AGENT_WORKFLOW.md`
-    - [ ] Refactor `SYSTEM.md` to be leaner, containing only core system instructions
-    - [ ] Context: Reducing redundancy and centralizing operational protocols for better maintainability.
-    - [ ] Steps: (as listed above)
-    - [ ] Notes: Target files are in `./Pi Agent/for-docker-volume/agent/`
-
 - [x] **[doc/new_computer]** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices
     - [x] Research compatible motherboards and CPUs for dual RTX 3090 setup
     - [ ] Find reliable power supplies (PSU) capable of handling dual 3090 peaks
@@ -20,10 +10,7 @@
     - [ ] Compile a summary of options and estimated total cost
     - [ ] Context: Building a high-performance workstation for LLM inference/training.
     - [ ] Steps: (as listed above)
-    - [ ] Notes: Focus on stability and thermal management.    - [x] Create `AGENT_WORKFLOW.md` with consolidated protocol
-    - [x] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
-    - [x] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
-    - [x] Refactor `SYSTEM.md` to be leaner
+    - [ ] Notes: Focus on stability and thermal management.
 
 
 - Switch project from inside the project (at the moment it requires quit Pi and restart it)
