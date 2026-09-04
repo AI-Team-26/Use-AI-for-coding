@@ -12,18 +12,18 @@
     - [ ] Steps: (as listed above)
     - [ ] Notes: Target files are in `./Pi Agent/for-docker-volume/agent/`
 
-- [ ] **[doc/new_computer]** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices
-    - [ ] Research compatible motherboards and CPUs for dual RTX 3090 setup
+- [x] **[doc/new_computer]** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices
+    - [x] Research compatible motherboards and CPUs for dual RTX 3090 setup
     - [ ] Find reliable power supplies (PSU) capable of handling dual 3090 peaks
     - [ ] Check case compatibility for dual large GPUs
     - [ ] Compare prices for components (CPU, MB, RAM, PSU, Case, Cooling)
     - [ ] Compile a summary of options and estimated total cost
     - [ ] Context: Building a high-performance workstation for LLM inference/training.
     - [ ] Steps: (as listed above)
-    - [ ] Notes: Focus on stability and thermal management.    - [ ] Create `AGENT_WORKFLOW.md` with consolidated protocol
-    - [ ] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
-    - [ ] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
-    - [ ] Refactor `SYSTEM.md` to be leaner
+    - [ ] Notes: Focus on stability and thermal management.    - [x] Create `AGENT_WORKFLOW.md` with consolidated protocol
+    - [x] Backup existing `AGENTS.md` and `SYSTEM.md` to `OLD/`
+    - [x] Refactor `AGENTS.md` to point to `AGENT_WORKFLOW.md`
+    - [x] Refactor `SYSTEM.md` to be leaner
 
 
 - Switch project from inside the project (at the moment it requires quit Pi and restart it)
