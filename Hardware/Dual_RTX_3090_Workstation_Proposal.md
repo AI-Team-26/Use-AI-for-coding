@@ -42,6 +42,21 @@ This document outlines hardware recommendations for building a high-performance 
 | **Cooling** | High-end AIO + Case Fans | $150 - $250 |
 | **Total Est.** | | **$3,300 - $4,450** |
 
+### AM5 Motherboard Comparison (Optimized for Dual GPU)
+
+Use this table to quickly find model names for eBay searches. Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adequate bandwidth.
+
+| Model Name | PCIe Configuration (Primary Slots) | Best Use Case | Price Tier |
+| :--- | :--- | :--- | :--- |
+| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** (via bifurcation) | Professional Multi-GPU Workflows | High |
+| **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | High |
+| **ASRock X670E Taichi** | **x16 / x8 / x8** | Balanced Performance & Value | Mid-High |
+| **ASUS ROG Strix X670E-E Gaming** | **x16 / x8 / x4** | Premium Gaming / Single GPU focus | Mid-High |
+
+> [!IMPORTANT]
+> **Note on the AM4 (DDR4) Path:**
+> If the AM5 components above are too expensive, you can significantly reduce costs by switching to the **AMD AM4 platform**. This allows you to use much cheaper **DDR4 RAM** and older (but still very capable) CPUs like the **Ryzen 9 5900X**. While you lose some future-proofing and raw PCIe Gen 5 speed, it is the most cost-effective way to build a dual-3090 workstation.
+
 ---
 
 ## Power Management & Optimization
