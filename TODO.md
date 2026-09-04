@@ -15,7 +15,6 @@
 
 - Select the Pi container should show the Agent name and icon
 
-- "Manage GitHub credentials" has to manage the new file instead of .git-credentials
 
 - (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
 
@@ -53,7 +52,6 @@
 
 ## Done
 
-- "Manage GitHub credentials" has to manage the new file instead of .git-credentials
 - GIT credentials can be stored in a more clear file with owner-PAT-expiration date for each record (instead of .git-credentials)
 - GIT credentials (.git-credentials) has to be autorenewed with a simple script
 - GIT credentials (.git-credentials) has to be autofilled with tokens from environment variable
