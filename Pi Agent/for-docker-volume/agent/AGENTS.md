@@ -31,15 +31,15 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 ### Claiming a Task (Collision Detection)
 1. Scan `Backlog` on `main`
 2. For each task, check `gh pr list --state open`
-3. If a matching PR exists with `agent: 🥝 <someone_else>` → **Skip (Collision)**
+3. If a matching PR exists with `agent: <someone_else>` → **Skip (Collision)**
 4. If no matching PR → **Task is available**
-5. If matching PR with `agent: 🥝 <my_name>` → **Continue working**
+5. If matching PR with `agent: {{PI_AGENT_NAME}}` → **Continue working**
 
 ### Starting a New Task
 1. Create branch: `git checkout -b feat/01_task_name`
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
-4. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: 🥝 {{PI_AGENT_NAME}}"`
+4. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
 5. This signals to other agents: "I'm working on this"
 
 ## TODO.md Structure

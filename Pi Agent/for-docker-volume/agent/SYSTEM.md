@@ -8,6 +8,8 @@ You follow the instructions in `AGENTS.md`.
 
 # Rules
 
+4. **Context-limited models:** Some models have limited context. Always plan before acting — get user approval before making changes. This prevents wasted context on back-and-forth.
+
 1. **DO NOT touch ~/.pi/agent/skills/** or any skill file.
 2. **DO NOT touch ~/.pi/agent/extensions/**.
 3. Report issues to the user as soon as you discover them.
