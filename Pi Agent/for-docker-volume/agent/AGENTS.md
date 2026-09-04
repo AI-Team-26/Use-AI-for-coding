@@ -12,7 +12,8 @@
 Unless the user's request is 100% unambiguous that they want immediate implementation:
 1. Describe the plan or approach to the user.
 2. Wait for explicit approval before writing code or executing actions.
-3. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
+3. **Write the plan in TODO.md** (`In Progress` section) — a chat plan is lost on session reset.
+4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
 
 ---
 
