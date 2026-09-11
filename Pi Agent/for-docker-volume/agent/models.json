@@ -10,6 +10,15 @@
 
 { "id": "===== KAT Coder ====="},
        { 
+            "_test": "?",
+            "_speed": "? t/s",
+            "id": "KAT-Coder-V2.5-Dev-REAP-205E-MTP-UD-IQ4_XS_(gbuxhf)_128k",
+            "name": "KAT-Coder-V2.5 REAP-205E MTP UD-IQ4_XS (gbuxhf) [128k]",
+            "contextWindow": 131072,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
             "_test": "✔️ Very Good",
             "_speed": "50 t/s",
             "id": "KAT-Coder-V2.5-Dev-Cerebellum-14GB-v2_deucebucket_160k",
@@ -340,28 +349,7 @@
 
         ]
     },
-    "Groq FREE": {
-        "baseUrl": "https://api.groq.com/openai/v1",
-        "api": "openai-completions",
-        "apiKey": "{{GROQ_API_KEY}}",
-        "models": [
-            {
-                "id": "qwen/qwen3.8-27b",
-                "name": "Qwen 3.8 27B",
-                "maxTokens": 8192,
-                "reasoning": true,
-                "input": [ "text", "image" ]
-            },
-            {
-                "id": "openai/gpt-oss-120b",
-                "name": "GPT OSS 120B",
-                "maxTokens": 8192,
-                "reasoning": true,
-                "input": [ "text", "image" ]
-            }
-            
-        ]
-    },
+
     "Google": {
         "_baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/", 
         "_api": "openai-completions",
@@ -585,25 +573,17 @@
         "api": "openai-completions",
         "apiKey": "{{OFOX_API_KEY}}",
         "models": [
-            {
-                "id": "z-ai/glm-4.7-flash:free",
-                "note": "",
-                "maxTokens": 4096,
-                "reasoning": true,
-                "cost": {
-                    "_date": "2026-08-17",
-                    "input": 0.00,
-                    "output": 0.00,
-                    "cacheRead": 0.00,
-                    "cacheWrite": 0.00
-                }
-            }
+
         ]
     },
     "Ofox": {
         "baseUrl": "https://api.ofox.ai/v1",
         "api": "openai-completions",
         "apiKey": "{{OFOX_API_KEY}}",
+        "compat": {
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": true
+        },
         "models": [
             {
                 "id": "openai/gpt-5.6-luna",
@@ -630,6 +610,19 @@
                     "output": 3.20,
                     "cacheRead": 0.05,
                     "cacheWrite": 0.5625
+                }
+            },
+            {
+                "id": "z-ai/glm-5.3-flash",
+                "note": "50% discount",
+                "maxTokens": 4096,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-09-07",
+                    "input": 0.075,
+                    "output": 0.25,
+                    "cacheRead": 0.015,
+                    "cacheWrite": 0.25
                 }
             }
         ]

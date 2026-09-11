@@ -104,6 +104,18 @@ docker run \
     --mount type=bind,src="$docker_volumes/Dev-3/projects",dst=/projects \
     $docker_image
 
+# Agent Reviewer
+docker run \
+    -it \
+    --name PiAgent-Reviewer \
+    --label "description=Pi Agent for Reviews" \
+    -e PI_AGENT_NAME="🌹 Pi Rose" \
+    -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
+    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/Reviewer/.pi",dst=/root/.pi \
+    --mount type=bind,src="$docker_volumes/Reviewer/projects",dst=/projects \
+    $docker_image
+
 # Agent QA
 docker run \
     -it \
