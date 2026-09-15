@@ -60,7 +60,6 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - **No `In Progress` section exists anywhere** — not on `main`, not on branches
 - Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
 - A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
-- On merge, all tracking disappears automatically — nothing to clean up
 - No `Done` → History lives in Git, not in files
 
 ## Running Tests
