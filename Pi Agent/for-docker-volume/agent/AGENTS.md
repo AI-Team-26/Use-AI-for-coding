@@ -11,7 +11,7 @@
 Unless the user's request is 100% unambiguous that they want immediate implementation:
 1. Describe the plan or approach to the user.
 2. Wait for explicit approval before writing code or executing actions.
-3. **Write the plan in TODO.md** (`In Progress` section) — a chat plan is lost on session reset.
+3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
 4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
 
 ---
@@ -41,7 +41,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 3. Open Draft PR immediately
 4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
 5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
-6. This signals to other agents: "I'm working on this"
+6. Write the plan/sub-steps in the PR body as a GitHub task list (`- [ ] Sub-step 1`, …) and check them off as they complete
+7. This signals to other agents: "I'm working on this"
 
 **Important:** We do NOT update `main/TODO.md`. Branch + PR = active signal. `main` only has `Backlog`.
 
@@ -56,34 +57,11 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - [ ] **[fix/02_bug]** Bug fix description
 ```
 - **Only `Backlog` section exists** on `main`
-- No `In Progress` → Branch + PR = active signal
+- **No `In Progress` section exists anywhere** — not on `main`, not on branches
+- Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
+- A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
+- On merge, all tracking disappears automatically — nothing to clean up
 - No `Done` → History lives in Git, not in files
-
-### Branch `TODO.md` — In Progress Tracking
-```markdown
-# TODO
-
-## In Progress
-- [ ] **[feat/01_task]** Task description
-    - [ ] Sub-step 1
-    - [ ] Sub-step 2
-
-## Backlog
-- [ ] Related future task
-```
-- **`In Progress`** exists only on the branch
-- Used for internal tracking across Pi sessions
-- A new Pi session can read this to know what was being done
-
-### Gradual Cleanup Rule (CRITICAL — BLOCKING)
-The `In Progress` section must be **gradually cleaned up**:
-1. When a sub-step is completed → **remove it immediately**
-2. When all steps are done → **remove the entire `In Progress` section**
-3. **NEVER open or finalize a PR with an `In Progress` section in TODO.md.**
-4. If you add an `In Progress` entry during work, pair it with its removal in the same final commit batch.
-5. Reviewer sees clean state → no last-minute cleanup needed
-
-**Why?** The merge can be automated when reviewer approves. If cleanup were needed before merge, it would fail.
 
 ## Running Tests
 After applying changes, run the test suite if available:
@@ -122,7 +100,8 @@ After applying changes, run the test suite if available:
 2. Put a short description in the PR
 3. Show a clickable link to the user
 4. If PR creator is not {{GITHUB_REVIEWER}}, add them as reviewer and say "Waiting for Review"
-5. If `CHANGELOG.md` exists, update it
+5. Include remaining sub-steps as a task list in the PR body; tick items off as they land
+6. If `CHANGELOG.md` exists, update it
 
 ---
 
