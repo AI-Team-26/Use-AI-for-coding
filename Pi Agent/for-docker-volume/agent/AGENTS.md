@@ -166,7 +166,7 @@ The GraphQL response includes a `url` field for each comment. Extract the numeri
 https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 ```
 
-**DO NOT resolve review threads yourself.** Only the reviewer who left the feedback should mark it resolved — they need to confirm their concern is actually addressed.
+**Do not resolve review threads yourself** unless the fix is purely mechanical (a typo, missing punctuation, or formatting nit) — in which case reply with the fix and resolve it. For anything substantive, let the reviewer confirm.
 
 ### Step 3 — Request Re-review
 ```bash
