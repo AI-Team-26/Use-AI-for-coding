@@ -17,6 +17,9 @@ const REFRESH_MS = 30_000
 function readCurrentModel(): string | null {
   try {
     const content = readFileSync(MODEL_FILE, "utf8")
+    // Prefer the alias field if present; fall back to model filename
+    const aliasMatch = content.match(/alias=(\S+)/m)
+    if (aliasMatch) return aliasMatch[1]
     const match = content.match(/^model=(\S+)/m)
     if (!match) return null
     return match[1].replace(/\.gguf$/, "")
