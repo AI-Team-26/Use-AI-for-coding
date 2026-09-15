@@ -1,12 +1,11 @@
 #!/bin/bash
 # Pi Agent Project Manager: Select or clone a GitHub project, then run it with Pi Agent.
-#   - Sets up Git credentials if missing.
-#   - Lists projects in /projects (bind-mounted from host).
+#   - Manage GIT credentials.
+#   - Lists projects in /projects (bind-mounted folder from host).
 #   - Allows cloning new repos interactively.
 
 source /scripts/start_common.sh
 source /scripts/.env
-#cd /projects
 
 # export to the current session all the variabled in .env
 #set -a; source .env; set +a
@@ -59,7 +58,7 @@ start_project() {
     # Pi save the used model in ~/.pi/agent/settings.json file, defaultModel property
     #If that is NOT set we can try to use the default model for this agent or peek tthe one that is running in local llama.cpp
 
-    # TODO
+    # [OBSOLETE] Removed to allow to use a previous selected model within this Pi agent
     if [[ 1 == 2 ]]; then 
         ### Pass over the current llama.cpp loaded model
         # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
@@ -83,6 +82,7 @@ start_project() {
 
     exec pi --continue
 
+    # [OBSOLETE]
     # user choice
     #echo -e "\e[34m-------------------\e[0m"
     #PS3=$'\e[34mSelect an option: \e[0m'
@@ -104,7 +104,5 @@ start_project() {
 echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
-
-#setup_git_global [obsolete]
 
 select_project

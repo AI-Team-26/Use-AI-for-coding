@@ -78,7 +78,7 @@ fi
 
 chmod 600 "$docker_volumes/scripts/github_pat"
 
-
+# Agent names
 for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
 
     echo ""

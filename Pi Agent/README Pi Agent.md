@@ -72,6 +72,8 @@ docker run \
 docker run \
     -it \
     --name "PiAgent-Dev-1" \
+    --label "icon=🍋" \
+    --label "alias=Pi Lemon" \
     --label "description=Pi Agent Dev-1" \
     -e PI_AGENT_NAME="🍋 Pi Lemon" \
     -e PI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
@@ -84,6 +86,8 @@ docker run \
 docker run \
     -it \
     --name PiAgent-Dev-2 \
+    --label "icon=🥝" \
+    --label "alias=Pi Kiwi" \
     --label "description=Pi Agent Dev 2" \
     -e PI_AGENT_NAME="🥝 Pi Kiwi" \
     -e PI_AGENT_DEFAULT_MODEL="mindai/macaron-v1-venti" \
@@ -96,6 +100,8 @@ docker run \
 docker run \
     -it \
     --name PiAgent-Dev-3 \
+    --label "icon=🍊" \
+    --label "alias=Pi Orange" \
     --label "description=Pi Agent Dev 3" \
     -e PI_AGENT_NAME="🍊 Pi Orange" \
     -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
@@ -108,6 +114,8 @@ docker run \
 docker run \
     -it \
     --name PiAgent-Reviewer \
+    --label "icon=🌹" \
+    --label "alias=Pi Rose" \
     --label "description=Pi Agent for Reviews" \
     -e PI_AGENT_NAME="🌹 Pi Rose" \
     -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \

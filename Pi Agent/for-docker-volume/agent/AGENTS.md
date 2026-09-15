@@ -75,12 +75,13 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - Used for internal tracking across Pi sessions
 - A new Pi session can read this to know what was being done
 
-### Gradual Cleanup Rule (IMPORTANT)
+### Gradual Cleanup Rule (CRITICAL — BLOCKING)
 The `In Progress` section must be **gradually cleaned up**:
 1. When a sub-step is completed → **remove it immediately**
 2. When all steps are done → **remove the entire `In Progress` section**
-3. By the time the PR is ready for review → **`In Progress` should be absent**
-4. Reviewer sees clean state → no last-minute cleanup needed
+3. **NEVER open or finalize a PR with an `In Progress` section in TODO.md.**
+4. If you add an `In Progress` entry during work, pair it with its removal in the same final commit batch.
+5. Reviewer sees clean state → no last-minute cleanup needed
 
 **Why?** The merge can be automated when reviewer approves. If cleanup were needed before merge, it would fail.
 
@@ -157,7 +158,7 @@ query {
 ```
 
 ### Step 2 — Reply to Individual Comments
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{PI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
 **USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`
 
 **Correct Syntax (Form Fields):**

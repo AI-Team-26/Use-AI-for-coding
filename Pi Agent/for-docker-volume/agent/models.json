@@ -5,8 +5,33 @@
         "baseUrl": "http://host.docker.internal:8001/v1",  
         "api": "openai-completions",
         "apiKey": "Llama.cpp",
-       
-        "models": [
+       "models": [
+       { 
+            "id": "64K ",
+            "contextWindow": 131072,
+            "maxTokens": 65536,
+            "reasoning": true
+       },
+       { 
+            "id": "80K ",
+            "contextWindow": 81920,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "id": "128K ",
+            "contextWindow": 131072,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "id": "52K ",
+            "contextWindow": 131072,
+            "maxTokens": 53248,
+            "reasoning": true
+       }
+       ],
+        "_models": [
 
 { "id": "===== KAT Coder ====="},
        { 
