@@ -1,5 +1,11 @@
 # TODO
 
+## In Progress
+
+- [ ] **[feat/02_llama_server_model]** Show current llama-server model in Pi footer
+    - [ ] New extension `llama-server-model.ts` reading `/scripts/llama-server-current-model.txt`
+    - [ ] Refresh every 30s, update footer only on change
+
 ## Backlog
 
 - Bug: Remove project (start_common.sh) does not work
