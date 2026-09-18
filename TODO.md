@@ -2,11 +2,8 @@
 
 ## Backlog
 
-- Bug: Remove project (start_common.sh) does not work
-  rm: cannot remove '/projects/autostop': Is a directory
-
+- Feature 10: add an extension to show the current GIT branch
 - Select the Pi container should show the Agent name and icon
-
 
 - (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
 
