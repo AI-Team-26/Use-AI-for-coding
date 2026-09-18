@@ -106,7 +106,8 @@ After applying changes, run the test suite if available:
 
 # PR Review Workflow
 
-When user reviews the PR, check if they approved/merged or rejected.
+When user reviews the PR, check if they approved/merged or rejected.  
+Also check if there are conflicts with the main branch and resolve them.  
 
 ### Step 1 — Find Unresolved Comments (GraphQL)
 Use GitHub GraphQL API for reliable `isResolved` field:
