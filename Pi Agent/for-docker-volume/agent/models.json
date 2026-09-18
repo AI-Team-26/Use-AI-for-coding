@@ -8,13 +8,19 @@
        "models": [
        { 
             "id": "64K ",
-            "contextWindow": 131072,
-            "maxTokens": 65536,
+            "contextWindow": 65536,
+            "maxTokens": 8192,
             "reasoning": true
        },
        { 
             "id": "80K ",
             "contextWindow": 81920,
+            "maxTokens": 8192,
+            "reasoning": true
+       },
+       { 
+            "id": "96K ",
+            "contextWindow": 98304,
             "maxTokens": 8192,
             "reasoning": true
        },
@@ -26,8 +32,8 @@
        },
        { 
             "id": "52K ",
-            "contextWindow": 131072,
-            "maxTokens": 53248,
+            "contextWindow": 53248,
+            "maxTokens": 8192,
             "reasoning": true
        }
        ],

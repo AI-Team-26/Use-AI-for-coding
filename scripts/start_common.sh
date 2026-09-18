@@ -210,8 +210,7 @@ delete_proj() {
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
-            # rm: cannot remove '/projects/autostop': Is a directory
-            rm -f "$project_folder/$proj"
+            rm -rf "$project_folder/$proj"
         fi
     done
 }

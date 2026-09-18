@@ -95,7 +95,7 @@ start_project() {
     #        #No-session|*) exec pi $model_param --no-session ;;
     #    esac
     #done
-            
+
     echo -e "Pi Agent session closed. Bye!"
 }
 

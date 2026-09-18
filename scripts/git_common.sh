@@ -25,6 +25,7 @@ set_github_auth_for_repo() {
     fi
 
     local owner=$(echo "$repo_path" | awk -F'/' '{print $1}' )
+    echo -e "Owner: $owner"
 
     local pat=$(grep "^${owner}:" "$github_pat_file" | cut -d':' -f2 | sed 's|[[:space:]]*$||' || true)
     if [[ -z "$pat" ]]; then
