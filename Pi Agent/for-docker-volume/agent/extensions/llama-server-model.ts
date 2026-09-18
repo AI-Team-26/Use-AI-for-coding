@@ -31,14 +31,28 @@ function readCurrentModel(): string | null {
 export default function llamaServerModelExtension(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     let last = ""
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     const refresh = () => {
-      const model = readCurrentModel() ?? ""
-      if (model !== last) {
-        last = model
-        if (model) ctx.ui.setStatus(STATUS_KEY, `🦙 ${model}`)
+      try {
+        const model = readCurrentModel() ?? ""
+        if (model !== last) {
+          last = model
+          if (model) ctx.ui.setStatus(STATUS_KEY, `🦙 ${model}`)
+        }
+      } catch {
+        // ctx is stale — session ended, interval will be cleared
       }
     }
+
     refresh()
-    setInterval(refresh, REFRESH_MS)
+    intervalId = setInterval(refresh, REFRESH_MS)
+
+    pi.on("session_end", () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId)
+        intervalId = null
+      }
+    })
   })
 }
