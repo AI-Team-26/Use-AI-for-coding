@@ -2,7 +2,7 @@
 
 ## Backlog
 
-- Feature 10: add an extension to show the current GIT branch
+- Feature: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
 - Select the Pi container should show the Agent name and icon
 
 - (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
