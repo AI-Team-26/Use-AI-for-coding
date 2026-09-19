@@ -2,11 +2,21 @@
 
 ## Backlog
 
-- Feature 10: add an extension to show the current GIT branch
+- Feature: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
 
 - Select the Pi container should show the Agent name and icon
 
 - Complete the documentation for GIT and GitHub setup
+
+- Bug: Delete repo does not exit the loop, after the selection it wants another selection.
+  ```sh
+ 1) ai.models-evaluator
+ 2) DANGER-Autonomys-Play-Copy
+ 3) family-tree
+ 4) ❌ Exit
+Select the project to delete: 3
+Select the project to delete:
+```
 
 - 🐞 GIT token for not-owned repositories.
   Currently, when you open a project where the repository is not-owned, it presents a message like this: 
@@ -36,19 +46,4 @@
   + Repo account (if is a repo)
   + "not a GIT repo" if it is not a repo
 
-## Done
 
-- GIT credentials can be stored in a more clear file with owner-PAT-expiration date for each record (instead of .git-credentials)
-- GIT credentials (.git-credentials) has to be autorenewed with a simple script
-- GIT credentials (.git-credentials) has to be autofilled with tokens from environment variable
-- Show the name of current Agent in Pi shell, on title (so it is visible in the taskbar) and in the footer.
-- ai-coding launch script let you choose between launching Pi (attach to main process) or open and independent shell
-- ai-coding launch script can ask for list the sessions, continue last session, etc... 
-- Study Pi Agent skills
-- Figure out how to set Shift+Enter as new-line command in the TUI of Pi Agent
-- Figure out why Pi Agent is not able to use gh due to auth not working.
-- Create models script
-- Test models script
-- Issue: Pi/Docker guest frooze when not used for a while. Solved switching to WSL (it uses VirtioFS I think)
-- Pi: Added auto-select of the current locaed model in local llama.cpp provider
-- Pi web-search skill to make parallel api calls (like the knowledge-search skill)
