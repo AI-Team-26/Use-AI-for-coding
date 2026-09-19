@@ -3,11 +3,8 @@
 ## Backlog
 
 - Feature 10: add an extension to show the current GIT branch
+
 - Select the Pi container should show the Agent name and icon
-
-- (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
-
-- (loop) Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
 
 - Complete the documentation for GIT and GitHub setup
 
