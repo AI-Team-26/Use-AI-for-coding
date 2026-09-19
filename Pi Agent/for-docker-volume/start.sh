@@ -27,9 +27,15 @@ done
 export EXA_API_KEY=$EXA_API_KEY
 export PI_AGENT_NAME="${PI_AGENT_NAME:-Pi Agent}" ## passed by docker run
 
-# First time run
+# First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
+    echo setup customized agent files
+
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
+
+
     echo "Restoring /root/.pi from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
