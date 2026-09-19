@@ -13,6 +13,8 @@ HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
 FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"; INFO_EMOJI="ℹ️"
 
 
+# Use agent name if not set, otherwise default to 'Pi Agent'
+PI_AGENT_NAME=${PI_AGENT_NAME:-Pi Agent}
 echo "Replace {{PI_AGENT_NAME}} with '$PI_AGENT_NAME'"
 sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$HOME/.pi/agent/AGENTS.md"
 
