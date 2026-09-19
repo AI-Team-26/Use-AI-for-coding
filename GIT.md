@@ -114,9 +114,9 @@ env | grep GITHUB | sort
 
 USER_TOKEN=
 USERNAME=
-GITHUB_ACCOUNT=
+GITHUB_AGENT_ACCOUNT=
 GITHUB_ORG=
-echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ACCOUNT" >> ~/.git-credentials
+echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_AGENT_ACCOUNT" >> ~/.git-credentials
 echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ORG" >> ~/.git-credentials
 
 # Add PAT for NOT-owned repo

@@ -48,14 +48,14 @@ set_github_auth_for_repo() {
 
 set_default_github_token() {
     #echo "set_default_github_token"
-    local pat=$(grep "^${GITHUB_ACCOUNT}:" "$github_pat_file" | cut -d':' -f2 || true)
+    local pat=$(grep "^${GITHUB_AGENT_ACCOUNT}:" "$github_pat_file" | cut -d':' -f2 || true)
     if [ -z "$pat" ]; then
-        echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for '${GITHUB_ACCOUNT}' ${NC}"
+        echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for '${GITHUB_AGENT_ACCOUNT}' ${NC}"
         return 1
     fi
 
     local obfuscated_pat="$(obfuscate_pat $pat)"
-    echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${GITHUB_ACCOUNT}${NC}"
+    echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${GITHUB_AGENT_ACCOUNT}${NC}"
     export GITHUB_TOKEN=$pat
 }
 
@@ -307,17 +307,39 @@ Values are stored as <account>:<PAT>.${NC}"
 }
 
 
-
 # --- Global GIT setup ---
+setup_git_global() {
+    local force=${1:-0}
+
+    if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
+        echo -e "GIT is not configured. Set up name and email:${NC}"
+
+        # The email is what set the "contributor" of the commit in GitHub
+        read -p "GitHub user name (name used for commits author, leave blank for '${PI_AGENT_NAME}'): " git_username
+        read -p "GitHub user email (email used for commits contributor, leave blank for '${GITHUB_MAIN_ACCOUNT_EMAIL}'): " git_email
+
+        if [[ -z "$git_username" ]]; then git_username=${PI_AGENT_NAME};          fi
+        if [[ -z "$git_email" ]];    then git_email=${GITHUB_MAIN_ACCOUNT_EMAIL}; fi
+
+        git config --global user.name "$git_username"
+        git config --global user.email "$git_email"
+
+        echo ""
+        echo -e "${YELLOW}GIT global set${NC}"
+    fi
+}
+
+
 # [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
 _setup_git_global() {
     local force=${1:-0}
 
     if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
-        echo -e "${YELLOW}${GIT_EMOJI} GIT is not configured for \"${GITHUB_ACCOUNT}\". Set up credentials:${NC}"
+        echo -e "GIT is not configured for \"${GITHUB_AGENT_ACCOUNT}\". Set up credentials:${NC}"
 
+        # The email is what set the "contributor" of the commit in GitHub
         read -p "GitHub user name (name used for commits, use the Agent name): " git_username
-        read -p "GitHub email (leave empty yo use ${GITHUB_ACCOUNT_EMAIL}): " git_email
+        read -p "GitHub user email (email used for commits, use ${GITHUB_MAIN_ACCOUNT_EMAIL}): " git_email
         read -s -p "GitHub account PAT (hidden): " git_pat
 
         if [[ -n "$git_email" ]]; then
@@ -334,7 +356,7 @@ _setup_git_global() {
 
 
         # Set the default credentials (repository owner)
-        echo "https://xxx:$git_pat@github.com/$GITHUB_ACCOUNT" > ~/.git-credentials
+        echo "https://xxx:$git_pat@github.com/$GITHUB_AGENT_ACCOUNT" > ~/.git-credentials
         echo ""
         echo -e "${YELLOW}GIT credentials${NC}"
 
@@ -371,7 +393,7 @@ _setup_git_global() {
 # [OBSOLETE] we switched from using .git-credentials to github_pat file to store GitHub PAT
 _set_default_github_token() {
     #echo "set_github_token()"
-    local token=$(grep "@github.com/${GITHUB_ACCOUNT}$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
+    local token=$(grep "@github.com/${GITHUB_AGENT_ACCOUNT}$" ~/.git-credentials | sed -n 's|.*:\([^@]*\)@.*|\1|p')  # "@github.com$", note the final "$"
     if [[ -z "$token" ]]; then
         echo -e "${RED}❌ Failed to get GitHub token from .git-credentials ${NC}"
         return 1
