@@ -3,13 +3,20 @@
 ## Backlog
 
 - Feature: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
+
 - Select the Pi container should show the Agent name and icon
 
-- (loop) Remove this message: "No backup found at /root/.pi_backup.tar. Skipping restore."
-
-- (loop) Remove this message: "Replace {{PI_AGENT_NAME}} with '🥝 Pi Kiwi'"
-
 - Complete the documentation for GIT and GitHub setup
+
+- Bug: Delete repo does not exit the loop, after the selection it wants another selection.
+  ```sh
+ 1) ai.models-evaluator
+ 2) DANGER-Autonomys-Play-Copy
+ 3) family-tree
+ 4) ❌ Exit
+Select the project to delete: 3
+Select the project to delete:
+```
 
 - 🐞 GIT token for not-owned repositories.
   Currently, when you open a project where the repository is not-owned, it presents a message like this: 
