@@ -128,10 +128,10 @@ The branch desription has to be clear and useful at any time to understand the g
 
 ``git`` and  ``gh`` are supposed to work smoothly.  
 Git is configured to use `credential.useHttpPath` to allow access to repository of other accounts.  
-~/.git-credentials is supposed to be set with the PAT of the main account ({{GITHUB_ACCOUNT}}), at least, and records with PAT for each repo not owned by the GitHub account.  
+~/.git-credentials is supposed to be set with the PAT of the main account ({{GITHUB_AGENT_ACCOUNT}}), at least, and records with PAT for each repo not owned by the GitHub account.  
 gh uses the GITHUB_TOKEN env variable, and it is set with a different value every time pi is launched on a project (repository).  
 If git push or GH CLI commands fails for permission issues, check the repository credentials for this project and ask the user to look at it.  
-Push on main branch is blocked for {{GITHUB_ACCOUNT}}.  
+Push on main branch is blocked for {{GITHUB_AGENT_ACCOUNT}}.  
 Set the author of PR and sign the comments with your name.  
 
 

@@ -12,22 +12,23 @@ source /scripts/.env
 
 
 # check required environment variables are set
-required_vars=("GITHUB_ACCOUNT" "EXA_API_KEY" )
+required_vars=("GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
 
 for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
         echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
         exit 1
     else
-        echo "✅ $var is set."
+        debug "✅ $var is set."
     fi
 done
 
 # set API KEYS and other secrets
 export EXA_API_KEY=$EXA_API_KEY
+export PI_AGENT_NAME="${PI_AGENT_NAME:-Pi Agent}" ## passed by docker run
 
-
-# Restore the .pi folder content that is "masked" by the bind mount (only the first time)
+# First time run
+# Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
     echo "Restoring /root/.pi from TAR backup..."
 
@@ -46,7 +47,7 @@ if [[ -f /root/.pi_backup.tar ]]; then
         exit 1
     fi
 else
-    echo "No backup found at /root/.pi_backup.tar. Skipping restore."
+    debug "No backup found at /root/.pi_backup.tar. Skipping restore."
 fi
 
 
@@ -104,5 +105,7 @@ start_project() {
 echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
+
+setup_git_global 0
 
 select_project
