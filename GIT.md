@@ -156,3 +156,10 @@ Permissions:
 
 Install for Organization only.  
 
+
+
+## Private (hidden) GitHub email
+
+Each GitHub account gets an address in this form: **1234567+yourusername@users.noreply.github.com**  
+where the number is your account ID.  
+You find yours in Settings → Emails, in the "Keep my email addresses private" section. If you enable that option, GitHub automatically uses this address for everything you do through the web UI (PRs, merges, edits), and — importantly — it will reject pushes that would expose your real email, with the well-known GH007: Your push would publish a private email address error.
