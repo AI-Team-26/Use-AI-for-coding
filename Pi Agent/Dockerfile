@@ -47,5 +47,4 @@ RUN pi install npm:pi-voice-stt
 RUN echo "Restore the .pi folder can take minutes, please wait."
 RUN tar -cf /root/.pi_backup.tar -C /root/.pi . && rm -rf /root/.pi/*
 
-
 ENTRYPOINT ["/scripts/start.sh"]

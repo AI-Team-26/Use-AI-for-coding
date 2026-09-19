@@ -90,7 +90,6 @@ After applying changes, run the test suite if available:
 
 ## Authentication
 - `git` and `gh` must work smoothly
-- Git uses `credential.useHttpPath` for multi-account access
 - Push on `main` branch is blocked
 - Set PR author and sign comments with your name
 

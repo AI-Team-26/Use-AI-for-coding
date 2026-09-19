@@ -7,10 +7,10 @@ source .env
 set -e  # Exit on error
 
 # check required environment variables are set
-required_vars=("GITHUB_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_ACCOUNT_EMAIL")
+required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
 #required_vars=("NOVITAAI_API_KEY" "OPENROUTER_API_KEY")
 # PAT for PI AGENT GitHub account and Organization
-required_vars=("PI_AGENT_GITHUB_ACCOUNT_PAT" "PI_AGENT_GITHUB_ORG_PAT")
+required_vars=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
 required_vars=("NOVITAAI_API_KEY_PI_AGENT" "OPENROUTER_API_KEY_PI_AGENT" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT")
 
 for var in "${required_vars[@]}" ; do
@@ -34,14 +34,14 @@ cp .env "$docker_volumes/scripts/.env"
 cp run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 
 # Set GitHub PAT (for Agent Account and Organization)
-account_pat="$GITHUB_ACCOUNT_PAT"  # Read from .env
+account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  # Read from .env
 if [[ $account_pat == ENV:* ]]; then
     var_name="${account_pat#ENV:}"  # Remove "ENV:"
     account_pat="${!var_name}"
 fi
 
 if [[ -z "$account_pat" ]]; then
-    echo -e "${RED}⛔ Failed to get GitHub Account PAT from GITHUB_ACCOUNT_PAT ${NC}"
+    echo -e "${RED}⛔ Failed to get GitHub Account PAT from GITHUB_AGENT_ACCOUNT_PAT ${NC}"
     exit 1
 fi
 
@@ -56,7 +56,7 @@ if [[ -z "$org_pat" ]]; then
     exit 1
 fi
 
-echo "$GITHUB_ACCOUNT:$account_pat" > "$docker_volumes/scripts/github_pat"  # Write
+echo "$GITHUB_AGENT_ACCOUNT:$account_pat" > "$docker_volumes/scripts/github_pat"  # Write
 echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"  # Append
 
 # GITHUB_MAIN_ACCOUNT is optional (it allows access to personal GitHub account repositories)
@@ -98,11 +98,11 @@ for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
     cp agent/models.json "$docker_volume_pi_agent/models.json"
     
     # Set accounts on SYSTEM.md
-    sed -i "s/{{GITHUB_ACCOUNT}}/$GITHUB_ACCOUNT/g" "$docker_volume_pi_agent/SYSTEM.md" 
+    sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_pi_agent/SYSTEM.md" 
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_pi_agent/SYSTEM.md"
 
     # Set accounts on AGENTS.md
-    sed -i "s/{{GITHUB_ACCOUNT}}/$GITHUB_ACCOUNT/g" "$docker_volume_pi_agent/AGENTS.md"
+    sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_pi_agent/AGENTS.md"
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_pi_agent/AGENTS.md"
 
     # Copy skills and extensions recursively
