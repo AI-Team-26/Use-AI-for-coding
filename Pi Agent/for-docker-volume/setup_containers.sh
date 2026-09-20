@@ -29,6 +29,7 @@ mkdir -p "$docker_volumes/scripts"
 # Copy common startup scripts and configurations
 cp ../../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
 cp ../../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
+echo "copy start.sh"
 cp start.sh "$docker_volumes/scripts/start.sh"
 cp .env "$docker_volumes/scripts/.env"
 cp run_loop.sh "$docker_volumes/scripts/run_loop.sh"
