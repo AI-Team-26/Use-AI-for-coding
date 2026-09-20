@@ -18,8 +18,8 @@ for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
         echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
         exit 1
-    else
-        debug "✅ $var is set."
+    #else
+    #    echo "✅ $var is set."
     fi
 done
 
@@ -52,8 +52,8 @@ if [[ -f /root/.pi_backup.tar ]]; then
         echo "CRITICAL ERROR: Tar extraction failed!" >&2
         exit 1
     fi
-else
-    debug "No backup found at /root/.pi_backup.tar. Skipping restore."
+#else
+#    echo "No backup found at /root/.pi_backup.tar. Skipping restore."
 fi
 
 
