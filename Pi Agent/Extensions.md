@@ -23,8 +23,9 @@
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
 - feature-timer
-  Measure elapsed time for agent responses.
-  Usage: `/feature <number>` — start timing a feature implementation.
-  Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>.txt`.
+  Implements a feature from the TODO backlog and measures elapsed time.
+  Usage: `/feature <number>` — starts implementing feature N.
+  Runs `git checkout main && git pull` before the agent starts.
+  Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>_<timestamp>.txt`.
   Also tracks model name and token usage.
   Injects follow-up message to write timing into the PR.
