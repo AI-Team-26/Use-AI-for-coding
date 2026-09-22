@@ -42,80 +42,98 @@ select_project() {
         mkdir "$project_folder"
     fi
 
-    mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
+    local projects proj action_done=0
 
-    echo $'\n\e[34m------------------------------------------------\e[0m'
+    # Loop instead of recursing: an unguarded tail-recursion spins forever
+    # when stdin hits EOF (terminal closed at the prompt), because `select`
+    # aborts without running its body and would re-enter the function endlessly.
+    while true; do
+        mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
-    #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
-    PS3=$'\e[34mSelect a project/action: \e[0m'
-    COLUMNS=1  # ← force one item per line
+        echo $'\n\e[34m------------------------------------------------\e[0m'
 
-    projects+=(
-       "➕ Clone a repository"
-       "➕ Create a new project"
-       "➖ Delete a project"
-       ">_ Shell"
-       "🔑 Manage GitHub credentials"
-       # "🔑 Add GitHub PAT for a repo"
-       #"🐙 Check GIT credentials"       
-       "❌ Exit"
-    )
-    
-    select proj in "${projects[@]}" ; do
-        if [[ "$proj" == "➕ Clone a repository" ]]; then
-            clone_repo
-            break
-        elif [[ "$proj" == "➕ Create a new project" ]]; then
-            create_new_proj
-            break
-        elif [[ "$proj" == "➖ Delete a project" ]]; then
-            delete_proj
-            break
-        elif [[ "$proj" == ">_ Shell" ]]; then 
-            /bin/bash
-            break  
-        elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
-            manage_git_credentials
-            break
-        #elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
-        #    echo -e "${YELLOW}GIT credentials${NC}"
-        #    cat ~/.git-credentials
-        #
-        #    echo ""
-        #    read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
-        #    case "$choice" in
-        #        Y|y|Yes|yes) setup_git_global 1 ;;
-        #    esac
-        #
-        #    break
-        elif [[ "$proj" == "❌ Exit" ]]; then
-            return 0
-        elif [[ -n "$proj" ]]; then
+        #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
+        PS3=$'\e[34mSelect a project/action: \e[0m'
+        COLUMNS=1  # ← force one item per line
 
-            clear
+        projects+=(
+           "➕ Clone a repository"
+           "➕ Create a new project"
+           "➖ Delete a project"
+           ">_ Shell"
+           "🔑 Manage GitHub credentials"
+           # "🔑 Add GitHub PAT for a repo"
+           #"🐙 Check GIT credentials"       
+           "❌ Exit"
+        )
 
-            echo ""
-            echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-            cd "$project_folder/$proj" || exit 1
+        action_done=0
+        select proj in "${projects[@]}" ; do
+            if [[ "$proj" == "➕ Clone a repository" ]]; then
+                clone_repo
+                action_done=1
+                break
+            elif [[ "$proj" == "➕ Create a new project" ]]; then
+                create_new_proj
+                action_done=1
+                break
+            elif [[ "$proj" == "➖ Delete a project" ]]; then
+                delete_proj
+                action_done=1
+                break
+            elif [[ "$proj" == ">_ Shell" ]]; then 
+                /bin/bash
+                action_done=1
+                break  
+            elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
+                manage_git_credentials
+                action_done=1
+                break
+            #elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
+            #    echo -e "${YELLOW}GIT credentials${NC}"
+            #    cat ~/.git-credentials
+            #
+            #    echo ""
+            #    read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
+            #    case "$choice" in
+            #        Y|y|Yes|yes) setup_git_global 1 ;;
+            #    esac
+            #
+            #    break
+            elif [[ "$proj" == "❌ Exit" ]]; then
+                return 0
+            elif [[ -n "$proj" ]]; then
 
-            #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
-            local repo_url=$(git remote get-url origin 2>/dev/null)   
-            if [[ -n "$repo_url" ]]; then
-                if ! set_github_auth_for_repo "$repo_url" ; then
-                    return 1
+                clear
+
+                echo ""
+                echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
+                cd "$project_folder/$proj" || exit 1
+
+                #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
+                local repo_url=$(git remote get-url origin 2>/dev/null)   
+                if [[ -n "$repo_url" ]]; then
+                    if ! set_github_auth_for_repo "$repo_url" ; then
+                        return 1
+                    fi
                 fi
-            fi
 
-            # custom tool function
-            start_project "$proj"
-            break
-        else
-            echo -e "${WARNING_EMOJI} Invalid selection. Retry."
+                # custom tool function
+                start_project "$proj"
+                action_done=1
+                break
+            else
+                echo -e "${WARNING_EMOJI} Invalid selection. Retry."
+            fi
+        done
+
+        # `select` exited without any handled action = stdin closed (EOF) or Ctrl-C:
+        # stop cleanly instead of redrawing the menu forever.
+        if [[ $action_done -eq 0 ]]; then
+            echo -e "\n${WARNING_EMOJI} Input interrupted or terminal closed. Exiting."
+            return 1
         fi
     done
-
-    # recursion
-    select_project
 }
 
 
@@ -206,15 +224,23 @@ delete_proj() {
     PS3=$'\e[34mSelect the project to delete: \e[0m'
     COLUMNS=1  # ← force one item per line
 
+    local action_done=0
     select proj in "${projects[@]}" "❌ Exit" ; do
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
             rm -rf "$project_folder/$proj"
             echo -e "${GREEN}✔️ Project '$proj' deleted.${NC}"
+            action_done=1
             break
         else
             echo -e "${WARNING_EMOJI} Invalid selection. Retry."
         fi
     done
+
+    # stdin closed (EOF) / Ctrl-C at this prompt: bail out, caller re-shows main menu
+    if [[ $action_done -eq 0 ]]; then
+        echo -e "${WARNING_EMOJI} Input interrupted or terminal closed."
+        return 1
+    fi
 }

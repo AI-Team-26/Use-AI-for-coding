@@ -29,8 +29,6 @@ Select the project to delete:
   I reply "No" and this is the next message: 
   The "default" account GIT credentials will be used, this works iif you are a colalborator of the repo
 
-- 🐞 Bug 3: When "continue" and it requires project selection, it doesn't show the list !
-
 - POC 1: https://pi.dev/packages/pi-voice-stt
 
 - POC 2: Try SmallCode tool: https://github.com/Doorman11991/smallcode IF IT IS WORTH
