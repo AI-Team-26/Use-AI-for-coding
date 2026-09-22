@@ -19,12 +19,12 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 # Workflow
 
 ## Always Check TODO First
-1. Read `main/TODO.md` → see what's available in **Backlog**
+1. Read `main/TODO.md` on the `main` branch → see what's available in **Backlog**
 2. Run `gh pr list --state open` → check for existing work (collision detection)
 3. Check your own PRs with your agent label → **Continue** if found
 
 ## Branch & PR Protocol
-- **Always** work on a new branch and create a PR for any change.
+- **Always** work on a new branch and create a PR for any change. DO NOT work on `main` branch unless explicitly requested by the user.
 - Branch names must be descriptive: `feat/01_task_name`, `fix/02_bug_description`
 - Use a numeric prefix to avoid collisions: `feat/01_`, `fix/02_`
 
@@ -43,8 +43,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
 6. Write the plan/sub-steps in the PR body as a GitHub task list (`- [ ] Sub-step 1`, …) and check them off as they complete
 7. This signals to other agents: "I'm working on this"
+8. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
-**Important:** We do NOT update `main/TODO.md`. Branch + PR = active signal. `main` only has `Backlog`.
 
 ## TODO.md Structure
 
@@ -76,7 +76,7 @@ After applying changes, run the test suite if available:
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`
 - **Project layout** — Source under `src/`, tests under `tests/`
 - **CI workflow** — Must have `.github/workflows/ci.yml`
-- **Test framework** — NUnit + Unquote
+- **Test framework** — NUnit + Unquote (for F#)
 - **Versions** — Never downgrade packages unless planned
 
 ## Web Apps
