@@ -14,14 +14,15 @@
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
  *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..."
- *   4. On turn_end/agent_end, writes END:<timestamp> and ELAPSED MINUTES to the file
+ *   4. When the agent signals "[FEATURE N COMPLETED]" on turn_end,
+ *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnStartEvent, TurnEndEvent, AgentEndEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -30,11 +31,11 @@ const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'feature-t
 
 interface FeatureTiming {
   featureNumber: number
-  startTime: number | null
-  turnIndex: number | null
+  startTime: number
 }
 
 let pendingFeature: FeatureTiming | null = null
+let featureCompleted = false
 
 function formatTime(ts: number): string {
   const d = new Date(ts)
@@ -67,7 +68,6 @@ function runGitUpdate(): boolean {
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
   const featureNumber = pendingFeature.featureNumber
-  //ctx.ui.setStatus(`todo-feature-${featureNumber}`, undefined)
   ctx.ui.setStatus(`todo-feature`, undefined)
   pendingFeature = null
 }
@@ -111,63 +111,60 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       // Run git checkout main && git pull before sending the prompt
       const onMain = runGitUpdate()
 
-      pendingFeature = { featureNumber, startTime, turnIndex: null }
+      pendingFeature = { featureNumber, startTime }
+      featureCompleted = false
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      //ctx.ui.setStatus(`todo-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
-      ctx.ui.setStatus(`todo-feature`, `⏱️ Feature ${featureNumber}`)
+      ctx.ui.setStatus(`todo-feature`, `🎯 Feature ${featureNumber}`)
 
       // Inject the task to the agent — code is already up to date
       pi.sendUserMessage(
-        `Implement feature ${featureNumber}\n. If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
-         onMain ? `The code is already on main and up to date. ` : "" +
-        `The feature number is ${featureNumber}.`
+        `Implement feature ${featureNumber}.\n If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+         (onMain ? `The code is already on main and up to date. ` : "") +
+        `The feature number is ${featureNumber}. ` +
+        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
       )
     },
   })
 
-  // Track when a turn starts — if we have a pending feature, record the turn index
-  pi.on('turn_start', (_event: TurnStartEvent, ctx: ExtensionContext) => {
-    if (pendingFeature) {
-      pendingFeature.turnIndex = _event.turnIndex
-    }
+  // Detect the completion marker in assistant chat replies.
+  // Accepts "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]"; a number must match the active feature.
+  pi.on('turn_end', (event: TurnEndEvent) => {
+    const n = pendingFeature?.featureNumber
+    if (n === undefined || featureCompleted) return
+    const msg = event.message
+    if (msg?.role !== 'assistant') return
+    const text = msg.content
+      .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+      .map(b => b.text).join('')
+    // strip common model decorations (backticks/bold/whitespace) around the marker
+    const cleaned = text.replace(/[\s`*_]+/g, ' ')
+    const match = /\[FEATURE( \d+)? COMPLETED\]/i.exec(cleaned)
+    if (!match) return
+    // if a number was given it must refer to the active feature
+    if (match[1] !== undefined && parseInt(match[1], 10) !== n) return
+    featureCompleted = true
   })
 
-  // Track when a turn ends — calculate elapsed time
-  pi.on('turn_end', async (event: TurnEndEvent, ctx: ExtensionContext) => {
-    
-    if (!pendingFeature || pendingFeature.turnIndex === null) return
-    if (event.turnIndex !== pendingFeature.turnIndex) return
-
-    //await finishFeature(event, ctx, pi)    
-    ctx.ui.notify(`⏱️ turn_end (${pendingFeature.turnIndex}) Feature ${pendingFeature.featureNumber} turn_end.`, 'info')
-  })
-
-  // Fallback: if agent_end fires (covers cases where turn_end doesn't fire)
-  pi.on('agent_end', async (event: AgentEndEvent, ctx: ExtensionContext) => {
-    if (!pendingFeature) return
-    await finishFeature(event, ctx, pi)
+  // Finalize once the run has fully settled (no retries/compactions/queued continuations
+  // pending) so sendUserMessage does not hit "Agent is already processing".
+  // If the run ended without a completion signal (e.g. the agent asked a question),
+  // the timer keeps running until the marker is seen or /feature end cancels it.
+  pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
+    if (!pendingFeature || !featureCompleted) return
+    await finishFeature(ctx, pi)
   })
 }
 
-async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
-  if (!pendingFeature) return
-  if (pendingFeature.turnIndex !== null && 'turnIndex' in event && event.turnIndex !== pendingFeature.turnIndex) return
+async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+  if (!pendingFeature || !featureCompleted) return
 
   const endTime = Date.now()
-  const elapsedMs = endTime - pendingFeature.startTime!
+  const elapsedMs = endTime - pendingFeature.startTime
   const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
 
   const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.featureNumber}.txt`)
-  const endContent = `START: ${formatTime(pendingFeature.startTime!)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
-
-  // Append to the file
-  try {
-    const existing = await fs.readFile(filePath, 'utf8')
-    await fs.writeFile(filePath, existing + endContent, 'utf8')
-  } catch {
-    await fs.writeFile(filePath, endContent, 'utf8')
-  }
+  const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
   const modelName = ctx.model?.name ?? 'unknown'
@@ -178,6 +175,7 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
   const finalContent = endContent + modelInfo + tokensInfo
 
+  // Append to the file
   try {
     const existing = await fs.readFile(filePath, 'utf8')
     await fs.writeFile(filePath, existing + finalContent, 'utf8')
@@ -186,13 +184,15 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
-  ctx.ui.setStatus(`pi-feature-${pendingFeature.featureNumber}`, undefined)
+  ctx.ui.setStatus(`todo-feature`, undefined)
 
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(
     `Write in the PR that this task required ${elapsedMinutes} minutes. ` +
-    `Feature ${pendingFeature.featureNumber} is complete.`
+    `Feature ${pendingFeature.featureNumber} is complete.`,
+    { streamingBehavior: "followUp" }
   )
 
   pendingFeature = null
+  featureCompleted = false
 }
