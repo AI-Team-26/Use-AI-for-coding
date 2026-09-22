@@ -134,17 +134,17 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
     if (!pendingFeature || pendingFeature.turnIndex === null) return
     if (event.turnIndex !== pendingFeature.turnIndex) return
 
-    await finishFeature(event, ctx)
+    await finishFeature(event, ctx, pi)
   })
 
   // Fallback: if agent_end fires (covers cases where turn_end doesn't fire)
   pi.on('agent_end', async (event: AgentEndEvent, ctx: ExtensionContext) => {
     if (!pendingFeature) return
-    await finishFeature(event, ctx)
+    await finishFeature(event, ctx, pi)
   })
 }
 
-async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: ExtensionContext): Promise<void> {
+async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
   if (!pendingFeature) return
   if (pendingFeature.turnIndex !== null && 'turnIndex' in event && event.turnIndex !== pendingFeature.turnIndex) return
 
