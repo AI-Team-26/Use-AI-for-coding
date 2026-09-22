@@ -2,17 +2,17 @@
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
  *
+ * Only one feature can be active at a time.
  * Usage:
  *   /feature 10    — Start implementing feature 10 from the TODO backlog.
  *
  * The extension:
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
- *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>_<timestamp>.txt
+ *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..."
  *   4. On turn_end/agent_end, writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
- *
- * Files are uniquely named with a timestamp suffix to support multiple concurrent features.
+ *   6. Clears the status bar entry for the completed feature.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -28,8 +28,6 @@ interface FeatureTiming {
   featureNumber: number
   startTime: number | null
   turnIndex: number | null
-  fileKey: string
-  fileId: string
 }
 
 let pendingFeature: FeatureTiming | null = null
@@ -40,8 +38,8 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
 }
 
-function writeTimingFile(featureId: string, content: string): void {
-  const filePath = path.join(FEATURE_DIR, `feature_${featureId}.txt`)
+function writeTimingFile(featureNumber: number, content: string): void {
+  const filePath = path.join(FEATURE_DIR, `feature_${featureNumber}.txt`)
   fs.writeFile(filePath, content, 'utf8').catch((err) => {
     console.error(`Failed to write timing file ${filePath}:`, err)
   })
@@ -77,22 +75,29 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
         return
       }
 
+      // Only one feature can be active at a time
+      if (pendingFeature) {
+        ctx.ui.notify(
+          `⛔ Feature ${pendingFeature.featureNumber} is still active. Complete it first before starting another.`,
+          'error'
+        )
+        return
+      }
+
       await ensureFeatureDir()
 
       const startTime = Date.now()
-      const fileId = `${featureNumber}-${startTime}`
-      const fileKey = `${featureNumber}_${startTime}`
-      const featureFile = path.join(FEATURE_DIR, `feature_${fileKey}.txt`)
+      const featureFile = path.join(FEATURE_DIR, `feature_${featureNumber}.txt`)
       const startContent = `START: ${formatTime(startTime)}\n`
       await fs.writeFile(featureFile, startContent, 'utf8')
 
       // Run git checkout main && git pull before sending the prompt
       runGitUpdate()
 
-      pendingFeature = { featureNumber, startTime, turnIndex: null, fileKey, fileId }
+      pendingFeature = { featureNumber, startTime, turnIndex: null }
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      ctx.ui.setStatus(`pi-feature-${fileKey}`, `⏱️ Feature ${featureNumber}`)
+      ctx.ui.setStatus(`pi-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
 
       // Inject the task to the agent — code is already up to date
       pi.sendUserMessage(
@@ -133,7 +138,7 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   const elapsedMs = endTime - pendingFeature.startTime
   const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
 
-  const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.fileKey}.txt`)
+  const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.featureNumber}.txt`)
   const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Append to the file
@@ -161,7 +166,9 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
-  ctx.ui.setStatus(`pi-feature-${pendingFeature.fileKey}`, undefined)
+
+  // Clear the status bar entry for this feature
+  ctx.ui.setStatus(`pi-feature-${pendingFeature.featureNumber}`, undefined)
 
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(
