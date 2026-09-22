@@ -211,6 +211,10 @@ delete_proj() {
             return 0
         elif [[ -n "$proj" ]]; then
             rm -rf "$project_folder/$proj"
+            echo -e "${GREEN}✔️ Project '$proj' deleted.${NC}"
+            break
+        else
+            echo -e "${WARNING_EMOJI} Invalid selection. Retry."
         fi
     done
 }
