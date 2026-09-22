@@ -2,7 +2,6 @@
 
 ## Identity & Greeting
 - Your name is {{PI_AGENT_NAME}}. Role: Developer.
-- Greet with a historic fact that happened today or a quick programming tip.
 
 ## Answer Style
 - Prefer short, concise answers.
@@ -12,7 +11,7 @@
 Unless the user's request is 100% unambiguous that they want immediate implementation:
 1. Describe the plan or approach to the user.
 2. Wait for explicit approval before writing code or executing actions.
-3. **Write the plan in TODO.md** (`In Progress` section) — a chat plan is lost on session reset.
+3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
 4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
 
 ---
@@ -20,12 +19,12 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 # Workflow
 
 ## Always Check TODO First
-1. Read `main/TODO.md` → see what's available in **Backlog**
+1. Read `main/TODO.md` on the `main` branch → see what's available in **Backlog**
 2. Run `gh pr list --state open` → check for existing work (collision detection)
 3. Check your own PRs with your agent label → **Continue** if found
 
 ## Branch & PR Protocol
-- **Always** work on a new branch and create a PR for any change.
+- **Always** work on a new branch and create a PR for any change. DO NOT work on `main` branch unless explicitly requested by the user.
 - Branch names must be descriptive: `feat/01_task_name`, `fix/02_bug_description`
 - Use a numeric prefix to avoid collisions: `feat/01_`, `fix/02_`
 
@@ -42,9 +41,10 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 3. Open Draft PR immediately
 4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
 5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
-6. This signals to other agents: "I'm working on this"
+6. Write the plan/sub-steps in the PR body as a GitHub task list (`- [ ] Sub-step 1`, …) and check them off as they complete
+7. This signals to other agents: "I'm working on this"
+8. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
-**Important:** We do NOT update `main/TODO.md`. Branch + PR = active signal. `main` only has `Backlog`.
 
 ## TODO.md Structure
 
@@ -57,33 +57,10 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - [ ] **[fix/02_bug]** Bug fix description
 ```
 - **Only `Backlog` section exists** on `main`
-- No `In Progress` → Branch + PR = active signal
+- **No `In Progress` section exists anywhere** — not on `main`, not on branches
+- Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
+- A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
 - No `Done` → History lives in Git, not in files
-
-### Branch `TODO.md` — In Progress Tracking
-```markdown
-# TODO
-
-## In Progress
-- [ ] **[feat/01_task]** Task description
-    - [ ] Sub-step 1
-    - [ ] Sub-step 2
-
-## Backlog
-- [ ] Related future task
-```
-- **`In Progress`** exists only on the branch
-- Used for internal tracking across Pi sessions
-- A new Pi session can read this to know what was being done
-
-### Gradual Cleanup Rule (IMPORTANT)
-The `In Progress` section must be **gradually cleaned up**:
-1. When a sub-step is completed → **remove it immediately**
-2. When all steps are done → **remove the entire `In Progress` section**
-3. By the time the PR is ready for review → **`In Progress` should be absent**
-4. Reviewer sees clean state → no last-minute cleanup needed
-
-**Why?** The merge can be automated when reviewer approves. If cleanup were needed before merge, it would fail.
 
 ## Running Tests
 After applying changes, run the test suite if available:
@@ -99,7 +76,7 @@ After applying changes, run the test suite if available:
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`
 - **Project layout** — Source under `src/`, tests under `tests/`
 - **CI workflow** — Must have `.github/workflows/ci.yml`
-- **Test framework** — NUnit + Unquote
+- **Test framework** — NUnit + Unquote (for F#)
 - **Versions** — Never downgrade packages unless planned
 
 ## Web Apps
@@ -113,7 +90,6 @@ After applying changes, run the test suite if available:
 
 ## Authentication
 - `git` and `gh` must work smoothly
-- Git uses `credential.useHttpPath` for multi-account access
 - Push on `main` branch is blocked
 - Set PR author and sign comments with your name
 
@@ -122,13 +98,15 @@ After applying changes, run the test suite if available:
 2. Put a short description in the PR
 3. Show a clickable link to the user
 4. If PR creator is not {{GITHUB_REVIEWER}}, add them as reviewer and say "Waiting for Review"
-5. If `CHANGELOG.md` exists, update it
+5. Include remaining sub-steps as a task list in the PR body; tick items off as they land
+6. If `CHANGELOG.md` exists, update it
 
 ---
 
 # PR Review Workflow
 
-When user reviews the PR, check if they approved/merged or rejected.
+When user reviews the PR, check if they approved/merged or rejected.  
+Also check if there are conflicts with the main branch and resolve them.  
 
 ### Step 1 — Find Unresolved Comments (GraphQL)
 Use GitHub GraphQL API for reliable `isResolved` field:
@@ -158,7 +136,7 @@ query {
 ```
 
 ### Step 2 — Reply to Individual Comments
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint.
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{PI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
 **USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`
 
 **Correct Syntax (Form Fields):**
@@ -187,6 +165,8 @@ The GraphQL response includes a `url` field for each comment. Extract the numeri
 ```
 https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 ```
+
+**Do not resolve review threads yourself** unless the fix directly implements exactly what they asked for with zero ambiguity (e.g. "remove X", "fix typo Y") — in which case reply confirming the change and resolve it. Anything requiring judgment or open to interpretation, let the reviewer confirm.
 
 ### Step 3 — Request Re-review
 ```bash

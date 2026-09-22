@@ -229,7 +229,30 @@
     ]
 },
 
-    "Ollama": [
+"Groq FREE": {
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{GROQ_API_KEY}}",
+        "models": [
+            {
+                "id": "qwen/qwen3.8-27b",
+                "name": "Qwen 3.8 27B",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "input": [ "text", "image" ]
+            },
+            {
+                "id": "openai/gpt-oss-120b",
+                "name": "GPT OSS 120B",
+                "maxTokens": 8192,
+                "reasoning": true,
+                "input": [ "text", "image" ]
+            }
+            
+        ]
+    },
+
+"Ollama": [
             { 
             "_test": "OK",
             "id": "granite4.1:8b-ALEX_CODE-36k",

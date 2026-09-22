@@ -1,0 +1,13 @@
+# Force ALL text files to use LF line endings everywhere
+* text=auto eol=lf
+
+# Explicitly ensure config files and scripts are LF
+*.env text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+github_pat text eol=lf
+Dockerfile text eol=lf
+
+
+# git add --renormalize .
+# git commit -m "Force LF line endings on all files"

@@ -13,7 +13,7 @@ HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
 FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"; INFO_EMOJI="ℹ️"
 
 
-echo "Replace {{PI_AGENT_NAME}} with '$PI_AGENT_NAME'"
+#debug "Replace {{PI_AGENT_NAME}} with '$PI_AGENT_NAME'"
 sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$HOME/.pi/agent/AGENTS.md"
 
 
@@ -210,7 +210,7 @@ delete_proj() {
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
-            rm -f "$project_folder/$proj"
+            rm -rf "$project_folder/$proj"
         fi
     done
 }

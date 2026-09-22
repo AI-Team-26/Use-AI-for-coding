@@ -1,35 +1,41 @@
 #!/bin/bash
 # Pi Agent Project Manager: Select or clone a GitHub project, then run it with Pi Agent.
-#   - Sets up Git credentials if missing.
-#   - Lists projects in /projects (bind-mounted from host).
+#   - Manage GIT credentials.
+#   - Lists projects in /projects (bind-mounted folder from host).
 #   - Allows cloning new repos interactively.
 
 source /scripts/start_common.sh
 source /scripts/.env
-#cd /projects
 
 # export to the current session all the variabled in .env
 #set -a; source .env; set +a
 
 
 # check required environment variables are set
-required_vars=("GITHUB_ACCOUNT" "EXA_API_KEY" )
+required_vars=("GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
 
 for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
         echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
         exit 1
-    else
-        echo "✅ $var is set."
+    #else
+    #    echo "✅ $var is set."
     fi
 done
 
 # set API KEYS and other secrets
 export EXA_API_KEY=$EXA_API_KEY
+export PI_AGENT_NAME="${PI_AGENT_NAME:-Pi Agent}" ## passed by docker run
 
-
-# Restore the .pi folder content that is "masked" by the bind mount (only the first time)
+# First run only
+# Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
+    echo setup customized agent files
+
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
+
+
     echo "Restoring /root/.pi from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
@@ -46,8 +52,8 @@ if [[ -f /root/.pi_backup.tar ]]; then
         echo "CRITICAL ERROR: Tar extraction failed!" >&2
         exit 1
     fi
-else
-    echo "No backup found at /root/.pi_backup.tar. Skipping restore."
+#else
+#    echo "No backup found at /root/.pi_backup.tar. Skipping restore."
 fi
 
 
@@ -59,7 +65,7 @@ start_project() {
     # Pi save the used model in ~/.pi/agent/settings.json file, defaultModel property
     #If that is NOT set we can try to use the default model for this agent or peek tthe one that is running in local llama.cpp
 
-    # TODO
+    # [OBSOLETE] Removed to allow to use a previous selected model within this Pi agent
     if [[ 1 == 2 ]]; then 
         ### Pass over the current llama.cpp loaded model
         # TODO add another remote model for the quick switch (CTRL+P), --models "Llama.cpp/aaa , Novita.AI/xxx"  (models... plural)
@@ -83,6 +89,7 @@ start_project() {
 
     exec pi --continue
 
+    # [OBSOLETE]
     # user choice
     #echo -e "\e[34m-------------------\e[0m"
     #PS3=$'\e[34mSelect an option: \e[0m'
@@ -95,7 +102,7 @@ start_project() {
     #        #No-session|*) exec pi $model_param --no-session ;;
     #    esac
     #done
-            
+
     echo -e "Pi Agent session closed. Bye!"
 }
 
@@ -105,6 +112,6 @@ echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
 
-#setup_git_global [obsolete]
+setup_git_global 0
 
 select_project
