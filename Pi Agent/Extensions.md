@@ -22,7 +22,7 @@
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
-- response-timer
+- feature-timer
   Measure elapsed time for agent responses.
   Usage: `/feature <number>` — start timing a feature implementation.
   Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>.txt`.
