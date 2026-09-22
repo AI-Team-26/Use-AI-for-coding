@@ -12,7 +12,7 @@
 - Feature 12: Complete the documentation for GIT and GitHub setup
 
 - 🐞 Bug 1: Delete repo does not exit the loop, after the selection it wants another selection.
-  ```sh
+```sh
  1) ai.models-evaluator
  2) DANGER-Autonomys-Play-Copy
  3) family-tree
@@ -30,6 +30,7 @@ Select the project to delete:
   The "default" account GIT credentials will be used, this works iif you are a colalborator of the repo
 
 - 🐞 Bug 3: When "continue" and it requires project selection, it doesn't show the list !
+  When the script is on the choice of the project and close (close shell), the next time it runs pi --continue, it shows the prompt "Select a project" but not the list!
 
 - POC 1: https://pi.dev/packages/pi-voice-stt
 
