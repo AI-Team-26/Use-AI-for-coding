@@ -2,14 +2,14 @@
 
 ## Backlog
 
-- Bug: feature extension error:
-   Extension "/root/.pi/agent/extensions/feature-timer.ts" error: pi is not defined
+- Feature 11: 
+  todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
 
-- Feature: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
+- Feature 10: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
 
-- Select the Pi container should show the Agent name and icon (ai-start script)
+- Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
 
-- Complete the documentation for GIT and GitHub setup
+- Feature 12: Complete the documentation for GIT and GitHub setup
 
 - 🐞 Bug 1: Delete repo does not exit the loop, after the selection it wants another selection.
   ```sh
@@ -31,22 +31,7 @@ Select the project to delete:
 
 - 🐞 Bug 3: When "continue" and it requires project selection, it doesn't show the list !
 
-- 5 proxy bridge to start requested model on llama-server
-  step 1: the script that used defined model in the models_configuration,json
-  step 2: proxy that intercepts the request and start the server with the new model.
+- POC 1: https://pi.dev/packages/pi-voice-stt
 
-- 3 https://pi.dev/packages/pi-voice-stt
-
-- 3 [Qwen Code huge initial context] document the problem properly an study possible solutions
-
-- 1 Organize Qwen Code settings to use different providers, if possible
-- 1 Try SmallCode tool: https://github.com/Doorman11991/smallcode IF IT IS WORTH
-
-- In the menu of existing projects format the record for the projects to show:
-  + folder icon
-  + Name/Folder 
-  + Private/Public repo (if is a repo)
-  + Repo account (if is a repo)
-  + "not a GIT repo" if it is not a repo
-
+- POC 2: Try SmallCode tool: https://github.com/Doorman11991/smallcode IF IT IS WORTH
 
