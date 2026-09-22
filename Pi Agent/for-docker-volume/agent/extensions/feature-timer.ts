@@ -68,7 +68,6 @@ function runGitUpdate(): boolean {
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
   const featureNumber = pendingFeature.featureNumber
-  //ctx.ui.setStatus(`todo-feature-${featureNumber}`, undefined)
   ctx.ui.setStatus(`todo-feature`, undefined)
   pendingFeature = null
 }
@@ -116,7 +115,6 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       featureCompleted = false
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      //ctx.ui.setStatus(`todo-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
       ctx.ui.setStatus(`todo-feature`, `🎯 Feature ${featureNumber}`)
 
       // Inject the task to the agent — code is already up to date
@@ -124,13 +122,13 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
         `Implement feature ${featureNumber}.\n If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
          (onMain ? `The code is already on main and up to date. ` : "") +
         `The feature number is ${featureNumber}. ` +
-        `**IMPORTANT**: when you complete the task and publish or update the PR write "[FEATURE COMPLETED]" or "[FEATURE ${featureNumber} COMPLETED]" in the message.`
+        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
       )
     },
   })
 
-  // Detect the completion marker in assistant messages.
-  // The prompt allows either "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]".
+  // Detect the completion marker in assistant chat replies.
+  // Accepts "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]"; a number must match the active feature.
   pi.on('turn_end', (event: TurnEndEvent) => {
     const n = pendingFeature?.featureNumber
     if (n === undefined || featureCompleted) return
@@ -141,9 +139,11 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       .map(b => b.text).join('')
     // strip common model decorations (backticks/bold/whitespace) around the marker
     const cleaned = text.replace(/[\s`*_]+/g, ' ')
-    if (/\[(?:FEATURE(?: \d+)?) COMPLETED\]/i.test(cleaned)) {
-      featureCompleted = true
-    }
+    const match = /\[FEATURE( \d+)? COMPLETED\]/i.exec(cleaned)
+    if (!match) return
+    // if a number was given it must refer to the active feature
+    if (match[1] !== undefined && parseInt(match[1], 10) !== n) return
+    featureCompleted = true
   })
 
   // If the agent run ends without a completion signal (e.g. it asked a question),
@@ -163,7 +163,7 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
 
   const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.featureNumber}.txt`)
   const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
-  
+
   // Get model info
   const modelName = ctx.model?.name ?? 'unknown'
   const contextUsage = ctx.getContextUsage()
@@ -182,7 +182,6 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
-  //ctx.ui.setStatus(`feature-${pendingFeature.featureNumber}`, undefined)
   ctx.ui.setStatus(`todo-feature`, undefined)
 
   // Inject follow-up message to write the PR timing
