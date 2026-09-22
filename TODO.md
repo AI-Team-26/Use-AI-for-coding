@@ -2,13 +2,16 @@
 
 ## Backlog
 
+- Bug: feature extension error:
+   Extension "/root/.pi/agent/extensions/feature-timer.ts" error: pi is not defined
+
 - Feature: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
 
-- Select the Pi container should show the Agent name and icon
+- Select the Pi container should show the Agent name and icon (ai-start script)
 
 - Complete the documentation for GIT and GitHub setup
 
-- Bug: Delete repo does not exit the loop, after the selection it wants another selection.
+- 🐞 Bug 1: Delete repo does not exit the loop, after the selection it wants another selection.
   ```sh
  1) ai.models-evaluator
  2) DANGER-Autonomys-Play-Copy
@@ -18,7 +21,7 @@ Select the project to delete: 3
 Select the project to delete:
 ```
 
-- 🐞 GIT token for not-owned repositories.
+- 🐞 Bug 2: GIT token for not-owned repositories.
   Currently, when you open a project where the repository is not-owned, it presents a message like this: 
   "❌ Git credentials record for <an-account>/<a project> not found"
   "Do you want to set the GIT credentials for "an-account" (do you have the PAT)? [Yy]es / [N]o"
@@ -26,7 +29,7 @@ Select the project to delete:
   I reply "No" and this is the next message: 
   The "default" account GIT credentials will be used, this works iif you are a colalborator of the repo
 
-- 🐞 When "continue" and it requires project selection, it doesn't show the list !
+- 🐞 Bug 3: When "continue" and it requires project selection, it doesn't show the list !
 
 - 5 proxy bridge to start requested model on llama-server
   step 1: the script that used defined model in the models_configuration,json
