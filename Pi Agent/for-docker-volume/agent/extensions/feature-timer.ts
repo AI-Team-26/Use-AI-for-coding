@@ -19,7 +19,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'feature-times')
-const TIMESTAMP_FORMAT = 'yyyy-MM-dd HH:mm:ss.SSS'
+//const TIMESTAMP_FORMAT = 'yyyy-MM-dd HH:mm:ss.SSS'
 
 interface FeatureTiming {
   featureNumber: number
