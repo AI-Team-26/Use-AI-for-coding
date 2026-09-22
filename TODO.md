@@ -2,14 +2,6 @@
 
 ## In Progress
 
-- [x] **[doc/new_computer]** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices
-    - [x] Research compatible motherboards and CPUs for dual RTX 3090 setup
-    - [x] Find reliable power supplies (PSU) capable of handling dual 3090 peaks
-    - [x] Check case compatibility for dual large GPUs
-    - [x] Compare prices for components (CPU, MB, RAM, PSU, Case, Cooling)
-    - [x] Compile a summary of options and estimated total cost
-
-
 - Switch project from inside the project (at the moment it requires quit Pi and restart it)
 
 - Select the Pi container should show the Agent name and icon
@@ -51,6 +43,7 @@
 
 ## Done
 
+- **doc/new_computer** Define new computer hardware (must support 2x RTX 3090 24GB), research reliability and prices → PR #3
 - GIT credentials can be stored in a more clear file with owner-PAT-expiration date for each record (instead of .git-credentials)
 - GIT credentials (.git-credentials) has to be autorenewed with a simple script
 - GIT credentials (.git-credentials) has to be autofilled with tokens from environment variable

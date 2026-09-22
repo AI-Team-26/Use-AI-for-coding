@@ -59,10 +59,17 @@ Use this table to quickly find model names for eBay searches. Focus on boards th
 
 ---
 
-## Power Management & Optimization
+## Physical Clearance & Power Standards
 
-To mitigate the high power draw and heat generation of dual RTX 3090s, it is highly recommended to implement **undervolting**.
+To ensure a successful build with dual RTX 3090s, pay close attention to these two factors:
 
-- **Method:** Use tools like MSI Afterburner (on Windows) or similar voltage curve adjustments on Linux to find a stable, lower voltage curve.
-- **Benefit:** Significantly reduces power consumption (potentially by 50-100W per card), lowers operating temperatures, and reduces the risk of transient power spikes triggering PSU protections.
-- **Impact:** Provides more headroom on the PSU and improves thermal stability within standard workstation cases.
+### 1. Power Supply (Transient Spikes)
+High-end GPUs can exhibit massive, millisecond-long power spikes (transients) that exceed their rated TDP.
+- **Recommendation:** Prioritize power supplies that are **ATX 3.0 or ATX 3.1 compliant**. These standards are specifically designed to handle much higher transient excursions (up to 200% of the rated power) without triggering OCP (Over Current Protection).
+- **Connectors:** Ensure the PSU has sufficient dedicated PCIe cables (do not use "pigtail" splitters for high-draw cards).
+
+### 2. Physical Dimensions (Clearance)
+Dual 3090s are physically massive.
+- **GPU Length:** Ensure the case supports GPUs at least **330mm - 350mm** long.
+- **GPU Width/Slot Thickness:** Most 3090s are 2.7 to 3 slots thick. Ensure the motherboard layout and case width allow for enough air gap between the two cards to prevent the top card from choking on the heat of the bottom card.
+- **Vertical Clearance:** If using a front-mounted radiator (AIO), ensure there is still enough room for the GPU length.
