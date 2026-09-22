@@ -1,10 +1,14 @@
 // ~/.pi/agent/extensions/feature-timer.ts
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
+ * /feature end — Ends the current feature without saving timing (unreliable).
  *
- * Only one feature can be active at a time.
+ * Only one feature can be active at a time. Starting a new feature
+ * auto-cancels the previous one without saving timing.
+ *
  * Usage:
  *   /feature 10    — Start implementing feature 10 from the TODO backlog.
+ *   /feature end   — End the current feature without saving timing data.
  *
  * The extension:
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
@@ -38,18 +42,11 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
 }
 
-function writeTimingFile(featureNumber: number, content: string): void {
-  const filePath = path.join(FEATURE_DIR, `feature_${featureNumber}.txt`)
-  fs.writeFile(filePath, content, 'utf8').catch((err) => {
-    console.error(`Failed to write timing file ${filePath}:`, err)
-  })
-}
-
-async function ensureFeatureDir(): Promise<void> {
+function ensureFeatureDir(): Promise<void> {
   try {
-    await fs.mkdir(FEATURE_DIR, { recursive: true })
+    return fs.mkdir(FEATURE_DIR, { recursive: true })
   } catch {
-    // directory already exists
+    return Promise.resolve()
   }
 }
 
@@ -65,23 +62,40 @@ function runGitUpdate(): void {
   }
 }
 
+function clearPendingFeature(ctx: ExtensionContext): void {
+  if (!pendingFeature) return
+  const featureNumber = pendingFeature.featureNumber
+  ctx.ui.setStatus(`pi-feature-${featureNumber}`, undefined)
+  pendingFeature = null
+}
+
 export default function featureTimerExtension(pi: ExtensionAPI) {
   pi.registerCommand('feature', {
-    description: 'Implement a feature from the TODO backlog. Usage: /feature <number>',
+    description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
     handler: async (args, ctx) => {
-      const featureNumber = parseInt(args.trim(), 10)
+      const trimmed = args.trim()
+
+      // /feature end — cancel current feature without saving timing
+      if (trimmed === 'end' || trimmed === 'clean') {
+        if (!pendingFeature) {
+          ctx.ui.notify('ℹ️ No active feature to end.', 'info')
+          return
+        }
+        const featureNumber = pendingFeature.featureNumber
+        clearPendingFeature(ctx)
+        ctx.ui.notify(`⛔ Feature ${featureNumber} cancelled — no timing saved.`, 'info')
+        return
+      }
+
+      const featureNumber = parseInt(trimmed, 10)
       if (isNaN(featureNumber) || featureNumber <= 0) {
         ctx.ui.notify('❌ Usage: /feature <number>  —  e.g. /feature 10', 'error')
         return
       }
 
-      // Only one feature can be active at a time
+      // Auto-clean any pending feature before starting a new one
       if (pendingFeature) {
-        ctx.ui.notify(
-          `⛔ Feature ${pendingFeature.featureNumber} is still active. Complete it first before starting another.`,
-          'error'
-        )
-        return
+        clearPendingFeature(ctx)
       }
 
       await ensureFeatureDir()
@@ -166,8 +180,6 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
-
-  // Clear the status bar entry for this feature
   ctx.ui.setStatus(`pi-feature-${pendingFeature.featureNumber}`, undefined)
 
   // Inject follow-up message to write the PR timing
