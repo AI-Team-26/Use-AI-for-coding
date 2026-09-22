@@ -15,14 +15,14 @@
  *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..."
  *   4. When the agent signals "[FEATURE N COMPLETED]" on turn_end,
- *      writes END:<timestamp> and ELAPSED MINUTES to the file
+ *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentEndEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -146,9 +146,11 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
     featureCompleted = true
   })
 
-  // If the agent run ends without a completion signal (e.g. it asked a question),
-  // keep the timer running — only finalize when the marker was seen.
-  pi.on('agent_end', async (_event: AgentEndEvent, ctx: ExtensionContext) => {
+  // Finalize once the run has fully settled (no retries/compactions/queued continuations
+  // pending) so sendUserMessage does not hit "Agent is already processing".
+  // If the run ended without a completion signal (e.g. the agent asked a question),
+  // the timer keeps running until the marker is seen or /feature end cancels it.
+  pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
     if (!pendingFeature || !featureCompleted) return
     await finishFeature(ctx, pi)
   })
