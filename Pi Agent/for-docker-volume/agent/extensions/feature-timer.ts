@@ -50,22 +50,25 @@ function ensureFeatureDir(): Promise<void> {
   }
 }
 
-function runGitUpdate(): void {
+function runGitUpdate(): boolean {
   try {
     execSync('git checkout main && git pull', {
       cwd: process.cwd(),
       encoding: 'utf-8',
       stdio: 'pipe',
     })
+    return true
   } catch (err) {
     console.error('Git update failed:', err)
+    return false
   }
 }
 
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
   const featureNumber = pendingFeature.featureNumber
-  ctx.ui.setStatus(`pi-feature-${featureNumber}`, undefined)
+  //ctx.ui.setStatus(`todo-feature-${featureNumber}`, undefined)
+  ctx.ui.setStatus(`todo-feature`, undefined)
   pendingFeature = null
 }
 
@@ -106,17 +109,18 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       await fs.writeFile(featureFile, startContent, 'utf8')
 
       // Run git checkout main && git pull before sending the prompt
-      runGitUpdate()
+      const onMain = runGitUpdate()
 
       pendingFeature = { featureNumber, startTime, turnIndex: null }
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      ctx.ui.setStatus(`pi-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
+      //ctx.ui.setStatus(`todo-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
+      ctx.ui.setStatus(`todo-feature`, `⏱️ Feature ${featureNumber}`)
 
       // Inject the task to the agent — code is already up to date
       pi.sendUserMessage(
-        `Implement feature ${featureNumber}. If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
-        `The code is already on main and up to date. ` +
+        `Implement feature ${featureNumber}\n. If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+         onMain ? `The code is already on main and up to date. ` : "" +
         `The feature number is ${featureNumber}.`
       )
     },
@@ -131,10 +135,12 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
 
   // Track when a turn ends — calculate elapsed time
   pi.on('turn_end', async (event: TurnEndEvent, ctx: ExtensionContext) => {
+    
     if (!pendingFeature || pendingFeature.turnIndex === null) return
     if (event.turnIndex !== pendingFeature.turnIndex) return
 
-    await finishFeature(event, ctx, pi)
+    //await finishFeature(event, ctx, pi)    
+    ctx.ui.notify(`⏱️ turn_end (${pendingFeature.turnIndex}) Feature ${pendingFeature.featureNumber} turn_end.`, 'info')
   })
 
   // Fallback: if agent_end fires (covers cases where turn_end doesn't fire)
@@ -149,11 +155,11 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   if (pendingFeature.turnIndex !== null && 'turnIndex' in event && event.turnIndex !== pendingFeature.turnIndex) return
 
   const endTime = Date.now()
-  const elapsedMs = endTime - pendingFeature.startTime
+  const elapsedMs = endTime - pendingFeature.startTime!
   const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
 
   const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.featureNumber}.txt`)
-  const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
+  const endContent = `START: ${formatTime(pendingFeature.startTime!)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Append to the file
   try {
