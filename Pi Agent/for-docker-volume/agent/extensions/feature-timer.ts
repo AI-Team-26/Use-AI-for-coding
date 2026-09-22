@@ -14,14 +14,15 @@
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
  *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..."
- *   4. On turn_end/agent_end, writes END:<timestamp> and ELAPSED MINUTES to the file
+ *   4. When the agent signals "[FEATURE N COMPLETED]" on turn_end,
+ *      writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnStartEvent, TurnEndEvent, AgentEndEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentEndEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -31,7 +32,6 @@ const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'feature-t
 interface FeatureTiming {
   featureNumber: number
   startTime: number
-  turnIndex: number | null
 }
 
 let pendingFeature: FeatureTiming | null = null
@@ -112,7 +112,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       // Run git checkout main && git pull before sending the prompt
       const onMain = runGitUpdate()
 
-      pendingFeature = { featureNumber, startTime, turnIndex: null }
+      pendingFeature = { featureNumber, startTime }
       featureCompleted = false
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
@@ -129,67 +129,33 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
     },
   })
 
-  // Track when a turn starts — if we have a pending feature, record the turn index
-  pi.on('turn_start', (_event: TurnStartEvent, ctx: ExtensionContext) => {
-    if (pendingFeature) {
-      pendingFeature.turnIndex = _event.turnIndex
+  // Detect the completion marker in assistant messages.
+  // The prompt allows either "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]".
+  pi.on('turn_end', (event: TurnEndEvent) => {
+    const n = pendingFeature?.featureNumber
+    if (n === undefined || featureCompleted) return
+    const msg = event.message
+    if (msg?.role !== 'assistant') return
+    const text = msg.content
+      .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+      .map(b => b.text).join('')
+    // strip common model decorations (backticks/bold/whitespace) around the marker
+    const cleaned = text.replace(/[\s`*_]+/g, ' ')
+    if (/\[(?:FEATURE(?: \d+)?) COMPLETED\]/i.test(cleaned)) {
+      featureCompleted = true
     }
   })
 
-  /*
-  // Track when a turn ends
-  pi.on('turn_end', async (event: TurnEndEvent, ctx: ExtensionContext) => {
-    
-    if (!pendingFeature || pendingFeature.turnIndex === null) return
-    if (event.turnIndex !== pendingFeature.turnIndex) return
-
-    //await finishFeature(event, ctx, pi)    
-   // ctx.ui.notify(`⏱️ turn_end (${pendingFeature.turnIndex}) Feature ${pendingFeature.featureNumber} turn_end.`, 'info')
-  })
-*/
-  /*
-   pi.on('turn_end', (event) => {
-     const msg = event.message
-     if (msg?.role !== 'assistant') return
-     const text = msg.content
-       .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-       .map(b => b.text).join('')
-     if ( /\[FEATURE \d+ COMPLETED\]/i.test(text)) featureCompleted = true
-   })
-     */
-
-   pi.on('turn_end', (event) => {
-     const n = pendingFeature?.featureNumber
-     if (n === undefined || featureCompleted) return
-     const msg = event.message
-     if (msg?.role !== 'assistant') return
-     const text = msg.content
-       .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-       .map(b => b.text).join('')
-     // strip common model decorations (backticks/bold/whitespace) around the marker
-     const cleaned = text.replace(/[\s`*_]+/g, ' ')
-     if (new RegExp(`\\[FEATURE ${n} COMPLETED\\]`, 'i').test(cleaned)) {
-       featureCompleted = true
-     }
-   })
-
-  // Fallback: if agent_end fires (covers cases where turn_end doesn't fire)
-  pi.on('agent_end', async (event: AgentEndEvent, ctx: ExtensionContext) => {
-    if (!pendingFeature) return
-    ctx.ui.notify(`⏱️ agent_end (${pendingFeature.turnIndex}) Feature ${pendingFeature.featureNumber} turn_end.`, 'info')
-
-    //# how to know the feature is completed?
-
-    event.message
-
-    // if is not completed (agent has questions), should stop the timer?
-    await finishFeature(event, ctx, pi)
+  // If the agent run ends without a completion signal (e.g. it asked a question),
+  // keep the timer running — only finalize when the marker was seen.
+  pi.on('agent_end', async (_event: AgentEndEvent, ctx: ExtensionContext) => {
+    if (!pendingFeature || !featureCompleted) return
+    await finishFeature(ctx, pi)
   })
 }
 
-async function finishFeature(event: AgentEndEvent, ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
   if (!pendingFeature || !featureCompleted) return
-  //if (pendingFeature.turnIndex !== null && 'turnIndex' in event && event.turnIndex !== pendingFeature.turnIndex) return
 
   const endTime = Date.now()
   const elapsedMs = endTime - pendingFeature.startTime
