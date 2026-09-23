@@ -15,11 +15,13 @@
   ``pi install npm:pi-llama-cpp-stats``
   Shows a progress bar and and estimation of duration when llama.cpp is "Prefilling".
 
+
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
 - todo
   Add the `/todo` command that shows the TODO.md file on hte UI and ask the agent to check it ans propose the next step.
+  Before reading, it runs `git checkout main && git pull` so the shown backlog is always loaded from a fresh main branch.
   It also ask the Agent to look for unfinished jobs and open PRs.
   
 - todo-feature

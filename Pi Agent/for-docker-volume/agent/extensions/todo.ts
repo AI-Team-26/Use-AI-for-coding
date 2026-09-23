@@ -1,7 +1,8 @@
 // ~/.pi/agent/extensions/todo.ts
 /**
 * /todo extension
-* Reads and displays the project's TODO.md file.
+* Moves to main branch and pulls before reading and displaying the project's TODO.md,
+* so the shown backlog is always the latest canonical version (same pattern as feature-timer).
 */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -9,6 +10,21 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { execSync } from 'node:child_process'
+
+function runGitUpdate(cwd: string): boolean {
+  try {
+    execSync('git checkout main && git pull', {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    })
+    return true
+  } catch (err) {
+    console.error('Git update failed:', err)
+    return false
+  }
+}
 
 const MAX_CHARS = 4096
 
@@ -18,6 +34,12 @@ export default function todoExtension(pi: ExtensionAPI) {
       handler: async (_args, ctx) => {
         const projectRoot = ctx.repoPath ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
+
+      // Move to main + pull first, so we read the latest canonical TODO.md
+      const onMain = runGitUpdate(projectRoot)
+      if (!onMain) {
+        ctx.ui.notify('⚠️ Could not switch to main/pull — showing TODO.md from current state.', 'warning')
+      }
 
       try {
         const content = await fs.readFile(filePath, 'utf8')
