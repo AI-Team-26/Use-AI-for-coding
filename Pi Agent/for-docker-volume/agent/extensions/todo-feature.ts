@@ -35,6 +35,30 @@ import { execSync } from 'node:child_process'
 
 const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY = "alex-piccione-todo-feature"
+// Provider id used for local LLMs served by llama-server
+const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'
+
+/**
+ * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
+ * For the local Llama.cpp provider the configured name may be stale,
+ * so we query the OpenAI-compatible `${baseUrl}/models` endpoint instead.
+ */
+async function resolveModelName(ctx: ExtensionContext): Promise<string> {
+  const m = ctx.model
+  if (!m) return 'unknown'
+  if (m.provider === LOCAL_LLAMA_CPP_PROVIDER && m.baseUrl) {
+    try {
+      // Assumption: ONLY ONE model is loaded on llama-server at a time — pick it.
+      const res = await fetch(`${m.baseUrl}/models`)
+      const data = (await res.json()) as { data?: Array<{ id: string }> }
+      const id = data.data?.[0]?.id
+      if (id) return `${m.provider}/${id}`
+    } catch {
+      ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+    }
+  }
+  return `${m.provider}/${m.name ?? 'unknown'}`
+}
 
 interface FeatureTiming {
   featureNumber: number
@@ -270,7 +294,7 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
   const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
-  const modelName = ctx.model?.name ?? 'unknown'
+  const modelName = await resolveModelName(ctx)
   const contextUsage = ctx.getContextUsage()
   const tokens = contextUsage?.tokens ?? null
 

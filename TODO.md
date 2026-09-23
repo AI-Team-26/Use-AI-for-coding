@@ -2,46 +2,6 @@
 
 ## Backlog
 
-- Feature 18: todo-extraction feature has to extract used model properly.
-  ```
-  async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
-  
-    // TODO: rework
-    // Get model info
-    const modelName = "${}/${}" ctx.provider ?? "unknown" model?.name ?? 'unknown'
-  ```
-
-  Use a constant LOCAL_LLAMA_CPP_PROVIDER="Llama.cpp" to define the provider used for local LLM.
-
-  Use the following info.
-  ctx.model:
- ```ts
-   interface Model<TApi extends Api> {
-     id: string          // e.g. "qwen3-..."
-     name: string
-     api: TApi           // e.g. "openai-completions"
-     provider: ProviderId // e.g. "Llama.cpp"
-     baseUrl: string     // ← http://host.docker.internal:8001/v1
-     contextWindow: number
-     maxTokens: number
-     ...
-   }
- ```
-
- ```ts
-   const res = await fetch(`${ctx.model.baseUrl}/models`)   // list models
-   const data = await res.json()                            // { data: [{ id, object, ... }] }
- ```
-
-    We can assume there is ONLY ONE model (comemnt this assumption) and pick it.
-  
-   For llama-server specifically you also have non-standard endpoints at the server root (strip the /v1 suffix):
-   + GET /props — loaded model info (name, context size, slots, main GPU, etc.)
-   + GET /slots — slot state
-
-
-  So, if the current provider is LOCAL_LLAMA_CPP_PROVIDER we can extract the model (name?) from the API.
-
 - Feature 17: the feature-timer extension should add a retry-function (every 15-30 seconds) that check if the user reviewed the PR (Accepted or Rejected)
 
 - Feature 11: 
