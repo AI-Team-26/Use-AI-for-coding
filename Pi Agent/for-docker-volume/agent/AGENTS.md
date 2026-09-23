@@ -108,6 +108,8 @@ After applying changes, run the test suite if available:
 When user reviews the PR, check if they approved/merged or rejected.  
 Also check if there are conflicts with the main branch and resolve them.  
 
+The GitHub account is shared between multiple agents: a comment or review authored by "{{GITHUB_AGENT_ACCOUNT}}" may come from another agent.
+
 ### Step 1 — Find Unresolved Comments (GraphQL)
 Use GitHub GraphQL API for reliable `isResolved` field:
 
