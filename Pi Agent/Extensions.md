@@ -24,8 +24,9 @@
 
 - feature-timer
   Implements a feature from the TODO backlog and measures elapsed time.
-  Usage: `/feature <number>` — starts implementing feature N.
+  Usage: `/feature <number>` — starts implementing feature N (float numeration supported, e.g. `/feature 7.1`).
   Runs `git checkout main && git pull` before the agent starts.
-  Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>_<timestamp>.txt`.
+  Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>.txt`.
   Also tracks model name and token usage.
   Injects follow-up message to write timing into the PR.
+  Completion marker: `[FEATURE N COMPLETED]`
