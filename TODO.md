@@ -5,8 +5,6 @@
 - Feature 17: the feature-timer extension should add a retry-function (every 15-30 seconds) that check if the user reviewed the PR (Accepted or Rejected)
   so the agent will keep working without the user prompt.
 
-- Feature 14: todo-feature command extension should work with float feature numeration (Feature 7, Feature 7.1, Feature 7.2)
-
 - Feature 11: 
   todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
 
@@ -17,16 +15,6 @@
 - Feature 12: Complete the documentation for GIT and GitHub setup
 
 - Feature 16: todo-feature extension should work also with bugs
-
-- 🐞 Bug 1: Delete repo does not exit the loop, after the selection it wants another selection.
-```sh
- 1) ai.models-evaluator
- 2) DANGER-Autonomys-Play-Copy
- 3) family-tree
- 4) ❌ Exit
-Select the project to delete: 3
-Select the project to delete:
-```
 
 - 🐞 Bug 2: GIT token for not-owned repositories.
   Currently, when you open a project where the repository is not-owned, it presents a message like this: 
