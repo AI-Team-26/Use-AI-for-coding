@@ -255,7 +255,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   })
 
   // Detect the completion marker in assistant chat replies.
-  // Accepts "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]"; a number must match the active feature.
+  // Accepts "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]" (N may be a float, e.g. 7.2);
+  // a number must match the active feature.
   pi.on('turn_end', (event: TurnEndEvent) => {
     const n = pendingFeature?.featureNumber
     if (n === undefined || featureCompleted) return
@@ -266,10 +267,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       .map(b => b.text).join('')
     // strip common model decorations (backticks/bold/whitespace) around the marker
     const cleaned = text.replace(/[\s`*_]+/g, ' ')
-    const match = /\[FEATURE( \d+)? COMPLETED\]/i.exec(cleaned)
+    const match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
     if (!match) return
     // if a number was given it must refer to the active feature
-    if (match[1] !== undefined && parseInt(match[1], 10) !== n) return
+    if (match[1] !== undefined && parseFloat(match[1]) !== n) return
     featureCompleted = true
   })
 

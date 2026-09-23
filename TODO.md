@@ -5,10 +5,6 @@ Last bug: 5
 
 ## Backlog
 
-- Bug 4: todo-feature extension
-  The last message from agent was "[FEATURE 7.2 COMPLETED]" but the status still has "FEATURE 7.2".
-  Is the "." a problem in the regex
-
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.
