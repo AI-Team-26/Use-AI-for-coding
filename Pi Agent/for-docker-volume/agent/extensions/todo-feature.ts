@@ -1,4 +1,4 @@
-// ~/.pi/agent/extensions/feature-timer.ts
+// ~/.pi/agent/extensions/todo-feature.ts
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
  * /feature end — Ends the current feature without saving timing (unreliable).
@@ -52,16 +52,19 @@ function ensureFeatureDir(): Promise<void> {
   }
 }
 
-function runGitUpdate(): boolean {
+// Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
+function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   try {
     execSync('git checkout main && git pull', {
-      cwd: process.cwd(),
+      cwd,
       encoding: 'utf-8',
       stdio: 'pipe',
     })
     return true
   } catch (err) {
-    console.error('Git update failed:', err)
+    const e = err as { stderr?: string; message: string }
+    const detail = (e.stderr ?? '').trim() || e.message
+    ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }
 }
@@ -77,6 +80,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
     handler: async (args, ctx) => {
       const trimmed = args.trim()
+      const projectRoot = ctx.repoPath ?? process.cwd()
 
       // /feature end — cancel current feature without saving timing
       if (trimmed === 'end' || trimmed === 'clean') {
@@ -97,9 +101,8 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       }
 
       // Auto-clean any pending feature before starting a new one
-      if (pendingFeature) {
-        clearPendingFeature(ctx)
-      }
+      if (pendingFeature) 
+        clearPendingFeature(ctx)      
 
       await ensureFeatureDir()
 
@@ -109,7 +112,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       await fs.writeFile(featureFile, startContent, 'utf8')
 
       // Run git checkout main && git pull before sending the prompt
-      const onMain = runGitUpdate()
+      const onMain = pullLatestMain(ctx, projectRoot)
 
       pendingFeature = { featureNumber, startTime }
       featureCompleted = false
