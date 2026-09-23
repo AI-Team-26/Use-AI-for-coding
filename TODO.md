@@ -9,7 +9,13 @@
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 17: the feature-timer extension should add a retry-function (every 15-30 seconds) that check if the user reviewed the PR (Accepted or Rejected)
+- Feature 18: todo-feature extension review watcher stop should add PR link to the message
+  "⏸️ Stopped watching for PR review (2h limit reached)." Add "Waiting for the review of PR #NN (<PR link>)".
+
+- Feature 19: todo-feature extension notified teh stop of review watch after 2 hous but the feature was still active
+  How is possible the review is active ("Feature N" is shown in hte status) and there is a review watcher running?
+  If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
+  That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 
 - Feature 11: 
   todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
