@@ -34,7 +34,7 @@ const STATUS_KEY = "alex-piccione-todo-feature"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'
 
 /**
- * Resolve the real model name actually serving requests.
+ * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
  * For the local Llama.cpp provider the configured name may be stale,
  * so we query the OpenAI-compatible `${baseUrl}/models` endpoint instead.
  */
@@ -47,12 +47,12 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const res = await fetch(`${m.baseUrl}/models`)
       const data = (await res.json()) as { data?: Array<{ id: string }> }
       const id = data.data?.[0]?.id
-      if (id) return id
+      if (id) return `${m.provider}/${id}`
     } catch {
-      // server unreachable or unexpected payload — fall back to configured name
+      ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
-  return m.name ?? 'unknown'
+  return `${m.provider}/${m.name ?? 'unknown'}`
 }
 
 interface FeatureTiming {
