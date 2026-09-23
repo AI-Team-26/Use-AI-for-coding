@@ -2,6 +2,9 @@
 
 ## Backlog
 
+- Feature 23: /new command should maintain the selected model, not switch to the default one set in settings.json or the first one found in models.json
+  This requires an investigation. Use the branch doc/8_investigate_new_command to store gathered info and possible solutions
+
 - Feature 21: agent get confused when another agent with same GH account leave comments/reviews:
   From agent thinking: " Hmm, that issue comment is by alex-cyber-75 (my own account?) saying "Review from 🍊 Pi Orange"?? Weird, but whatever. "
   Add to the AGENTS.md the fact that the GH account is shared between multiple agents, so there are possibly reviews as comments in the PR.
