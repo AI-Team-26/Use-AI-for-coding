@@ -191,8 +191,8 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
 
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(
-    `Write in the PR that this task required ${elapsedMinutes} minutes. ` +
-    `Feature ${pendingFeature.featureNumber} is complete.`,
+    `Write in the PR that this feature required ${elapsedMinutes} minutes. ` +
+    `Write also that is used the model ${modelName} and used ${tokens} tokens.`,
     { streamingBehavior: "followUp" }
   )
 
