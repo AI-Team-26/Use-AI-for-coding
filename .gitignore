@@ -2,3 +2,5 @@
 
 # temporary file used when customize models
 Modelfile
+# local Ollama model files
+Ollama models/modelfiles/
