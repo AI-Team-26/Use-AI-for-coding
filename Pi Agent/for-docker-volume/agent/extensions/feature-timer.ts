@@ -6,6 +6,9 @@
  * Only one feature can be active at a time. Starting a new feature
  * auto-cancels the previous one without saving timing.
  *
+ * Timing is captured using the agent_settled event (fires when the agent
+ * has fully finished its work), not turn_end (which fires after each turn).
+ *
  * Usage:
  *   /feature 10    — Start implementing feature 10 from the TODO backlog.
  *   /feature end   — End the current feature without saving timing data.
@@ -14,14 +17,14 @@
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
  *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..."
- *   4. On turn_end/agent_end, writes END:<timestamp> and ELAPSED MINUTES to the file
+ *   4. On agent_settled, writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnStartEvent, TurnEndEvent, AgentEndEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -30,8 +33,7 @@ const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'feature-t
 
 interface FeatureTiming {
   featureNumber: number
-  startTime: number | null
-  turnIndex: number | null
+  startTime: number
 }
 
 let pendingFeature: FeatureTiming | null = null
@@ -108,7 +110,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       // Run git checkout main && git pull before sending the prompt
       runGitUpdate()
 
-      pendingFeature = { featureNumber, startTime, turnIndex: null }
+      pendingFeature = { featureNumber, startTime }
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
       ctx.ui.setStatus(`pi-feature-${featureNumber}`, `⏱️ Feature ${featureNumber}`)
@@ -117,36 +119,21 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       pi.sendUserMessage(
         `Implement feature ${featureNumber}. If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         `The code is already on main and up to date. ` +
-        `The feature number is ${featureNumber}.`
+        `The feature number is ${featureNumber}.`,
+        { deliverAs: 'followUp' }
       )
     },
   })
 
-  // Track when a turn starts — if we have a pending feature, record the turn index
-  pi.on('turn_start', (_event: TurnStartEvent, ctx: ExtensionContext) => {
-    if (pendingFeature) {
-      pendingFeature.turnIndex = _event.turnIndex
-    }
-  })
-
-  // Track when a turn ends — calculate elapsed time
-  pi.on('turn_end', async (event: TurnEndEvent, ctx: ExtensionContext) => {
-    if (!pendingFeature || pendingFeature.turnIndex === null) return
-    if (event.turnIndex !== pendingFeature.turnIndex) return
-
-    await finishFeature(event, ctx)
-  })
-
-  // Fallback: if agent_end fires (covers cases where turn_end doesn't fire)
-  pi.on('agent_end', async (event: AgentEndEvent, ctx: ExtensionContext) => {
+  // Track when the agent has fully settled — this is when the feature task is complete
+  pi.on('agent_settled', async (event: AgentSettledEvent, ctx: ExtensionContext) => {
     if (!pendingFeature) return
-    await finishFeature(event, ctx)
+    await finishFeature(ctx)
   })
 }
 
-async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: ExtensionContext): Promise<void> {
+async function finishFeature(ctx: ExtensionContext): Promise<void> {
   if (!pendingFeature) return
-  if (pendingFeature.turnIndex !== null && 'turnIndex' in event && event.turnIndex !== pendingFeature.turnIndex) return
 
   const endTime = Date.now()
   const elapsedMs = endTime - pendingFeature.startTime
@@ -185,7 +172,8 @@ async function finishFeature(event: TurnEndEvent | AgentEndEvent, ctx: Extension
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(
     `Write in the PR that this task required ${elapsedMinutes} minutes. ` +
-    `Feature ${pendingFeature.featureNumber} is complete.`
+    `Feature ${pendingFeature.featureNumber} is complete.`,
+    { deliverAs: 'followUp' }
   )
 
   pendingFeature = null
