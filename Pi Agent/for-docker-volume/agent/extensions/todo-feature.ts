@@ -33,7 +33,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
-const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'feature-times')
+const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
+const STATUS_KEY = "alex-piccione-todo-feature"
 
 interface FeatureTiming {
   featureNumber: number
@@ -81,7 +82,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
 
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
-  ctx.ui.setStatus(`todo-feature`, undefined)
+  ctx.ui.setStatus(STATUS_KEY, undefined)
   pendingFeature = null
 }
 
@@ -217,7 +218,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       startPrPolling(projectRoot)
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      ctx.ui.setStatus(`todo-feature`, `🎯 Feature ${featureNumber}`)
+      ctx.ui.setStatus(STATUS_KEY, `☑️ Feature ${featureNumber}`)
 
       // Inject the task to the agent — code is already up to date
       pi.sendUserMessage(
@@ -286,7 +287,7 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
-  ctx.ui.setStatus(`todo-feature`, undefined)
+  ctx.ui.setStatus(STATUS_KEY, undefined)
 
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(

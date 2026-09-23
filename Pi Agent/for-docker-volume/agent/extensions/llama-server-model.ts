@@ -10,7 +10,7 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 import { readFileSync } from 'node:fs'
 
-const STATUS_KEY = "pi-llama-model"
+const STATUS_KEY = "alex-piccione-llama-model"
 const MODEL_FILE = "/scripts/llama-server-current-model.txt"
 const REFRESH_MS = 30_000
 
