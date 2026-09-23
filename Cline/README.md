@@ -2,7 +2,7 @@
 
 ** PAUSED **
 
-I'm actually using it just to write commits description at the moment, because it has a super accessible button that does all with a click on VS Code Git panel.  
+I'm actually using it just to write commits description at the moment, because it has a quick button right in the VS Code GIT panel.
 
 
 ## Bad things
