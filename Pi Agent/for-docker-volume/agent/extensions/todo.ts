@@ -1,18 +1,19 @@
 // ~/.pi/agent/extensions/todo.ts
 /**
 * /todo extension
-* Moves to main branch and pulls before reading and displaying the project's TODO.md,
-* so the shown backlog is always the latest canonical version (same pattern as feature-timer).
+* Shows the TODO.md Backlog loaded from a fresh main branch (checkout + pull),
+* so the agent always sees updated info, never a stale copy.
 */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
-function runGitUpdate(cwd: string): boolean {
+// Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
+function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   try {
     execSync('git checkout main && git pull', {
       cwd,
@@ -21,7 +22,9 @@ function runGitUpdate(cwd: string): boolean {
     })
     return true
   } catch (err) {
-    console.error('Git update failed:', err)
+    const e = err as { stderr?: string; message: string }
+    const detail = (e.stderr ?? '').trim() || e.message
+    ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }
 }
@@ -30,16 +33,13 @@ const MAX_CHARS = 4096
 
 export default function todoExtension(pi: ExtensionAPI) {
   pi.registerCommand('todo', {
-    description: 'Reads TODO.md from the current project',
+    description: 'Shows the TODO.md Backlog from the latest main branch (fresh checkout + pull)',
       handler: async (_args, ctx) => {
         const projectRoot = ctx.repoPath ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
 
-      // Move to main + pull first, so we read the latest canonical TODO.md
-      const onMain = runGitUpdate(projectRoot)
-      if (!onMain) {
-        ctx.ui.notify('⚠️ Could not switch to main/pull — showing TODO.md from current state.', 'warning')
-      }
+      // Load the TODO from a fresh main branch before reading it
+      pullLatestMain(ctx, projectRoot)
 
       try {
         const content = await fs.readFile(filePath, 'utf8')
