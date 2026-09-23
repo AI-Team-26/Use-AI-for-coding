@@ -2,6 +2,9 @@
 
 ## Backlog
 
+- Feature 20: the /quit command exit Pi completely, ok.
+  There is a simple way to switch project instead ? Investigate.
+
 - Feature 18: todo-feature extension review watcher stop should add PR link to the message
   "⏸️ Stopped watching for PR review (2h limit reached)." Add "Waiting for the review of PR #NN (<PR link>)".
 
