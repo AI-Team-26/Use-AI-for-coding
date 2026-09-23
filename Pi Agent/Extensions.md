@@ -15,7 +15,6 @@
   ``pi install npm:pi-llama-cpp-stats``
   Shows a progress bar and and estimation of duration when llama.cpp is "Prefilling".
 
-
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
