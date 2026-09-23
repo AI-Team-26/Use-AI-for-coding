@@ -1,6 +1,17 @@
 # TODO
 
+Last feature number: 23
+Last bug: 5
+
 ## Backlog
+
+- Bug 4: todo-feature extension
+  The last message from agent was "[FEATURE 7.2 COMPLETED]" but the status still has "FEATURE 7.2".
+  Is the "." a problem in the regex
+
+- Bug 5: todo-feature extension
+  " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
+  This error apepared after a review was done.
 
 - Feature 23: /new command should maintain the selected model, not switch to the default one set in settings.json or the first one found in models.json
   This requires an investigation. Use the branch doc/8_investigate_new_command to store gathered info and possible solutions
