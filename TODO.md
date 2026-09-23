@@ -15,6 +15,8 @@
 
 - Feature 12: Complete the documentation for GIT and GitHub setup
 
+- Feature 16: todo-feature extension should work also with bugs
+
 - 🐞 Bug 1: Delete repo does not exit the loop, after the selection it wants another selection.
   ```sh
  1) ai.models-evaluator
