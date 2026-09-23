@@ -28,7 +28,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -43,18 +43,10 @@ interface FeatureTiming {
 let pendingFeature: FeatureTiming | null = null
 let featureCompleted = false
 
-// PR review polling state — keeps the agent working without user prompts:
-// every POLL_INTERVAL_MS we check whether the reviewer approved/requested changes.
+// PR review polling cadence — keeps the agent working without user prompts.
 const POLL_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const POLL_MAX_MS = 2 * 60 * 60 * 1000
-let pollTimer: ReturnType<typeof setInterval> | null = null
-let pollStartedAt = 0
-let pollInFlight = false
-let reviewWatching = false
-let watchCwd: string | null = null
-let watchCtx: ExtensionContext | null = null
-const handledReviewDecisions = new Map<string, string>()
 
 function formatTime(ts: number): string {
   const d = new Date(ts)
@@ -93,22 +85,6 @@ function clearPendingFeature(ctx: ExtensionContext): void {
   pendingFeature = null
 }
 
-function stopPrPolling(): void {
-  if (pollTimer) clearInterval(pollTimer)
-  pollTimer = null
-  reviewWatching = false
-}
-
-function startPrPolling(pi: ExtensionAPI, ctx: ExtensionContext, cwd: string): void {
-  stopPrPolling()
-  reviewWatching = true
-  watchCwd = cwd
-  watchCtx = ctx
-  pollStartedAt = Date.now()
-  handledReviewDecisions.clear()
-  pollTimer = setInterval(() => { void checkPrReview(pi) }, POLL_INTERVAL_MS)
-}
-
 interface PrView {
   number: number
   state: string
@@ -116,63 +92,86 @@ interface PrView {
   reviews: Array<{ state: string; body: string }>
 }
 
-async function checkPrReview(pi: ExtensionAPI): Promise<void> {
-  if (!reviewWatching || pollInFlight || !watchCwd) return
-  // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
-  if (Date.now() - pollStartedAt > POLL_MAX_MS) {
-    stopPrPolling()
-    watchCtx?.ui.notify('⏸️ Stopped watching for PR review (2h limit reached).', 'info')
-    return
+export default function todoFeatureExtension(pi: ExtensionAPI) {
+  // PR review polling — simple timer pattern (see llama-server-model.ts):
+  // closure-local state, cleaned up when the session shuts down.
+  let pollTimer: ReturnType<typeof setInterval> | null = null
+  let pollStartedAt = 0
+  let pollInFlight = false
+  const handledReviewDecisions = new Map<string, string>()
+
+  const stopPrPolling = (): void => {
+    if (pollTimer) clearInterval(pollTimer)
+    pollTimer = null
   }
-  pollInFlight = true
-  try {
-    const branch = execSync('git branch --show-current', { cwd: watchCwd, encoding: 'utf-8' }).trim()
-    if (!branch || branch === 'main' || branch === 'master') return
 
-    let pr: PrView
-    try {
-      pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews', {
-        cwd: watchCwd,
-        encoding: 'utf-8',
-        stdio: 'pipe',
-      }))
-    } catch {
-      return // no open PR on this branch yet
-    }
-
-    if (pr.state === 'MERGED') {
-      // Nothing to do besides refreshing the TODO list; the agent never merges itself.
-      try {
-        pi.sendUserMessage('/todo', { streamingBehavior: 'followUp' })
-      } catch {
-        // /todo command not available — just stop watching
-      }
+  const checkPrReview = async (cwd: string): Promise<void> => {
+    if (pollInFlight) return
+    // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
+    if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
+      pi.sendMessage({ customType: 'todo-feature', content: '⏸️ Stopped watching for PR review (2h limit reached).', display: true, details: {} })
       return
     }
+    pollInFlight = true
+    try {
+      const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+      if (!branch || branch === 'main' || branch === 'master') return
 
-    const decision = pr.reviewDecision ?? ''
-    const key = `${pr.number}:${decision}`
-    if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED') || handledReviewDecisions.has(key)) return
-    handledReviewDecisions.set(key, decision)
+      let pr: PrView
+      try {
+        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews', {
+          cwd,
+          encoding: 'utf-8',
+          stdio: 'pipe',
+        }))
+      } catch {
+        return // no open PR on this branch yet
+      }
 
-    if (decision === 'APPROVED') {
-      // The user usually merges an approved PR themselves — just notify and keep watching until merged.
-      watchCtx?.ui.notify(`✅ PR #${pr.number} approved — waiting for merge.`, 'info')
-    } else {
-      pi.sendUserMessage(
-        `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
-        { streamingBehavior: 'followUp' }
-      )
+      if (pr.state === 'MERGED') {
+        // Nothing to do besides refreshing the TODO list; the agent never merges itself.
+        try {
+          pi.sendUserMessage('/todo', { streamingBehavior: 'followUp' })
+        } catch {
+          // /todo command not available — just stop watching
+        }
+        stopPrPolling()
+        return
+      }
+
+      const decision = pr.reviewDecision ?? ''
+      const key = `${pr.number}:${decision}`
+      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED') || handledReviewDecisions.has(key)) return
+      handledReviewDecisions.set(key, decision)
+
+      if (decision === 'APPROVED') {
+        // The user usually merges an approved PR themselves — just notify and keep watching until merged.
+        pi.sendMessage({ customType: 'todo-feature', content: `✅ PR #${pr.number} approved — waiting for merge.`, display: true, details: {} })
+      } else {
+        pi.sendUserMessage(
+          `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
+          { streamingBehavior: 'followUp' }
+        )
+      }
+    } catch {
+      // transient git/gh failure — retry on next tick
+    } finally {
+      pollInFlight = false
     }
-  } catch {
-    // transient git/gh failure — retry on next tick
-  } finally {
-    pollInFlight = false
   }
-}
 
-export default function featureTimerExtension(pi: ExtensionAPI) {
+  const startPrPolling = (cwd: string): void => {
+    stopPrPolling()
+    pollStartedAt = Date.now()
+    handledReviewDecisions.clear()
+    pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
+  }
+
+  pi.on('session_shutdown', () => {
+    stopPrPolling()
+  })
+
   pi.registerCommand('feature', {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
     handler: async (args, ctx) => {
@@ -215,7 +214,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       pendingFeature = { featureNumber, startTime }
       featureCompleted = false
 
-      startPrPolling(pi, ctx, projectRoot)
+      startPrPolling(projectRoot)
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
       ctx.ui.setStatus(`todo-feature`, `🎯 Feature ${featureNumber}`)
