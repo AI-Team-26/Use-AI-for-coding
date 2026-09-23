@@ -2,6 +2,10 @@
 
 ## Backlog
 
+- Feature 21: agent get confused when another agent with same GH account leave comments/reviews:
+  From agent thinking: " Hmm, that issue comment is by alex-cyber-75 (my own account?) saying "Review from 🍊 Pi Orange"?? Weird, but whatever. "
+  Add to the AGENTS.md the fact that the GH account is shared between multiple agents, so there are possibly reviews as comments in the PR.
+
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
