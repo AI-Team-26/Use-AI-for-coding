@@ -1,4 +1,4 @@
-// ~/.pi/agent/extensions/feature-timer.ts
+// ~/.pi/agent/extensions/todo-feature.ts
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
  * /feature end — Ends the current feature without saving timing (unreliable).
@@ -8,6 +8,7 @@
  *
  * Usage:
  *   /feature 10    — Start implementing feature 10 from the TODO backlog.
+ *   /feature 7.1   — Start implementing a sub-feature (float numeration supported).
  *   /feature end   — End the current feature without saving timing data.
  *
  * The extension:
@@ -51,23 +52,25 @@ function ensureFeatureDir(): Promise<void> {
   }
 }
 
-function runGitUpdate(): boolean {
+// Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
+function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   try {
     execSync('git checkout main && git pull', {
-      cwd: process.cwd(),
+      cwd,
       encoding: 'utf-8',
       stdio: 'pipe',
     })
     return true
   } catch (err) {
-    console.error('Git update failed:', err)
+    const e = err as { stderr?: string; message: string }
+    const detail = (e.stderr ?? '').trim() || e.message
+    ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }
 }
 
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
-  const featureNumber = pendingFeature.featureNumber
   ctx.ui.setStatus(`todo-feature`, undefined)
   pendingFeature = null
 }
@@ -77,6 +80,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
     handler: async (args, ctx) => {
       const trimmed = args.trim()
+      const projectRoot = ctx.repoPath ?? process.cwd()
 
       // /feature end — cancel current feature without saving timing
       if (trimmed === 'end' || trimmed === 'clean') {
@@ -90,16 +94,15 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
         return
       }
 
-      const featureNumber = parseInt(trimmed, 10)
+      const featureNumber = parseFloat(trimmed)
       if (isNaN(featureNumber) || featureNumber <= 0) {
-        ctx.ui.notify('❌ Usage: /feature <number>  —  e.g. /feature 10', 'error')
+        ctx.ui.notify('❌ Usage: /feature <number>  —  e.g. /feature 10 or /feature 7.1', 'error')
         return
       }
 
       // Auto-clean any pending feature before starting a new one
-      if (pendingFeature) {
-        clearPendingFeature(ctx)
-      }
+      if (pendingFeature) 
+        clearPendingFeature(ctx)      
 
       await ensureFeatureDir()
 
@@ -109,7 +112,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
       await fs.writeFile(featureFile, startContent, 'utf8')
 
       // Run git checkout main && git pull before sending the prompt
-      const onMain = runGitUpdate()
+      const onMain = pullLatestMain(ctx, projectRoot)
 
       pendingFeature = { featureNumber, startTime }
       featureCompleted = false
@@ -188,8 +191,8 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
 
   // Inject follow-up message to write the PR timing
   pi.sendUserMessage(
-    `Write in the PR that this task required ${elapsedMinutes} minutes. ` +
-    `Feature ${pendingFeature.featureNumber} is complete.`,
+    `Write in the PR that this feature required ${elapsedMinutes} minutes. ` +
+    `Write also that is used the model ${modelName} and used ${tokens} tokens.`,
     { streamingBehavior: "followUp" }
   )
 
