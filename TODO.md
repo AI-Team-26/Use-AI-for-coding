@@ -2,6 +2,9 @@
 
 ## Backlog
 
+- Feature 17: the feature-timer extension should add a retry-function (every 15-30 seconds) that check if the user reviewed the PR (Accepted or Rejected)
+  so the agent will keep working without the user prompt.
+
 - Feature 14: todo-feature command extension should work with float feature numeration (Feature 7, Feature 7.1, Feature 7.2)
 
 - Feature 15: todo extension should move to main branch (copy the command from the todo-feature extension)
