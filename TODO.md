@@ -28,13 +28,14 @@
 
 - Feature 16: todo-feature extension should work also with bugs
 
-- 🐞 Bug 2: GIT token for not-owned repositories.
-  Currently, when you open a project where the repository is not-owned, it presents a message like this: 
-  "❌ Git credentials record for <an-account>/<a project> not found"
-  "Do you want to set the GIT credentials for "an-account" (do you have the PAT)? [Yy]es / [N]o"
-
-  I reply "No" and this is the next message: 
-  The "default" account GIT credentials will be used, this works iif you are a colalborator of the repo
+- Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
+  The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
+  but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
+  1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
+     GITHUB_TOKEN to the default agent account (the old "works if you are a collaborator" fallback, now implicit
+     and not communicated to the user).
+  2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
+     suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
 - POC 1: https://pi.dev/packages/pi-voice-stt
 
