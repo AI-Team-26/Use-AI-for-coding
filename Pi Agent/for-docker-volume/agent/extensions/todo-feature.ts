@@ -20,6 +20,9 @@
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
  *
+ * While a feature runs the status bar shows the live elapsed time (MM:SS),
+ * refreshed every 15s.
+ *
  * While a feature session is active it also polls GitHub every ~20s (max 2h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
@@ -68,6 +71,32 @@ interface FeatureTiming {
 let pendingFeature: FeatureTiming | null = null
 let featureCompleted = false
 
+// Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature runs.
+const STATUS_UPDATE_MS = 15_000
+let statusTimer: ReturnType<typeof setInterval> | null = null
+
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
+}
+
+function stopStatusTimer(): void {
+  if (statusTimer) clearInterval(statusTimer)
+  statusTimer = null
+}
+
+function startStatusTimer(ctx: ExtensionContext): void {
+  stopStatusTimer()
+  if (!pendingFeature) return
+  const refresh = () => {
+    if (!pendingFeature) { stopStatusTimer(); return }
+    ctx.ui.setStatus(STATUS_KEY, `☑️ Feature ${pendingFeature.featureNumber} (${formatElapsed(Date.now() - pendingFeature.startTime)})`)
+  }
+  refresh()
+  statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
+}
+
 // PR review polling cadence — keeps the agent working without user prompts.
 const POLL_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
@@ -106,6 +135,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
 
 function clearPendingFeature(ctx: ExtensionContext): void {
   if (!pendingFeature) return
+  stopStatusTimer()
   ctx.ui.setStatus(STATUS_KEY, undefined)
   pendingFeature = null
 }
@@ -195,6 +225,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   pi.on('session_shutdown', () => {
     stopPrPolling()
+    stopStatusTimer()
   })
 
   pi.registerCommand('feature', {
@@ -242,7 +273,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       startPrPolling(projectRoot)
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
-      ctx.ui.setStatus(STATUS_KEY, `☑️ Feature ${featureNumber}`)
+      startStatusTimer(ctx)
 
       // Inject the task to the agent — code is already up to date
       pi.sendUserMessage(
@@ -312,6 +343,7 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
   }
 
   ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
+  stopStatusTimer()
   ctx.ui.setStatus(STATUS_KEY, undefined)
 
   // Inject follow-up message to write the PR timing

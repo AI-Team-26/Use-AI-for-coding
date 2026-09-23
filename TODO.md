@@ -23,9 +23,6 @@ Last bug: 5
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 
-- Feature 11: 
-  todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
-
 - Feature 10: add a single extension to show current GIT repo as <owner>/<repo> (<branch>) with owner/repo in different colors
 
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
