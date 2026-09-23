@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- Feature 17: the feature-timer extension should add a retry-function (every 15-30 seconds) that check if the user reviewed the PR (Accepted or Rejected)
-  so the agent will keep working without the user prompt.
-
 - Feature 11: 
   todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
 

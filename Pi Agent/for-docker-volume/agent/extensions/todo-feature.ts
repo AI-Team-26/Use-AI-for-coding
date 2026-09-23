@@ -19,6 +19,11 @@
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed feature.
+ *
+ * While a feature session is active it also polls GitHub every ~20s:
+ * if the reviewer APPROVED the PR the agent is told to merge it;
+ * if CHANGES_REQUESTED the agent is told to address the review comments;
+ * when the PR is MERGED the watcher stops. Polling ends on `/feature end`.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -37,6 +42,15 @@ interface FeatureTiming {
 
 let pendingFeature: FeatureTiming | null = null
 let featureCompleted = false
+
+// PR review polling state — keeps the agent working without user prompts:
+// every POLL_INTERVAL_MS we check whether the reviewer approved/requested changes.
+const POLL_INTERVAL_MS = 20_000
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let pollInFlight = false
+let reviewWatching = false
+let watchCwd: string | null = null
+const handledReviewDecisions = new Map<string, string>()
 
 function formatTime(ts: number): string {
   const d = new Date(ts)
@@ -75,6 +89,82 @@ function clearPendingFeature(ctx: ExtensionContext): void {
   pendingFeature = null
 }
 
+function stopPrPolling(): void {
+  if (pollTimer) clearInterval(pollTimer)
+  pollTimer = null
+  reviewWatching = false
+}
+
+function startPrPolling(pi: ExtensionAPI, cwd: string): void {
+  stopPrPolling()
+  reviewWatching = true
+  watchCwd = cwd
+  handledReviewDecisions.clear()
+  pollTimer = setInterval(() => { void checkPrReview(pi) }, POLL_INTERVAL_MS)
+}
+
+interface PrView {
+  number: number
+  state: string
+  reviewDecision: string | null
+  reviews: Array<{ state: string; body: string }>
+}
+
+async function checkPrReview(pi: ExtensionAPI): Promise<void> {
+  if (!reviewWatching || pollInFlight || !watchCwd) return
+  pollInFlight = true
+  try {
+    const branch = execSync('git branch --show-current', { cwd: watchCwd, encoding: 'utf-8' }).trim()
+    if (!branch || branch === 'main' || branch === 'master') return
+
+    let pr: PrView
+    try {
+      pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews', {
+        cwd: watchCwd,
+        encoding: 'utf-8',
+        stdio: 'pipe',
+      }))
+    } catch {
+      return // no open PR on this branch yet
+    }
+
+    if (pr.state === 'MERGED') {
+      pi.sendUserMessage(
+        `PR #${pr.number} was merged. The feature work is done — give the user a short final summary of what was delivered.`,
+        { streamingBehavior: 'followUp' }
+      )
+      stopPrPolling()
+      return
+    }
+
+    const decision = pr.reviewDecision ?? ''
+    const key = `${pr.number}:${decision}`
+    if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED') || handledReviewDecisions.has(key)) return
+    handledReviewDecisions.set(key, decision)
+
+    if (decision === 'APPROVED') {
+      pi.sendUserMessage(
+        `The user approved PR #${pr.number}. Merge it now with \`gh pr merge ${pr.number} --squash --delete-branch\` and confirm to the user.`,
+        { streamingBehavior: 'followUp' }
+      )
+    } else {
+      const bodies = pr.reviews
+        .filter(r => r.state === 'CHANGES_REQUESTED' && r.body.trim())
+        .map(r => r.body.trim())
+        .join('\n---\n')
+      pi.sendUserMessage(
+        `The user requested changes on PR #${pr.number}. Review comments:\n${bodies || '(see inline comments via gh api)'}\n` +
+        `Address every review comment following the "PR Review Workflow" in AGENTS.md, push the fixes, reply to each comment and re-request review.`,
+        { streamingBehavior: 'followUp' }
+      )
+    }
+  } catch {
+    // transient git/gh failure — retry on next tick
+  } finally {
+    pollInFlight = false
+  }
+}
+
 export default function featureTimerExtension(pi: ExtensionAPI) {
   pi.registerCommand('feature', {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
@@ -89,6 +179,7 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
           return
         }
         const featureNumber = pendingFeature.featureNumber
+        stopPrPolling()
         clearPendingFeature(ctx)
         ctx.ui.notify(`⛔ Feature ${featureNumber} cancelled — no timing saved.`, 'info')
         return
@@ -116,6 +207,8 @@ export default function featureTimerExtension(pi: ExtensionAPI) {
 
       pendingFeature = { featureNumber, startTime }
       featureCompleted = false
+
+      startPrPolling(pi, projectRoot)
 
       ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
       ctx.ui.setStatus(`todo-feature`, `🎯 Feature ${featureNumber}`)
