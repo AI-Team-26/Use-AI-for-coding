@@ -7,8 +7,6 @@
 
 - Feature 14: todo-feature command extension should work with float feature numeration (Feature 7, Feature 7.1, Feature 7.2)
 
-- Feature 15: todo extension should move to main branch (copy the command from the todo-feature extension)
-
 - Feature 11: 
   todo-feature: it should show teh elapsed time (00:00) and update the status every 15 or 30 seconds,
 
