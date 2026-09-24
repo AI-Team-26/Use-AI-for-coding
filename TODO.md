@@ -1,9 +1,12 @@
 # TODO
 
-Last feature number: 27
+Last feature number: 28
 Last bug: 7
 
 ## Backlog
+- Feature 28: todoextension should accept an optional note.
+  `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
+ `/feature 10 "ignore existing PR"` should work the same.
 - Bug 7: todo-feature extension
   I see this notify in the chat:
   "⏸️ Stopped watching for PR review (2h limit reached)."
