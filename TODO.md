@@ -1,7 +1,7 @@
 # TODO
 
-Last feature number: 26
-Last bug: 5
+Last feature number: 27
+Last bug: 6
 
 ## Backlog
 
