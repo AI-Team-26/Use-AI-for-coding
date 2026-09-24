@@ -4,6 +4,18 @@ Last feature number: 28
 Last bug: 10
 
 ## Backlog
+
+- Bug 11: "/bug" is a reserved command, use something else for todo-feature
+  ```
+  [Extension issues]
+  auto (user) ~/.pi/agent/extensions/todo-feature.ts
+    Extension command '/bug' conflicts with built-in interactive command. Skipping in autocomplete.
+
+   🔍 /new: Model restored successfully
+  ✓ New session started
+  ```
+
+
 - Bug 10: todo-feature extension fails to update main branch
   ```
    Error: ❌ Git update failed: Already on 'main'
