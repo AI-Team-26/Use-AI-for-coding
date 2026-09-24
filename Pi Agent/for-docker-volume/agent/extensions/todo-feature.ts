@@ -135,7 +135,9 @@ function ensureTodoDir(): Promise<void> {
 // Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
 function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   try {
-    execSync('git checkout main && git pull', {
+    // --rebase reconciles divergent branches without a merge commit;
+    // --autostash keeps uncommitted work out of the way.
+    execSync('git checkout main && git pull --rebase --autostash', {
       cwd,
       encoding: 'utf-8',
       stdio: 'pipe',
