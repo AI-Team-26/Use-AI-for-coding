@@ -15,7 +15,7 @@ Last bug: 7
   "⏸️ Stopped watching for PR review (2h limit reached)." 
   It seems that starting the new feture hasn't reset the 2h timer !!
   Also, the message shold saywhichPR it refers to !
-- Feature 27.1: investigate new pi extension to replace this built-in footer:
+- Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
   Also the branch is useless since it is printed in another extension.
@@ -32,6 +32,16 @@ Last bug: 7
 
 - Feature 24: investigate and document how the /new command of Pi cleanup  the session. It will be usefull to reuse the same mechanism in custom extensions
 - Bug 6: the /new extension doesn't work. The default model was set again. Maybe we can add a notification, so we try to debug.
+  [update]
+  Collected info from logs/notify:
+  ``` 
+  🔍 /new: Loaded saved model Llama.cpp/64K
+
+  Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
+
+  ✓ New session started
+  ``` 
+
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.
