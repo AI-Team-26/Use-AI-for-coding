@@ -1,7 +1,7 @@
 # TODO
 
 Last feature number: 29
-Last bug: 10
+Last bug: 11
 
 ## Backlog
 
@@ -14,16 +14,6 @@ Last bug: 10
   `session_shutdown` (NOT `"session_end"` — that event does not exist).
   Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
   (~line 239) both capture ctx; check `checkPrReview` too.
-
-- Bug 11: "/bug" is a reserved command, use something else for todo-feature
-  ```
-  [Extension issues]
-  auto (user) ~/.pi/agent/extensions/todo-feature.ts
-    Extension command '/bug' conflicts with built-in interactive command. Skipping in autocomplete.
-
-   🔍 /new: Model restored successfully
-  ✓ New session started
-  ```
 
 - Bug 10: todo-feature extension fails to update main branch
   ```

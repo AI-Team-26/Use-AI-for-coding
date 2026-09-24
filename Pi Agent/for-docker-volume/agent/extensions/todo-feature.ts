@@ -279,6 +279,66 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     return { number, note, error: null }
   }
 
+  // Shared logic for starting a feature/bug activity (used by /feature and /feature-bug).
+  async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
+    const projectRoot = ctx.repoPath ?? process.cwd()
+
+    // "end" — cancel current activity without saving timing
+    if (number === 0) {
+      if (!pending) {
+        ctx.ui.notify('\u2139\ufe0f No active feature or bug to end.', 'info')
+        return
+      }
+      const { type: pendingType, number: pendingNumber } = pending
+      stopPrPolling()
+      clearPending(ctx)
+      ctx.ui.notify(`\u26d4 ${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled \u2014 no timing saved.`, 'info')
+      return
+    }
+
+    // Auto-cancel any pending activity before starting a new one
+    if (pending)
+      clearPending(ctx)
+
+    await ensureTodoDir()
+
+    const startTime = Date.now()
+    const fileName = `${type}_${number}.txt`
+    const filePath = path.join(TODO_DIR, fileName)
+    const startContent = `START: ${formatTime(startTime)}\n`
+    await fs.writeFile(filePath, startContent, 'utf8')
+
+    // Run git checkout main && git pull before sending the prompt
+    const onMain = pullLatestMain(ctx, projectRoot)
+
+    pending = { type, number, startTime }
+    completed = false
+
+    startPrPolling(projectRoot)
+
+    const label = type === 'feature' ? 'Feature' : 'Bug'
+    ctx.ui.notify(`\u23f1\ufe0f ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+    startStatusTimer(ctx)
+
+    // Inject the task to the agent — code is already up to date
+    let agentMessage = type === 'feature'
+      ? `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+        (onMain ? `The code is already on main and up to date. ` : "") +
+        `The feature number is ${number}. ` +
+        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+      : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+        (onMain ? `The code is already on main and up to date. ` : "") +
+        `The bug number is ${number}. ` +
+        `**IMPORTANT**: after you publish or update the PR, include "[BUG ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+
+    // Optional note: simply prepended as a prefix.
+    if (note) {
+      agentMessage = `${note}. ` + agentMessage
+    }
+
+    pi.sendUserMessage(agentMessage)
+  }
+
   pi.registerCommand('feature', {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end',
     handler: async (args, ctx) => {
@@ -287,119 +347,44 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         ctx.ui.notify(error, 'error')
         return
       }
-      const projectRoot = ctx.repoPath ?? process.cwd()
-
-      // /feature end — cancel current activity without saving timing
-      if (number === 0) {
-        if (!pending) {
-          ctx.ui.notify('ℹ️ No active feature or bug to end.', 'info')
-          return
-        }
-        const { type, number: pendingNumber } = pending
-        stopPrPolling()
-        clearPending(ctx)
-        ctx.ui.notify(`⛔ ${type === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled — no timing saved.`, 'info')
-        return
-      }
-
-      // Parse feature number and optional note already done
-
-      // Auto-cancel any pending activity before starting a new one
-      if (pending) 
-        clearPending(ctx)      
-
-      await ensureTodoDir()
-
-      const startTime = Date.now()
-      const fileName = `feature_${number}.txt`
-      const filePath = path.join(TODO_DIR, fileName)
-      const startContent = `START: ${formatTime(startTime)}\n`
-      await fs.writeFile(filePath, startContent, 'utf8')
-
-      // Run git checkout main && git pull before sending the prompt
-      const onMain = pullLatestMain(ctx, projectRoot)
-
-      pending = { type: 'feature', number, startTime }
-      completed = false
-
-      startPrPolling(projectRoot)
-
-      ctx.ui.notify(`⏱️ Feature ${number} started. Elapsed time will be recorded.`, 'info')
-      startStatusTimer(ctx)
-
-      // Inject the task to the agent — code is already up to date
-      let agentMessage = `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
-                       (onMain ? `The code is already on main and up to date. ` : "") +
-                       `The feature number is ${number}. ` +
-                       `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-
-      // Optional note: simply prepended as a prefix.
-      if (note) {
-        agentMessage = `${note}. ` + agentMessage
-      }
-
-      pi.sendUserMessage(agentMessage)
+      await startTask(ctx, 'feature', number, note)
     },
   })
 
-  pi.registerCommand('bug', {
-    description: 'Fix a bug from the TODO backlog. Usage: /bug <number> [note] or /bug end',
+  // "/bug" conflicts with a built-in Pi interactive command, hence the combined name.
+  pi.registerCommand('feature-bug', {
+    description: 'Start a feature or bug from the TODO backlog (type auto-detected). Usage: /feature-bug <number> [note] or /feature-bug end',
     handler: async (args, ctx) => {
       const { number, note, error } = parseCommandArgs(args)
       if (error) {
         ctx.ui.notify(error, 'error')
         return
       }
-      const projectRoot = ctx.repoPath ?? process.cwd()
-
-      // /bug end — cancel current activity without saving timing
       if (number === 0) {
-        if (!pending) {
-          ctx.ui.notify('ℹ️ No active feature or bug to end.', 'info')
-          return
-        }
-        const { type, number: pendingNumber } = pending
-        stopPrPolling()
-        clearPending(ctx)
-        ctx.ui.notify(`⛔ ${type === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled — no timing saved.`, 'info')
+        await startTask(ctx, 'feature', 0, undefined)
         return
       }
 
-      // Auto-cancel any pending activity before starting a new one
-      if (pending) 
-        clearPending(ctx)      
-
-      await ensureTodoDir()
-
-      const startTime = Date.now()
-      const fileName = `bug_${number}.txt`
-      const filePath = path.join(TODO_DIR, fileName)
-      const startContent = `START: ${formatTime(startTime)}\n`
-      await fs.writeFile(filePath, startContent, 'utf8')
-
-      // Run git checkout main && git pull before sending the prompt
-      const onMain = pullLatestMain(ctx, projectRoot)
-
-      pending = { type: 'bug', number, startTime }
-      completed = false
-
-      startPrPolling(projectRoot)
-
-      ctx.ui.notify(`⏱️ Bug ${number} started. Elapsed time will be recorded.`, 'info')
-      startStatusTimer(ctx)
-
-      // Inject the task to the agent — code is already up to date
-      let agentMessage = `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
-                       (onMain ? `The code is already on main and up to date. ` : "") +
-                       `The bug number is ${number}. ` +
-                       `**IMPORTANT**: after you publish or update the PR, include "[BUG ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-
-      // Optional note: simply prepended as a prefix.
-      if (note) {
-        agentMessage = `${note}. ` + agentMessage
+      // Auto-detect whether the number refers to a Feature or a Bug entry in TODO.md
+      const projectRoot = ctx.repoPath ?? process.cwd()
+      let content: string
+      try {
+        content = await fs.readFile(path.join(projectRoot, 'TODO.md'), 'utf8')
+      } catch {
+        ctx.ui.notify('\u274c Could not read TODO.md \u2014 cannot auto-detect whether this is a feature or a bug.', 'error')
+        return
       }
-
-      pi.sendUserMessage(agentMessage)
+      const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
+        .filter(m => parseFloat(m[2]) === number)
+      if (matches.length === 0) {
+        ctx.ui.notify(`\u274c No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, 'error')
+        return
+      }
+      if (new Set(matches.map(m => m[1])).size > 1) {
+        ctx.ui.notify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
+        return
+      }
+      await startTask(ctx, matches[0][1].toLowerCase() as 'feature' | 'bug', number, note)
     },
   })
 
