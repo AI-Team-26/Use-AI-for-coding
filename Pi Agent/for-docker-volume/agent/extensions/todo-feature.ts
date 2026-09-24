@@ -4,7 +4,11 @@
  * /feature N [note] — Optionally includes a note with the feature start.
  * /feature end — Ends the current feature without saving timing (unreliable).
  *
- * Only one feature can be active at a time. Starting a new feature
+ * /bug N — Fixes a bug from the TODO backlog and measures elapsed time.
+ * /bug N [note] — Optionally includes a note with the bug start.
+ * /bug end — Ends the current bug without saving timing (unreliable).
+ *
+ * Only one activity (feature or bug) can be active at a time. Starting a new one
  * auto-cancels the previous one without saving timing.
  *
  * Usage:
@@ -15,22 +19,28 @@
  *   /feature 7.1                    — Start implementing a sub-feature (float numeration supported).
  *   /feature end                    — End the current feature without saving timing data.
  *
+ *   /bug 7                          — Start fixing bug 7 from the TODO backlog.
+ *   /bug 7 ignore existing PR       — Start bug 7 with note about ignoring existing PR.
+ *   /bug 7 "ignore existing PR"     — Same as above with quoted note.
+ *   /bug 7 "my custom note"         — Start bug 7 with custom note.
+ *   /bug end                        — End the current bug without saving timing data.
+ *
  * The extension:
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
- *   2. Writes START:<timestamp> to ~/.pi/agent/feature-times/feature_<N>.txt
- *   3. Injects a message to the agent: "Implement feature N..."
- *   4. When the agent signals "[FEATURE N COMPLETED]" on turn_end,
+ *   2. Writes START:<timestamp> to ~/.pi/agent/todo-features/feature_<N>.txt or bug_<N>.txt
+ *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
+ *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUG N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
- *   6. Clears the status bar entry for the completed feature.
+ *   6. Clears the status bar entry for the completed activity.
  *
- * While a feature runs the status bar shows the live elapsed time (MM:SS),
+ * While a feature/bug runs the status bar shows the live elapsed time (MM:SS),
  * refreshed every 15s.
  *
- * While a feature session is active it also polls GitHub every ~20s (max 2h):
+ * While a feature/bug session is active it also polls GitHub every ~20s (max 2h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
- * when the PR is MERGED the watcher stops. Polling ends on `/feature end`.
+ * when the PR is MERGED the watcher stops. Polling ends on `/feature end` or `/bug end`.
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -40,7 +50,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
-const FEATURE_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
+const TODO_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY = "alex-piccione-todo-feature"
 // Provider id used for local LLMs served by llama-server
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'
@@ -67,15 +77,16 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
   return `${m.provider}/${m.name ?? 'unknown'}`
 }
 
-interface FeatureTiming {
-  featureNumber: number
+interface TimingItem {
+  type: 'feature' | 'bug'
+  number: number
   startTime: number
 }
 
-let pendingFeature: FeatureTiming | null = null
-let featureCompleted = false
+let pending: TimingItem | null = null
+let completed = false
 
-// Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature runs.
+// Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
 
@@ -92,10 +103,11 @@ function stopStatusTimer(): void {
 
 function startStatusTimer(ctx: ExtensionContext): void {
   stopStatusTimer()
-  if (!pendingFeature) return
+  if (!pending) return
   const refresh = () => {
-    if (!pendingFeature) { stopStatusTimer(); return }
-    ctx.ui.setStatus(STATUS_KEY, `☑️ Feature ${pendingFeature.featureNumber} (${formatElapsed(Date.now() - pendingFeature.startTime)})`)
+    if (!pending) { stopStatusTimer(); return }
+    const emoji = pending.type === 'feature' ? '☑️' : '🐛'
+    ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -112,9 +124,9 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
 }
 
-function ensureFeatureDir(): Promise<void> {
+function ensureTodoDir(): Promise<void> {
   try {
-    return fs.mkdir(FEATURE_DIR, { recursive: true })
+    return fs.mkdir(TODO_DIR, { recursive: true })
   } catch {
     return Promise.resolve()
   }
@@ -137,11 +149,11 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   }
 }
 
-function clearPendingFeature(ctx: ExtensionContext): void {
-  if (!pendingFeature) return
+function clearPending(ctx: ExtensionContext): void {
+  if (!pending) return
   stopStatusTimer()
   ctx.ui.setStatus(STATUS_KEY, undefined)
-  pendingFeature = null
+  pending = null
 }
 
 interface PrView {
@@ -232,82 +244,155 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     stopStatusTimer()
   })
 
+  // Helper to parse command arguments for feature/bug
+  function parseCommandArgs(args: string): { number: number; note: string | undefined; error: string | null } {
+    const trimmed = args.trim()
+    if (trimmed === 'end' || trimmed === 'clean') {
+      return { number: 0, note: undefined, error: null } // special case handled outside
+    }
+    // Try to parse feature/bug number
+    const numberMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/)
+    if (!numberMatch) {
+      return { number: 0, note: undefined, error: '❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR' }
+    }
+
+    let number: number
+    let note: string | undefined
+
+    number = parseFloat(numberMatch[1])
+    if (isNaN(number) || number <= 0) {
+      return { number: 0, note: undefined, error: '❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR' }
+    }
+
+    // Group 2 may be absent depending on the regex engine — guard before accessing.
+    const notePart = numberMatch.length > 2 ? (numberMatch[2] ?? '').trim() : ''
+    if (notePart) {
+      // Remove surrounding quotes if present
+      if ((notePart.startsWith('"') && notePart.endsWith('"')) ||
+          (notePart.startsWith("'") && notePart.endsWith("'"))) {
+        note = notePart.slice(1, -1).trim()
+      } else {
+        note = notePart
+      }
+    }
+
+    return { number, note, error: null }
+  }
+
   pi.registerCommand('feature', {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end',
     handler: async (args, ctx) => {
-      const trimmed = args.trim()
+      const { number, note, error } = parseCommandArgs(args)
+      if (error) {
+        ctx.ui.notify(error, 'error')
+        return
+      }
       const projectRoot = ctx.repoPath ?? process.cwd()
 
-      // /feature end — cancel current feature without saving timing
-      if (trimmed === 'end' || trimmed === 'clean') {
-        if (!pendingFeature) {
-          ctx.ui.notify('ℹ️ No active feature to end.', 'info')
+      // /feature end — cancel current activity without saving timing
+      if (number === 0) {
+        if (!pending) {
+          ctx.ui.notify('ℹ️ No active feature or bug to end.', 'info')
           return
         }
-        const featureNumber = pendingFeature.featureNumber
+        const { type, number: pendingNumber } = pending
         stopPrPolling()
-        clearPendingFeature(ctx)
-        ctx.ui.notify(`⛔ Feature ${featureNumber} cancelled — no timing saved.`, 'info')
+        clearPending(ctx)
+        ctx.ui.notify(`⛔ ${type === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled — no timing saved.`, 'info')
         return
       }
 
-      // Parse feature number and optional note
-      // Supports: /feature 10, /feature 10 ignore existing PR, /feature 10 "ignore existing PR"
-      let featureNumber: number
-      let note: string | undefined
+      // Parse feature number and optional note already done
 
-      // Try to parse feature number
-      const numberMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/)
-      if (!numberMatch) {
-        ctx.ui.notify('❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR', 'error')
-        return
-      }
+      // Auto-cancel any pending activity before starting a new one
+      if (pending) 
+        clearPending(ctx)      
 
-      featureNumber = parseFloat(numberMatch[1])
-      if (isNaN(featureNumber) || featureNumber <= 0) {
-        ctx.ui.notify('❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR', 'error')
-        return
-      }
-
-      // Group 2 may be absent depending on the regex engine — guard before accessing.
-      const notePart = numberMatch.length > 2 ? (numberMatch[2] ?? '').trim() : ''
-      if (notePart) {
-        // Remove surrounding quotes if present
-        if ((notePart.startsWith('"') && notePart.endsWith('"')) ||
-            (notePart.startsWith("'") && notePart.endsWith("'"))) {
-          note = notePart.slice(1, -1).trim()
-        } else {
-          note = notePart
-        }
-      }
-
-      // Auto-clean any pending feature before starting a new one
-      if (pendingFeature) 
-        clearPendingFeature(ctx)      
-
-      await ensureFeatureDir()
+      await ensureTodoDir()
 
       const startTime = Date.now()
-      const featureFile = path.join(FEATURE_DIR, `feature_${featureNumber}.txt`)
+      const fileName = `feature_${number}.txt`
+      const filePath = path.join(TODO_DIR, fileName)
       const startContent = `START: ${formatTime(startTime)}\n`
-      await fs.writeFile(featureFile, startContent, 'utf8')
+      await fs.writeFile(filePath, startContent, 'utf8')
 
       // Run git checkout main && git pull before sending the prompt
       const onMain = pullLatestMain(ctx, projectRoot)
 
-      pendingFeature = { featureNumber, startTime }
-      featureCompleted = false
+      pending = { type: 'feature', number, startTime }
+      completed = false
 
       startPrPolling(projectRoot)
 
-      ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
+      ctx.ui.notify(`⏱️ Feature ${number} started. Elapsed time will be recorded.`, 'info')
       startStatusTimer(ctx)
 
       // Inject the task to the agent — code is already up to date
-      let agentMessage = `Implement feature ${featureNumber}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+      let agentMessage = `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
                        (onMain ? `The code is already on main and up to date. ` : "") +
-                       `The feature number is ${featureNumber}. ` +
-                       `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+                       `The feature number is ${number}. ` +
+                       `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+
+      // Optional note: simply prepended as a prefix.
+      if (note) {
+        agentMessage = `${note}. ` + agentMessage
+      }
+
+      pi.sendUserMessage(agentMessage)
+    },
+  })
+
+  pi.registerCommand('bug', {
+    description: 'Fix a bug from the TODO backlog. Usage: /bug <number> [note] or /bug end',
+    handler: async (args, ctx) => {
+      const { number, note, error } = parseCommandArgs(args)
+      if (error) {
+        ctx.ui.notify(error, 'error')
+        return
+      }
+      const projectRoot = ctx.repoPath ?? process.cwd()
+
+      // /bug end — cancel current activity without saving timing
+      if (number === 0) {
+        if (!pending) {
+          ctx.ui.notify('ℹ️ No active feature or bug to end.', 'info')
+          return
+        }
+        const { type, number: pendingNumber } = pending
+        stopPrPolling()
+        clearPending(ctx)
+        ctx.ui.notify(`⛔ ${type === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled — no timing saved.`, 'info')
+        return
+      }
+
+      // Auto-cancel any pending activity before starting a new one
+      if (pending) 
+        clearPending(ctx)      
+
+      await ensureTodoDir()
+
+      const startTime = Date.now()
+      const fileName = `bug_${number}.txt`
+      const filePath = path.join(TODO_DIR, fileName)
+      const startContent = `START: ${formatTime(startTime)}\n`
+      await fs.writeFile(filePath, startContent, 'utf8')
+
+      // Run git checkout main && git pull before sending the prompt
+      const onMain = pullLatestMain(ctx, projectRoot)
+
+      pending = { type: 'bug', number, startTime }
+      completed = false
+
+      startPrPolling(projectRoot)
+
+      ctx.ui.notify(`⏱️ Bug ${number} started. Elapsed time will be recorded.`, 'info')
+      startStatusTimer(ctx)
+
+      // Inject the task to the agent — code is already up to date
+      let agentMessage = `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+                       (onMain ? `The code is already on main and up to date. ` : "") +
+                       `The bug number is ${number}. ` +
+                       `**IMPORTANT**: after you publish or update the PR, include "[BUG ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
 
       // Optional note: simply prepended as a prefix.
       if (note) {
@@ -319,11 +404,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   })
 
   // Detect the completion marker in assistant chat replies.
-  // Accepts "[FEATURE COMPLETED]" or "[FEATURE N COMPLETED]" (N may be a float, e.g. 7.2);
-  // a number must match the active feature.
+  // Accepts "[FEATURE N COMPLETED]" or "[BUG N COMPLETED]" (N may be a float, e.g. 7.2);
+  // a number must match the active pending item.
   pi.on('turn_end', (event: TurnEndEvent) => {
-    const n = pendingFeature?.featureNumber
-    if (n === undefined || featureCompleted) return
+    if (!pending) return
+    const { type, number: pendingNumber } = pending
     const msg = event.message
     if (msg?.role !== 'assistant') return
     const text = msg.content
@@ -331,32 +416,38 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       .map(b => b.text).join('')
     // strip common model decorations (backticks/bold/whitespace) around the marker
     const cleaned = text.replace(/[\s`*_]+/g, ' ')
-    const match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
+    let match: RegExpExecArray | null
+    if (type === 'feature') {
+      match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
+    } else {
+      match = /\[BUG( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
+    }
     if (!match) return
-    // if a number was given it must refer to the active feature
-    if (match[1] !== undefined && parseFloat(match[1]) !== n) return
-    featureCompleted = true
+    // if a number was given it must refer to the active pending item
+    if (match[1] !== undefined && parseFloat(match[1]) !== pendingNumber) return
+    completed = true
   })
 
   // Finalize once the run has fully settled (no retries/compactions/queued continuations
   // pending) so sendUserMessage does not hit "Agent is already processing".
   // If the run ended without a completion signal (e.g. the agent asked a question),
-  // the timer keeps running until the marker is seen or /feature end cancels it.
+  // the timer keeps running until the marker is seen or /feature end / /bug end cancels it.
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
-    if (!pendingFeature || !featureCompleted) return
-    await finishFeature(ctx, pi)
+    if (!pending || !completed) return
+    await finishActivity(ctx, pi)
   })
 }
 
-async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
-  if (!pendingFeature || !featureCompleted) return
+async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+  if (!pending || !completed) return
 
   const endTime = Date.now()
-  const elapsedMs = endTime - pendingFeature.startTime
+  const elapsedMs = endTime - pending.startTime
   const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
 
-  const filePath = path.join(FEATURE_DIR, `feature_${pendingFeature.featureNumber}.txt`)
-  const endContent = `START: ${formatTime(pendingFeature.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
+  const fileName = pending.type === 'feature' ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
+  const filePath = path.join(TODO_DIR, fileName)
+  const endContent = `START: ${formatTime(pending.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
   const modelName = await resolveModelName(ctx)
@@ -375,20 +466,19 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
     await fs.writeFile(filePath, finalContent, 'utf8')
   }
 
-  ctx.ui.notify(`✅ Feature ${pendingFeature.featureNumber} completed in ${elapsedMinutes} minutes.`, 'info')
+  ctx.ui.notify(`✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
   ctx.ui.setStatus(STATUS_KEY, undefined)
 
   // Inject follow-up message to write the PR timing
-  // TODO: can we execute this command here, so the chat is not polluted and the user experience is nice? 
-  // The user  last message should remain the recap ow completed work... not the commands to update the PR with report stuff.
+  const activityName = pending.type === 'feature' ? 'feature' : 'bug'
   pi.sendUserMessage(
-    `Write in the PR that this feature required ${elapsedMinutes} minutes. ` +
+    `Write in the PR that this ${activityName} required ${elapsedMinutes} minutes. ` +
     `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
     `No need to share this info here in the chat. Remember again the PR number and link to the user.`,
     { streamingBehavior: "followUp" }
   )
 
-  pendingFeature = null
-  featureCompleted = false
+  pending = null
+  completed = false
 }
