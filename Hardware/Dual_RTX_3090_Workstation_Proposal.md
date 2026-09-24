@@ -49,7 +49,7 @@ Use this table to quickly find model names for eBay searches. Focus on boards th
 | Model Name | PCIe Configuration (Primary Slots) | Best Use Case | Price Tier |
 | :--- | :--- | :--- | :--- |
 | **ASRock X670E Taichi** | **x16 / x8 / x8** | Best Value / Balanced | ~405€ (Used/Open Box) - *Note: eBay second hand from China (~500 EUR)* |
-| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** | Professional Multi-GPU Workflows | High (~600€ New) |
+| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** | Professional Multi-GPU Workflows | High (~600€ New / ~700€ eBay) |
 | **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | High (~650€ New) |
 | **ASUS ROG Strix X670E-E Gaming** | **x16 / x8 / x4** | Premium Gaming / Single GPU focus | Mid-High |
 
@@ -73,3 +73,17 @@ Dual 3090s are physically massive.
 - **GPU Length:** Ensure the case supports GPUs at least **330mm - 350mm** long.
 - **GPU Width/Slot Thickness:** Most 3090s are 2.7 to 3 slots thick. Ensure the motherboard layout and case width allow for enough air gap between the two cards to prevent the top card from choking on the heat of the bottom card.
 - **Vertical Clearance:** If using a front-mounted radiator (AIO), ensure there is still enough room for the GPU length.
+
+---
+
+## Second-Hand Hardware Advice
+
+When sourcing components from secondary markets (like eBay), consider the following risks:
+
+### Motherboards
+*   **Risk Level:** Low.
+*   **Considerations:** Motherboards do not suffer from computational stress. A board used for heavy LLM workloads is no more "worn out" than one used for gaming. Focus on physical integrity, pin condition (for CPU sockets), and ensuring the seller has good ratings for shipping reliability.
+
+### GPUs
+*   **Risk Level:** High.
+*   **Considerations:** RTX 3090s are frequently used for mining or intensive LLM inference. These activities involve high heat and significant power transients which can degrade silicon over time. Always perform extensive stress tests (e.g., FurMark, 3DMark) and check VRAM stability before finalizing a purchase.
