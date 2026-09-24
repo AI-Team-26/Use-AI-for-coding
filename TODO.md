@@ -7,8 +7,8 @@ Last bug: 9
 - Bug 9: the "/new" extension fil to load th emodel
   ```
   🔍 /new: Loaded saved model Llama.cpp/64K
- Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
- ```
+   Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
+  ```
 
 - Bug 8: git-infoxtension cause Pi to crash
   ```
