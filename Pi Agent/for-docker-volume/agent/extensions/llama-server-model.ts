@@ -7,7 +7,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import { readFileSync } from 'node:fs'
 
 const STATUS_KEY = "alex-piccione-llama-model"
@@ -29,16 +29,25 @@ function readCurrentModel(): string | null {
 }
 
 export default function llamaServerModelExtension(pi: ExtensionAPI) {
-  pi.on("session_start", async (_event, ctx) => {
+  let latestCtx: ExtensionContext | null = null
+
+  pi.on("session_start", async (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+    
     let last = ""
     let intervalId: ReturnType<typeof setInterval> | null = null
 
     const refresh = () => {
+      // Use the latest ctx we've received from session_start or agent_settled events
+      if (!latestCtx) {
+        return
+      }
+
       try {
         const model = readCurrentModel() ?? ""
         if (model !== last) {
           last = model
-          if (model) ctx.ui.setStatus(STATUS_KEY, `🦙 ${model}`)
+          if (model) latestCtx.ui.setStatus(STATUS_KEY, `🦙 ${model}`)
         }
       } catch {
         // ctx is stale — session ended, interval will be cleared
@@ -54,5 +63,10 @@ export default function llamaServerModelExtension(pi: ExtensionAPI) {
         intervalId = null
       }
     })
+  })
+
+  // Also update ctx when agent settles, which provides fresh ctx for current session
+  pi.on("agent_settled", async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
+    latestCtx = ctx
   })
 }
