@@ -204,7 +204,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
         try {
           pi.sendUserMessage('/todo', { streamingBehavior: 'followUp' })
-        } catch {
+        } catch (err) {
+          console.error('todo-feature: error sending /todo command:', err)
           // /todo command not available — just stop watching
         }
         stopPrPolling()
@@ -225,7 +226,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
           { streamingBehavior: 'followUp' }
         )
       }
-    } catch {
+    } catch (err) {
+      console.error('todo-feature: error in checkPrReview:', err)
       // transient git/gh failure — retry on next tick
     } finally {
       pollInFlight = false
