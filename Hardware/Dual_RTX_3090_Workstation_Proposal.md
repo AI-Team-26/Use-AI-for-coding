@@ -48,7 +48,7 @@ Use this table to quickly find model names for eBay searches. Focus on boards th
 
 | Model Name | PCIe Configuration (Primary Slots) | Best Use Case | Price Tier |
 | :--- | :--- | :--- | :--- |
-| **ASRock X670E Taichi** | **x16 / x8 / x8** | Best Value / Balanced | ~405€ (Used/Open Box) |
+| **ASRock X670E Taichi** | **x16 / x8 / x8** | Best Value / Balanced | ~405€ (Used/Open Box) - *Note: eBay second hand from China (~500 EUR)* |
 | **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** | Professional Multi-GPU Workflows | High (~600€ New) |
 | **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | High (~650€ New) |
 | **ASUS ROG Strix X670E-E Gaming** | **x16 / x8 / x4** | Premium Gaming / Single GPU focus | Mid-High |
