@@ -5,6 +5,13 @@ Last bug: 5
 
 ## Backlog
 
+- Feature 27.1: investigate new pi extension to replace this built-in footer:
+  ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
+  ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
+  Also the branch is useless since it is printed in another extension.
+  Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
+
+- Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
 
 - Feature 25: todo-feature extension, unify the Agent report:
   ```
