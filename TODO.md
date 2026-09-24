@@ -1,14 +1,26 @@
 # TODO
 
 Last feature number: 28
-Last bug: 9
+Last bug: 10
 
 ## Backlog
-- Bug 9: the "/new" extension fil to load th emodel
+- Bug 10: todo-feature extension fails to update main branch
   ```
-  🔍 /new: Loaded saved model Llama.cpp/64K
-   Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
-  ```
+   Error: ❌ Git update failed: Already on 'main'
+ hint: You have divergent branches and need to specify how to reconcile them.
+ hint: You can do so by running one of the following commands sometime before
+ hint: your next pull:
+ hint:
+ hint:   git config pull.rebase false  # merge
+ hint:   git config pull.rebase true   # rebase
+ hint:   git config pull.ff only       # fast-forward only
+ hint:
+ hint: You can replace "git config" with "git config --global" to set a default
+ hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+ hint: or --ff-only on the command line to override the configured default per
+ hint: invocation.
+ fatal: Need to specify how to reconcile divergent branches.
+ ```
 
 - Bug 8: git-infoxtension cause Pi to crash
   ```
