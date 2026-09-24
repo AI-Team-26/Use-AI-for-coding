@@ -1,15 +1,19 @@
 // ~/.pi/agent/extensions/todo-feature.ts
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
+ * /feature N [note] — Optionally includes a note with the feature start.
  * /feature end — Ends the current feature without saving timing (unreliable).
  *
  * Only one feature can be active at a time. Starting a new feature
  * auto-cancels the previous one without saving timing.
  *
  * Usage:
- *   /feature 10    — Start implementing feature 10 from the TODO backlog.
- *   /feature 7.1   — Start implementing a sub-feature (float numeration supported).
- *   /feature end   — End the current feature without saving timing data.
+ *   /feature 10                    — Start implementing feature 10 from the TODO backlog.
+ *   /feature 10 ignore existing PR — Start feature 10 with note about ignoring existing PR.
+ *   /feature 10 "ignore existing PR" — Same as above with quoted note.
+ *   /feature 10 "my custom note"    — Start feature 10 with custom note.
+ *   /feature 7.1                    — Start implementing a sub-feature (float numeration supported).
+ *   /feature end                    — End the current feature without saving timing data.
  *
  * The extension:
  *   1. Runs `git checkout main && git pull` to ensure up-to-date code
@@ -229,7 +233,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   })
 
   pi.registerCommand('feature', {
-    description: 'Implement a feature from the TODO backlog. Usage: /feature <number> or /feature end',
+    description: 'Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end',
     handler: async (args, ctx) => {
       const trimmed = args.trim()
       const projectRoot = ctx.repoPath ?? process.cwd()
@@ -247,10 +251,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
-      const featureNumber = parseFloat(trimmed)
-      if (isNaN(featureNumber) || featureNumber <= 0) {
-        ctx.ui.notify('❌ Usage: /feature <number>  —  e.g. /feature 10 or /feature 7.1', 'error')
+      // Parse feature number and optional note
+      // Supports: /feature 10, /feature 10 ignore existing PR, /feature 10 "ignore existing PR"
+      let featureNumber: number
+      let note: string | undefined
+
+      // Try to parse feature number
+      const numberMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/)
+      if (!numberMatch) {
+        ctx.ui.notify('❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR', 'error')
         return
+      }
+
+      featureNumber = parseFloat(numberMatch[1])
+      if (isNaN(featureNumber) || featureNumber <= 0) {
+        ctx.ui.notify('❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR', 'error')
+        return
+      }
+
+      // Group 2 may be absent depending on the regex engine — guard before accessing.
+      const notePart = numberMatch.length > 2 ? (numberMatch[2] ?? '').trim() : ''
+      if (notePart) {
+        // Remove surrounding quotes if present
+        if ((notePart.startsWith('"') && notePart.endsWith('"')) ||
+            (notePart.startsWith("'") && notePart.endsWith("'"))) {
+          note = notePart.slice(1, -1).trim()
+        } else {
+          note = notePart
+        }
       }
 
       // Auto-clean any pending feature before starting a new one
@@ -276,12 +304,17 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       startStatusTimer(ctx)
 
       // Inject the task to the agent — code is already up to date
-      pi.sendUserMessage(
-        `Implement feature ${featureNumber}.\n If the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
-         (onMain ? `The code is already on main and up to date. ` : "") +
-        `The feature number is ${featureNumber}. ` +
-        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-      )
+      let agentMessage = `Implement feature ${featureNumber}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+                       (onMain ? `The code is already on main and up to date. ` : "") +
+                       `The feature number is ${featureNumber}. ` +
+                       `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+
+      // Optional note: simply prepended as a prefix.
+      if (note) {
+        agentMessage = `${note}. ` + agentMessage
+      }
+
+      pi.sendUserMessage(agentMessage)
     },
   })
 
