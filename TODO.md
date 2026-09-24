@@ -63,17 +63,6 @@ To report this crash: run `pi -r` to resume the session, then run /bug. The cras
   ```
 
 - Feature 24: investigate and document how the /new command of Pi cleanup  the session. It will be usefull to reuse the same mechanism in custom extensions
-- Bug 6: the /new extension doesn't work. The default model was set again. Maybe we can add a notification, so we try to debug.
-  [update]
-  Collected info from logs/notify:
-  ``` 
-  🔍 /new: Loaded saved model Llama.cpp/64K
-
-  Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
-
-  ✓ New session started
-  ``` 
-
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.

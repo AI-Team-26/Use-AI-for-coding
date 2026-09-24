@@ -39,9 +39,15 @@ async function loadAndDeleteModel(): Promise<SavedModel | null> {
     const content = await fs.readFile(MODEL_TEMP_FILE, "utf8")
     // Delete the temp file immediately — default Pi startup is unaffected
     await fs.unlink(MODEL_TEMP_FILE)
-    const lines = content.trim().split("\n")
-    if (lines.length < 2 || !lines[0] || !lines[1]) return null
-    return { provider: lines[0], id: lines[1] }
+    // File format is exactly `${provider}\n${id}\n`. Parse verbatim: do NOT trim,
+    // because configured model ids may legitimately contain trailing whitespace.
+    const sep = content.indexOf("\n")
+    if (sep === -1) return null
+    const provider = content.slice(0, sep)
+    let id = content.slice(sep + 1)
+    if (id.endsWith("\n")) id = id.slice(0, -1)
+    if (!provider || !id) return null
+    return { provider, id }
   } catch {
     return null
   }
@@ -72,13 +78,27 @@ export default function newExtension(pi: ExtensionAPI) {
       return
     }
 
-    ctx.ui.notify(`🔍 /new: Loaded saved model ${saved.provider}/${saved.id}`, "info")
+    ctx.ui.notify(`🔍 /new: Loaded saved model ${saved.provider}/${JSON.stringify(saved.id)}`, "info")
 
     // Look up the full Model object in the registry (no JSON needed —
     // plain text plus registry lookup is enough).
-    const restored = ctx.modelRegistry.find(saved.provider, saved.id)
+    let restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
-      ctx.ui.notify(`🔍 /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
+      // Whitespace-tolerant fallback within the same provider (guards against
+      // stray spaces drifting between models.json and the saved value).
+      restored = ctx.modelRegistry
+        .getAll()
+        .find((m) => m.provider === saved.provider && m.id.trim() === saved.id.trim())
+    }
+    if (!restored) {
+      const available = ctx.modelRegistry
+        .getAll()
+        .filter((m) => m.provider === saved.provider)
+        .map((m) => JSON.stringify(m.id))
+      ctx.ui.notify(
+        `🔍 /new: Could not find model ${saved.provider}/${JSON.stringify(saved.id)} in registry. Available for ${saved.provider}: ${available.join(", ") || "(none)"}`,
+        "error",
+      )
       return
     }
 
