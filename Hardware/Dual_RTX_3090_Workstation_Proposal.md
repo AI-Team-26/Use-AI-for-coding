@@ -17,14 +17,14 @@ This document outlines hardware recommendations for building a high-performance 
 
 | Component | Recommendation | Estimated Cost (USD) |
 | :--- | :--- | :--- |
-| **CPU** | AMD Ryzen™ Threadripper™ Pro (e.g., 7955WX or higher) | $2,500 - $5,000 |
-| **Motherboard** | ASUS Pro WS WRX80E-SAGE SE WIFI or ASUS Pro WS TRX50-SAGE WIFI | $600 - $1,000 |
-| **RAM** | 256GB DDR5 ECC Registered | $1,000 - $1,500 |
-| **GPU** | 2x NVIDIA RTX 3090 (Used) | $1,600 - $1,800 |
-| **PSU** | 1600W Platinum (e.g., Corsair AX1600i or Seasonic Prime) | $300 - $450 |
-| **Case** | Full Tower (e.g., Fractal Design Meshify 2 XL or Corsair 7000D) | $200 - $300 |
-| **Cooling** | High-end AIO + Case Fans | $200 - $300 |
-| **Total Est.** | | **$6,400 - $10,350** |
+| **CPU** | AMD Ryzen™ Threadripper™ Pro (e.g., 7955WX or higher) | ,500 - ,000 |
+| **Motherboard** | ASUS Pro WS WRX80E-SAGE SE WIFI or ASUS Pro WS TRX50-SAGE WIFI | 00 - ,000 |
+| **RAM** | 256GB DDR5 ECC Registered | ,000 - ,500 |
+| **GPU** | 2x NVIDIA RTX 3090 (Used) | ,600 - ,800 |
+| **PSU** | 1600W Platinum (e.g., Corsair AX1600i or Seasonic Prime) | 00 - 50 |
+| **Case** | Full Tower (e.g., Fractal Design Meshify 2 XL or Corsair 7000D) | 00 - 00 |
+| **Cooling** | High-end AIO + Case Fans | 00 - 00 |
+| **Total Est.** | | **,400 - 0,350** |
 
 ---
 
