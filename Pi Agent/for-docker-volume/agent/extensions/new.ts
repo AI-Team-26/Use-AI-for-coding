@@ -52,29 +52,43 @@ export default function newExtension(pi: ExtensionAPI) {
   pi.on("session_before_switch", async (event: SessionBeforeSwitchEvent, ctx: ExtensionContext) => {
     if (event.reason !== "new") return
     const model = ctx.model
-    if (!model) return
+    if (!model) {
+      ctx.ui.notify("🔍 /new: No current model to save", "warning")
+      return
+    }
     await saveModel({ provider: model.provider, id: model.id })
+    ctx.ui.notify(`🔍 /new: Saved model ${model.provider}/${model.id}`, "info")
   })
 
   // After the new session starts, restore the previously selected model
   // from the temp file and immediately delete it.
   pi.on("session_start", async (event: SessionStartEvent, ctx: ExtensionContext) => {
     if (event.reason !== "new") return
+    ctx.ui.notify("🔍 /new: session_start event received", "info")
+    
     const saved = await loadAndDeleteModel()
-    if (!saved) return
+    if (!saved) {
+      ctx.ui.notify("🔍 /new: No saved model found (temp file missing or invalid)", "warning")
+      return
+    }
+
+    ctx.ui.notify(`🔍 /new: Loaded saved model ${saved.provider}/${saved.id}`, "info")
 
     // Look up the full Model object in the registry (no JSON needed —
     // plain text plus registry lookup is enough).
     const restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
-      ctx.ui.notify(`Could not restore model ${saved.provider}/${saved.id}`, "warning")
+      ctx.ui.notify(`🔍 /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
       return
     }
 
+    ctx.ui.notify(`🔍 /new: Restoring model ${restored.provider}/${restored.id}`, "info")
+    
     try {
       await pi.setModel(restored)
-    } catch {
-      // Non-fatal: the session runs with the default model.
+      ctx.ui.notify(`🔍 /new: Model restored successfully`, "info")
+    } catch (err) {
+      ctx.ui.notify(`🔍 /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
     }
   })
 }
