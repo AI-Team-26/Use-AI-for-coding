@@ -1,9 +1,19 @@
 # TODO
 
-Last feature number: 28
+Last feature number: 29
 Last bug: 10
 
 ## Backlog
+
+- Feature 29: audit all pi extensions for stale-ctx usage (same crash class as Bug 8)
+  Any extension that captures `ctx` and uses it later — in timer callbacks
+  (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
+  uncaughtException after newSession/fork/switch/reload (stale ctx throws on any use).
+  Fix pattern (see merged PR #30): track latest ctx from `session_start`/`agent_settled`,
+  try/catch around `ctx.ui.*` calls made from timers, clear intervals on
+  `session_shutdown` (NOT `"session_end"` — that event does not exist).
+  Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
+  (~line 239) both capture ctx; check `checkPrReview` too.
 
 - Bug 11: "/bug" is a reserved command, use something else for todo-feature
   ```
@@ -14,7 +24,6 @@ Last bug: 10
    🔍 /new: Model restored successfully
   ✓ New session started
   ```
-
 
 - Bug 10: todo-feature extension fails to update main branch
   ```
