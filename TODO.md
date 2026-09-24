@@ -1,6 +1,6 @@
 # TODO
 
-Last feature number: 23
+Last feature number: 26
 Last bug: 5
 
 ## Backlog
@@ -40,9 +40,5 @@ Last bug: 5
      and not communicated to the user).
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
-- POC 1: https://pi.dev/packages/pi-voice-stt
-- POC 2: Try SmallCode tool: https://github.com/Doorman11991/smallcode IF IT IS WORTH
+- Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
-## Backlog - Pending
-
-- Feature 8: [TBD - clarification needed from user]
