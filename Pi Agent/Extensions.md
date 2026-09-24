@@ -18,9 +18,10 @@
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
-- git-repo
+- git-info
   Show the current Git repository as `<owner>/<repo> (<branch>)` in the footer,
   with the owner and the repo name rendered in different colors.
+  Falls back to branch-only display when the remote cannot be resolved (a warning is shown).
   Replaces the old `git-branch` extension (single combined display).
 
 - todo
