@@ -7,22 +7,22 @@ Last bug: 9
 - Bug 9: the "/new" extension fil to load th emodel
   ```
   🔍 /new: Loaded saved model Llama.cpp/64K
- Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
- ```
+   Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
+  ```
 
 - Bug 8: git-infoxtension cause Pi to crash
   ```
   pi exiting due to uncaughtException:
-Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
+  Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
     at ExtensionRunner.assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OJP47DM6.js:656:12257)
     at get ui (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OJP47DM6.js:656:14246)
     at Timeout.refresh [as _onTimeout] (/root/.pi/agent/extensions/git-info.ts:84:13)
     at listOnTimeout (node:internal/timers:685:17)
     at process.processTimers (node:internal/timers:618:7)
 
-A stack frame came from loaded extension `/root/.pi/agent/extensions/git-info.ts`, which may be involved. Try disabling it with `pi config`, or run `pi -ne` to confirm.
+  A stack frame came from loaded extension `/root/.pi/agent/extensions/git-info.ts`, which may be involved. Try disabling it with `pi config`, or run `pi -ne` to confirm.
 
-To report this crash: run `pi -r` to resume the session, then run /bug. The crash details are attached automatically.
+  To report this crash: run `pi -r` to resume the session, then run /bug. The crash details are attached automatically.
   ```
  [update from Pi Kiwi quick investigation]
      Captured warning: "This extension ctx is stale after session replacement or reload..."
