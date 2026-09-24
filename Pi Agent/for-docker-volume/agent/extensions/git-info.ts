@@ -17,7 +17,6 @@ const REFRESH_MS = 5_000
 const CYAN = "\x1b[36m"
 const BLUE = "\x1b[34m"
 const GREEN = "\x1b[32m"
-//const DIM = "\x1b[2m"
 const RESET = "\x1b[0m"
 
 function run(cmd: string): string | null {
@@ -34,66 +33,82 @@ function isGitRepo(): boolean {
 }
 
 export default function gitInfoExtension(pi: ExtensionAPI) {
-  pi.on("session_start", async (_event, ctx: ExtensionContext) => {
-    let last = ""
-    let lastError = ""
-    let intervalId: ReturnType<typeof setInterval> | null = null
+  // A captured ctx goes stale after session replacement or reload; always use the most
+  // recent one delivered by events and never touch a possibly-stale ctx outside try/catch.
+  let latestCtx: ExtensionContext | null = null
+  let lastText = ""
+  let lastError = ""
+  let intervalId: ReturnType<typeof setInterval> | null = null
 
-    // Surface failures so they are visible instead of silently swallowed.
-    // Deduped per distinct message to avoid spamming every refresh tick.
-    const reportError = (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (msg !== lastError) {
-        lastError = msg
-        console.error(`[${STATUS_KEY}] ${msg}`)
-        ctx.ui.notify(`${STATUS_KEY}: ${msg}`, "warning")
+  const reportError = (err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg === lastError || !latestCtx) return
+    lastError = msg
+    console.error(`[${STATUS_KEY}] ${msg}`)
+    try {
+      latestCtx.ui.notify(`${STATUS_KEY}: ${msg}`, "warning")
+    } catch {
+      // ctx went stale mid-report; next event delivers a fresh one
+    }
+  }
+
+  const buildStatus = (): string | undefined => {
+    if (!isGitRepo()) return undefined
+
+    const branch = run("git branch --show-current")
+    const url = run("git remote get-url origin")
+
+    if (url !== null) {
+      // Accept https://host/owner/repo(.git), ssh git@host:owner/repo(.git) and scp-style host:owner/repo
+      const match = url.match(/[:/]([^/:]+)\/([^/]+?)(?:\.git)?$/)
+      if (match) {
+        const base = `${CYAN}${match[1]}${RESET}/${BLUE}${match[2]}${RESET}`
+        return branch ? `${base} (🌿 ${GREEN}${branch}${RESET})` : base
       }
+      reportError(new Error(`unrecognized remote URL format: ${url}`))
+    } else {
+      // We are inside a Git repo but there is no 'origin' remote: an error worth surfacing.
+      reportError(new Error("no 'origin' remote configured"))
     }
 
-    const refresh = () => {
-      let text: string | undefined
+    // Fall back to branch only when the remote could not be resolved
+    return branch ? `🌿 ${GREEN}${branch}${RESET}` : undefined
+  }
 
-      if (!isGitRepo()) {
-        // Not a Git working tree — nothing to show (expected, no error).
-        text = undefined
-      } else {
-        const branch = run("git branch --show-current")
-        const url = run("git remote get-url origin")
+  const refresh = () => {
+    const ctx = latestCtx
+    if (!ctx) return
 
-        if (url === null) {
-          // We are inside a Git repo but there is no 'origin' remote: an error worth surfacing.
-          reportError(new Error("no 'origin' remote configured"))
-        } else {
-          // Accept https://host/owner/repo(.git), ssh git@host:owner/repo(.git) and scp-style host:owner/repo
-          const match = url.match(/[:/]([^/:]+)\/([^/]+?)(?:\.git)?$/)
-          if (!match || match.length < 3) {
-            reportError(new Error(`unrecognized remote URL format: ${url}`))
-          } else {
-            const base = `${CYAN}${match[1]}${RESET}/${BLUE}${match[2]}${RESET}`
-            text = branch ? `${base} (🌿 ${GREEN}${branch}${RESET})` : base
-          }
-        }
-
-        if (text === undefined && branch) {
-          // Fall back to branch only when the remote could not be resolved
-          text = `🌿 ${GREEN}${branch}${RESET}`
-        }
-      }
-
-      if (text !== last) {
-        last = text ?? ""
+    const text = buildStatus()
+    if ((text ?? "") !== lastText) {
+      lastText = text ?? ""
+      try {
         ctx.ui.setStatus(STATUS_KEY, text)
+      } catch {
+        // ctx became stale between capture and call — session_start / agent_settled will replace it
       }
     }
+  }
 
-    refresh()
-    intervalId = setInterval(refresh, REFRESH_MS)
+  pi.on("session_start", (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+    if (intervalId === null) {
+      refresh()
+      intervalId = setInterval(refresh, REFRESH_MS)
+    }
+  })
 
-    pi.on("session_end", () => {
-      if (intervalId !== null) {
-        clearInterval(intervalId)
-        intervalId = null
-      }
-    })
+  pi.on("agent_settled", (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+  })
+
+  // "session_end" does not exist in the extension API; the real teardown event is
+  // "session_shutdown". A new session_start always follows replacement reasons, so
+  // clearing here cannot leave the status permanently empty.
+  pi.on("session_shutdown", () => {
+    if (intervalId !== null) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
   })
 }

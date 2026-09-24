@@ -22,32 +22,16 @@ Last bug: 10
  fatal: Need to specify how to reconcile divergent branches.
  ```
 
-- Bug 8: git-infoxtension cause Pi to crash
-  ```
-  pi exiting due to uncaughtException:
-  Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
-    at ExtensionRunner.assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OJP47DM6.js:656:12257)
-    at get ui (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OJP47DM6.js:656:14246)
-    at Timeout.refresh [as _onTimeout] (/root/.pi/agent/extensions/git-info.ts:84:13)
-    at listOnTimeout (node:internal/timers:685:17)
-    at process.processTimers (node:internal/timers:618:7)
 
-  A stack frame came from loaded extension `/root/.pi/agent/extensions/git-info.ts`, which may be involved. Try disabling it with `pi config`, or run `pi -ne` to confirm.
-
-  To report this crash: run `pi -r` to resume the session, then run /bug. The crash details are attached automatically.
-  ```
- [update from Pi Kiwi quick investigation]
-     Captured warning: "This extension ctx is stale after session replacement or reload..."
-     Root cause: git-info.ts captures `ctx` once in `session_start` and reuses it inside
-     the 5s `setInterval` callback (`ctx.ui.setStatus`). After crash-restart / newSession /
-     fork / switchSession / reload the captured ctx is stale → crash on next tick.
-     Fix: never reuse a captured ctx across session boundaries — track the latest ctx from
-     events that deliver a fresh one (or move post-replacement work into `withSession`) and
-     clear the interval on `session_end`. Same latent pattern in llama-server-model.ts
-     (only survives because its refresh is try/catch-wrapped).
-     NOTE: repo copy is outdated — file is `git-branch.ts` in repo vs `git-info.ts` deployed;
-     sync when fixing.
-
+- Audit: stale-ctx usage in all pi extensions (same crash class as Bug 8)
+  Any extension that captures `ctx` and uses it later — in timer callbacks
+  (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
+  uncaughtException after newSession/fork/switch/reload (stale ctx throws on any use).
+  Fix pattern (see PR #30): track latest ctx from `session_start`/`agent_settled`,
+  try/catch around `ctx.ui.*` calls made from timers, clear intervals on
+  `session_shutdown` (NOT `"session_end"` — that event does not exist).
+  Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
+  (~line 239) both capture ctx; check `checkPrReview` too.
 - Feature 28: todoextension should accept an optional note.
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
  `/feature 10 "ignore existing PR"` should work the same.
