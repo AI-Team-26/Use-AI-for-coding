@@ -22,16 +22,6 @@ Last bug: 10
  fatal: Need to specify how to reconcile divergent branches.
  ```
 
-
-- Audit: stale-ctx usage in all pi extensions (same crash class as Bug 8)
-  Any extension that captures `ctx` and uses it later — in timer callbacks
-  (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
-  uncaughtException after newSession/fork/switch/reload (stale ctx throws on any use).
-  Fix pattern (see PR #30): track latest ctx from `session_start`/`agent_settled`,
-  try/catch around `ctx.ui.*` calls made from timers, clear intervals on
-  `session_shutdown` (NOT `"session_end"` — that event does not exist).
-  Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
-  (~line 239) both capture ctx; check `checkPrReview` too.
 - Feature 28: todoextension should accept an optional note.
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
  `/feature 10 "ignore existing PR"` should work the same.
