@@ -347,9 +347,12 @@ async function finishFeature(ctx: ExtensionContext, pi: ExtensionAPI): Promise<v
   ctx.ui.setStatus(STATUS_KEY, undefined)
 
   // Inject follow-up message to write the PR timing
+  // TODO: can we execute this command here, so the chat is not polluted and the user experience is nice? 
+  // The user  last message should remain the recap ow completed work... not the commands to update the PR with report stuff.
   pi.sendUserMessage(
     `Write in the PR that this feature required ${elapsedMinutes} minutes. ` +
-    `Write also that is used the model ${modelName} and used ${tokens} tokens.`,
+    `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
+    `No need to share this info here in the chat. Remember again the PR number and link to the user.`,
     { streamingBehavior: "followUp" }
   )
 
