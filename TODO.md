@@ -18,7 +18,18 @@ A stack frame came from loaded extension `/root/.pi/agent/extensions/git-info.ts
 
 To report this crash: run `pi -r` to resume the session, then run /bug. The crash details are attached automatically.
   ```
-
+ [update from Pi Kiwi quick investigation]
+  /tree
+     Captured warning: "This extension ctx is stale after session replacement or reload..."
+     Root cause: git-info.ts captures `ctx` once in `session_start` and reuses it inside
+     the 5s `setInterval` callback (`ctx.ui.setStatus`). After crash-restart / newSession /
+     fork / switchSession / reload the captured ctx is stale → crash on next tick.
+     Fix: never reuse a captured ctx across session boundaries — track the latest ctx from
+     events that deliver a fresh one (or move post-replacement work into `withSession`) and
+     clear the interval on `session_end`. Same latent pattern in llama-server-model.ts
+     (only survives because its refresh is try/catch-wrapped).
+     NOTE: repo copy is outdated — file is `git-branch.ts` in repo vs `git-info.ts` deployed;
+     sync when fixing.
 
 - Feature 28: todoextension should accept an optional note.
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
