@@ -15,8 +15,9 @@ const REFRESH_MS = 5_000
 
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 const CYAN = "\x1b[36m"
+const BLUE = "\x1b[34m"
 const GREEN = "\x1b[32m"
-const DIM = "\x1b[2m"
+//const DIM = "\x1b[2m"
 const RESET = "\x1b[0m"
 
 function run(cmd: string): string | null {
@@ -68,14 +69,14 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
           if (!match || match.length < 3) {
             reportError(new Error(`unrecognized remote URL format: ${url}`))
           } else {
-            const base = `${CYAN}${match[1]}${RESET}/${GREEN}${match[2]}${RESET}`
-            text = branch ? `${base} (${DIM}${branch}${RESET})` : base
+            const base = `${CYAN}${match[1]}${RESET}/${BLUE}${match[2]}${RESET}`
+            text = branch ? `${base} (🌿 ${GREEN}${branch}${RESET})` : base
           }
         }
 
         if (text === undefined && branch) {
           // Fall back to branch only when the remote could not be resolved
-          text = `🌿 ${branch}`
+          text = `🌿 ${GREEN}${branch}${RESET}`
         }
       }
 
