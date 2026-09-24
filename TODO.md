@@ -1,18 +1,19 @@
 # TODO
 
 Last feature number: 27
-Last bug: 6
+Last bug: 7
 
 ## Backlog
-
+- Bug 7: todo-feature extension
+  I see this notify in the chat:
+  "⏸️ Stopped watching for PR review (2h limit reached)."
+  But the Feature is still shown in the status and gets updated (the ttime).
 - Feature 27.1: investigate new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
   Also the branch is useless since it is printed in another extension.
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
-
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
-
 - Feature 25: todo-feature extension, unify the Agent report:
   ```
   # Feature execution report 
