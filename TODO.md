@@ -18,8 +18,6 @@ Last bug: 5
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.
-- Feature 23: /new command should maintain the selected model, not switch to the default one set in settings.json or the first one found in models.json
-  This requires an investigation. Use the branch doc/8_investigate_new_command to store gathered info and possible solutions
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 - Feature 18: todo-feature extension review watcher stop should add PR link to the message
