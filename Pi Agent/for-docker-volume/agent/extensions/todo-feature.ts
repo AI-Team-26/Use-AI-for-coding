@@ -269,10 +269,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
-      const notePart = numberMatch[2].trim()
+      // Group 2 may be absent depending on the regex engine — guard before accessing.
+      const notePart = numberMatch.length > 2 ? (numberMatch[2] ?? '').trim() : ''
       if (notePart) {
         // Remove surrounding quotes if present
-        if ((notePart.startsWith('"') && notePart.endsWith('"')) || 
+        if ((notePart.startsWith('"') && notePart.endsWith('"')) ||
             (notePart.startsWith("'") && notePart.endsWith("'"))) {
           note = notePart.slice(1, -1).trim()
         } else {
@@ -299,7 +300,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       startPrPolling(projectRoot)
 
-      ctx.ui.notify(`⏱️ Feature ${featureNumber} started${note ? ` with note: "${note}"` : ''}. Elapsed time will be recorded.`, 'info')
+      ctx.ui.notify(`⏱️ Feature ${featureNumber} started. Elapsed time will be recorded.`, 'info')
       startStatusTimer(ctx)
 
       // Inject the task to the agent — code is already up to date
@@ -308,13 +309,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                        `The feature number is ${featureNumber}. ` +
                        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${featureNumber} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
 
-      // Add note to the message if present, and handle special case for "ignore existing PR"
+      // Optional note: simply prepended as a prefix.
       if (note) {
-        if (note.toLowerCase().includes('ignore existing pr') || note.toLowerCase().includes('ignore existing pr')) {
-          agentMessage = `ignore existing PR. ` + agentMessage
-        } else {
-          agentMessage = `${note}. ` + agentMessage
-        }
+        agentMessage = `${note}. ` + agentMessage
       }
 
       pi.sendUserMessage(agentMessage)
