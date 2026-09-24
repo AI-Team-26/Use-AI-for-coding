@@ -19,7 +19,6 @@ A stack frame came from loaded extension `/root/.pi/agent/extensions/git-info.ts
 To report this crash: run `pi -r` to resume the session, then run /bug. The crash details are attached automatically.
   ```
  [update from Pi Kiwi quick investigation]
-  /tree
      Captured warning: "This extension ctx is stale after session replacement or reload..."
      Root cause: git-info.ts captures `ctx` once in `session_start` and reuses it inside
      the 5s `setInterval` callback (`ctx.ui.setStatus`). After crash-restart / newSession /
