@@ -5,7 +5,8 @@ Last bug: 5
 
 ## Backlog
 
-- Feature 25: todofeature extension, unify the Agent report:
+
+- Feature 25: todo-feature extension, unify the Agent report:
   ```
   # Feature execution report 
   (first push only, without following reviews rework)
@@ -15,9 +16,11 @@ Last bug: 5
   ```
 
 - Feature 24: investigate and document how the /new command of Pi cleanup  the session. It will be usefull to reuse the same mechanism in custom extensions
+- Bug 6: the /new extension doesn't work. The default model was set again. Maybe we can add a notification, so we try to debug.
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.
+  (2026-09-28 still relevant?)
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 - Feature 18: todo-feature extension review watcher stop should add PR link to the message
