@@ -72,12 +72,8 @@ export default function newExtension(pi: ExtensionAPI) {
       return
     }
 
-    ctx.ui.notify(`🔍 /new: Loaded saved model ${saved.provider}/${JSON.stringify(saved.id)}`, "info")
-
-    // Look up the full Model object in the registry (no JSON needed —
-    // plain text plus registry lookup is enough). On failure, report the
-    // available ids for the provider so misconfigured models.json entries
-    // (e.g. stray whitespace in an id) are easy to spot.
+    // Look up the full Model object in the registry; on failure report the
+    // available ids so misconfigured models.json entries are easy to spot.
     const restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
       const available = ctx.modelRegistry
@@ -85,7 +81,7 @@ export default function newExtension(pi: ExtensionAPI) {
         .filter((m) => m.provider === saved.provider)
         .map((m) => JSON.stringify(m.id))
       ctx.ui.notify(
-        `🔍 /new: Could not find model ${saved.provider}/${JSON.stringify(saved.id)} in registry. Available for ${saved.provider}: ${available.join(", ") || "(none)"}`,
+        `❌ /new: Could not find model ${saved.provider}/${JSON.stringify(saved.id)} in registry. Available for ${saved.provider}: ${available.join(", ") || "(none)"}`,
         "error",
       )
       return
