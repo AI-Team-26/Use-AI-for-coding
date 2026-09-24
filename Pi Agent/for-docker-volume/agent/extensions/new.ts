@@ -53,22 +53,20 @@ export default function newExtension(pi: ExtensionAPI) {
     if (event.reason !== "new") return
     const model = ctx.model
     if (!model) {
-      ctx.ui.notify("🔍 /new: No current model to save", "warning")
+      ctx.ui.notify("❌ /new: No current model to save", "warning")
       return
     }
     await saveModel({ provider: model.provider, id: model.id })
-    ctx.ui.notify(`🔍 /new: Saved model ${model.provider}/${model.id}`, "info")
   })
 
   // After the new session starts, restore the previously selected model
   // from the temp file and immediately delete it.
   pi.on("session_start", async (event: SessionStartEvent, ctx: ExtensionContext) => {
     if (event.reason !== "new") return
-    ctx.ui.notify("🔍 /new: session_start event received", "info")
     
     const saved = await loadAndDeleteModel()
     if (!saved) {
-      ctx.ui.notify("🔍 /new: No saved model found (temp file missing or invalid)", "warning")
+      ctx.ui.notify("❌ /new: No saved model found (temp file missing or invalid)", "warning")
       return
     }
 
@@ -80,13 +78,11 @@ export default function newExtension(pi: ExtensionAPI) {
       return
     }
 
-    ctx.ui.notify(`🔍 /new: Restoring model ${restored.provider}/${restored.id}`, "info")
-    
+   
     try {
       await pi.setModel(restored)
-      ctx.ui.notify(`🔍 /new: Model restored successfully`, "info")
     } catch (err) {
-      ctx.ui.notify(`🔍 /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
+      ctx.ui.notify(`❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
     }
   })
 }
