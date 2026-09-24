@@ -1,9 +1,15 @@
 # TODO
 
 Last feature number: 28
-Last bug: 
+Last bug: 9
 
 ## Backlog
+- Bug 9: the "/new" extension fil to load th emodel
+  ```
+  🔍 /new: Loaded saved model Llama.cpp/64K
+ Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
+ ```
+
 - Bug 8: git-infoxtension cause Pi to crash
   ```
   pi exiting due to uncaughtException:
