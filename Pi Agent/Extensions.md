@@ -18,6 +18,11 @@
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
 
+- git-info
+  Show the current Git repository as `<owner>/<repo> (<branch>)` in the footer,
+  with the owner and the repo name rendered in different colors.
+  Falls back to branch-only display when the remote cannot be resolved (a warning is shown).
+
 - todo
   Add the `/todo` command that shows the TODO.md file on hte UI and ask the agent to check it ans propose the next step.
   Before reading, it runs `git checkout main && git pull` so the shown backlog is always loaded from a fresh main branch.
