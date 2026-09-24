@@ -72,13 +72,11 @@ export default function newExtension(pi: ExtensionAPI) {
       return
     }
 
-    ctx.ui.notify(`🔍 /new: Loaded saved model ${saved.provider}/${saved.id}`, "info")
-
     // Look up the full Model object in the registry (no JSON needed —
     // plain text plus registry lookup is enough).
     const restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
-      ctx.ui.notify(`🔍 /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
+      ctx.ui.notify(`❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
       return
     }
 
