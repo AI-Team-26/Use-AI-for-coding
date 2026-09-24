@@ -202,6 +202,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
+        const projectRoot = ctx.repoPath ?? process.cwd()
+        pullLatestMain(ctx, projectRoot)
         try {
           pi.sendUserMessage('/todo', { streamingBehavior: 'followUp' })
         } catch (err) {
