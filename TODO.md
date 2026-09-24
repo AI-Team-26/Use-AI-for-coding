@@ -5,19 +5,6 @@ Last bug: 11
 
 ## Backlog
 
-- Feature 29: audit all pi extensions for stale-ctx usage (same crash class as Bug 8)
-  Any extension that captures `ctx` and uses it later — in timer callbacks
-  (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
-  uncaughtException after newSession/fork/switch/reload (stale ctx throws on any use).
-  Fix pattern (see merged PR #30): track latest ctx from `session_start`/`agent_settled`,
-  try/catch around `ctx.ui.*` calls made from timers, clear intervals on
-  `session_shutdown` (NOT `"session_end"` — that event does not exist).
-  Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
-  (~line 239) both capture ctx; check `checkPrReview` too.
-
-- Feature 28: todoextension should accept an optional note.
-  `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
- `/feature 10 "ignore existing PR"` should work the same.
 - Bug 7: todo-feature extension
   I see this notify in the chat:
   "⏸️ Stopped watching for PR review (2h limit reached)."
@@ -41,10 +28,6 @@ Last bug: 11
   Tokens used: 8797
   ```
 
-- Bug 5: todo-feature extension
-  " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
-  This error apepared after a review was done.
-  (2026-09-28 still relevant?)
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 - Feature 18: todo-feature extension review watcher stop should add PR link to the message
@@ -55,7 +38,6 @@ Last bug: 11
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
 - Feature 12: Complete the documentation for GIT and GitHub setup
-- Feature 16: todo-feature extension should work also with bugs
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
