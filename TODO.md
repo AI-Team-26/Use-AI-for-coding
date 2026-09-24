@@ -1,9 +1,28 @@
 # TODO
 
 Last feature number: 28
-Last bug: 7
+Last bug: 10
 
 ## Backlog
+- Bug 10: todo-feature extension fails to update main branch
+  ```
+   Error: ❌ Git update failed: Already on 'main'
+ hint: You have divergent branches and need to specify how to reconcile them.
+ hint: You can do so by running one of the following commands sometime before
+ hint: your next pull:
+ hint:
+ hint:   git config pull.rebase false  # merge
+ hint:   git config pull.rebase true   # rebase
+ hint:   git config pull.ff only       # fast-forward only
+ hint:
+ hint: You can replace "git config" with "git config --global" to set a default
+ hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+ hint: or --ff-only on the command line to override the configured default per
+ hint: invocation.
+ fatal: Need to specify how to reconcile divergent branches.
+ ```
+
+
 - Audit: stale-ctx usage in all pi extensions (same crash class as Bug 8)
   Any extension that captures `ctx` and uses it later — in timer callbacks
   (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
@@ -40,17 +59,6 @@ Last bug: 7
   ```
 
 - Feature 24: investigate and document how the /new command of Pi cleanup  the session. It will be usefull to reuse the same mechanism in custom extensions
-- Bug 6: the /new extension doesn't work. The default model was set again. Maybe we can add a notification, so we try to debug.
-  [update]
-  Collected info from logs/notify:
-  ``` 
-  🔍 /new: Loaded saved model Llama.cpp/64K
-
-  Error: 🔍 /new: Could not find model Llama.cpp/64K in registry
-
-  ✓ New session started
-  ``` 
-
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
   This error apepared after a review was done.
