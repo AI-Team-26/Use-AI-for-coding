@@ -5,6 +5,15 @@ Last bug: 5
 
 ## Backlog
 
+- Feature 25: todofeature extension, unify the Agent report:
+  ```
+  # Feature execution report 
+  (first push only, without following reviews rework)
+  Time required: 2.0 minutes 
+  Model used: Llama.cpp/Qwen3.8-27B-ASCII-Condensed-IQ4_XS-3_troed_64k
+  Tokens used: 8797
+  ```
+
 - Feature 24: investigate and document how the /new command of Pi cleanup  the session. It will be usefull to reuse the same mechanism in custom extensions
 - Bug 5: todo-feature extension
   " Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message."
