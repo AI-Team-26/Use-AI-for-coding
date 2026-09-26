@@ -29,6 +29,7 @@ async function saveModel(model: { provider: string; id: string }): Promise<void>
     await fs.mkdir(path.dirname(MODEL_TEMP_FILE), { recursive: true })
     await fs.writeFile(MODEL_TEMP_FILE, `${model.provider}\n${model.id}\n`, "utf8")
   } catch {
+    // TODO: console.error
     // non-fatal
   }
 }
@@ -58,6 +59,7 @@ async function loadAndDeleteModel(): Promise<SavedModel | null> {
     if (lines.length < 2 || !lines[0] || !lines[1]) return null
     return { provider: lines[0], id: lines[1] }
   } catch {
+    // TODO: console.error
     return null
   }
 }
@@ -93,7 +95,6 @@ export default function newExtension(pi: ExtensionAPI) {
       return
     }
 
-   
     try {
       await pi.setModel(restored)
     } catch (err) {
