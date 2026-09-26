@@ -90,6 +90,18 @@ let statusTimer: ReturnType<typeof setInterval> | null = null
 // so timer callbacks must always read this instead of a captured value.
 let latestCtx: ExtensionContext | null = null
 
+// PR review-watcher state lives at module scope rather than per extension instance:
+// Pi can instantiate the factory again on session replacement without shutting the
+// previous one down, leaking a stale poll interval whose 2h clock never resets
+// (Bug 7 — "Stopped watching" fired minutes after starting a fresh feature).
+// Sharing the state guarantees a single watcher process-wide; startPrPolling()
+// clears any leaked interval before arming a fresh one.
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let pollStartedAt = 0
+let pollInFlight = false
+const handledReviewDecisions = new Map<string, string>()
+let watchedPr: { number: number; url: string } | null = null
+
 /**
  * Guarded UI access for calls made outside a fresh handler/event scope
  * (timers, post-await code). Skips only when no ctx arrived yet; any other
@@ -189,15 +201,10 @@ interface PrView {
   state: string
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
+  htmlUrl?: string
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  // closure-local state, cleaned up when the session shuts down.
-  let pollTimer: ReturnType<typeof setInterval> | null = null
-  let pollStartedAt = 0
-  let pollInFlight = false
-  const handledReviewDecisions = new Map<string, string>()
-
   const stopPrPolling = (): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
@@ -208,7 +215,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
-      pi.sendMessage({ customType: 'todo-feature', content: '⏸️ Stopped watching for PR review (2h limit reached).', display: true, details: {} })
+      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (${watchedPr.url}).` : ''
+      pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
     pollInFlight = true
@@ -218,7 +226,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       let pr: PrView
       try {
-        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews', {
+        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews,htmlUrl', {
           cwd,
           encoding: 'utf-8',
           stdio: 'pipe',
@@ -226,6 +234,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       } catch {
         return // no open PR on this branch yet
       }
+      watchedPr = { number: pr.number, url: pr.htmlUrl ?? '' }
 
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
@@ -265,6 +274,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     stopPrPolling()
     pollStartedAt = Date.now()
     handledReviewDecisions.clear()
+    watchedPr = null
     pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
   }
 
