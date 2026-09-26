@@ -43,7 +43,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
@@ -326,7 +326,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
-  async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
+  async function startTask(ctx: ExtensionCommandContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
     const END = 0 // "end" command argument is managed to send "0"
@@ -389,7 +389,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    ctx.ui.notify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
     startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
@@ -408,7 +407,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    pi.sendUserMessage(agentMessage)
+    // Start a fresh session so the agent begins the task on clean state, then inject the
+    // task there. State (pending, timers, START file) was set up above and survives the
+    // switch; latestCtx is refreshed by the new session's session_start / agent_settled.
+    // waitForIdle() before steering avoids the "Agent is already processing" error (Bug 12).
+    //
+    // Local cleanup used when the fresh-session start is cancelled or fails, so we never
+    // leave a pending activity / timers pointing at a session that never began the task.
+    const abortStart = (): void => {
+      stopPrPolling()
+      stopStatusTimer()
+      pending = null
+      completed = false
+      safeSetStatus(latestCtx, undefined)
+    }
+
+    try {
+      const result = await ctx.newSession({
+        withSession: async (newCtx) => {
+          await newCtx.waitForIdle()
+          safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+          await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
+        },
+      })
+      if (result.cancelled) abortStart()
+    } catch (err) {
+      abortStart()
+      safeNotify(latestCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+    }
   }
 
   pi.registerCommand('feature', {
