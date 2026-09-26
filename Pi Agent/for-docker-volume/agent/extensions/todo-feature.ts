@@ -141,7 +141,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
       encoding: 'utf-8',
       stdio: 'pipe',
     })
-    ctx.iui.notify(`Moved to updated main branch`, 'info')
+    ctx.ui.notify(`Moved to updated main branch`, 'info')
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
