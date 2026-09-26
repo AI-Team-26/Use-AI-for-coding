@@ -68,7 +68,7 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+      safeNotify(ctx, 'ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -86,6 +86,44 @@ let completed = false
 // Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
+// Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
+// so timer callbacks must always read this instead of a captured value.
+let latestCtx: ExtensionContext | null = null
+
+// PR review-watcher state lives at module scope rather than per extension instance:
+// Pi can instantiate the factory again on session replacement without shutting the
+// previous one down, leaking a stale poll interval whose 2h clock never resets
+// (Bug 7 — "Stopped watching" fired minutes after starting a fresh feature).
+// Sharing the state guarantees a single watcher process-wide; startPrPolling()
+// clears any leaked interval before arming a fresh one.
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let pollStartedAt = 0
+let pollInFlight = false
+const handledReviewDecisions = new Map<string, string>()
+let watchedPr: { number: number; url: string } | null = null
+
+/**
+ * Guarded UI access for calls made outside a fresh handler/event scope
+ * (timers, post-await code). Skips only when no ctx arrived yet; any other
+ * failure is logged, never silenced.
+ */
+function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): void {
+  if (!ctx) return
+  try {
+    ctx.ui.setStatus(STATUS_KEY, text)
+  } catch (err) {
+    console.error('[todo-feature] setStatus failed:', err)
+  }
+}
+
+function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
+  if (!ctx) return
+  try {
+    ctx.ui.notify(message, type)
+  } catch (err) {
+    console.error('[todo-feature] notify failed:', err)
+  }
+}
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000)
@@ -98,13 +136,13 @@ function stopStatusTimer(): void {
   statusTimer = null
 }
 
-function startStatusTimer(ctx: ExtensionContext): void {
+function startStatusTimer(): void {
   stopStatusTimer()
   if (!pending) return
   const refresh = () => {
     if (!pending) { stopStatusTimer(); return }
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    safeSetStatus(latestCtx, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -125,7 +163,7 @@ function formatTime(ts: number): string {
 
 function ensureTodoDir(): Promise<void> {
   try {
-    return fs.mkdir(TODO_DIR, { recursive: true })
+    return fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
   } catch {
     return Promise.resolve()
   }
@@ -163,15 +201,10 @@ interface PrView {
   state: string
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
+  htmlUrl?: string
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  // closure-local state, cleaned up when the session shuts down.
-  let pollTimer: ReturnType<typeof setInterval> | null = null
-  let pollStartedAt = 0
-  let pollInFlight = false
-  const handledReviewDecisions = new Map<string, string>()
-
   const stopPrPolling = (): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
@@ -182,7 +215,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
-      pi.sendMessage({ customType: 'todo-feature', content: '⏸️ Stopped watching for PR review (2h limit reached).', display: true, details: {} })
+      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (${watchedPr.url}).` : ''
+      pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
     pollInFlight = true
@@ -192,7 +226,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       let pr: PrView
       try {
-        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews', {
+        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews,htmlUrl', {
           cwd,
           encoding: 'utf-8',
           stdio: 'pipe',
@@ -200,6 +234,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       } catch {
         return // no open PR on this branch yet
       }
+      watchedPr = { number: pr.number, url: pr.htmlUrl ?? '' }
 
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
@@ -239,8 +274,15 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     stopPrPolling()
     pollStartedAt = Date.now()
     handledReviewDecisions.clear()
+    watchedPr = null
     pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
   }
+
+  // Track the latest ctx from every event that delivers one; command handlers also
+  // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+  })
 
   pi.on('session_shutdown', () => {
     stopPrPolling()
@@ -285,6 +327,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
   async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
+    latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
     const END = 0 // "end" command argument is managed to send "0"
 
@@ -347,7 +390,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
     ctx.ui.notify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
-    startStatusTimer(ctx)
+    startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
     let agentMessage = type === 'feature'
@@ -423,6 +466,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // If the run ended without a completion signal (e.g. the agent asked a question),
   // the timer keeps running until the marker is seen or /feature end / /bug end cancels it.
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
+    latestCtx = ctx
     if (!pending || !completed) return
     await finishActivity(ctx, pi)
   })
@@ -441,8 +485,13 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
 
   // Get model info
   const modelName = await resolveModelName(ctx)
-  const contextUsage = ctx.getContextUsage()
-  const tokens = contextUsage?.tokens ?? null
+  let tokens: number | null = null
+  try {
+    // ctx may have gone stale during the awaited calls above; token count is best-effort
+    tokens = ctx.getContextUsage()?.tokens ?? null
+  } catch (err) {
+    console.error('[todo-feature] getContextUsage failed:', err)
+  }
 
   const modelInfo = `MODEL: ${modelName}\n`
   const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
@@ -456,9 +505,10 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     await fs.writeFile(filePath, finalContent, 'utf8')
   }
 
-  ctx.ui.notify(`✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
+  safeNotify(ctx, `✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
-  ctx.ui.setStatus(STATUS_KEY, undefined)
+  safeSetStatus(ctx, undefined)
 
   // Inject follow-up message to write the PR timing
   const activityName = pending.type === 'feature' ? 'feature' : 'bug'

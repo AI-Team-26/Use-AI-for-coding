@@ -10,28 +10,10 @@ Last bug: 12
    ⏱️ Feature 3.1 started. Elapsed time will be recorded.
    Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.
   ``` 
-- Feature 29: audit all pi extensions for stale-ctx usage (same crash class as Bug 8)
-  Any extension that captures `ctx` and uses it later — in timer callbacks
-  (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
-  uncaughtException after newSession/fork/switch/reload (stale ctx throws on any use).
-  Fix pattern (see merged PR #30): track latest ctx from `session_start`/`agent_settled`,
-  try/catch around `ctx.ui.*` calls made from timers, clear intervals on
-  `session_shutdown` (NOT `"session_end"` — that event does not exist).
-  Known suspect: `todo-feature.ts` — `statusTimer` (~line 113) and `pollTimer`
-  (~line 239) both capture ctx; check `checkPrReview` too.
-
 - Feature 28: todo-feature extension should accept an optional note.
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
   `/feature 10 "ignore existing PR"` should work the same.
 
-- Bug 7: todo-feature extension
-  I see this notify in the chat:
-  "⏸️ Stopped watching for PR review (2h limit reached)."
-  But the Feature is still shown in the status and gets updated (the ttime).
-  I've tarted a new feature, it reset the Featureand creatd a new one... but after a few miutes I see this:
-  "⏸️ Stopped watching for PR review (2h limit reached)." 
-  It seems that starting the new feture hasn't reset the 2h timer !!
-  Also, the message shold saywhichPR it refers to !
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
