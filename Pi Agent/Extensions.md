@@ -29,8 +29,11 @@
   It also ask the Agent to look for unfinished jobs and open PRs.
   
 - todo-feature
-  ASk the agent to implements a feature from the TODO backlog and measures elapsed time.
-  Usage: `/feature <number>` — starts implementing feature N (float numeration supported, e.g. `/feature 7.1`).
+  ASk the agent to implements a feature or a bugfix from the TODO backlog and measures elapsed time.
+  Usage:
+  -  `/feature <number>` — starts implementing feature N (float numeration supported, e.g. `/feature 7.1`).
+  -  `/bugfix <number>`  — starts implementing a fix for Bug N.
+  
   Runs `git checkout main && git pull` before the agent starts.
   Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>.txt`.
   Also tracks model name and token usage.

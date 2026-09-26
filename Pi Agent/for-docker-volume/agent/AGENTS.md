@@ -41,9 +41,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 3. Open Draft PR immediately
 4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
 5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
-6. Write the plan/sub-steps in the PR body as a GitHub task list (`- [ ] Sub-step 1`, …) and check them off as they complete
-7. This signals to other agents: "I'm working on this"
-8. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
+6. This signals to other agents: "I'm working on this"
+7. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
 
 ## TODO.md Structure
@@ -53,11 +52,14 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 # TODO
 
 ## Backlog
-- [ ] **[feat/01_task]** Task description
-- [ ] **[fix/02_bug]** Bug fix description
+- [feat/02_task] Task description
+- [fix/03_bug] Bug fix description
+
+## Done (last 20)
+- [feat/02_task] Task description
 ```
-- **Only `Backlog` section exists** on `main`
-- **No `In Progress` section exists anywhere** — not on `main`, not on branches
+
+- The `Done` section is optional
 - Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
 - A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
 - No `Done` → History lives in Git, not in files

@@ -4,43 +4,41 @@
  * /feature N [note] — Optionally includes a note with the feature start.
  * /feature end — Ends the current feature without saving timing (unreliable).
  *
- * /bug N — Fixes a bug from the TODO backlog and measures elapsed time.
- * /bug N [note] — Optionally includes a note with the bug start.
- * /bug end — Ends the current bug without saving timing (unreliable).
+ * /bugfix N — Fixes a bug from the TODO backlog and measures elapsed time.
+ * /bugfix N [note] — Optionally includes a note with the bug start.
+ * /bugfix end — Ends the current bug without saving timing (unreliable).
  *
  * Only one activity (feature or bug) can be active at a time. Starting a new one
  * auto-cancels the previous one without saving timing.
  *
  * Usage:
- *   /feature 10                    — Start implementing feature 10 from the TODO backlog.
- *   /feature 10 ignore existing PR — Start feature 10 with note about ignoring existing PR.
- *   /feature 10 "ignore existing PR" — Same as above with quoted note.
- *   /feature 10 "my custom note"    — Start feature 10 with custom note.
- *   /feature 7.1                    — Start implementing a sub-feature (float numeration supported).
- *   /feature end                    — End the current feature without saving timing data.
+ *   /feature 10                      — Start implementing feature 10 from the TODO backlog.
+ *   /feature 10 ignore existing PR   — Start feature 10 with note "ignoring existing PR".
+ *   /feature 10 "ignore existing PR" — Start feature 10 with note "ignoring existing PR".
+ *   /feature 7.1                     — Start implementing a feature 7.1.
+ *   /feature end                     — End the current feature without saving timing data.
  *
- *   /bug 7                          — Start fixing bug 7 from the TODO backlog.
- *   /bug 7 ignore existing PR       — Start bug 7 with note about ignoring existing PR.
- *   /bug 7 "ignore existing PR"     — Same as above with quoted note.
- *   /bug 7 "my custom note"         — Start bug 7 with custom note.
- *   /bug end                        — End the current bug without saving timing data.
+ *   /bugfix 7                        — Start fixing bug 7 from the TODO backlog.
+ *   /bugfix 7 ignore existing PR     — Start bug 7 with note "ignoring existing PR".
+ *   /bugfix 7 "my custom note"       — Start bug 7 with note "ignoring existing PR"
+ *   /bugfix end                      — End the current bug without saving timing data.
  *
  * The extension:
- *   1. Runs `git checkout main && git pull` to ensure up-to-date code
+ *   1. Move to updated main branch to look at up-to-date TODO
  *   2. Writes START:<timestamp> to ~/.pi/agent/todo-features/feature_<N>.txt or bug_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
- *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUG N COMPLETED]" on turn_end,
+ *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
  *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
  *   6. Clears the status bar entry for the completed activity.
  *
- * While a feature/bug runs the status bar shows the live elapsed time (MM:SS),
- * refreshed every 15s.
+ * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
  * While a feature/bug session is active it also polls GitHub every ~20s (max 2h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
- * when the PR is MERGED the watcher stops. Polling ends on `/feature end` or `/bug end`.
+ * when the PR is MERGED the watcher stops. 
+ * Polling is forced to ends on `/feature end` or `/bug end` (useful for stale polling).
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -50,10 +48,9 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
-const TODO_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
+const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY = "alex-piccione-todo-feature"
-// Provider id used for local LLMs served by llama-server
-const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'
+const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -118,6 +115,8 @@ const POLL_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const POLL_MAX_MS = 2 * 60 * 60 * 1000
 
+// TODO is the fff part really required or usefull ?
+// timestamp -> YYYY-MM-DD HH:mm:ss.fff
 function formatTime(ts: number): string {
   const d = new Date(ts)
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -142,6 +141,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
       encoding: 'utf-8',
       stdio: 'pipe',
     })
+    ctx.iui.notify(`Moved to updated main branch`, 'info')
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
@@ -166,7 +166,6 @@ interface PrView {
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  // PR review polling — simple timer pattern (see llama-server-model.ts):
   // closure-local state, cleaned up when the session shuts down.
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let pollStartedAt = 0
@@ -249,6 +248,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   })
 
   // Helper to parse command arguments for feature/bug
+  // return number as 0 when command it is called with "end" argument
   function parseCommandArgs(args: string): { number: number; note: string | undefined; error: string | null } {
     const trimmed = args.trim()
     if (trimmed === 'end' || trimmed === 'clean') {
@@ -283,20 +283,20 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     return { number, note, error: null }
   }
 
-  // Shared logic for starting a feature/bug activity (used by /feature and /feature-bug).
+  // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
   async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     const projectRoot = ctx.repoPath ?? process.cwd()
+    const END = 0 // "end" command argument is managed to send "0"
 
-    // "end" — cancel current activity without saving timing
-    if (number === 0) {
+    if (number === END) {
       if (!pending) {
-        ctx.ui.notify('\u2139\ufe0f No active feature or bug to end.', 'info')
+        ctx.ui.notify('❌ No active feature or bug to end.', 'info')
         return
       }
       const { type: pendingType, number: pendingNumber } = pending
       stopPrPolling()
       clearPending(ctx)
-      ctx.ui.notify(`\u26d4 ${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled \u2014 no timing saved.`, 'info')
+      ctx.ui.notify(`${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled - no timing saved.`, 'info')
       return
     }
 
@@ -308,12 +308,36 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const startTime = Date.now()
     const fileName = `${type}_${number}.txt`
-    const filePath = path.join(TODO_DIR, fileName)
+    const filePath = path.join(TODO_FEATURES_DIR, fileName)
     const startContent = `START: ${formatTime(startTime)}\n`
     await fs.writeFile(filePath, startContent, 'utf8')
 
     // Run git checkout main && git pull before sending the prompt
     const onMain = pullLatestMain(ctx, projectRoot)
+
+    // Check the number refers to an exising Feature or Bug entry in TODO.md
+    let content: string
+    try {
+      content = await fs.readFile(path.join(projectRoot, 'TODO.md'), 'utf8')
+    } catch {
+      ctx.ui.notify(`❌ Could not read TODO.md - cannot check if the feature/bug ${number} exists.`, 'error')
+      return
+    }
+    
+    const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
+        .filter(m => parseFloat(m[2]) === number)
+    if (matches.length === 0) {
+      ctx.ui.notify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, 'error')
+      return
+    }
+
+    /*
+    // Auto-detect if number refers to a Feature or a Bug
+    if (new Set(matches.map(m => m[1])).size > 1) {
+      ctx.ui.notify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
+      return
+    }
+    */
 
     pending = { type, number, startTime }
     completed = false
@@ -321,7 +345,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     startPrPolling(projectRoot)
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
-    ctx.ui.notify(`\u23f1\ufe0f ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+    const emoji = pending.type === 'feature' ? '☑️' : '🐛'
+    ctx.ui.notify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
     startStatusTimer(ctx)
 
     // Inject the task to the agent — code is already up to date
@@ -333,7 +358,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The bug number is ${number}. ` +
-        `**IMPORTANT**: after you publish or update the PR, include "[BUG ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
+        `**IMPORTANT**: after you publish or update the PR, include "[BUGFIX ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
 
     // Optional note: simply prepended as a prefix.
     if (note) {
@@ -355,45 +380,21 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     },
   })
 
-  // "/bug" conflicts with a built-in Pi interactive command, hence the combined name.
-  pi.registerCommand('feature-bug', {
-    description: 'Start a feature or bug from the TODO backlog (type auto-detected). Usage: /feature-bug <number> [note] or /feature-bug end',
+  // "/bug" is a built-in Pi interactive command, cannot be used.
+  pi.registerCommand('bugfix', {
+    description: 'Start a feature or bug from the TODO backlog (type auto-detected). Usage: /bugfix <number> [note] or /bugfix end',
     handler: async (args, ctx) => {
       const { number, note, error } = parseCommandArgs(args)
       if (error) {
         ctx.ui.notify(error, 'error')
         return
       }
-      if (number === 0) {
-        await startTask(ctx, 'feature', 0, undefined)
-        return
-      }
-
-      // Auto-detect whether the number refers to a Feature or a Bug entry in TODO.md
-      const projectRoot = ctx.repoPath ?? process.cwd()
-      let content: string
-      try {
-        content = await fs.readFile(path.join(projectRoot, 'TODO.md'), 'utf8')
-      } catch {
-        ctx.ui.notify('\u274c Could not read TODO.md \u2014 cannot auto-detect whether this is a feature or a bug.', 'error')
-        return
-      }
-      const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
-        .filter(m => parseFloat(m[2]) === number)
-      if (matches.length === 0) {
-        ctx.ui.notify(`\u274c No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, 'error')
-        return
-      }
-      if (new Set(matches.map(m => m[1])).size > 1) {
-        ctx.ui.notify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
-        return
-      }
-      await startTask(ctx, matches[0][1].toLowerCase() as 'feature' | 'bug', number, note)
-    },
+      await startTask(ctx, 'bug', number, note)
+    },    
   })
 
   // Detect the completion marker in assistant chat replies.
-  // Accepts "[FEATURE N COMPLETED]" or "[BUG N COMPLETED]" (N may be a float, e.g. 7.2);
+  // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
   // a number must match the active pending item.
   pi.on('turn_end', (event: TurnEndEvent) => {
     if (!pending) return
@@ -409,7 +410,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (type === 'feature') {
       match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
     } else {
-      match = /\[BUG( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
+      match = /\[BUGFIX( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
     }
     if (!match) return
     // if a number was given it must refer to the active pending item
@@ -435,7 +436,7 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
   const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
 
   const fileName = pending.type === 'feature' ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
-  const filePath = path.join(TODO_DIR, fileName)
+  const filePath = path.join(TODO_FEATURES_DIR, fileName)
   const endContent = `START: ${formatTime(pending.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info

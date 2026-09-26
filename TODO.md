@@ -5,6 +5,11 @@ Last bug: 11
 
 ## Backlog
 
+- Bug 12: todo-feature raise an error when called while agent is still replying
+  ``` 
+   ⏱️ Feature 3.1 started. Elapsed time will be recorded.
+   Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.
+  ``` 
 - Feature 29: audit all pi extensions for stale-ctx usage (same crash class as Bug 8)
   Any extension that captures `ctx` and uses it later — in timer callbacks
   (`setInterval`/`setTimeout`) or after an `await` — can crash Pi with
