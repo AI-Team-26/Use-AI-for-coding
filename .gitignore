@@ -4,3 +4,6 @@
 Modelfile
 # local Ollama model files
 Ollama models/modelfiles/
+
+# local typecheck/build artifacts
+agent_build/

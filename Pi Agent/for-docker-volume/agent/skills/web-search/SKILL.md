@@ -1,6 +1,6 @@
 ---
 name: web-search
-description: Searches the web using EXA AI for factual answers and documentation lookups. Use this when the user asks a question, needs facts, or wants to find official docs/tutorials.
+description: Search the web using EXA AI for factual answers and documentation lookups. Use this when the user asks a question, needs facts, or wants to find official docs/tutorials.
 ---
 
 # Web Search

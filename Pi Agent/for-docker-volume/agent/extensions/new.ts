@@ -29,7 +29,23 @@ async function saveModel(model: { provider: string; id: string }): Promise<void>
     await fs.mkdir(path.dirname(MODEL_TEMP_FILE), { recursive: true })
     await fs.writeFile(MODEL_TEMP_FILE, `${model.provider}\n${model.id}\n`, "utf8")
   } catch {
+    // TODO: console.error
     // non-fatal
+  }
+}
+
+/**
+ * Notify via a possibly-stale ctx.
+ * Event handlers here await filesystem work before touching ctx; if the session
+ * gets replaced in that window any ctx.ui.* access throws (stale-ctx crash class).
+ * Skips only when no ctx is available; any other failure is logged, never silenced.
+ */
+function safeNotify(ctx: ExtensionContext | null, message: string, type: "warning" | "error"): void {
+  if (!ctx) return;
+  try {
+    ctx.ui.notify(message, type);
+  } catch (err) {
+    console.error("[new] notify failed:", err);
   }
 }
 
@@ -43,6 +59,7 @@ async function loadAndDeleteModel(): Promise<SavedModel | null> {
     if (lines.length < 2 || !lines[0] || !lines[1]) return null
     return { provider: lines[0], id: lines[1] }
   } catch {
+    // TODO: console.error
     return null
   }
 }
@@ -52,7 +69,10 @@ export default function newExtension(pi: ExtensionAPI) {
   pi.on("session_before_switch", async (event: SessionBeforeSwitchEvent, ctx: ExtensionContext) => {
     if (event.reason !== "new") return
     const model = ctx.model
-    if (!model) return
+    if (!model) {
+      ctx.ui.notify("❌ /new: No current model to save", "warning")
+      return
+    }
     await saveModel({ provider: model.provider, id: model.id })
   })
 
@@ -60,21 +80,25 @@ export default function newExtension(pi: ExtensionAPI) {
   // from the temp file and immediately delete it.
   pi.on("session_start", async (event: SessionStartEvent, ctx: ExtensionContext) => {
     if (event.reason !== "new") return
+    
     const saved = await loadAndDeleteModel()
-    if (!saved) return
+    if (!saved) {
+      safeNotify(ctx, "❌ /new: No saved model found (temp file missing or invalid)", "warning")
+      return
+    }
 
     // Look up the full Model object in the registry (no JSON needed —
     // plain text plus registry lookup is enough).
     const restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
-      ctx.ui.notify(`Could not restore model ${saved.provider}/${saved.id}`, "warning")
+      safeNotify(ctx, `❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
       return
     }
 
     try {
       await pi.setModel(restored)
-    } catch {
-      // Non-fatal: the session runs with the default model.
+    } catch (err) {
+      safeNotify(ctx, `❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
     }
   })
 }
