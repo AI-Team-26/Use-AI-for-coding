@@ -2,6 +2,11 @@
 
 This document outlines hardware recommendations for building a high-performance workstation optimized for LLM inference and training using two NVIDIA RTX 3090 GPUs (totaling 48GB VRAM).
 
+
+Look at the video here to compare the components: https://www.youtube.com/watch?v=cN6aRa9GRfE
+MB: ASUS X99-E WS
+
+
 ## Core Requirements
 
 - **VRAM:** 48GB (2x 24GB RTX 3090)
