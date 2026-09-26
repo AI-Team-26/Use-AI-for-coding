@@ -85,6 +85,10 @@ interface TimingItem {
 
 let pending: TimingItem | null = null
 let completed = false
+// Most recent ctx delivered by session_start / agent_settled. A ctx captured once can go
+// stale after session replacement/reload and throw on any .ui.* use; timers always read the
+// latest one inside try/catch instead of a captured (stale) reference.
+let latestCtx: ExtensionContext | null = null
 
 // Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
@@ -101,13 +105,19 @@ function stopStatusTimer(): void {
   statusTimer = null
 }
 
-function startStatusTimer(ctx: ExtensionContext): void {
+function startStatusTimer(): void {
   stopStatusTimer()
   if (!pending) return
   const refresh = () => {
     if (!pending) { stopStatusTimer(); return }
+    const ctx = latestCtx
+    if (!ctx) return
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    try {
+      ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    } catch (err) {
+      console.error('todo-feature: error updating status:', err)
+    }
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -248,6 +258,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     stopStatusTimer()
   })
 
+  // Track the most recent ctx so timers never touch a stale (captured) reference.
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+  })
+
   // Helper to parse command arguments for feature/bug
   function parseCommandArgs(args: string): { number: number; note: string | undefined; error: string | null } {
     const trimmed = args.trim()
@@ -322,7 +337,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
     ctx.ui.notify(`\u23f1\ufe0f ${label} ${number} started. Elapsed time will be recorded.`, 'info')
-    startStatusTimer(ctx)
+    latestCtx = ctx
+    startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
     let agentMessage = type === 'feature'
@@ -422,6 +438,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // If the run ended without a completion signal (e.g. the agent asked a question),
   // the timer keeps running until the marker is seen or /feature end / /bug end cancels it.
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
+    latestCtx = ctx
     if (!pending || !completed) return
     await finishActivity(ctx, pi)
   })
