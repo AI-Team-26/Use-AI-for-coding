@@ -33,6 +33,19 @@ async function saveModel(model: { provider: string; id: string }): Promise<void>
   }
 }
 
+/**
+ * Notify via a possibly-stale ctx.
+ * Event handlers here await filesystem work before touching ctx; if the session
+ * gets replaced in that window any ctx.ui.* access throws (stale-ctx crash class).
+ */
+function safeNotify(ctx: ExtensionContext, message: string, type: "warning" | "error"): void {
+  try {
+    ctx.ui.notify(message, type);
+  } catch {
+    // ctx went stale mid-handler; nothing sensible to do
+  }
+}
+
 /** Load and immediately delete the saved model, so default behavior at Pi start is preserved. */
 async function loadAndDeleteModel(): Promise<SavedModel | null> {
   try {
@@ -66,7 +79,7 @@ export default function newExtension(pi: ExtensionAPI) {
     
     const saved = await loadAndDeleteModel()
     if (!saved) {
-      ctx.ui.notify("❌ /new: No saved model found (temp file missing or invalid)", "warning")
+      safeNotify(ctx, "❌ /new: No saved model found (temp file missing or invalid)", "warning")
       return
     }
 
@@ -74,7 +87,7 @@ export default function newExtension(pi: ExtensionAPI) {
     // plain text plus registry lookup is enough).
     const restored = ctx.modelRegistry.find(saved.provider, saved.id)
     if (!restored) {
-      ctx.ui.notify(`❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
+      safeNotify(ctx, `❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
       return
     }
 
@@ -82,7 +95,7 @@ export default function newExtension(pi: ExtensionAPI) {
     try {
       await pi.setModel(restored)
     } catch (err) {
-      ctx.ui.notify(`❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
+      safeNotify(ctx, `❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
     }
   })
 }

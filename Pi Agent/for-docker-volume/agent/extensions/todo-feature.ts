@@ -68,7 +68,12 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+      // ctx may have gone stale during the network round-trip
+      try {
+        ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+      } catch {
+        // stale ctx — next event delivers a fresh one
+      }
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -86,6 +91,9 @@ let completed = false
 // Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
+// Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
+// so timer callbacks must always read this and guard their calls with try/catch.
+let latestCtx: ExtensionContext | null = null
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000)
@@ -98,13 +106,19 @@ function stopStatusTimer(): void {
   statusTimer = null
 }
 
-function startStatusTimer(ctx: ExtensionContext): void {
+function startStatusTimer(): void {
   stopStatusTimer()
   if (!pending) return
   const refresh = () => {
     if (!pending) { stopStatusTimer(); return }
+    const ctx = latestCtx
+    if (!ctx) return
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    try {
+      ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    } catch {
+      // ctx became stale between capture and call — session_start / agent_settled will replace it
+    }
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -125,7 +139,7 @@ function formatTime(ts: number): string {
 
 function ensureTodoDir(): Promise<void> {
   try {
-    return fs.mkdir(TODO_DIR, { recursive: true })
+    return fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
   } catch {
     return Promise.resolve()
   }
@@ -141,7 +155,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
       encoding: 'utf-8',
       stdio: 'pipe',
     })
-    ctx.iui.notify(`Moved to updated main branch`, 'info')
+    ctx.ui.notify(`Moved to updated main branch`, 'info')
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
@@ -242,6 +256,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
   }
 
+  // Track the latest ctx from every event that delivers one; command handlers also
+  // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {
+    latestCtx = ctx
+  })
+
   pi.on('session_shutdown', () => {
     stopPrPolling()
     stopStatusTimer()
@@ -285,6 +305,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
   async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
+    latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
     const END = 0 // "end" command argument is managed to send "0"
 
@@ -347,7 +368,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
     ctx.ui.notify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
-    startStatusTimer(ctx)
+    startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
     let agentMessage = type === 'feature'
@@ -423,6 +444,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // If the run ended without a completion signal (e.g. the agent asked a question),
   // the timer keeps running until the marker is seen or /feature end / /bug end cancels it.
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
+    latestCtx = ctx
     if (!pending || !completed) return
     await finishActivity(ctx, pi)
   })
@@ -441,8 +463,13 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
 
   // Get model info
   const modelName = await resolveModelName(ctx)
-  const contextUsage = ctx.getContextUsage()
-  const tokens = contextUsage?.tokens ?? null
+  let tokens: number | null = null
+  try {
+    // ctx may have gone stale during the awaited calls above
+    tokens = ctx.getContextUsage()?.tokens ?? null
+  } catch {
+    // stale ctx — token count is best-effort
+  }
 
   const modelInfo = `MODEL: ${modelName}\n`
   const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
@@ -456,9 +483,18 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     await fs.writeFile(filePath, finalContent, 'utf8')
   }
 
-  ctx.ui.notify(`✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  // ctx was used after awaits above — it may have gone stale during them
+  try {
+    ctx.ui.notify(`✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  } catch {
+    // stale ctx — next event delivers a fresh one
+  }
   stopStatusTimer()
-  ctx.ui.setStatus(STATUS_KEY, undefined)
+  try {
+    ctx.ui.setStatus(STATUS_KEY, undefined)
+  } catch {
+    // stale ctx — next event delivers a fresh one
+  }
 
   // Inject follow-up message to write the PR timing
   const activityName = pending.type === 'feature' ? 'feature' : 'bug'
