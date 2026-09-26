@@ -14,14 +14,6 @@ Last bug: 12
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
   `/feature 10 "ignore existing PR"` should work the same.
 
-- Bug 7: todo-feature extension
-  I see this notify in the chat:
-  "⏸️ Stopped watching for PR review (2h limit reached)."
-  But the Feature is still shown in the status and gets updated (the ttime).
-  I've tarted a new feature, it reset the Featureand creatd a new one... but after a few miutes I see this:
-  "⏸️ Stopped watching for PR review (2h limit reached)." 
-  It seems that starting the new feture hasn't reset the 2h timer !!
-  Also, the message shold saywhichPR it refers to !
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
