@@ -37,12 +37,14 @@ async function saveModel(model: { provider: string; id: string }): Promise<void>
  * Notify via a possibly-stale ctx.
  * Event handlers here await filesystem work before touching ctx; if the session
  * gets replaced in that window any ctx.ui.* access throws (stale-ctx crash class).
+ * Skips only when no ctx is available; any other failure is logged, never silenced.
  */
-function safeNotify(ctx: ExtensionContext, message: string, type: "warning" | "error"): void {
+function safeNotify(ctx: ExtensionContext | null, message: string, type: "warning" | "error"): void {
+  if (!ctx) return;
   try {
     ctx.ui.notify(message, type);
-  } catch {
-    // ctx went stale mid-handler; nothing sensible to do
+  } catch (err) {
+    console.error("[new] notify failed:", err);
   }
 }
 

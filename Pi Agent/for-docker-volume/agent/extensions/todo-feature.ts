@@ -68,12 +68,7 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      // ctx may have gone stale during the network round-trip
-      try {
-        ctx.ui.notify('ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
-      } catch {
-        // stale ctx — next event delivers a fresh one
-      }
+      safeNotify(ctx, 'ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -92,8 +87,31 @@ let completed = false
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
 // Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
-// so timer callbacks must always read this and guard their calls with try/catch.
+// so timer callbacks must always read this instead of a captured value.
 let latestCtx: ExtensionContext | null = null
+
+/**
+ * Guarded UI access for calls made outside a fresh handler/event scope
+ * (timers, post-await code). Skips only when no ctx arrived yet; any other
+ * failure is logged, never silenced.
+ */
+function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): void {
+  if (!ctx) return
+  try {
+    ctx.ui.setStatus(STATUS_KEY, text)
+  } catch (err) {
+    console.error('[todo-feature] setStatus failed:', err)
+  }
+}
+
+function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
+  if (!ctx) return
+  try {
+    ctx.ui.notify(message, type)
+  } catch (err) {
+    console.error('[todo-feature] notify failed:', err)
+  }
+}
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.floor(ms / 1000)
@@ -111,14 +129,8 @@ function startStatusTimer(): void {
   if (!pending) return
   const refresh = () => {
     if (!pending) { stopStatusTimer(); return }
-    const ctx = latestCtx
-    if (!ctx) return
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    try {
-      ctx.ui.setStatus(STATUS_KEY, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
-    } catch {
-      // ctx became stale between capture and call — session_start / agent_settled will replace it
-    }
+    safeSetStatus(latestCtx, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -465,10 +477,10 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
   const modelName = await resolveModelName(ctx)
   let tokens: number | null = null
   try {
-    // ctx may have gone stale during the awaited calls above
+    // ctx may have gone stale during the awaited calls above; token count is best-effort
     tokens = ctx.getContextUsage()?.tokens ?? null
-  } catch {
-    // stale ctx — token count is best-effort
+  } catch (err) {
+    console.error('[todo-feature] getContextUsage failed:', err)
   }
 
   const modelInfo = `MODEL: ${modelName}\n`
@@ -483,18 +495,10 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     await fs.writeFile(filePath, finalContent, 'utf8')
   }
 
-  // ctx was used after awaits above — it may have gone stale during them
-  try {
-    ctx.ui.notify(`✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
-  } catch {
-    // stale ctx — next event delivers a fresh one
-  }
+  // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
+  safeNotify(ctx, `✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
-  try {
-    ctx.ui.setStatus(STATUS_KEY, undefined)
-  } catch {
-    // stale ctx — next event delivers a fresh one
-  }
+  safeSetStatus(ctx, undefined)
 
   // Inject follow-up message to write the PR timing
   const activityName = pending.type === 'feature' ? 'feature' : 'bug'
