@@ -5,10 +5,12 @@ Last bug: 12
 
 ## Backlog
 
-- Bug 14 | todo-extension polling is broken
-  I PR was done wit hREQUEST_CHANGES but the extension didn't picked it.
-  I suggest to add a visual thing to know the polling is active in the status, for example "{hourglass or magnifier emoji} PR # {pr number}".
-  When the polling stop, this status is celaned.
+- Feature 30 | todo-feature extension: unify status display
+  Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
+  Use two separate status keys:
+  - STATUS_KEY = "alex-piccione-todo-feature" → elapsed time (☑️ Feature N MM:SS)
+  - POLLING_STATUS_KEY = "alex-piccione-todo-feature-polling" → polling indicator (🔍 PR #N)
+  Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
 
 - Bug 3: When Pi start I have this warning message:
   "Warning: Could not restore model Llama.cpp/96K . Using Llama.cpp/64K"
@@ -53,6 +55,7 @@ Last bug: 12
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
 - Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
 - Bug 1 [bug/1_aaa]: Aaa (just an example)
 - Feature 8 [feat/8_aaa]: Aaa (just an example)
