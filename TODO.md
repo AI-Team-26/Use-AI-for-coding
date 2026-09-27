@@ -5,20 +5,6 @@ Last bug: 15
 
 ## Backlog
 
-- Bug 15: todo-feature PR polling stops working after session replacement (stale-ctx rework regression).
-  The PR review polling (startPrPolling) and the elapsed-time status timer (startStatusTimer) are killed
-  by `session_shutdown` but never restarted by `session_start`.
-  When Pi replaces a session (e.g. /new, model switch, context overflow), `session_shutdown` fires and
-  calls stopPrPolling() + stopStatusTimer(). The subsequent `session_start` handler only does
-  `latestCtx = ctx` — it does NOT restart either timer.
-  Since `pending` survives at module scope, the user does not re-run /feature N, so the timers stay dead:
-  no polling, no status indicator, no review notifications — the feature appears silently inactive.
-  This regressed in commit 953d95d (Feature 29 stale-ctx audit) which added `session_shutdown` cleanup
-  without the matching restart in `session_start`.
-  Compare with git-info.ts which correctly restarts its interval in `session_start` when `intervalId === null`.
-  Fix: in the `session_start` handler, if `pending` is set, call `startPrPolling(cwd)` (which clears any
-  stale interval first) and `startStatusTimer()` to resume both watchers with the fresh ctx/pi.
-
 - Feature 30 | todo-feature extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
   Use two separate status keys:
@@ -68,6 +54,7 @@ Last bug: 15
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
 - Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
