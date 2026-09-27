@@ -306,7 +306,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
     // module scope (the user does not re-run /feature N). If an activity is still
-    // active, resume polling and the elapsed-time ticker with the fresh ctx. (Bug 15)
+    // active, resume polling and the elapsed-time ticker with the fresh ctx.
     if (pending) {
       startPrPolling(ctx.repoPath ?? process.cwd())
       startStatusTimer()
