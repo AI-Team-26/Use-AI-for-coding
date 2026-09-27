@@ -36,8 +36,7 @@ Last bug: 12
 
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
-- Feature 18: todo-feature extension review watcher stop should add PR link to the message
-  "⏸️ Stopped watching for PR review (2h limit reached)." Add "Waiting for the review of PR #NN (<PR link>)".
+
 - Feature 19: todo-feature extension notified teh stop of review watch after 2 hous but the feature was still active
   How is possible the review is active ("Feature N" is shown in hte status) and there is a review watcher running?
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
@@ -55,6 +54,7 @@ Last bug: 12
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
 - Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
 - Bug 1 [bug/1_aaa]: Aaa (just an example)
