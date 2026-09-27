@@ -101,6 +101,7 @@ let pollStartedAt = 0
 let pollInFlight = false
 const handledReviewDecisions = new Map<string, string>()
 let watchedPr: { number: number; url: string } | null = null
+let pollingStatusKey = 'alex-piccione-todo-feature-polling'
 
 /**
  * Guarded UI access for calls made outside a fresh handler/event scope
@@ -189,12 +190,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   }
 }
 
-function clearPending(ctx: ExtensionContext): void {
-  if (!pending) return
-  stopStatusTimer()
-  ctx.ui.setStatus(STATUS_KEY, undefined)
-  pending = null
-}
+
 
 interface PrView {
   number: number
@@ -208,6 +204,18 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   const stopPrPolling = (): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
+    // Clear polling status indicator
+    if (latestCtx) {
+      safeSetStatus(latestCtx, undefined)
+    }
+  }
+
+  const clearPending = (ctx: ExtensionContext): void => {
+    if (!pending) return
+    stopStatusTimer()
+    stopPrPolling()
+    safeSetStatus(ctx, undefined)
+    pending = null
   }
 
   const checkPrReview = async (cwd: string): Promise<void> => {
@@ -236,6 +244,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       }
       watchedPr = { number: pr.number, url: pr.htmlUrl ?? '' }
 
+      // Update polling status indicator: show 🔍 PR #N while actively polling
+      if (watchedPr && latestCtx) {
+        safeSetStatus(latestCtx, `🔍 PR #${watchedPr.number}`)
+      }
+
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
         try {
@@ -248,15 +261,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
+      // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
-      const key = `${pr.number}:${decision}`
-      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED') || handledReviewDecisions.has(key)) return
+      
+      // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
+      const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
+
+      const key = `${pr.number}:${decision}:${hasChangesRequested}`
+      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+        return
+      }
       handledReviewDecisions.set(key, decision)
 
       if (decision === 'APPROVED') {
         // The user usually merges an approved PR themselves — just notify and keep watching until merged.
         pi.sendMessage({ customType: 'todo-feature', content: `✅ PR #${pr.number} approved — waiting for merge.`, display: true, details: {} })
-      } else {
+      } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { streamingBehavior: 'followUp' }
@@ -276,6 +296,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     handledReviewDecisions.clear()
     watchedPr = null
     pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
+    // Initial polling status will be set on first checkPrReview run
   }
 
   // Track the latest ctx from every event that delivers one; command handlers also
