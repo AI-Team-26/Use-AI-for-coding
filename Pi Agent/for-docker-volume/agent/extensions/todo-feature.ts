@@ -46,11 +46,14 @@
 import type { ExtensionAPI, ExtensionContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
 
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY = "alex-piccione-todo-feature"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
+const DEBUG = false
+
+const debug = (msg:string) => DEBUG && console.debug(`[todo-feature] ${msg}`)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -83,7 +86,7 @@ interface TimingItem {
 let pending: TimingItem | null = null
 let completed = false
 
-// Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
+// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
 // Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
@@ -109,7 +112,10 @@ let pollingStatusKey = 'alex-piccione-todo-feature-polling'
  * failure is logged, never silenced.
  */
 function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): void {
-  if (!ctx) return
+  if (!ctx) {
+    console.error('[todo-feature] setStatus failed got a null ctx:')
+    return
+  }
   try {
     ctx.ui.setStatus(STATUS_KEY, text)
   } catch (err) {
@@ -118,7 +124,10 @@ function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): 
 }
 
 function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
-  if (!ctx) return
+  if (!ctx) {
+    console.error('[todo-feature] notify got a null ctx:')
+    return
+  }
   try {
     ctx.ui.notify(message, type)
   } catch (err) {
@@ -184,8 +193,9 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
-    const detail = (e.stderr ?? '').trim() || e.message
-    ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
+    const detail = (e.stderr ?? '').trim() || e.message    
+    //ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
+    safeNotify(ctx, `❌ Git update failed: ${detail}`, 'error')
     return false
   }
 }
@@ -197,7 +207,7 @@ interface PrView {
   state: string
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
-  htmlUrl?: string
+  url?: string
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
@@ -218,8 +228,27 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
+   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
+     const res = spawnSync(
+       'gh', ['pr', 'list', '--head', branch, '--state', 'open',
+              '--json', 'number,state,reviewDecision,reviews,url'],
+       { cwd, encoding: 'utf-8' },
+     )
+
+     // A non-zero status is a real gh failure.
+     if (res.status !== 0)
+       throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
+
+     const prs: PrView[] = JSON.parse(res.stdout)   // [] when no PR — no exception, no regex
+     return prs[0] ?? null
+   }
+
   const checkPrReview = async (cwd: string): Promise<void> => {
-    if (pollInFlight) return
+    debug("checkPrReview")
+    if (pollInFlight) {
+        debug("pollInFlight... exit")
+        return
+    }
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
@@ -232,17 +261,23 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
       if (!branch || branch === 'main' || branch === 'master') return
 
-      let pr: PrView
+      let pr: PrView|null
       try {
-        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews,htmlUrl', {
-          cwd,
-          encoding: 'utf-8',
-          stdio: 'pipe',
-        }))
-      } catch {
+        pr = getBranchOpenPr(cwd, branch)
+      } catch (err) {
+        debug(`Failed to get PR"${branch}"`)
+        console.error('todo-feature: failed to get PR of branch', err)
+        return
+      }
+
+      if (pr == null) {
+        debug(`No open PR on the branch "${branch}"`)
         return // no open PR on this branch yet
       }
-      watchedPr = { number: pr.number, url: pr.htmlUrl ?? '' }
+
+      watchedPr = { number: pr.number, url: pr.url ?? '' }
+
+      debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
 
       // Update polling status indicator: show 🔍 PR #N while actively polling
       if (watchedPr && latestCtx) {
@@ -291,7 +326,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const startPrPolling = (cwd: string): void => {
-    stopPrPolling()
+    stopPrPolling() // stop polling previous PR
     pollStartedAt = Date.now()
     handledReviewDecisions.clear()
     watchedPr = null
