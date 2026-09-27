@@ -214,7 +214,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (!pending) return
     stopStatusTimer()
     stopPrPolling()
-    ctx.ui.setStatus(STATUS_KEY, undefined)
+    safeSetStatus(ctx, undefined)
     pending = null
   }
 
