@@ -223,7 +223,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
-      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (${watchedPr.url}).` : ''
+      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (<${watchedPr.url}>).` : ''
       pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
