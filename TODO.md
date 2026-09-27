@@ -5,6 +5,11 @@ Last bug: 12
 
 ## Backlog
 
+- Bug 14 | todo-extension polling is broken
+  I PR was done wit hREQUEST_CHANGES but the extension didn't picked it.
+  I suggest to add a visual thing to know the polling is active in the status, for example "{hourglass or magnifier emoji} PR # {pr number}".
+  When the polling stop, this status is celaned.
+
 - Bug 3: When Pi start I have this warning message:
   "Warning: Could not restore model Llama.cpp/96K . Using Llama.cpp/64K"
   It appears in the Pi chat.  
