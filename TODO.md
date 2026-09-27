@@ -12,11 +12,6 @@ Last bug: 12
   I remember there was a bug due to model id saved with a trail space ("96k ", "64k ") and the extensions was instead trimming it.
   I say this because hte error has suspect space after "Llama.cpp/96K", but can be not related.
 
-
-- Feature 28: todo-feature extension should accept an optional note.
-  `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
-  `/feature 10 "ignore existing PR"` should work the same.
-
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
@@ -53,5 +48,6 @@ Last bug: 12
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
 - Bug 1 [bug/1_aaa]: Aaa (just an example)
 - Feature 8 [feat/8_aaa]: Aaa (just an example)
