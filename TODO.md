@@ -1,9 +1,23 @@
 # TODO
 
 Last feature number: 29
-Last bug: 12
+Last bug: 15
 
 ## Backlog
+
+- Bug 15: todo-feature PR polling stops working after session replacement (stale-ctx rework regression).
+  The PR review polling (startPrPolling) and the elapsed-time status timer (startStatusTimer) are killed
+  by `session_shutdown` but never restarted by `session_start`.
+  When Pi replaces a session (e.g. /new, model switch, context overflow), `session_shutdown` fires and
+  calls stopPrPolling() + stopStatusTimer(). The subsequent `session_start` handler only does
+  `latestCtx = ctx` — it does NOT restart either timer.
+  Since `pending` survives at module scope, the user does not re-run /feature N, so the timers stay dead:
+  no polling, no status indicator, no review notifications — the feature appears silently inactive.
+  This regressed in commit 953d95d (Feature 29 stale-ctx audit) which added `session_shutdown` cleanup
+  without the matching restart in `session_start`.
+  Compare with git-info.ts which correctly restarts its interval in `session_start` when `intervalId === null`.
+  Fix: in the `session_start` handler, if `pending` is set, call `startPrPolling(cwd)` (which clears any
+  stale interval first) and `startStatusTimer()` to resume both watchers with the fresh ctx/pi.
 
 - Feature 30 | todo-feature extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
