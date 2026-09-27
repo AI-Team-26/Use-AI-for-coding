@@ -408,7 +408,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    pi.sendUserMessage(agentMessage)
+    // Queue behind any in-flight reply instead of throwing "Agent is already processing".
+    pi.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
   }
 
   pi.registerCommand('feature', {
