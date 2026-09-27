@@ -408,7 +408,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    pi.sendUserMessage(agentMessage)
+    pi.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
   }
 
   pi.registerCommand('feature', {

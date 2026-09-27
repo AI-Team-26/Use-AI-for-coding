@@ -13,11 +13,6 @@ Last bug: 12
   I say this because hte error has suspect space after "Llama.cpp/96K", but can be not related.
 
 
-- Bug 12: todo-feature raise an error when called while agent is still replying
-  ``` 
-   ⏱️ Feature 3.1 started. Elapsed time will be recorded.
-   Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.
-  ``` 
 - Feature 28: todo-feature extension should accept an optional note.
   `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
   `/feature 10 "ignore existing PR"` should work the same.
