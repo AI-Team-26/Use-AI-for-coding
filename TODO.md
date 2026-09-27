@@ -5,6 +5,11 @@ Last bug: 15
 
 ## Backlog
 
+- Feature 999 | Test
+  This is a fake feature, just to test the todo-extension extension.
+  Write an empty file.
+  Don't remove this feature from TODO in the PR.
+
 - Feature 30 | todo-feature extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
   Use two separate status keys:
