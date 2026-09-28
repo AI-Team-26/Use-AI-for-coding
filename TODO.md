@@ -1,9 +1,14 @@
 # TODO
 
 Last feature number: 29
-Last bug: 15
+Last bug: 16
 
 ## Backlog
+
+- Bug 16 | todo-feature polling
+  Polling continue also after Rejection, but does not trigger any command when reject a second time.
+  Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
+
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-extension extension.
