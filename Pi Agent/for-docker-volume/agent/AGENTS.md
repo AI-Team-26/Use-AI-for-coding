@@ -177,7 +177,8 @@ https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 
 **Do not resolve review threads yourself** unless the fix directly implements exactly what they asked for with zero ambiguity (e.g. "remove X", "fix typo Y") — in which case reply confirming the change and resolve it. Anything requiring judgment or open to interpretation, let the reviewer confirm.
 
-### Step 3 — Request Re-review
+### Step 3 — Request Re-review 
+**IMPORTANT:** You have to request a re-review when PR has changes
 ```bash
 curl -L -X POST \
   https://api.github.com/repos/<owner>/<repo>/pulls/<PR_NUMBER>/requested_reviewers \
