@@ -179,7 +179,7 @@ https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 
 ### Step 3 — Request Re-review
 ```bash
-curl -X POST \
+curl -L -X POST \
   https://api.github.com/repos/<owner>/<repo>/pulls/<PR_NUMBER>/requested_reviewers \
   -H "Authorization: token $(gh auth token)" \
   -H "Content-Type: application/json" \
