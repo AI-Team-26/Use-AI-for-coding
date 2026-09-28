@@ -2,6 +2,9 @@
 
 ## Backlog
 
+- Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
+- [feat/02_remove_clean_session_extension] Remove the redundant clean-session.ts extension as session management is being unified into todo-feature
+
 - Feature 31 | todo-feature extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
