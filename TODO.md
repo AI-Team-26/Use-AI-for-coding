@@ -1,10 +1,10 @@
 # TODO
 
-Last feature number: 29
-Last bug: 16
-
 ## Backlog
 
+- Feature 31 | todo-feature extension
+  Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
+  
 - Bug 16 | todo-feature polling
   Polling continue also after Rejection, but does not trigger any command when reject a second time.
   Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
@@ -47,8 +47,8 @@ Last bug: 16
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 19: todo-feature extension notified teh stop of review watch after 2 hous but the feature was still active
-  How is possible the review is active ("Feature N" is shown in hte status) and there is a review watcher running?
+- Feature 19: todo-feature extension notified the stop of review watch after 2 hous but the feature was still active
+  How is possible the review is active ("Feature N" is shown in the status) and there is a review watcher running?
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
