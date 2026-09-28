@@ -78,11 +78,20 @@ fi
 
 chmod 600 "$docker_volumes/scripts/github_pat"
 
-# Agent names
-for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
+# Agent names (has to match the ones defined in READNE Pi Agent,md)
+declare -A agents
+agents["Dev-1"]="🍋 Pi Lemon" 
+agents["Dev-2"]="🥝 Pi Kiwi" 
+agents["Dev-3"]="🍊 Pi Orange" 
+#agents["Manager"]="🍓 Pi Manager"
+#for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
+for agent in "${!agents[@]}"; do
+
+    PI_AGENT_NAME=${agents[$agent]}
 
     echo ""
     echo "=== Processing agent ${agent} ==="
+    echo "PI_AGENT_NAME: ${PI_AGENT_NAME}"
     echo "Target: ${docker_volumes}/${agent}"
 
     # Create target directory structure
@@ -104,6 +113,10 @@ for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
     # Set accounts on AGENTS.md
     sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_pi_agent/AGENTS.md"
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_pi_agent/AGENTS.md"
+
+    # Set PI agent name
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$docker_volume_pi_agent/SYSTEM.md" 
+    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$docker_volume_pi_agent/AGENTS.md"
 
     # Copy skills and extensions recursively
     cp -r agent/skills/* "$docker_volume_pi_agent/skills/" || true
