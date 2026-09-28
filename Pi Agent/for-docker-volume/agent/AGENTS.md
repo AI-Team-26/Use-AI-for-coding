@@ -20,8 +20,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 
 ## Always Check TODO First
 1. Read `main/TODO.md` on the `main` branch → see what's available in **Backlog**
-2. Run `gh pr list --state open` → check for existing work (collision detection)
-3. Check your own PRs with your agent label → **Continue** if found
+2. Run `gh pr list --state open` → check for existing work
+3. Check your own PRs with your agent label. If found → suggest the user to continue to work on that.
 
 ## Branch & PR Protocol
 - **Always** work on a new branch and create a PR for any change. DO NOT work on `main` branch unless explicitly requested by the user.
@@ -29,7 +29,7 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - Use a numeric prefix to avoid collisions: `feat/01_`, `fix/02_`
 - Push on `main` branch is blocked usually
 
-### Claiming a Task (Collision Detection)
+### Task ownership
 1. Scan `Backlog` on `main`
 2. For each task, check `gh pr list --state open`
 3. If a matching PR exists with `agent: <someone_else>` → **Skip (Collision)**
@@ -177,9 +177,10 @@ https://api.github.com/repos/owner/repo/pulls/comments/<comment_id>
 
 **Do not resolve review threads yourself** unless the fix directly implements exactly what they asked for with zero ambiguity (e.g. "remove X", "fix typo Y") — in which case reply confirming the change and resolve it. Anything requiring judgment or open to interpretation, let the reviewer confirm.
 
-### Step 3 — Request Re-review
+### Step 3 — Request Re-review 
+**IMPORTANT:** You have to request a re-review when PR has changes
 ```bash
-curl -X POST \
+curl -L -X POST \
   https://api.github.com/repos/<owner>/<repo>/pulls/<PR_NUMBER>/requested_reviewers \
   -H "Authorization: token $(gh auth token)" \
   -H "Content-Type: application/json" \
