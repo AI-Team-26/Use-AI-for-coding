@@ -82,10 +82,10 @@ After applying changes, run the test suite if available:
 ## .NET Projects
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`
 - **Project layout** — Source under `src/`, tests under `tests/`
-- **CI workflow** — Must have `.github/workflows/ci.yml`
 - **Test framework** — NUnit + Unquote (for F#)
 - **Versions** — Never downgrade packages unless planned
 - DO NOT use underscore prefix on variable names
+- For Console project use Spectre 
 
 ## Web Apps
 - **TypeScript** — Not plain JavaScript
