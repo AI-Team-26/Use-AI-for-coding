@@ -3,7 +3,6 @@
 ## Backlog
 
 - [feat/02_remove_clean_session_extension] Remove the redundant clean-session.ts extension as session management is being unified into todo-feature
-- Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
 - Feature 33 | pr-extension
   Add an extension (pr-extension) that add this command: /review [pr] [note:optional] where pr is a number and norte is optional and can be wrapped by double/single quote (look at todo-feature extension).
 
