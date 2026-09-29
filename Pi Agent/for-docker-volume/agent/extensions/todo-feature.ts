@@ -43,7 +43,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
@@ -390,7 +390,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
-  async function startTask(ctx: ExtensionContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
+  async function startTask(ctx: ExtensionCommandContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
     const END = 0 // "end" command argument is managed to send "0"
@@ -472,7 +472,24 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    pi.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
+    // Start a fresh session so the agent begins the task on clean state.
+    // Module-level pending/timers survive via the session_start handler.
+    try {
+      const result = await ctx.newSession({
+        withSession: async (newCtx) => {
+          latestCtx = newCtx
+          pi.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
+        },
+      })
+      if (result.cancelled) {
+        stopPrPolling()
+        clearPending(latestCtx ?? ctx)
+      }
+    } catch (err) {
+      stopPrPolling()
+      clearPending(latestCtx ?? ctx)
+      safeNotify(ctx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+    }
   }
 
   pi.registerCommand('feature', {

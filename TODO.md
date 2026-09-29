@@ -2,7 +2,13 @@
 
 ## Backlog
 
+- [feat/02_remove_clean_session_extension] Remove the redundant clean-session.ts extension as session management is being unified into todo-feature
 - Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
+- Feature 33 | pr-extension
+  Add an extension (pr-extension) that add this command: /review [pr] [note:optional] where pr is a number and norte is optional and can be wrapped by double/single quote (look at todo-feature extension).
+
+  It will clean the session and inject this prompt:
+  "Please review the PR [n]. Leave a PR review comment, signed with your name. [note]"
 
 - Feature 31 | todo-feature extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
@@ -66,6 +72,7 @@
 
 ## Latest 10 tasks completed
 - Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
+- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-feature starts a fresh session on task start for context purity
 - Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
