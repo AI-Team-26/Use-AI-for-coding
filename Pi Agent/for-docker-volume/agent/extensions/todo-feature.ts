@@ -564,7 +564,6 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
 
   const fileName = pending.type === 'feature' ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
   const filePath = path.join(TODO_FEATURES_DIR, fileName)
-  const endContent = `START: ${formatTime(pending.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
   const modelName = await resolveModelName(ctx)
@@ -576,14 +575,21 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     console.error('[todo-feature] getContextUsage failed:', err)
   }
 
-  const modelInfo = `MODEL: ${modelName}\n`
-  const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
-  const finalContent = endContent + modelInfo + tokensInfo
+  // Unify the Agent report format as specified in Feature 25
+  const reportHeader = `# ${pending.type === 'feature' ? 'Feature' : 'Bug'} execution report\n`
+  const reportNote = `(first push only, without following reviews rework)\n`
+  const reportTime = `Time required: ${elapsedMinutes} minutes\n`
+  const reportModel = `Model used: ${modelName}\n`
+  const reportTokens = `Tokens used: ${tokens}\n`
+  const finalContent = reportHeader + reportNote + reportTime + reportModel + reportTokens
 
   // Append to the file
   try {
     const existing = await fs.readFile(filePath, 'utf8')
-    await fs.writeFile(filePath, existing + finalContent, 'utf8')
+    // Check if report already exists (first push only)
+    if (!existing.includes('# ' + (pending.type === 'feature' ? 'Feature' : 'Bug') + ' execution report')) {
+      await fs.writeFile(filePath, existing + finalContent, 'utf8')
+    }
   } catch {
     await fs.writeFile(filePath, finalContent, 'utf8')
   }
