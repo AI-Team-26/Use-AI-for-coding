@@ -32,8 +32,9 @@ function parseReviewArgs(args: string): ParsedReviewArgs {
     return { prNumber: 0, note: undefined, error: '❌ Usage: /review <pr-number> [optional note]\nExample: /review 42 or /review 42 "quick look"' }
   }
 
+  // Regex guarantees digits, so only the zero case can fail here.
   const prNumber = parseInt(match[1], 10)
-  if (isNaN(prNumber) || prNumber <= 0) {
+  if (prNumber <= 0) {
     return { prNumber: 0, note: undefined, error: '❌ PR number must be a positive integer.' }
   }
 
@@ -71,10 +72,11 @@ export default function prExtension(pi: ExtensionAPI) {
           },
         })
       } catch (err) {
-        if (!ctx) return
         try {
           ctx.ui.notify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
-        } catch {}
+        } catch (notifyErr) {
+          console.error('[pr-extension] notify failed:', notifyErr)
+        }
       }
     },
   })
