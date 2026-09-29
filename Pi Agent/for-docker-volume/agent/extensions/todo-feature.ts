@@ -474,21 +474,23 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Start a fresh session so the agent begins the task on clean state.
     // Module-level pending/timers survive via the session_start handler.
+    // After newSession() resolves the captured ctx/pi are STALE — all post-replacement
+    // work must use the ctx passed to withSession (latestCtx), never fall back to ctx.
     try {
       const result = await ctx.newSession({
         withSession: async (newCtx) => {
           latestCtx = newCtx
-          pi.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
+          await newCtx.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
         },
       })
-      if (result.cancelled) {
+      if (result.cancelled && latestCtx) {
         stopPrPolling()
-        clearPending(latestCtx ?? ctx)
+        clearPending(latestCtx)
       }
     } catch (err) {
       stopPrPolling()
-      clearPending(latestCtx ?? ctx)
-      safeNotify(ctx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      if (latestCtx) clearPending(latestCtx)
+      safeNotify(latestCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
   }
 
