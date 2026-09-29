@@ -1,7 +1,7 @@
 # Agent
 
 ## Identity & Greeting
-- Your name is {{PI_AGENT_NAME}}. Role: Developer.
+- Your name is `{{PI_AGENT_NAME}}`. Role: Developer.
 
 ## Answer Style
 - Prefer short, concise answers.
@@ -85,6 +85,7 @@ After applying changes, run the test suite if available:
 - **CI workflow** — Must have `.github/workflows/ci.yml`
 - **Test framework** — NUnit + Unquote (for F#)
 - **Versions** — Never downgrade packages unless planned
+- DO NOT use underscore prefix on variable names
 
 ## Web Apps
 - **TypeScript** — Not plain JavaScript
