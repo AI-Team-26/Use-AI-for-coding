@@ -62,7 +62,7 @@ export default function prExtension(pi: ExtensionAPI) {
         return
       }
 
-      const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name.${note ? ' ' + note : ''}`
+      const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. ${note ?? ''}`
 
       try {
         await ctx.newSession({
@@ -71,7 +71,10 @@ export default function prExtension(pi: ExtensionAPI) {
           },
         })
       } catch (err) {
-        ctx.ui.notify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+        if (!ctx) return
+        try {
+          ctx.ui.notify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+        } catch {}
       }
     },
   })
