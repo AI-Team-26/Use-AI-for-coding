@@ -2,7 +2,6 @@
 
 ## Backlog
 
-- Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
 - [feat/02_remove_clean_session_extension] Remove the redundant clean-session.ts extension as session management is being unified into todo-feature
 
 - Feature 31 | todo-feature extension
@@ -67,6 +66,7 @@
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-feature starts a fresh session on task start for context purity
 - Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
