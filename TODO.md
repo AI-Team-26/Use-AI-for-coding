@@ -8,13 +8,14 @@
   It will clean the session and inject this prompt:
   "Please review the PR [n]. Leave a PR review comment, signed with your name. [note]"  
 
+- Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
+
 - Feature 31 | todo-feature extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
 - Bug 16 | todo-feature polling
   Polling continue also after Rejection, but does not trigger any command when reject a second time.
   Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
-
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-extension extension.
