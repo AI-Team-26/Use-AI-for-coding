@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- Feature 33 | pr-extension
-  Add an extension (pr-extension) that add this command: /review [pr] [note:optional] where pr is a number and norte is optional and can be wrapped by double/single quote (look at todo-feature extension).
-
-  It will clean the session and inject this prompt:
-  "Please review the PR [n]. Leave a PR review comment, signed with your name. [note]"  
-
 - Feature 32 | todo-feature: start a new session by default when starting a task to ensure context purity
 
 - Feature 31 | todo-feature extension
@@ -71,6 +65,7 @@
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
 - Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator

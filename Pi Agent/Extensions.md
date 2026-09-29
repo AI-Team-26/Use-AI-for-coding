@@ -39,3 +39,10 @@
   Also tracks model name and token usage.
   Injects follow-up message to write timing into the PR.
   Completion marker: `[FEATURE N COMPLETED]`/`[BUGFIX N COMPLETED]`
+
+- pr-extension
+  Add the `/review` command to start a fresh session for reviewing a GitHub PR.
+  Usage:
+  -  `/review <pr-number>` — review PR N with no additional note.
+  -  `/review <pr-number> <note>` — review PR N with an optional note (supports double/single quotes).
+  Cleans the session and injects a prompt asking the agent to leave a PR review comment signed with its name.
