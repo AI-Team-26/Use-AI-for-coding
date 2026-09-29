@@ -16,6 +16,11 @@
   Polling continue also after Rejection, but does not trigger any command when reject a second time.
   Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
 
+- Bug 17 | todo-feature fresh session crashes with stale ctx
+  After starting a fresh session (Feature 32), Pi crashes:
+  "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
+  The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-extension extension.
   Write an empty file.
