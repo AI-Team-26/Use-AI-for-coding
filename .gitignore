@@ -7,4 +7,3 @@ Ollama models/modelfiles/
 
 # local typecheck/build artifacts
 agent_build/
-*.ts.backup

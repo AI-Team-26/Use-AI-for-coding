@@ -39,15 +39,11 @@ function parseReviewArgs(args: string): ParsedReviewArgs {
   }
 
   const notePart = (match[2] ?? '').trim()
-  let note: string | undefined
-  if (notePart) {
-    // Strip surrounding quotes if present
-    if ((notePart.startsWith('"') && notePart.endsWith('"')) ||
-        (notePart.startsWith("'") && notePart.endsWith("'"))) {
-      note = notePart.slice(1, -1).trim()
-    } else {
-      note = notePart
-    }
+  let note: string | undefined = notePart || undefined
+  // Strip surrounding quotes if present
+  if (note && ((note.startsWith('"') && note.endsWith('"')) ||
+      (note.startsWith("'") && note.endsWith("'")))) {
+    note = note.slice(1, -1).trim()
   }
 
   return { prNumber, note, error: null }
@@ -75,7 +71,7 @@ export default function prExtension(pi: ExtensionAPI) {
         try {
           ctx.ui.notify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
         } catch (notifyErr) {
-          console.error('[pr-extension] notify failed:', notifyErr)
+          console.error('[pr-extension] newSession failed:', err, '— and notify also failed:', notifyErr)
         }
       }
     },
