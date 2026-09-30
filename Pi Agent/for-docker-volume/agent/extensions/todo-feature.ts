@@ -625,8 +625,8 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   const reportLines = [
     `## ${label} agent execution report`,
     '_(first push only, without following reviews rework)_',
-    ` ⏲️vTime required: ${elapsedMinutes} minutes`,
-    ` 🤖Model used: ${modelName}`,
+    ` ⏲️ Time required: ${elapsedMinutes} minutes`,
+    ` 🤖 Model used: ${modelName}`,
   ]
   if (tokens !== null) reportLines.push(` 💰 Tokens used: ${tokens}`)
   const report = reportLines.join('\n')
@@ -645,21 +645,15 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   stopStatusTimer()
   safeSetStatus(ctx, undefined)
 
-  // Inject follow-up message to write the PR timing
-  //const activityName = pending.type === 'feature' ? 'feature' : 'bug'
-  //pi.sendUserMessage(
-  //  `Write in the PR that this ${activityName} required ${elapsedMinutes} minutes. ` +
-  // `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
-
   if (!taskProjectRoot) {
     console.error(`[todo-extension] finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
   }
 
   // Write the report directly into the open PR description (no chat pollution)
   if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
-    safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
+    //safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
   } else {
-    //safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')    
+    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')    
   }
 
   pending = null
