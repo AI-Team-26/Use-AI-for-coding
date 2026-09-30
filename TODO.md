@@ -2,6 +2,12 @@
 
 ## Backlog
 
+- Feature 34 | todo-feature extension: reuse PR lookup in appendReportToPr
+  `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
+  Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
+  - `getBranchOpenPr` keeps requesting `number,state,reviewDecision,reviews,url`
+  - `appendReportToPr` requests only `number,body` — collapsing its two gh calls (`pr list` + `pr view`) into one.
+
 - Feature 31 | todo-feature extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
