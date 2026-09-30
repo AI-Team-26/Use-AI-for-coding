@@ -71,7 +71,7 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      safeNotify(ctx, 'ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+      safeNotify(ctx, 'Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -95,10 +95,14 @@ let statusTimer: ReturnType<typeof setInterval> | null = null
 // so timer callbacks must always read this instead of a captured value.
 let latestCtx: ExtensionContext | null = null
 
+// PR review polling cadence — keeps the agent working without user prompts.
+const POLL_INTERVAL_MS = 20_000
+// Safenet: stop polling after this long even if no decision was made (can be increased later).
+const POLL_MAX_MS = 4 * 60 * 60 * 1000
+
 // PR review-watcher state lives at module scope rather than per extension instance:
 // Pi can instantiate the factory again on session replacement without shutting the
 // previous one down, leaking a stale poll interval whose 2h clock never resets
-// (Bug 7 — "Stopped watching" fired minutes after starting a fresh feature).
 // Sharing the state guarantees a single watcher process-wide; startPrPolling()
 // clears any leaked interval before arming a fresh one.
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -106,7 +110,6 @@ let pollStartedAt = 0
 let pollInFlight = false
 const handledReviewDecisions = new Map<string, string>()
 let watchedPr: { number: number; url: string } | null = null
-let pollingStatusKey = 'alex-piccione-todo-feature-polling'
 
 /**
  * Guarded UI access for calls made outside a fresh handler/event scope
@@ -137,17 +140,6 @@ function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' 
   }
 }
 
-function formatElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
-}
-
-function stopStatusTimer(): void {
-  if (statusTimer) clearInterval(statusTimer)
-  statusTimer = null
-}
-
 function startStatusTimer(): void {
   stopStatusTimer()
   if (!pending) return
@@ -160,17 +152,23 @@ function startStatusTimer(): void {
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
 }
 
-// PR review polling cadence — keeps the agent working without user prompts.
-const POLL_INTERVAL_MS = 20_000
-// Safenet: stop polling after this long even if no decision was made (can be increased later).
-const POLL_MAX_MS = 2 * 60 * 60 * 1000
+function stopStatusTimer(): void {
+  if (statusTimer) clearInterval(statusTimer)
+  statusTimer = null
+}
 
-// TODO is the fff part really required or usefull ?
+// TODO is the fff part really needed ?
 // timestamp -> YYYY-MM-DD HH:mm:ss.fff
 function formatTime(ts: number): string {
   const d = new Date(ts)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
+}
+
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
 }
 
 function ensureTodoDir(): Promise<void> {
@@ -190,6 +188,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
     const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
     if (!branch || branch === 'main' || branch === 'master') return false
 
+    //const prNumber = getBranchOpenPr(branch)
     const listRes = spawnSync(
       'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number'],
       { cwd, encoding: 'utf-8' },
@@ -198,7 +197,10 @@ function appendReportToPr(cwd: string, report: string): boolean {
       throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
     const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
     const pr = prs[0]
-    if (!pr) return false
+    if (!pr) {
+      console.error(`PR not found on branch '${branch}'.`)
+      return false
+    }
 
     const viewRes = spawnSync(
       'gh', ['pr', 'view', String(pr.number), '--json', 'body'],
@@ -246,8 +248,6 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   }
 }
 
-
-
 interface PrView {
   number: number
   state: string
@@ -274,20 +274,20 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
-   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-     const res = spawnSync(
-       'gh', ['pr', 'list', '--head', branch, '--state', 'open',
-              '--json', 'number,state,reviewDecision,reviews,url'],
-       { cwd, encoding: 'utf-8' },
-     )
+  // Return the "open" PR on a branch
+  const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
+    const res = spawnSync(
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,reviewDecision,reviews,url'],
+      { cwd, encoding: 'utf-8' },
+    )
 
-     // A non-zero status is a real gh failure.
-     if (res.status !== 0)
-       throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
+    // A non-zero status is a real gh failure.
+    if (res.status !== 0)
+      throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
 
-     const prs: PrView[] = JSON.parse(res.stdout)   // [] when no PR — no exception, no regex
-     return prs[0] ?? null
-   }
+    const prs: PrView[] = JSON.parse(res.stdout)   // [] when no PR — no exception, no regex
+    return prs[0] ?? null  // assume there is 1 PR and points to "main"
+  }
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
@@ -646,11 +646,21 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   stopStatusTimer()
   safeSetStatus(ctx, undefined)
 
+  // Inject follow-up message to write the PR timing
+  //const activityName = pending.type === 'feature' ? 'feature' : 'bug'
+  //pi.sendUserMessage(
+  //  `Write in the PR that this ${activityName} required ${elapsedMinutes} minutes. ` +
+  // `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
+
+  if (!taskProjectRoot) {
+    console.error(`[todo-extension] finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
+  }
+
   // Write the report directly into the open PR description (no chat pollution)
   if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
     safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
   } else {
-    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
+    //safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')    
   }
 
   pending = null
