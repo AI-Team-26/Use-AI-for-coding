@@ -580,7 +580,7 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
   const reportNote = `(first push only, without following reviews rework)\n`
   const reportTime = `Time required: ${elapsedMinutes} minutes\n`
   const reportModel = `Model used: ${modelName}\n`
-  const reportTokens = `Tokens used: ${tokens}\n`
+  const reportTokens = tokens !== null ? `Tokens used: ${tokens}\n` : ''
   const finalContent = reportHeader + reportNote + reportTime + reportModel + reportTokens
 
   // Append to the file
