@@ -29,7 +29,7 @@
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
  *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
- *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
+ *   5. Appends the unified execution report directly to the open PR description (via gh)
  *   6. Clears the status bar entry for the completed activity.
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
@@ -85,6 +85,8 @@ interface TimingItem {
 
 let pending: TimingItem | null = null
 let completed = false
+// Project root of the running task — needed by finishActivity to locate the branch's PR.
+let taskProjectRoot: string | null = null
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
@@ -176,6 +178,50 @@ function ensureTodoDir(): Promise<void> {
     return fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
   } catch {
     return Promise.resolve()
+  }
+}
+
+/**
+ * Append the unified execution report to the open PR of the current branch.
+ * Returns true when the report is present in the PR body (added or already there).
+ */
+function appendReportToPr(cwd: string, report: string): boolean {
+  try {
+    const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+    if (!branch || branch === 'main' || branch === 'master') return false
+
+    const listRes = spawnSync(
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (listRes.status !== 0)
+      throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
+    const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
+    const pr = prs[0]
+    if (!pr) return false
+
+    const viewRes = spawnSync(
+      'gh', ['pr', 'view', String(pr.number), '--json', 'body'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (viewRes.status !== 0)
+      throw new Error(`gh pr view failed (${viewRes.status}): ${viewRes.stderr}`)
+    const body = ((JSON.parse(viewRes.stdout) as { body?: string }).body ?? '').trimEnd()
+
+    // First push only — do not duplicate the report after review rework
+    if (/^# (Feature|Bug) execution report$/m.test(body)) return true
+
+    const editRes = spawnSync(
+      'gh', ['pr', 'edit', String(pr.number), '--body', `${body}\n\n${report}`],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (editRes.status !== 0)
+      throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
+    debug(`Report appended to PR #${pr.number} description`)
+    return true
+  } catch (err) {
+    console.error('[todo-feature] failed to attach report to PR:', err)
+    return false
   }
 }
 
@@ -393,6 +439,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   async function startTask(ctx: ExtensionCommandContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
+    taskProjectRoot = projectRoot
     const END = 0 // "end" command argument is managed to send "0"
 
     if (number === END) {
@@ -551,11 +598,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
     latestCtx = ctx
     if (!pending || !completed) return
-    await finishActivity(ctx, pi)
+    await finishActivity(ctx)
   })
 }
 
-async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+async function finishActivity(ctx: ExtensionContext): Promise<void> {
   if (!pending || !completed) return
 
   const endTime = Date.now()
@@ -564,7 +611,6 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
 
   const fileName = pending.type === 'feature' ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
   const filePath = path.join(TODO_FEATURES_DIR, fileName)
-  const endContent = `START: ${formatTime(pending.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
   const modelName = await resolveModelName(ctx)
@@ -576,9 +622,16 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     console.error('[todo-feature] getContextUsage failed:', err)
   }
 
-  const modelInfo = `MODEL: ${modelName}\n`
-  const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
-  const finalContent = endContent + modelInfo + tokensInfo
+  const label = pending.type === 'feature' ? 'Feature' : 'Bug'
+  const reportLines = [
+    `# ${label} execution report`,
+    '(first push only, without following reviews rework)',
+    `Time required: ${elapsedMinutes} minutes`,
+    `Model used: ${modelName}`,
+  ]
+  if (tokens !== null) reportLines.push(`Tokens used: ${tokens}`)
+  const report = reportLines.join('\n')
+  const finalContent = `${report}\n`
 
   // Append to the file
   try {
@@ -589,18 +642,16 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
   }
 
   // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
-  safeNotify(ctx, `✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  safeNotify(ctx, `✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
   safeSetStatus(ctx, undefined)
 
-  // Inject follow-up message to write the PR timing
-  const activityName = pending.type === 'feature' ? 'feature' : 'bug'
-  pi.sendUserMessage(
-    `Write in the PR that this ${activityName} required ${elapsedMinutes} minutes. ` +
-    `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
-    `No need to share this info here in the chat. Remember again the PR number and link to the user.`,
-    { streamingBehavior: "followUp" }
-  )
+  // Write the report directly into the open PR description (no chat pollution)
+  if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
+    safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
+  } else {
+    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
+  }
 
   pending = null
   completed = false

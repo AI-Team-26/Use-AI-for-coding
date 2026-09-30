@@ -39,15 +39,6 @@
   Also the branch is useless since it is printed in another extension.
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
-- Feature 25: todo-feature extension, unify the Agent report:
-  ```
-  # Feature execution report 
-  (first push only, without following reviews rework)
-  Time required: 2.0 minutes 
-  Model used: Llama.cpp/Qwen3.8-27B-ASCII-Condensed-IQ4_XS-3_troed_64k
-  Tokens used: 8797
-  ```
-
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
