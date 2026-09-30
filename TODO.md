@@ -2,12 +2,6 @@
 
 ## Backlog
 
-- Feature 33 | pr-extension
-  Add an extension (pr-extension) that add this command: /review [pr] [note:optional] where pr is a number and norte is optional and can be wrapped by double/single quote (look at todo-feature extension).
-
-  It will clean the session and inject this prompt:
-  "Please review the PR [n]. Leave a PR review comment, signed with your name. [note]"
-
 - Feature 31 | todo-feature extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
