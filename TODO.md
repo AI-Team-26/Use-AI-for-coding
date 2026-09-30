@@ -22,8 +22,9 @@
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-extension extension.
-  Write an empty file.
+  Write an empty file.  
   Don't remove this feature from TODO in the PR.
+  DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
 
 - Feature 30 | todo-feature extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
