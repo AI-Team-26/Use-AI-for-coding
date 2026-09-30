@@ -211,7 +211,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
     const body = ((JSON.parse(viewRes.stdout) as { body?: string }).body ?? '').trimEnd()
 
     // First push only — do not duplicate the report after review rework
-    if (/^# (Feature|Bug) execution report$/m.test(body)) return true
+    if (/^### (Feature|Bug) agent work report$/m.test(body)) return true
 
     const editRes = spawnSync(
       'gh', ['pr', 'edit', String(pr.number), '--body', `${body}\n\n${report}`],
@@ -241,8 +241,7 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
-    const detail = (e.stderr ?? '').trim() || e.message    
-    //ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
+    const detail = (e.stderr ?? '').trim() || e.message
     safeNotify(ctx, `❌ Git update failed: ${detail}`, 'error')
     return false
   }
@@ -327,7 +326,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Update polling status indicator: show 🔍 PR #N while actively polling
       if (watchedPr && latestCtx) {
-        safeSetStatus(latestCtx, `🔍 PR #${watchedPr.number}`)
+        safeSetStatus(latestCtx, `👁️ PR #${watchedPr.number}`) // 👀
       }
 
       if (pr.state === 'MERGED') {
@@ -624,12 +623,12 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
   const reportLines = [
-    `# ${label} execution report`,
-    '(first push only, without following reviews rework)',
-    `Time required: ${elapsedMinutes} minutes`,
-    `Model used: ${modelName}`,
+    `## ${label} agent execution report`,
+    '_(first push only, without following reviews rework)_',
+    ` ⏲️vTime required: ${elapsedMinutes} minutes`,
+    ` 🤖Model used: ${modelName}`,
   ]
-  if (tokens !== null) reportLines.push(`Tokens used: ${tokens}`)
+  if (tokens !== null) reportLines.push(` 💰 Tokens used: ${tokens}`)
   const report = reportLines.join('\n')
   const finalContent = `${report}\n`
 
