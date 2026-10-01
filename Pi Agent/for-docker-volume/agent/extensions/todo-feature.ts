@@ -37,7 +37,7 @@
  * While a feature/bug session is active it also polls GitHub every ~20s (max 2h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
- * when the PR is MERGED the watcher stops. 
+ * when the PR is MERGED the watcher stops.
  * Polling is forced to ends on `/feature end` or `/bug end` (useful for stale polling).
  */
 
@@ -256,24 +256,22 @@ interface PrView {
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  const stopPrPolling = (): void => {
+  const stopPrPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
     // Clear polling status indicator
-    if (latestCtx) {
-      safeSetStatus(latestCtx, undefined)
-    }
+    safeSetStatus(statusCtx, undefined)
   }
 
   const clearPending = (ctx: ExtensionContext): void => {
     if (!pending) return
     stopStatusTimer()
-    stopPrPolling()
+    stopPrPolling(ctx)
     safeSetStatus(ctx, undefined)
     pending = null
   }
 
-  // Return the "open" PR on a branch
+  // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
       'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,reviewDecision,reviews,url'],
@@ -284,8 +282,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (res.status !== 0)
       throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
 
-    const prs: PrView[] = JSON.parse(res.stdout)   // [] when no PR — no exception, no regex
-    return prs[0] ?? null  // assume there is 1 PR and points to "main"
+    const prs: PrView[] = JSON.parse(res.stdout) // [] when no PR — no exception, no regex
+    return prs[0] ?? null // assume there is 1 PR and points to "main"
   }
 
   const checkPrReview = async (cwd: string): Promise<void> => {
@@ -343,7 +341,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
-      
+
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
@@ -476,7 +474,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       ctx.ui.notify(`❌ Could not read TODO.md - cannot check if the feature/bug ${number} exists.`, 'error')
       return
     }
-    
+
     const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
         .filter(m => parseFloat(m[2]) === number)
     if (matches.length === 0) {
@@ -499,7 +497,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    ctx.ui.notify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
     startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
@@ -518,25 +515,39 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    // Start a fresh session so the agent begins the task on clean state.
-    // Module-level pending/timers survive via the session_start handler.
-    // After newSession() resolves the captured ctx/pi are STALE — all post-replacement
-    // work must use the ctx passed to withSession (latestCtx), never fall back to ctx.
+    // Start a fresh session so the agent begins the task on clean state, then inject the
+    // task there. State (pending, timers, START file) survives the switch.
+    // UI cleanup receives an explicitly fresh context; the command context must never be
+    // used after newSession starts replacing the session (Bug 17).
+    const abortStart = (freshCtx: ExtensionContext | null): void => {
+      stopPrPolling(freshCtx)
+      stopStatusTimer()
+      pending = null
+      completed = false
+      safeSetStatus(freshCtx, undefined)
+    }
+
+    let replacementCtx: ExtensionContext | null = null
     try {
       const result = await ctx.newSession({
         withSession: async (newCtx) => {
+          replacementCtx = newCtx
           latestCtx = newCtx
-          await newCtx.sendUserMessage(agentMessage, { streamingBehavior: 'followUp' })
+          try {
+            await newCtx.waitForIdle()
+            safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+            await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
+          } catch (err) {
+            abortStart(newCtx)
+            throw err
+          }
         },
       })
-      if (result.cancelled && latestCtx) {
-        stopPrPolling()
-        clearPending(latestCtx)
-      }
+      if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
-      stopPrPolling()
-      if (latestCtx) clearPending(latestCtx)
-      safeNotify(latestCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      abortStart(replacementCtx)
+      safeNotify(replacementCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+    }
     }
   }
 
@@ -562,7 +573,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
       await startTask(ctx, 'bug', number, note)
-    },    
+    },
   })
 
   // Detect the completion marker in assistant chat replies.
@@ -653,7 +664,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
     //safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
   } else {
-    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')    
+    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
   }
 
   pending = null
