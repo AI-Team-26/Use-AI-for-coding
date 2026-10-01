@@ -112,6 +112,20 @@ const handledReviewDecisions = new Map<string, string>()
 let watchedPr: { number: number; url: string } | null = null
 
 /**
+ * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
+ * support it (iTerm2/Kitty/WezTerm/VS Code) render it as a clickable link.
+ * Degrades gracefully to plain text in unsupported terminals.
+ *
+ * TODO(2026-10-15): If Approach A proves unreliable across terminals,
+ * fall back to Approach B: custom footer via ctx.ui.setFooter(factory)
+ * using <Link href={url}>PR #N</Link>. See Feature 35 in TODO.md.
+ */
+function osc8Link(url: string, text: string): string {
+  if (!url) return text
+  return `\x1b]8;;${url}\x07${text}\x07`
+}
+
+/**
  * Guarded UI access for calls made outside a fresh handler/event scope
  * (timers, post-await code). Skips only when no ctx arrived yet; any other
  * failure is logged, never silenced.
@@ -295,7 +309,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
-      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (<${watchedPr.url}>).` : ''
+      const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
       pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
@@ -322,9 +336,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
 
-      // Update polling status indicator: show 🔍 PR #N while actively polling
+      // Update polling status indicator with clickable PR reference
       if (watchedPr && latestCtx) {
-        safeSetStatus(latestCtx, `👁️ PR #${watchedPr.number}`) // 👀
+        safeSetStatus(latestCtx, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}`)
       }
 
       if (pr.state === 'MERGED') {
@@ -353,7 +367,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       if (decision === 'APPROVED') {
         // The user usually merges an approved PR themselves — just notify and keep watching until merged.
-        pi.sendMessage({ customType: 'todo-feature', content: `✅ PR #${pr.number} approved — waiting for merge.`, display: true, details: {} })
+        pi.sendMessage({ customType: 'todo-feature', content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
       } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
