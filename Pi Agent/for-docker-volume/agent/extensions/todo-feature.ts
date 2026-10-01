@@ -29,7 +29,7 @@
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
  *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
- *   5. Injects a follow-up message: "Write in the PR that this task required NN minutes."
+ *   5. Appends the unified execution report directly to the open PR description (via gh)
  *   6. Clears the status bar entry for the completed activity.
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
@@ -37,7 +37,7 @@
  * While a feature/bug session is active it also polls GitHub every ~20s (max 2h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
- * when the PR is MERGED the watcher stops. 
+ * when the PR is MERGED the watcher stops.
  * Polling is forced to ends on `/feature end` or `/bug end` (useful for stale polling).
  */
 
@@ -46,11 +46,14 @@
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { execSync } from 'node:child_process'
+import { execSync, spawnSync } from 'node:child_process'
 
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY = "alex-piccione-todo-feature"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
+const DEBUG = false
+
+const debug = (msg:string) => DEBUG && console.debug(`[todo-feature] ${msg}`)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -68,7 +71,7 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      safeNotify(ctx, 'ℹ️ Could not reach llama-server /models — using configured model name.', 'info')
+      safeNotify(ctx, 'Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -82,18 +85,24 @@ interface TimingItem {
 
 let pending: TimingItem | null = null
 let completed = false
+// Project root of the running task — needed by finishActivity to locate the branch's PR.
+let taskProjectRoot: string | null = null
 
-// Status-bar elapsed-time ticker — refreshes the ☑️ status while a feature/bug runs.
+// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 const STATUS_UPDATE_MS = 15_000
 let statusTimer: ReturnType<typeof setInterval> | null = null
 // Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
 // so timer callbacks must always read this instead of a captured value.
 let latestCtx: ExtensionContext | null = null
 
+// PR review polling cadence — keeps the agent working without user prompts.
+const POLL_INTERVAL_MS = 20_000
+// Safenet: stop polling after this long even if no decision was made (can be increased later).
+const POLL_MAX_MS = 4 * 60 * 60 * 1000
+
 // PR review-watcher state lives at module scope rather than per extension instance:
 // Pi can instantiate the factory again on session replacement without shutting the
 // previous one down, leaking a stale poll interval whose 2h clock never resets
-// (Bug 7 — "Stopped watching" fired minutes after starting a fresh feature).
 // Sharing the state guarantees a single watcher process-wide; startPrPolling()
 // clears any leaked interval before arming a fresh one.
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -108,7 +117,10 @@ let watchedPr: { number: number; url: string } | null = null
  * failure is logged, never silenced.
  */
 function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): void {
-  if (!ctx) return
+  if (!ctx) {
+    console.error('[todo-feature] setStatus failed got a null ctx:')
+    return
+  }
   try {
     ctx.ui.setStatus(STATUS_KEY, text)
   } catch (err) {
@@ -117,23 +129,15 @@ function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): 
 }
 
 function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
-  if (!ctx) return
+  if (!ctx) {
+    console.error('[todo-feature] notify got a null ctx:')
+    return
+  }
   try {
     ctx.ui.notify(message, type)
   } catch (err) {
     console.error('[todo-feature] notify failed:', err)
   }
-}
-
-function formatElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
-}
-
-function stopStatusTimer(): void {
-  if (statusTimer) clearInterval(statusTimer)
-  statusTimer = null
 }
 
 function startStatusTimer(): void {
@@ -148,12 +152,12 @@ function startStatusTimer(): void {
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
 }
 
-// PR review polling cadence — keeps the agent working without user prompts.
-const POLL_INTERVAL_MS = 20_000
-// Safenet: stop polling after this long even if no decision was made (can be increased later).
-const POLL_MAX_MS = 2 * 60 * 60 * 1000
+function stopStatusTimer(): void {
+  if (statusTimer) clearInterval(statusTimer)
+  statusTimer = null
+}
 
-// TODO is the fff part really required or usefull ?
+// TODO is the fff part really needed ?
 // timestamp -> YYYY-MM-DD HH:mm:ss.fff
 function formatTime(ts: number): string {
   const d = new Date(ts)
@@ -161,11 +165,65 @@ function formatTime(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, '0')}`
 }
 
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
+}
+
 function ensureTodoDir(): Promise<void> {
   try {
     return fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
   } catch {
     return Promise.resolve()
+  }
+}
+
+/**
+ * Append the unified execution report to the open PR of the current branch.
+ * Returns true when the report is present in the PR body (added or already there).
+ */
+function appendReportToPr(cwd: string, report: string): boolean {
+  try {
+    const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+    if (!branch || branch === 'main' || branch === 'master') return false
+
+    //const prNumber = getBranchOpenPr(branch)
+    const listRes = spawnSync(
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (listRes.status !== 0)
+      throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
+    const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
+    const pr = prs[0]
+    if (!pr) {
+      console.error(`PR not found on branch '${branch}'.`)
+      return false
+    }
+
+    const viewRes = spawnSync(
+      'gh', ['pr', 'view', String(pr.number), '--json', 'body'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (viewRes.status !== 0)
+      throw new Error(`gh pr view failed (${viewRes.status}): ${viewRes.stderr}`)
+    const body = ((JSON.parse(viewRes.stdout) as { body?: string }).body ?? '').trimEnd()
+
+    // First push only — do not duplicate the report after review rework
+    if (/^### (Feature|Bug) agent work report$/m.test(body)) return true
+
+    const editRes = spawnSync(
+      'gh', ['pr', 'edit', String(pr.number), '--body', `${body}\n\n${report}`],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (editRes.status !== 0)
+      throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
+    debug(`Report appended to PR #${pr.number} description`)
+    return true
+  } catch (err) {
+    console.error('[todo-feature] failed to attach report to PR:', err)
+    return false
   }
 }
 
@@ -184,16 +242,9 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   } catch (err) {
     const e = err as { stderr?: string; message: string }
     const detail = (e.stderr ?? '').trim() || e.message
-    ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
+    safeNotify(ctx, `❌ Git update failed: ${detail}`, 'error')
     return false
   }
-}
-
-function clearPending(ctx: ExtensionContext): void {
-  if (!pending) return
-  stopStatusTimer()
-  ctx.ui.setStatus(STATUS_KEY, undefined)
-  pending = null
 }
 
 interface PrView {
@@ -201,7 +252,7 @@ interface PrView {
   state: string
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
-  htmlUrl?: string
+  url?: string
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
@@ -211,12 +262,36 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     safeSetStatus(statusCtx, undefined)
   }
 
+  const clearPending = (ctx: ExtensionContext): void => {
+    if (!pending) return
+    stopStatusTimer()
+    stopPrPolling(ctx)
+    safeSetStatus(ctx, undefined)
+    pending = null
+  }
+
+  // Return the open PR on a branch.
+  const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
+    const res = spawnSync(
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,reviewDecision,reviews,url'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (res.status !== 0)
+      throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
+    const prs: PrView[] = JSON.parse(res.stdout)
+    return prs[0] ?? null
+  }
+
   const checkPrReview = async (cwd: string): Promise<void> => {
-    if (pollInFlight) return
+    debug("checkPrReview")
+    if (pollInFlight) {
+        debug("pollInFlight... exit")
+        return
+    }
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
-      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (${watchedPr.url}).` : ''
+      const prRef = watchedPr ? ` Waiting for the review of PR #${watchedPr.number} (<${watchedPr.url}>).` : ''
       pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
@@ -225,17 +300,28 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
       if (!branch || branch === 'main' || branch === 'master') return
 
-      let pr: PrView
+      let pr: PrView|null
       try {
-        pr = JSON.parse(execSync('gh pr view --json number,state,reviewDecision,reviews,htmlUrl', {
-          cwd,
-          encoding: 'utf-8',
-          stdio: 'pipe',
-        }))
-      } catch {
+        pr = getBranchOpenPr(cwd, branch)
+      } catch (err) {
+        debug(`Failed to get PR"${branch}"`)
+        console.error('todo-feature: failed to get PR of branch', err)
+        return
+      }
+
+      if (pr == null) {
+        debug(`No open PR on the branch "${branch}"`)
         return // no open PR on this branch yet
       }
-      watchedPr = { number: pr.number, url: pr.htmlUrl ?? '' }
+
+      watchedPr = { number: pr.number, url: pr.url ?? '' }
+
+      debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
+
+      // Update polling status indicator: show 🔍 PR #N while actively polling
+      if (watchedPr && latestCtx) {
+        safeSetStatus(latestCtx, `👁️ PR #${watchedPr.number}`) // 👀
+      }
 
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
@@ -249,15 +335,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
+      // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
-      const key = `${pr.number}:${decision}`
-      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED') || handledReviewDecisions.has(key)) return
+
+      // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
+      const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
+
+      const key = `${pr.number}:${decision}:${hasChangesRequested}`
+      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+        return
+      }
       handledReviewDecisions.set(key, decision)
 
       if (decision === 'APPROVED') {
         // The user usually merges an approved PR themselves — just notify and keep watching until merged.
         pi.sendMessage({ customType: 'todo-feature', content: `✅ PR #${pr.number} approved — waiting for merge.`, display: true, details: {} })
-      } else {
+      } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { streamingBehavior: 'followUp' }
@@ -272,17 +365,26 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const startPrPolling = (cwd: string): void => {
-    stopPrPolling()
+    stopPrPolling() // stop polling previous PR
     pollStartedAt = Date.now()
     handledReviewDecisions.clear()
     watchedPr = null
     pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
+    // Initial polling status will be set on first checkPrReview run
   }
 
   // Track the latest ctx from every event that delivers one; command handlers also
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
   pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
+    // Session replacement (e.g. /new, model switch, context overflow) fires
+    // session_shutdown, which stops both watchers but leaves `pending` alive at
+    // module scope (the user does not re-run /feature N). If an activity is still
+    // active, resume polling and the elapsed-time ticker with the fresh ctx.
+    if (pending) {
+      startPrPolling(ctx.repoPath ?? process.cwd())
+      startStatusTimer()
+    }
   })
 
   pi.on('session_shutdown', () => {
@@ -330,6 +432,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   async function startTask(ctx: ExtensionCommandContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     latestCtx = ctx // handler-delivered ctx is fresh
     const projectRoot = ctx.repoPath ?? process.cwd()
+    taskProjectRoot = projectRoot
     const END = 0 // "end" command argument is managed to send "0"
 
     if (number === END) {
@@ -367,7 +470,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       ctx.ui.notify(`❌ Could not read TODO.md - cannot check if the feature/bug ${number} exists.`, 'error')
       return
     }
-    
+
     const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
         .filter(m => parseFloat(m[2]) === number)
     if (matches.length === 0) {
@@ -409,11 +512,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     }
 
     // Start a fresh session so the agent begins the task on clean state, then inject the
-    // task there. State (pending, timers, START file) was set up above and survives the
-    // switch; latestCtx is refreshed by the new session's session_start / agent_settled.
-    // waitForIdle() before steering avoids the "Agent is already processing" error (Bug 12).
-    //
-    // UI cleanup receives an explicitly fresh context. The command context must never be
+    // task there. State (pending, timers, START file) survives the switch.
+    // UI cleanup receives an explicitly fresh context; the command context must never be
     // used after newSession starts replacing the session (Bug 17).
     const abortStart = (freshCtx: ExtensionContext | null): void => {
       stopPrPolling(freshCtx)
@@ -434,8 +534,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
             await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
           } catch (err) {
-            // The callback owns the fresh context, so failure cleanup stays within the
-            // replacement session rather than using the stale command context.
             abortStart(newCtx)
             throw err
           }
@@ -443,9 +541,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       })
       if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
-      // No UI call uses ctx here: after newSession(), only the replacement context is valid.
       abortStart(replacementCtx)
       safeNotify(replacementCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+    }
     }
   }
 
@@ -471,7 +569,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
       await startTask(ctx, 'bug', number, note)
-    },    
+    },
   })
 
   // Detect the completion marker in assistant chat replies.
@@ -506,11 +604,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   pi.on('agent_settled', async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
     latestCtx = ctx
     if (!pending || !completed) return
-    await finishActivity(ctx, pi)
+    await finishActivity(ctx)
   })
 }
 
-async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+async function finishActivity(ctx: ExtensionContext): Promise<void> {
   if (!pending || !completed) return
 
   const endTime = Date.now()
@@ -519,7 +617,6 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
 
   const fileName = pending.type === 'feature' ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
   const filePath = path.join(TODO_FEATURES_DIR, fileName)
-  const endContent = `START: ${formatTime(pending.startTime)}\nEND: ${formatTime(endTime)}\nELAPSED MINUTES: ${elapsedMinutes}\n`
 
   // Get model info
   const modelName = await resolveModelName(ctx)
@@ -531,9 +628,16 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
     console.error('[todo-feature] getContextUsage failed:', err)
   }
 
-  const modelInfo = `MODEL: ${modelName}\n`
-  const tokensInfo = tokens !== null ? `TOKENS: ${tokens}\n` : ''
-  const finalContent = endContent + modelInfo + tokensInfo
+  const label = pending.type === 'feature' ? 'Feature' : 'Bug'
+  const reportLines = [
+    `## ${label} agent execution report`,
+    '_(first push only, without following reviews rework)_',
+    ` ⏲️ Time required: ${elapsedMinutes} minutes`,
+    ` 🤖 Model used: ${modelName}`,
+  ]
+  if (tokens !== null) reportLines.push(` 💰 Tokens used: ${tokens}`)
+  const report = reportLines.join('\n')
+  const finalContent = `${report}\n`
 
   // Append to the file
   try {
@@ -544,18 +648,20 @@ async function finishActivity(ctx: ExtensionContext, pi: ExtensionAPI): Promise<
   }
 
   // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
-  safeNotify(ctx, `✅ ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  safeNotify(ctx, `✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
   safeSetStatus(ctx, undefined)
 
-  // Inject follow-up message to write the PR timing
-  const activityName = pending.type === 'feature' ? 'feature' : 'bug'
-  pi.sendUserMessage(
-    `Write in the PR that this ${activityName} required ${elapsedMinutes} minutes. ` +
-    `Write also that is used the model ${modelName} and used ${tokens} tokens.` +
-    `No need to share this info here in the chat. Remember again the PR number and link to the user.`,
-    { streamingBehavior: "followUp" }
-  )
+  if (!taskProjectRoot) {
+    console.error(`[todo-extension] finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
+  }
+
+  // Write the report directly into the open PR description (no chat pollution)
+  if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
+    //safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
+  } else {
+    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
+  }
 
   pending = null
   completed = false

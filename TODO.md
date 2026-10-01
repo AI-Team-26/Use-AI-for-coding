@@ -1,9 +1,37 @@
 # TODO
 
-Last feature number: 29
-Last bug: 12
-
 ## Backlog
+
+- Feature 34 | todo-feature extension: reuse PR lookup in appendReportToPr
+  `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
+  Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
+  - `getBranchOpenPr` keeps requesting `number,state,reviewDecision,reviews,url`
+  - `appendReportToPr` requests only `number,body` — collapsing its two gh calls (`pr list` + `pr view`) into one.
+
+- Feature 31 | todo-feature extension
+  Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
+  
+- Bug 16 | todo-feature polling
+  Polling continue also after Rejection, but does not trigger any command when reject a second time.
+  Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
+
+- Bug 17 | todo-feature fresh session crashes with stale ctx
+  After starting a fresh session (Feature 32), Pi crashes:
+  "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
+  The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
+
+- Feature 999 | Test
+  This is a fake feature, just to test the todo-extension extension.
+  Write an empty file.  
+  Don't remove this feature from TODO in the PR.
+  DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
+
+- Feature 30 | todo-feature extension: unify status display
+  Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
+  Use two separate status keys:
+  - STATUS_KEY = "alex-piccione-todo-feature" → elapsed time (☑️ Feature N MM:SS)
+  - POLLING_STATUS_KEY = "alex-piccione-todo-feature-polling" → polling indicator (🔍 PR #N)
+  Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
 
 - Bug 3: When Pi start I have this warning message:
   "Warning: Could not restore model Llama.cpp/96K . Using Llama.cpp/64K"
@@ -12,37 +40,17 @@ Last bug: 12
   I remember there was a bug due to model id saved with a trail space ("96k ", "64k ") and the extensions was instead trimming it.
   I say this because hte error has suspect space after "Llama.cpp/96K", but can be not related.
 
-
-- Bug 12: todo-feature raise an error when called while agent is still replying
-  ``` 
-   ⏱️ Feature 3.1 started. Elapsed time will be recorded.
-   Extension "<runtime>" error: Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.
-  ``` 
-- Feature 28: todo-feature extension should accept an optional note.
-  `/feature 10 ignore existing PR` should add "ignore exising PR" before the currently sent message to the prompt.
-  `/feature 10 "ignore existing PR"` should work the same.
-
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
   Also the branch is useless since it is printed in another extension.
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
-- Feature 25: todo-feature extension, unify the Agent report:
-  ```
-  # Feature execution report 
-  (first push only, without following reviews rework)
-  Time required: 2.0 minutes 
-  Model used: Llama.cpp/Qwen3.8-27B-ASCII-Condensed-IQ4_XS-3_troed_64k
-  Tokens used: 8797
-  ```
-
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
-- Feature 18: todo-feature extension review watcher stop should add PR link to the message
-  "⏸️ Stopped watching for PR review (2h limit reached)." Add "Waiting for the review of PR #NN (<PR link>)".
-- Feature 19: todo-feature extension notified teh stop of review watch after 2 hous but the feature was still active
-  How is possible the review is active ("Feature N" is shown in hte status) and there is a review watcher running?
+
+- Feature 19: todo-feature extension notified the stop of review watch after 2 hous but the feature was still active
+  How is possible the review is active ("Feature N" is shown in the status) and there is a review watcher running?
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
@@ -58,5 +66,11 @@ Last bug: 12
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 ## Latest 10 tasks completed
+- Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
+- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-feature starts a fresh session on task start for context purity
+- Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
+- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
+- Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
+- Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
 - Bug 1 [bug/1_aaa]: Aaa (just an example)
 - Feature 8 [feat/8_aaa]: Aaa (just an example)

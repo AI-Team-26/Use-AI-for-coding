@@ -12,7 +12,7 @@ source /scripts/.env
 
 
 # check required environment variables are set
-required_vars=("GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
+required_vars=("PI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
 
 for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
@@ -34,7 +34,6 @@ if [[ -f /root/.pi_backup.tar ]]; then
 
     sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
     sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
-
 
     echo "Restoring /root/.pi from TAR backup..."
 

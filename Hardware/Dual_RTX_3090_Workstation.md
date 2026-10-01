@@ -88,9 +88,25 @@ Use this table to quickly find model names for eBay searches. Focus on boards th
 | GPUs (RTX 3090 24GB) | 700 | 1,000 | Based on target prices. |
 | **GRAND TOTAL** | **2,010** | **3,140** | **Full Build Cost.** |
 
----
+## Deep Dive: The ASUS X99-E WS Path (High Bandwidth / Budget Optimized)
+*Best for: Users looking to maximize PCIe bandwidth on a budget via the used market.*
 
-## Physical Clearance & Power Standards
+| Feature | Detail | Impact |
+| :--- | :--- | :--- |
+| **PCIe Configuration** | Supports **x16 / x16** | **Major Advantage:** Maximum data throughput for training and large model inference. |
+| **Critical Requirement** | Must use **2-slot width** GPUs | **Essential:** Ensures physical fit and prevents thermal choking between cards. |
+| **Platform** | Intel X99 (LGA 2011-v3) | Uses DDR4; older but highly stable for workstation tasks. |
+
+**Pros:**
+- Massive PCIe bandwidth (x16/x16) compared to many consumer boards.
+- Significantly lower entry cost if sourcing used parts.
+- Excellent for AI training where inter-GPU communication is frequent.
+
+**Cons/Risks:**
+- Requires finding specific "slim" (2-slot) RTX 3090 models.
+- Older architecture (DDR4 vs modern DDR5).
+- Requires careful planning of case airflow due to tight component density.
+
 
 To ensure a successful build with dual RTX 3090s, pay close attention to these two factors:
 
