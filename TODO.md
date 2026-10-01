@@ -65,6 +65,29 @@
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
+- Feature 35: todo-feature polling status "PR #NN" should be a clickable link
+     Currently `safeSetStatus(latestCtx, \`👁️ PR #${watchedPr.number}\`)` renders plain text in the
+     footer; `ctx.ui.setStatus(key, text)` only accepts a plain string (no markdown/hyperlinks).
+     Goal: make the PR reference in the status clickable, opening the PR URL in the browser.
+
+     Approach A (preferred, minimal): OSC 8 hyperlink escape sequence in the status string.
+     - Build the text as `\x1b]8;;${watchedPr.url}\x07PR #${watchedPr.number}\x07`
+       (OSC 8 = terminal-native hyperlink, works in iTerm2/Kitty/WezTerm/VS Code, degrades to
+       plain text in terminals without support).
+     - Apply it in the polling tick where the status is set (~line 329 of todo-feature.ts);
+       keep the emoji prefix outside the link (`👁️ ` + linked `#N`).
+     - Verify: click opens the PR page; check the footer width/layout does not glitch from the
+       invisible escape bytes (Ink measures visible length — if it breaks, fall back to B).
+     - Guard: wrap the escape construction in a helper so the plain-text fallback is one flag away.
+
+     Approach B (fallback, heavier): custom footer via `ctx.ui.setFooter(factory)`.
+     - Replace/augment the built-in footer with an Ink component using `<Link href={url}>PR #N</Link>`,
+       which is fully API-supported and guaranteed clickable.
+     - Cost: taking over footer rendering means re-implementing the pieces we want to keep
+       (branch name, context usage, model info — see FooterDataProvider) alongside our status items,
+       i.e. overlaps with Feature 27 (custom footer extension). Only worth it if Approach A proves
+       unreliable across terminals.
+
 ## Latest 10 tasks completed
 - Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
 - Feature 32 [feat/32_fresh_session_on_task_v2]: todo-feature starts a fresh session on task start for context purity
