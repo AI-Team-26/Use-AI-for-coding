@@ -281,8 +281,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // A non-zero status is a real gh failure.
     if (res.status !== 0)
       throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
-    const prs: PrView[] = JSON.parse(res.stdout)
-    return prs[0] ?? null
+
+    const prs: PrView[] = JSON.parse(res.stdout) // [] when no PR — no exception, no regex
+    return prs[0] ?? null // assume there is 1 PR and points to "main"
   }
 
   const checkPrReview = async (cwd: string): Promise<void> => {
