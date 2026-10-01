@@ -259,6 +259,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   const stopPrPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
+    // Clear polling status indicator
     safeSetStatus(statusCtx, undefined)
   }
 
@@ -276,6 +277,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,reviewDecision,reviews,url'],
       { cwd, encoding: 'utf-8' },
     )
+
+    // A non-zero status is a real gh failure.
     if (res.status !== 0)
       throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
     const prs: PrView[] = JSON.parse(res.stdout)
