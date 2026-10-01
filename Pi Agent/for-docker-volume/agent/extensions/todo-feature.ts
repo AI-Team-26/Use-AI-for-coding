@@ -205,9 +205,10 @@ interface PrView {
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  const stopPrPolling = (): void => {
+  const stopPrPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
+    safeSetStatus(statusCtx, undefined)
   }
 
   const checkPrReview = async (cwd: string): Promise<void> => {
@@ -412,28 +413,39 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // switch; latestCtx is refreshed by the new session's session_start / agent_settled.
     // waitForIdle() before steering avoids the "Agent is already processing" error (Bug 12).
     //
-    // Local cleanup used when the fresh-session start is cancelled or fails, so we never
-    // leave a pending activity / timers pointing at a session that never began the task.
-    const abortStart = (): void => {
-      stopPrPolling()
+    // UI cleanup receives an explicitly fresh context. The command context must never be
+    // used after newSession starts replacing the session (Bug 17).
+    const abortStart = (freshCtx: ExtensionContext | null): void => {
+      stopPrPolling(freshCtx)
       stopStatusTimer()
       pending = null
       completed = false
-      safeSetStatus(latestCtx, undefined)
+      safeSetStatus(freshCtx, undefined)
     }
 
+    let replacementCtx: ExtensionContext | null = null
     try {
       const result = await ctx.newSession({
         withSession: async (newCtx) => {
-          await newCtx.waitForIdle()
-          safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
-          await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
+          replacementCtx = newCtx
+          latestCtx = newCtx
+          try {
+            await newCtx.waitForIdle()
+            safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+            await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
+          } catch (err) {
+            // The callback owns the fresh context, so failure cleanup stays within the
+            // replacement session rather than using the stale command context.
+            abortStart(newCtx)
+            throw err
+          }
         },
       })
-      if (result.cancelled) abortStart()
+      if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
-      abortStart()
-      safeNotify(latestCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      // No UI call uses ctx here: after newSession(), only the replacement context is valid.
+      abortStart(replacementCtx)
+      safeNotify(replacementCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
   }
 
