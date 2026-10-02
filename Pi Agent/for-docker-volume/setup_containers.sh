@@ -120,7 +120,9 @@ for agent in "${!agents[@]}"; do
 
     # Copy skills and extensions recursively
     cp -r agent/skills/* "$docker_volume_pi_agent/skills/" || true
-    cp -r agent/extensions/* "$docker_volume_pi_agent/extensions/" || true
+    # WARN careful to not copy node_modules !
+    #cp -r agent/extensions/* "$docker_volume_pi_agent/extensions/" || true
+    cp agent/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
 
     # Set secret keys
     # XXX_API_KEY_PI_AGENT are environment variables

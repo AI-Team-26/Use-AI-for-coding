@@ -5,5 +5,6 @@ Modelfile
 # local Ollama model files
 Ollama models/modelfiles/
 
-# local typecheck/build artifacts
-agent_build/
+**/node_modules/
+Pi Agent/for-docker-volume/agent/extensions/package-lock.json
+Pi Agent/for-docker-volume/agent/extensions/package.json

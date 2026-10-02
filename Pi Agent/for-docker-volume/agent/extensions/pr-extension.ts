@@ -11,7 +11,26 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionCommandContext } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
+
+const DEBUG = false
+const EXTENSION = "TODO-PR"
+let latestCtx: ExtensionContext | null = null
+
+const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
+
+function safeNotify(message: string, type: 'info' | 'warning' | 'error' = 'info'): void {
+  if (!latestCtx) {
+    console.error(`❌ ${EXTENSION} notify got a null ctx`)
+    return
+  }
+  try {
+    latestCtx.ui.notify(message, type)
+  } catch (err) {
+    console.error(`❌ ${EXTENSION} notify failed:`, err)
+  }
+}
+
 
 interface ParsedReviewArgs {
   prNumber: number
@@ -53,26 +72,22 @@ export default function prExtension(pi: ExtensionAPI) {
   pi.registerCommand('review', {
     description: 'Start a fresh session to review a GitHub PR. Usage: /review <pr-number> [optional note]',
     handler: async (args, ctx) => {
+      latestCtx = ctx
       const { prNumber, note, error } = parseReviewArgs(args)
-      if (error) {
-        ctx.ui.notify(error, 'error')
-        return
-      }
+      if (error) return safeNotify(error, 'error')
 
       const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. ${note ?? ''}`
 
       try {
         await ctx.newSession({
           withSession: async (newCtx) => {
-            pi.sendUserMessage(prompt, { streamingBehavior: 'followUp' })
+            latestCtx = newCtx
+            await newCtx.sendUserMessage(prompt)
           },
         })
       } catch (err) {
-        try {
-          ctx.ui.notify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
-        } catch (notifyErr) {
-          console.error('[pr-extension] newSession failed:', err, '— and notify also failed:', notifyErr)
-        }
+        debug(`Failed to start new session. ${err}`)
+        safeNotify(`❌ Failed to start fresh session for PR #${prNumber}: ${err instanceof Error ? err.message : String(err)}`, 'error')
       }
     },
   })
