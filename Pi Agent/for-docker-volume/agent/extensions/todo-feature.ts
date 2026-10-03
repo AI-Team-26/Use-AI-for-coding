@@ -141,7 +141,7 @@ function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string |
     console.error('[todo-feature] setStatus failed:', err)
   }
 }
-
+/*
 function _safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
   if (!ctx) {
     console.error(`${EXTENSION} notify got a null ctx`)
@@ -152,7 +152,7 @@ function _safeNotify(ctx: ExtensionContext | null, message: string, type: 'info'
   } catch (err) {
     console.error('[todo-feature] notify failed:', err)
   }
-}
+}*/
 
 function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
   if (!latestCtx) {
@@ -160,6 +160,7 @@ function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
     return
   }
   try {
+    console.info(`${EXTENSION} notify.`)
     latestCtx.ui.notify(message, type)
   } catch (err) {
     console.error(`${EXTENSION} notify failed.`, err)
@@ -279,12 +280,13 @@ interface PrView {
   url?: string
 }
 
+let checkCounter = 0
 export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const clearPending = (ctx: ExtensionContext): void => {
     if (!pending) return
     stopStatusTimer()
-    stopPrCheckPolling(ctx)
+    stopPrCheckPolling()
     safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
     pending = null
   }
@@ -306,12 +308,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
+    checkCounter++
     if (prCheckInFlight) {
         debug("pr check in flight... exit")
         return
     }
 
-    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ (checking PR)`)
+    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ (checking PR ${checkCounter})`)
 
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
@@ -329,12 +332,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       try {
         pr = getBranchOpenPr(cwd, branch)
       } catch (err) {
+        safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
         debug(`Failed to get PR"${branch}"`)
         console.error('todo-feature: failed to get PR of branch', err)
         return
       }
 
       if (pr == null) {
+        safeSetStatus(latestCtx, STATUS_KEY_PR, "PR is null")
         debug(`No open PR on the branch "${branch}"`)
         return // no open PR on this branch yet
       }
@@ -344,13 +349,17 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
 
       // Update polling status indicator with clickable PR reference
-      if (watchedPr && latestCtx) {
+      if (latestCtx) {
         debug("Update PR status")
-        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}`)
+        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${checkCounter})`)}`)
       }
+      else 
+        safeSetStatus(latestCtx, STATUS_KEY_PR, "no PR")
 
       if (pr.state === 'MERGED') {
-        // Nothing to do besides refreshing the TODO list; the agent never merges itself.
+        
+        safeNotify(`✅ PR MERGED !`, 'info')
+
         try {
           pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
         } catch (err) {
@@ -400,11 +409,18 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Initial polling status will be set on first checkPrReview run
   }
 
-  const stopPrCheckPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
+  /*
+  const _stopPrCheckPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
     // Clear polling status indicator
     safeSetStatus(statusCtx, STATUS_KEY_PR, undefined)
+  }*/
+
+  const stopPrCheckPolling = (): void => {
+    if (prCheckTimer) clearInterval(prCheckTimer)
+    prCheckTimer = null
+    safeSetStatus(latestCtx, STATUS_KEY_PR, "PR check stopped")
   }
 
   // Track the latest ctx from every event that delivers one; command handlers also
@@ -534,20 +550,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       ? `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The feature number is ${number}. ` +
+        `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO.` +
+        `After you publish or update the PR, resolve conflicts with main if there are.` + 
         `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
       : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The bug number is ${number}. ` +
         `**IMPORTANT**: after you publish or update the PR, include "[BUGFIX ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
 
-    // Optional note: simply prepended as a prefix.
+    // Optional note: simply append to the instruction message.
     if (note) {
-      agentMessage = `${note}. ` + agentMessage
+      agentMessage = agentMessage + `${note}. `
     }
 
     // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
     const abortStart = (freshCtx: ExtensionContext | null): void => {
-      stopPrCheckPolling(freshCtx)
+      stopPrCheckPolling()
       stopStatusTimer()
       pending = null
       completed = false
