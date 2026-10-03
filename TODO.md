@@ -20,12 +20,6 @@
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
   The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
 
-- Feature 999 | Test
-  This is a fake feature, just to test the todo-extension extension.
-  Write an empty file.  
-  Don't remove this feature from TODO in the PR.
-  DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
-
 - Feature 30 | todo-feature extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
   Use two separate status keys:
@@ -65,7 +59,15 @@
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 - Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
+- Feature 35 | "Select a project/action:" prompt should accept ESC
 
+- Bug 36 | "Select a project/action:" prompt on crash and restart of the shell does not show the options
+
+- Feature 999 | Test
+  This is a fake feature, just to test the todo-feature extension.
+  Write an empty file.    
+  DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
+  Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
 - Feature 35 [feat/35_pr_status_link]: todo-feature polling status PR references are now clickable (OSC 8 hyperlinks)
