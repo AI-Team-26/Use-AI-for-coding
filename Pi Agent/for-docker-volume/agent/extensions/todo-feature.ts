@@ -87,8 +87,8 @@ const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${
  * For the local Llama.cpp provider the configured name may be stale,
  * so we query the OpenAI-compatible `${baseUrl}/models` endpoint instead.
  */
-async function resolveModelName(ctx: ExtensionContext): Promise<string> {
-  const m = ctx.model
+async function resolveModelName(): Promise<string> {
+  const m = latestCtx?.model
   if (!m) return 'unknown'
   if (m.provider === LOCAL_LLAMA_CPP_PROVIDER && m.baseUrl) {
     try {
@@ -98,7 +98,7 @@ async function resolveModelName(ctx: ExtensionContext): Promise<string> {
       const id = data.data?.[0]?.id
       if (id) return `${m.provider}/${id}`
     } catch {
-      safeNotify(ctx, 'Could not reach llama-server /models — using configured model name.', 'info')
+      safeNotify('Could not reach llama-server /models — using configured model name.', 'info')
     }
   }
   return `${m.provider}/${m.name ?? 'unknown'}`
@@ -142,15 +142,27 @@ function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string |
   }
 }
 
-function safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
+function _safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
   if (!ctx) {
-    console.error('[todo-feature] notify got a null ctx:')
+    console.error(`${EXTENSION} notify got a null ctx`)
     return
   }
   try {
     ctx.ui.notify(message, type)
   } catch (err) {
     console.error('[todo-feature] notify failed:', err)
+  }
+}
+
+function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
+  if (!latestCtx) {
+    console.error(`${EXTENSION} notify got a null ctx`)
+    return
+  }
+  try {
+    latestCtx.ui.notify(message, type)
+  } catch (err) {
+    console.error(`${EXTENSION} notify failed.`, err)
   }
 }
 
@@ -240,7 +252,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
 }
 
 // Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
-function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
+function pullLatestMain(cwd: string): boolean {
   try {
     // --rebase reconciles divergent branches without a merge commit;
     // --autostash keeps uncommitted work out of the way.
@@ -249,12 +261,12 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
       encoding: 'utf-8',
       stdio: 'pipe',
     })
-    ctx.ui.notify(`Moved to updated main branch`, 'info')
+    safeNotify(`Moved to updated main branch`, 'info')
     return true
   } catch (err) {
     const e = err as { stderr?: string; message: string }
     const detail = (e.stderr ?? '').trim() || e.message
-    safeNotify(ctx, `❌ Git update failed: ${detail}`, 'error')
+    safeNotify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }
 }
@@ -303,7 +315,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
-      stopPrPolling()
+      stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
       pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
@@ -345,7 +357,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
           console.error('todo-feature: error sending /todo command:', err)
           // /todo command not available — just stop watching
         }
-        stopPrPolling()
+        stopPrCheckPolling()
         return
       }
 
@@ -459,13 +471,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     if (number === END) {
       if (!pending) {
-        ctx.ui.notify('❌ No active feature or bug to end.', 'info')
+        safeNotify('❌ No active feature or bug to end.', 'info')
         return
       }
       const { type: pendingType, number: pendingNumber } = pending
       stopPrCheckPolling()
       clearPending(ctx)
-      ctx.ui.notify(`${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled - no timing saved.`, 'info')
+      safeNotify(`${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled - no timing saved.`, 'info')
       return
     }
 
@@ -482,28 +494,28 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     await fs.writeFile(filePath, startContent, 'utf8')
 
     // Run git checkout main && git pull before sending the prompt
-    const onMain = pullLatestMain(ctx, projectRoot)
+    const onMain = pullLatestMain(projectRoot)
 
     // Check the number refers to an exising Feature or Bug entry in TODO.md
     let content: string
     try {
       content = await fs.readFile(path.join(projectRoot, 'TODO.md'), 'utf8')
     } catch {
-      ctx.ui.notify(`❌ Could not read TODO.md - cannot check if the feature/bug ${number} exists.`, 'error')
+      safeNotify(`❌ Could not read TODO.md - cannot check if the feature/bug ${number} exists.`, 'error')
       return
     }
 
     const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/mg)]
         .filter(m => parseFloat(m[2]) === number)
     if (matches.length === 0) {
-      ctx.ui.notify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, 'error')
+      safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, 'error')
       return
     }
 
     /*
     // Auto-detect if number refers to a Feature or a Bug
     if (new Set(matches.map(m => m[1])).size > 1) {
-      ctx.ui.notify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
+      safeNotify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
       return
     }
     */
@@ -551,7 +563,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
           latestCtx = newCtx
           try {
             await newCtx.waitForIdle()
-            safeNotify(newCtx, `${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
+            safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
             await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
           } catch (err) {
             abortStart(newCtx)
@@ -562,7 +574,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
       abortStart(replacementCtx)
-      safeNotify(replacementCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      safeNotify(`❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
   }
 
@@ -627,8 +639,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   })
 }
 
-async function finishActivity(ctx: ExtensionContext): Promise<void> {
+async function finishActivity(ctx: ExtensionContext): Promise<void> {  
   if (!pending || !completed) return
+  latestCtx=ctx
 
   const endTime = Date.now()
   const elapsedMs = endTime - pending.startTime
@@ -638,7 +651,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   const filePath = path.join(TODO_FEATURES_DIR, fileName)
 
   // Get model info
-  const modelName = await resolveModelName(ctx)
+  const modelName = await resolveModelName()
   let tokens: number | null = null
   try {
     // ctx may have gone stale during the awaited calls above; token count is best-effort
@@ -667,7 +680,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   }
 
   // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
-  safeNotify(ctx, `✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
+  safeNotify(`✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
   safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
 
@@ -679,7 +692,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
     //safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
   } else {
-    safeNotify(ctx, `⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
+    safeNotify(`⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
   }
 
   pending = null
