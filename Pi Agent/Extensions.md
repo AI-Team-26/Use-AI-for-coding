@@ -4,7 +4,7 @@ Add TypeScript types to the extensions for code syntax help and check.
 ```bash 
 cd for-docker-volume/agent/extensions
 npm install -D @earendil-works/pi-coding-agent typescript
-npm install -D @earendil-works/pi-coding-agent@<that-version> typescript
+npm install -D @earendil-works/pi-coding-agent@<specific-version> typescript
 ```
 
 - [pi-token-speed](https://github.com/gsanhueza/pi-token-speed)

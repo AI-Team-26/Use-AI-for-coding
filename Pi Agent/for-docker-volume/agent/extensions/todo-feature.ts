@@ -49,7 +49,8 @@ import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
 
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
-const STATUS_KEY = "alex-piccione-todo-feature"
+const STATUS_KEY_TASK = "alex-piccione-todo-feature-task"
+const STATUS_KEY_PR = "alex-piccione-todo-feature-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 const DEBUG = false
 
@@ -122,7 +123,7 @@ let watchedPr: { number: number; url: string } | null = null
  */
 function osc8Link(url: string, text: string): string {
   if (!url) return text
-  return `\x1b]8;;${url}\x07${text}\x07`
+  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
 }
 
 /**
@@ -130,13 +131,13 @@ function osc8Link(url: string, text: string): string {
  * (timers, post-await code). Skips only when no ctx arrived yet; any other
  * failure is logged, never silenced.
  */
-function safeSetStatus(ctx: ExtensionContext | null, text: string | undefined): void {
+function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
   if (!ctx) {
-    console.error('[todo-feature] setStatus failed got a null ctx:')
+    console.error('[todo-feature] setStatus failed got a null ctx.')
     return
   }
   try {
-    ctx.ui.setStatus(STATUS_KEY, text)
+    ctx.ui.setStatus(key, text)
   } catch (err) {
     console.error('[todo-feature] setStatus failed:', err)
   }
@@ -160,7 +161,7 @@ function startStatusTimer(): void {
   const refresh = () => {
     if (!pending) { stopStatusTimer(); return }
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
-    safeSetStatus(latestCtx, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
+    safeSetStatus(latestCtx, STATUS_KEY_TASK, `${emoji} ${pending.type === 'feature' ? 'Feature' : 'Bug'} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`)
   }
   refresh()
   statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -185,13 +186,11 @@ function formatElapsed(ms: number): string {
   return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
 }
 
-function ensureTodoDir(): Promise<void> {
-  try {
-    return fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
-  } catch {
-    return Promise.resolve()
-  }
-}
+const ensureTodoDir = (): Promise<void> => 
+    fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
+        .catch((err) => { console.error('Failed to create features directory.', err)})
+        .then(_ => {})
+
 
 /**
  * Append the unified execution report to the open PR of the current branch.
@@ -274,14 +273,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (pollTimer) clearInterval(pollTimer)
     pollTimer = null
     // Clear polling status indicator
-    safeSetStatus(statusCtx, undefined)
+    safeSetStatus(statusCtx, STATUS_KEY_PR, undefined)
   }
 
   const clearPending = (ctx: ExtensionContext): void => {
     if (!pending) return
     stopStatusTimer()
     stopPrPolling(ctx)
-    safeSetStatus(ctx, undefined)
+    safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
     pending = null
   }
 
@@ -306,6 +305,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         debug("pollInFlight... exit")
         return
     }
+
+    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ (checking PR)`)
+
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
     if (Date.now() - pollStartedAt > POLL_MAX_MS) {
       stopPrPolling()
@@ -338,7 +340,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Update polling status indicator with clickable PR reference
       if (watchedPr && latestCtx) {
-        safeSetStatus(latestCtx, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}`)
+        debug("Update PR status")
+        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}`)
       }
 
       if (pr.state === 'MERGED') {
@@ -383,6 +386,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const startPrPolling = (cwd: string): void => {
+    debug("startPrPolling()")
     stopPrPolling() // stop polling previous PR
     pollStartedAt = Date.now()
     handledReviewDecisions.clear()
@@ -538,7 +542,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       stopStatusTimer()
       pending = null
       completed = false
-      safeSetStatus(freshCtx, undefined)
+      safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
+      safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
     }
 
     let replacementCtx: ExtensionContext | null = null
@@ -561,7 +566,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     } catch (err) {
       abortStart(replacementCtx)
       safeNotify(replacementCtx, `❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
-    }
     }
   }
 
@@ -599,7 +603,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const msg = event.message
     if (msg?.role !== 'assistant') return
     const text = msg.content
-      .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+      .filter((b:any): b is { type: 'text'; text: string } => b.type === 'text')
       .map(b => b.text).join('')
     // strip common model decorations (backticks/bold/whitespace) around the marker
     const cleaned = text.replace(/[\s`*_]+/g, ' ')
@@ -668,7 +672,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
   safeNotify(ctx, `✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, 'info')
   stopStatusTimer()
-  safeSetStatus(ctx, undefined)
+  safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
 
   if (!taskProjectRoot) {
     console.error(`[todo-extension] finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)

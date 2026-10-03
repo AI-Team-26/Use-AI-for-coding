@@ -6,5 +6,5 @@ Modelfile
 Ollama models/modelfiles/
 
 **/node_modules/
-Pi Agent/for-docker-volume/agent/extensions/package-lock.json
-Pi Agent/for-docker-volume/agent/extensions/package.json
+**/extensions/package-lock.json
+**/extensions/package.json
