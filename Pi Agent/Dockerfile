@@ -39,7 +39,7 @@ RUN pi install https://github.com/gsanhueza/pi-token-speed
 #RUN pi install npm:pi-idle
 RUN pi install https://github.com/AI-Team-26/pi-status
 RUN pi install npm:pi-llama-cpp-stats
-RUN pi install npm:pi-voice-stt
+#RUN pi install npm:pi-voice-stt     crash Pi after update to new tUI version (0.9x)
 
 # Copy the entire .pi directory (which now contains the installs)
 # to the backup locations so it survives the volume mount

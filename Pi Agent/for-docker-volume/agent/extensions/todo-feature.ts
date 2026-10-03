@@ -48,13 +48,39 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
 
+const EXTENSION = "TODO-TASK"
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
 const STATUS_KEY_TASK = "alex-piccione-todo-feature-task"
 const STATUS_KEY_PR = "alex-piccione-todo-feature-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
-const DEBUG = false
 
-const debug = (msg:string) => DEBUG && console.debug(`[todo-feature] ${msg}`)
+
+let latestCtx: ExtensionContext | null = null
+let pending: TimingItem | null = null  // represent hte current task, should be called CurrentTask ?
+let completed = false                  // is current task completed ? shoud it be a property of CurrentTask ?
+// Project root of the running task — needed by finishActivity to locate the branch's PR.
+let taskProjectRoot: string | null = null
+
+// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
+let statusTimer: ReturnType<typeof setInterval> | null = null
+const STATUS_UPDATE_MS = 15_000
+
+// PR review-watcher state lives at module scope rather than per extension instance:
+// Pi can instantiate the factory again on session replacement without shutting the
+// previous one down, leaking a stale poll interval whose 2h clock never resets
+// Sharing the state guarantees a single watcher process-wide; startPrPolling()
+// clears any leaked interval before arming a fresh one.
+let prCheckTimer: ReturnType<typeof setInterval> | null = null
+const PR_CHECK_INTERVAL_MS = 20_000
+// Safenet: stop polling after this long even if no decision was made (can be increased later).
+const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000  // 4 hours
+let prCheckStartedAt = 0
+let prCheckInFlight = false
+const handledReviewDecisions = new Map<string, string>()
+let watchedPr: { number: number; url: string } | null = null
+
+const DEBUG = false
+const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -84,33 +110,6 @@ interface TimingItem {
   startTime: number
 }
 
-let pending: TimingItem | null = null
-let completed = false
-// Project root of the running task — needed by finishActivity to locate the branch's PR.
-let taskProjectRoot: string | null = null
-
-// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
-const STATUS_UPDATE_MS = 15_000
-let statusTimer: ReturnType<typeof setInterval> | null = null
-// Latest ctx delivered by events — a captured ctx goes stale after session replacement/reload,
-// so timer callbacks must always read this instead of a captured value.
-let latestCtx: ExtensionContext | null = null
-
-// PR review polling cadence — keeps the agent working without user prompts.
-const POLL_INTERVAL_MS = 20_000
-// Safenet: stop polling after this long even if no decision was made (can be increased later).
-const POLL_MAX_MS = 4 * 60 * 60 * 1000
-
-// PR review-watcher state lives at module scope rather than per extension instance:
-// Pi can instantiate the factory again on session replacement without shutting the
-// previous one down, leaking a stale poll interval whose 2h clock never resets
-// Sharing the state guarantees a single watcher process-wide; startPrPolling()
-// clears any leaked interval before arming a fresh one.
-let pollTimer: ReturnType<typeof setInterval> | null = null
-let pollStartedAt = 0
-let pollInFlight = false
-const handledReviewDecisions = new Map<string, string>()
-let watchedPr: { number: number; url: string } | null = null
 
 /**
  * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
@@ -269,17 +268,11 @@ interface PrView {
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-  const stopPrPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
-    if (pollTimer) clearInterval(pollTimer)
-    pollTimer = null
-    // Clear polling status indicator
-    safeSetStatus(statusCtx, STATUS_KEY_PR, undefined)
-  }
 
   const clearPending = (ctx: ExtensionContext): void => {
     if (!pending) return
     stopStatusTimer()
-    stopPrPolling(ctx)
+    stopPrCheckPolling(ctx)
     safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
     pending = null
   }
@@ -301,21 +294,21 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
-    if (pollInFlight) {
-        debug("pollInFlight... exit")
+    if (prCheckInFlight) {
+        debug("pr check in flight... exit")
         return
     }
 
     safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ (checking PR)`)
 
     // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
-    if (Date.now() - pollStartedAt > POLL_MAX_MS) {
+    if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
       pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
       return
     }
-    pollInFlight = true
+    prCheckInFlight = true
     try {
       const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
       if (!branch || branch === 'main' || branch === 'master') return
@@ -347,7 +340,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       if (pr.state === 'MERGED') {
         // Nothing to do besides refreshing the TODO list; the agent never merges itself.
         try {
-          pi.sendUserMessage('/todo', { streamingBehavior: 'followUp' })
+          pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
         } catch (err) {
           console.error('todo-feature: error sending /todo command:', err)
           // /todo command not available — just stop watching
@@ -374,25 +367,32 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
-          { streamingBehavior: 'followUp' }
+          { deliverAs: 'followUp' }
         )
       }
     } catch (err) {
       console.error('todo-feature: error in checkPrReview:', err)
       // transient git/gh failure — retry on next tick
     } finally {
-      pollInFlight = false
+      prCheckInFlight = false
     }
   }
 
-  const startPrPolling = (cwd: string): void => {
+  const startPrCheckPolling = (cwd: string): void => {
     debug("startPrPolling()")
-    stopPrPolling() // stop polling previous PR
-    pollStartedAt = Date.now()
+    stopPrCheckPolling()
+    prCheckStartedAt = Date.now()
     handledReviewDecisions.clear()
     watchedPr = null
-    pollTimer = setInterval(() => { void checkPrReview(cwd) }, POLL_INTERVAL_MS)
+    prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
     // Initial polling status will be set on first checkPrReview run
+  }
+
+  const stopPrCheckPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
+    if (prCheckTimer) clearInterval(prCheckTimer)
+    prCheckTimer = null
+    // Clear polling status indicator
+    safeSetStatus(statusCtx, STATUS_KEY_PR, undefined)
   }
 
   // Track the latest ctx from every event that delivers one; command handlers also
@@ -404,13 +404,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // module scope (the user does not re-run /feature N). If an activity is still
     // active, resume polling and the elapsed-time ticker with the fresh ctx.
     if (pending) {
-      startPrPolling(ctx.repoPath ?? process.cwd())
+      startPrCheckPolling(ctx.cwd ?? process.cwd())
       startStatusTimer()
     }
   })
 
   pi.on('session_shutdown', () => {
-    stopPrPolling()
+    stopPrCheckPolling()
     stopStatusTimer()
   })
 
@@ -453,7 +453,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // Shared logic for starting a feature/bug activity (used by /feature and /bugfix).
   async function startTask(ctx: ExtensionCommandContext, type: 'feature' | 'bug', number: number, note: string | undefined): Promise<void> {
     latestCtx = ctx // handler-delivered ctx is fresh
-    const projectRoot = ctx.repoPath ?? process.cwd()
+    const projectRoot = ctx.cwd ?? process.cwd()
     taskProjectRoot = projectRoot
     const END = 0 // "end" command argument is managed to send "0"
 
@@ -463,7 +463,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
       const { type: pendingType, number: pendingNumber } = pending
-      stopPrPolling()
+      stopPrCheckPolling()
       clearPending(ctx)
       ctx.ui.notify(`${pendingType === 'feature' ? 'Feature' : 'Bug'} ${pendingNumber} cancelled - no timing saved.`, 'info')
       return
@@ -511,7 +511,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = { type, number, startTime }
     completed = false
 
-    startPrPolling(projectRoot)
+    startPrCheckPolling(projectRoot)
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
@@ -533,12 +533,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       agentMessage = `${note}. ` + agentMessage
     }
 
-    // Start a fresh session so the agent begins the task on clean state, then inject the
-    // task there. State (pending, timers, START file) survives the switch.
-    // UI cleanup receives an explicitly fresh context; the command context must never be
-    // used after newSession starts replacing the session (Bug 17).
+    // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
     const abortStart = (freshCtx: ExtensionContext | null): void => {
-      stopPrPolling(freshCtx)
+      stopPrCheckPolling(freshCtx)
       stopStatusTimer()
       pending = null
       completed = false
