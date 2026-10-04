@@ -19,7 +19,7 @@ export default function loopExtension(pi: ExtensionAPI) {
   pi.registerCommand('loop', {
     description: 'Launch the agent loop on this project: /loop [max_iterations]',
     handler: async (args, ctx) => {
-      const root = ctx.repoPath ?? process.cwd()
+      const root = ctx.cwd ?? process.cwd()
       const capRaw = parseInt((args ?? '').trim(), 10)
       const cap = Number.isFinite(capRaw) && capRaw > 0 ? capRaw : DEFAULT_CAP
 
@@ -79,7 +79,7 @@ export default function loopExtension(pi: ExtensionAPI) {
   pi.registerCommand('loop-stop', {
     description: 'Ask the agent loop to stop after the current iteration',
     handler: async (_args, ctx) => {
-      const root = ctx.repoPath ?? process.cwd()
+      const root = ctx.cwd ?? process.cwd()
       await fs.promises.writeFile(path.join(root, '.LOOP_STOP'), new Date().toISOString())
       ctx.ui.notify('🛑 Stop requested — loop will halt after the current iteration.', 'info')
     },

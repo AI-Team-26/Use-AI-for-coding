@@ -63,11 +63,6 @@
 
 - Bug 36 | "Select a project/action:" prompt on crash and restart of the shell does not show the options
 
-- Feature 37 | update todo-feature extension 
-  pi.sendUserMessage('/todo', {  deliverAs: 'followUp' })  to replace streamingBehavior
-  startPrPolling(ctx.repoPath ?? process.cwd())   replace repoPath with ... ? 
-
-
 - Feature 999 | Test
   This is a fake feature, just to test the todo-feature extension.
   Write an empty file.    
