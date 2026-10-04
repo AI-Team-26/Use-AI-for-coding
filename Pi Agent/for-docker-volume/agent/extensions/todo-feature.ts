@@ -338,9 +338,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         debug("Update PR status")
         safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state}) (${checkCounter})`)}`)
       }
-      else {
-        safeSetStatus(latestCtx, STATUS_KEY_PR, "no latestCtx !!")
-      }
+      else 
+        console.error(`${EXTENSION} latestCtx is null`)
 
       if (pr.state === 'MERGED') {
         
