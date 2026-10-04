@@ -63,6 +63,11 @@
 
 - Bug 36 | "Select a project/action:" prompt on crash and restart of the shell does not show the options
 
+- Feature 37 | todo-feature: add "/pr N" command. It should start the PR check polling of that PR
+
+- Feature 38 | todo-feature: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
+  It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-feature extension.
   Write an empty file.    
