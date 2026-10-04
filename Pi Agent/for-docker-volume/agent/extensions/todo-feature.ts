@@ -132,13 +132,13 @@ function osc8Link(url: string, text: string): string {
  */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
   if (!ctx) {
-    console.error('[todo-feature] setStatus failed got a null ctx.')
+    console.error(`${EXTENSION}} setStatus failed got a null ctx.`)
     return
   }
   try {
     ctx.ui.setStatus(key, text)
   } catch (err) {
-    console.error('[todo-feature] setStatus failed:', err)
+    console.error(`${EXTENSION} setStatus failed.`, err)
   }
 }
 /*
@@ -309,14 +309,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
     checkCounter++
-    if (prCheckInFlight) {
-        debug("pr check in flight... exit")
-        return
-    }
+    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️‍🗨️ (checking PR ${checkCounter})`)
 
-    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ (checking PR ${checkCounter})`)
+    if (prCheckInFlight) return
 
-    // Safenet: stop polling after POLL_MAX_MS even without a reviewer decision.
+    // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
@@ -351,10 +348,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Update polling status indicator with clickable PR reference
       if (latestCtx) {
         debug("Update PR status")
-        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${checkCounter})`)}`)
+        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state}) (${checkCounter})`)}`)
       }
-      else 
-        safeSetStatus(latestCtx, STATUS_KEY_PR, "no PR")
+      else {
+        safeSetStatus(latestCtx, STATUS_KEY_PR, "no latestCtx !!")
+      }
 
       if (pr.state === 'MERGED') {
         
