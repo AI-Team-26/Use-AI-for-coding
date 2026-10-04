@@ -89,7 +89,7 @@ After applying changes, run the test suite if available:
 - For Console project use Spectre 
 
 ## Rust projects
-- Use clippy to format the code before commit.
+- Run `cargo fmt` then `cargo clippy -- -D warnings` before commit.
 
 ## Web Apps
 - **TypeScript** — Not plain JavaScript
