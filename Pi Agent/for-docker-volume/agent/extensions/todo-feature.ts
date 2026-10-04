@@ -141,18 +141,6 @@ function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string |
     console.error(`${EXTENSION} setStatus failed.`, err)
   }
 }
-/*
-function _safeNotify(ctx: ExtensionContext | null, message: string, type: 'info' | 'warning' | 'error'): void {
-  if (!ctx) {
-    console.error(`${EXTENSION} notify got a null ctx`)
-    return
-  }
-  try {
-    ctx.ui.notify(message, type)
-  } catch (err) {
-    console.error('[todo-feature] notify failed:', err)
-  }
-}*/
 
 function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
   if (!latestCtx) {
@@ -247,7 +235,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
     debug(`Report appended to PR #${pr.number} description`)
     return true
   } catch (err) {
-    console.error('[todo-feature] failed to attach report to PR:', err)
+    console.error(`${EXTENSION} failed to attach report to PR:`, err)
     return false
   }
 }
@@ -331,7 +319,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       } catch (err) {
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
         debug(`Failed to get PR"${branch}"`)
-        console.error('todo-feature: failed to get PR of branch', err)
+        console.error(`${EXTENSION}  failed to get PR of branch`, err)
         return
       }
 
@@ -361,7 +349,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         try {
           pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
         } catch (err) {
-          console.error('todo-feature: error sending /todo command:', err)
+          console.error(`${EXTENSION} error sending /todo command:`, err)
           // /todo command not available — just stop watching
         }
         stopPrCheckPolling()
@@ -390,7 +378,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         )
       }
     } catch (err) {
-      console.error('todo-feature: error in checkPrReview:', err)
+      console.error(`${EXTENSION}  error in checkPrReview:`, err)
       // transient git/gh failure — retry on next tick
     } finally {
       prCheckInFlight = false
@@ -548,8 +536,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       ? `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The feature number is ${number}. ` +
-        `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO.` +
-        `After you publish or update the PR, resolve conflicts with main if there are.` + 
+        `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO. ` +
+        `After you publish or update the PR, resolve conflicts with main if there are. ` + 
         `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
       : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
@@ -673,7 +661,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
     // ctx may have gone stale during the awaited calls above; token count is best-effort
     tokens = ctx.getContextUsage()?.tokens ?? null
   } catch (err) {
-    console.error('[todo-feature] getContextUsage failed:', err)
+    console.error(`${EXTENSION} getContextUsage failed:`, err)
   }
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
