@@ -395,14 +395,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Initial polling status will be set on first checkPrReview run
   }
 
-  /*
-  const _stopPrCheckPolling = (statusCtx: ExtensionContext | null = latestCtx): void => {
-    if (prCheckTimer) clearInterval(prCheckTimer)
-    prCheckTimer = null
-    // Clear polling status indicator
-    safeSetStatus(statusCtx, STATUS_KEY_PR, undefined)
-  }*/
-
   const stopPrCheckPolling = (): void => {
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
