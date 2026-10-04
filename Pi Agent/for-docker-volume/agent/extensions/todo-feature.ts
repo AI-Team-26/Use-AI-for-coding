@@ -406,12 +406,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   const stopPrCheckPolling = (): void => {
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
-    safeSetStatus(latestCtx, STATUS_KEY_PR, "PR check stopped")
+    safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
   }
 
   // Track the latest ctx from every event that delivers one; command handlers also
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
-  pi.on('session_start', (_event, ctx: ExtensionContext) => {
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {    
     latestCtx = ctx
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
@@ -529,6 +529,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
+    try {
+      pi.setSessionName(`${emoji} ${label} ${pending.number}`)
+    } catch {}
     startStatusTimer()
 
     // Inject the task to the agent — code is already up to date
