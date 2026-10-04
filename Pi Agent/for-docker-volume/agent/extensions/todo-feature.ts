@@ -532,7 +532,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The feature number is ${number}. ` +
         `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO. ` +
-        `After you publish or update the PR, resolve conflicts with main if there are. ` + 
+        `After you publish or update the PR, resolve conflicts with main if there are any. ` + 
         `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
       : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
         (onMain ? `The code is already on main and up to date. ` : "") +
