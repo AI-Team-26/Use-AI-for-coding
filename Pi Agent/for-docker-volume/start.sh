@@ -86,6 +86,8 @@ start_project() {
         exec pi "$model_param" --continue
     fi
 
+	# Use regular if fullscreen causes issues in the shell of Windows Terminal
+    #exec pi --continue --tui-mode regular
     exec pi --continue
 
     # [OBSOLETE]
