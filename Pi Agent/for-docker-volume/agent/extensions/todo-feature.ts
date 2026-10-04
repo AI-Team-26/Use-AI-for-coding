@@ -145,10 +145,10 @@ function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string |
 function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
   if (!latestCtx) {
     console.error(`${EXTENSION} notify got a null ctx`)
+    console.info(`${EXTENSION} ${message}`)
     return
   }
-  try {
-    console.info(`${EXTENSION} notify.`)
+  try {    
     latestCtx.ui.notify(message, type)
   } catch (err) {
     console.error(`${EXTENSION} notify failed.`, err)

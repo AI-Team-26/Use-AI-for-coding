@@ -35,7 +35,7 @@ export default function todoExtension(pi: ExtensionAPI) {
   pi.registerCommand('todo', {
     description: 'Shows the TODO.md Backlog from the latest main branch (fresh checkout + pull)',
       handler: async (_args, ctx) => {
-        const projectRoot = ctx.repoPath ?? process.cwd()
+        const projectRoot = ctx.cwd ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
 
       // Load the TODO from a fresh main branch before reading it
