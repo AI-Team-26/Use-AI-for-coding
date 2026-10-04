@@ -132,7 +132,7 @@ function osc8Link(url: string, text: string): string {
  */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
   if (!ctx) {
-    console.error(`${EXTENSION}} setStatus failed got a null ctx.`)
+    console.error(`${EXTENSION} setStatus failed got a null ctx.`)
     return
   }
   try {
