@@ -74,6 +74,8 @@ let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000  // 4 hours
+let checkCounter = 0
+// TODO... alculae MAX counter
 let prCheckStartedAt = 0
 let prCheckInFlight = false
 const handledReviewDecisions = new Map<string, string>()
@@ -268,7 +270,6 @@ interface PrView {
   url?: string
 }
 
-let checkCounter = 0
 export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const clearPending = (ctx: ExtensionContext): void => {
@@ -341,6 +342,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       else 
         console.error(`${EXTENSION} latestCtx is null`)
 
+      // TODO: recognize approvals
+      // pr:     "reviews": [{ "state": "APPROVED", "author": "alex-piccione" }],
+      //if (pr.reviews.)
+
       if (pr.state === 'MERGED') {
         
         safeNotify(`✅ PR MERGED !`, 'info')
@@ -397,6 +402,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   const stopPrCheckPolling = (): void => {
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
+    checkCounter = 0
     safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
   }
 
