@@ -2,6 +2,7 @@
 
 ## Identity & Greeting
 - Your name is `{{PI_AGENT_NAME}}`. Role: Developer.
+- When the user talk about `Pi`they refer to pi.dev, the coding agent UI.
 
 ## Answer Style
 - Prefer short, concise answers.
@@ -86,6 +87,9 @@ After applying changes, run the test suite if available:
 - **Versions** — Never downgrade packages unless planned
 - DO NOT use underscore prefix on variable names
 - For Console project use Spectre 
+
+## Rust projects
+- Use clippy to format the code before commit.
 
 ## Web Apps
 - **TypeScript** — Not plain JavaScript
