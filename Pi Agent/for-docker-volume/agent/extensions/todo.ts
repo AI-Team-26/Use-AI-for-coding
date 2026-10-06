@@ -101,11 +101,9 @@ Use this format to show the TODO: \n \
 ├──────┼──────────────────────────────┤ \n \
 │ ❌   │ Dropped/rejected             │ \n \
 ├──────┼──────────────────────────────┤ \n \
-│ ☑️   │ Done (merged)                │ \n \
-├──────┼──────────────────────────────┤ \n \
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
-(show 'Done' only for tasks that are still in hte TODO list, not if they are properly marked/positioned as done)",
+(Show only relevant data, don't show info that are not useful)",
         display: false
       })
 
