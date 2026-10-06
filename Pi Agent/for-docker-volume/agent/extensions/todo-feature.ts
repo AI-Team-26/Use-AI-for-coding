@@ -5,7 +5,7 @@
  * /feature end — Ends the current feature without saving timing (unreliable).
  *
  * /bugfix N — Fixes a bug from the TODO backlog and measures elapsed time.
- * /bugfix N [note] — Optionally includes a note with the bug start.
+ * /bugfix N [note] — Optionally includes a note with the bug fix start.
  * /bugfix end — Ends the current bug without saving timing (unreliable).
  *
  * Only one activity (feature or bug) can be active at a time. Starting a new one
@@ -13,14 +13,14 @@
  *
  * Usage:
  *   /feature 10                      — Start implementing feature 10 from the TODO backlog.
- *   /feature 10 ignore existing PR   — Start feature 10 with note "ignoring existing PR".
- *   /feature 10 "ignore existing PR" — Start feature 10 with note "ignoring existing PR".
- *   /feature 7.1                     — Start implementing a feature 7.1.
+ *   /feature 10 ignore existing PR   — Start implementing feature 10 with note "ignoring existing PR".
+ *   /feature 10 "ignore existing PR" — Start implementing feature 10 with note "ignoring existing PR".
+ *   /feature 7.1                     — Start implementing feature 7.1 .
  *   /feature end                     — End the current feature without saving timing data.
  *
  *   /bugfix 7                        — Start fixing bug 7 from the TODO backlog.
- *   /bugfix 7 ignore existing PR     — Start bug 7 with note "ignoring existing PR".
- *   /bugfix 7 "my custom note"       — Start bug 7 with note "ignoring existing PR"
+ *   /bugfix 7 ignore existing PR     — Start fixing bug 7 with note "ignoring existing PR".
+ *   /bugfix 7 "my custom note"       — Start fixing bug 7with note "ignoring existing PR"
  *   /bugfix end                      — End the current bug without saving timing data.
  *
  * The extension:
@@ -38,7 +38,7 @@
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
- * Polling is forced to ends on `/feature end` or `/bug end` (useful for stale polling).
+ * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -522,14 +522,16 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = { type, number, startTime }
     completed = false
 
-    startPrCheckPolling(projectRoot)
-
     const label = type === 'feature' ? 'Feature' : 'Bug'
     const emoji = pending.type === 'feature' ? '☑️' : '🐛'
     try {
       pi.setSessionName(`${emoji} ${label} ${pending.number}`)
-    } catch {}
+    } catch {
+        safeNotify(`❌ Failed to set the session name.`, 'error')
+    }
+
     startStatusTimer()
+    //startPrCheckPolling(projectRoot)
 
     // Inject the task to the agent — code is already up to date
     let agentMessage = type === 'feature'
@@ -569,6 +571,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
             await newCtx.sendUserMessage(agentMessage, { deliverAs: 'steer' })
+
+            // await newCtx.waitForIdle()
+            startPrCheckPolling(projectRoot)
           } catch (err) {
             abortStart(newCtx)
             throw err
@@ -596,7 +601,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   // "/bug" is a built-in Pi interactive command, cannot be used.
   pi.registerCommand('bugfix', {
-    description: 'Start a feature or bug from the TODO backlog (type auto-detected). Usage: /bugfix <number> [note] or /bugfix end',
+    description: 'Implement the fix for a bug from the TODO backlog. Usage: /bugfix <number> [note] or /bugfix end',
     handler: async (args, ctx) => {
       const { number, note, error } = parseCommandArgs(args)
       if (error) {
