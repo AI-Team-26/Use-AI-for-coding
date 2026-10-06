@@ -364,7 +364,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeNotify(`✅ PR MERGED !`, 'info')
 
         try {
-          pi.sendUserMessage('/todo Previos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
+          pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
         } catch (err) {
           console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
         }

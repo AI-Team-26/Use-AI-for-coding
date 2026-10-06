@@ -76,7 +76,9 @@ export default function prExtension(pi: ExtensionAPI) {
       const { prNumber, note, error } = parseReviewArgs(args)
       if (error) return safeNotify(error, 'error')
 
-      const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. ${note ?? ''}`
+      const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. \n
+      Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info. \n
+      ${note ?? ''}`
 
       try {
         await ctx.newSession({
