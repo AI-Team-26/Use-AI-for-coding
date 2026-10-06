@@ -110,9 +110,10 @@ Use this format to show the TODO: \n \
       })
 
       // Second message: recap prompt
-      pi.sendUserMessage("Verify the current branch status: is the job done and all the changes committed? There is a PR? \n \
-        There are unresolved review comments?\n \
-        For open PR shows the link.")
+      pi.sendUserMessage(
+"Verify the current branch status: is the job done and all the changes committed? There is a PR? \n \
+There are unresolved review comments?\n \
+For open PR shows the link.")
       
     },
   })
