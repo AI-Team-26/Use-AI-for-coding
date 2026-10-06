@@ -1,4 +1,4 @@
-// ~/.pi/agent/extensions/todo-feature.ts
+// ~/.pi/agent/extensions/todo-task.ts
 /**
  * /feature N — Implements a feature from the TODO backlog and measures elapsed time.
  * /feature N [note] — Optionally includes a note with the feature start.
@@ -7,6 +7,8 @@
  * /bugfix N — Fixes a bug from the TODO backlog and measures elapsed time.
  * /bugfix N [note] — Optionally includes a note with the bug fix start.
  * /bugfix end — Ends the current bug without saving timing (unreliable).
+ * 
+ * /pr N - Check PR status and reviews
  *
  * Only one activity (feature or bug) can be active at a time. Starting a new one
  * auto-cancels the previous one without saving timing.
@@ -25,7 +27,7 @@
  *
  * The extension:
  *   1. Move to updated main branch to look at up-to-date TODO
- *   2. Writes START:<timestamp> to ~/.pi/agent/todo-features/feature_<N>.txt or bug_<N>.txt
+ *   2. Writes START:<timestamp> to ~/.pi/agent/todo-tasks/task_<N>.txt or bug_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
  *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
@@ -49,9 +51,9 @@ import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
 
 const EXTENSION = "TODO-TASK"
-const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
-const STATUS_KEY_TASK = "alex-piccione-todo-feature-task"
-const STATUS_KEY_PR = "alex-piccione-todo-feature-pr"
+const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-tasks')
+const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
+const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
 
@@ -60,6 +62,9 @@ let pending: TimingItem | null = null  // represent hte current task, should be 
 let completed = false                  // is current task completed ? shoud it be a property of CurrentTask ?
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
+
+let watchedPr: { number: number; url: string } | null = null
+const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 let statusTimer: ReturnType<typeof setInterval> | null = null
@@ -75,11 +80,10 @@ const PR_CHECK_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000  // 4 hours
 let checkCounter = 0
-// TODO... alculae MAX counter
+// TODO... calculae MAX counter
 let prCheckStartedAt = 0
 let prCheckInFlight = false
-const handledReviewDecisions = new Map<string, string>()
-let watchedPr: { number: number; url: string } | null = null
+
 
 const DEBUG = false
 const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
@@ -265,6 +269,8 @@ function pullLatestMain(cwd: string): boolean {
 interface PrView {
   number: number
   state: string
+  mergeable: string    // 'CONFLICTING'
+  statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
   url?: string
@@ -283,7 +289,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
-      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,reviewDecision,reviews,url'],
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,mergeable,statusCheckRollup,reviewDecision,reviews,url'],
       { cwd, encoding: 'utf-8' },
     )
 
@@ -297,6 +303,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
+    safeNotify(`Checking PR review ...`, "info")
     checkCounter++
     safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️‍🗨️ (checking PR ${checkCounter})`)
 
@@ -306,10 +313,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
-      pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
+      pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
       return
     }
+
     prCheckInFlight = true
+
     try {
       const branch = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
       if (!branch || branch === 'main' || branch === 'master') return
@@ -318,9 +327,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       try {
         pr = getBranchOpenPr(cwd, branch)
       } catch (err) {
+        safeNotify(`Checking PR review: ❌ Failed to get PR of branch "${branch}"`, "info")
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
-        debug(`Failed to get PR"${branch}"`)
-        console.error(`${EXTENSION} ❌ Failed to get PR of branch`, err)
+        debug(`Failed to get PR of branch "${branch}"`)
+        console.error(`${EXTENSION} ❌ Failed to get PR of branch "${branch}". `, err)
         return
       }
 
@@ -345,16 +355,18 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // TODO: recognize approvals
       // pr:     "reviews": [{ "state": "APPROVED", "author": "alex-piccione" }],
       //if (pr.reviews.)
+      
+      // TODO: inject a message to manage PR checks (workflows?)
+      //if (pr.statusCheckRollup.findIndex( s => s.conclusion))  
 
       if (pr.state === 'MERGED') {
         
         safeNotify(`✅ PR MERGED !`, 'info')
 
         try {
-          pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
+          pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
         } catch (err) {
-          console.error(`${EXTENSION} ❌ FAiled to send /todo command:`, err)
-          // /todo command not available — just stop watching
+          console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
         }
         stopPrCheckPolling()
         return
@@ -362,35 +374,45 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
+      // TODO: temporary debug message, ignore in PR review
+      safeNotify(`PR decision is '${decision}' (unmanaged)`, "info") 
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
+      const hasConflicts = pr.mergeable === "CONFLICTING"
+
+      // Avoid re-process the same decision
       const key = `${pr.number}:${decision}:${hasChangesRequested}`
       if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         return
       }
       handledReviewDecisions.set(key, decision)
 
-      if (decision === 'APPROVED') {
+      if (decision === 'APPROVED') {        
         // The user usually merges an approved PR themselves — just notify and keep watching until merged.
-        pi.sendMessage({ customType: 'todo-feature', content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
+        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
       } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
-          `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
+          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
         )
       }
+
+      if (hasConflicts)
+        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
-      // transient git/gh failure — retry on next tick
+      safeNotify(`❌ checkPrReview() failed. ${err}`, "error")      
     } finally {
       prCheckInFlight = false
     }
   }
 
   const startPrCheckPolling = (cwd: string): void => {
-    debug("startPrPolling()")
+    debug("startPrCheckPolling()")
+    safeNotify(`Start PR check...`, "info")
     stopPrCheckPolling()
     prCheckStartedAt = Date.now()
     handledReviewDecisions.clear()
@@ -400,6 +422,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const stopPrCheckPolling = (): void => {
+    //debug("stopPrCheckPolling()")
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
     checkCounter = 0
@@ -587,6 +610,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     }
   }
 
+// ### register commands
+
   pi.registerCommand('feature', {
     description: 'Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end',
     handler: async (args, ctx) => {
@@ -609,6 +634,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
       await startTask(ctx, 'bug', number, note)
+    },
+  })
+
+  pi.registerCommand('pr', {
+    description: 'Check PR reviews. Continue to work on a PR. Usage: /pr [number]',
+    handler: async (_args, ctx) => {      
+
+      const projectRoot = ctx.cwd ?? process.cwd()
+      taskProjectRoot = projectRoot
+     
+      // TODO if branch is main/master, switch to the PR branch
+      const branch = execSync('git branch --show-current', { cwd:projectRoot, encoding: 'utf-8' }).trim()
+      if (!branch || branch === 'main' || branch === 'master') {
+        safeNotify("To call /pr you need to be on a branch different from the default one", "warning")
+        return
+      }
+
+      //let pr: PrView|null
+      //try {
+      //  pr = getBranchOpenPr(projectRoot, branch)
+      //} catch( error) {
+      //
+      //}
+
+      //if (note) append a note using sendUserMessage
+
+      // TODO: for now get the PR from the cirrent branch
+      startPrCheckPolling(projectRoot)      
     },
   })
 
