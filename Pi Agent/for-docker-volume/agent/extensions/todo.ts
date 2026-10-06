@@ -1,8 +1,12 @@
 // ~/.pi/agent/extensions/todo.ts
 /**
-* /todo extension
-* Shows the TODO.md Backlog loaded from a fresh main branch (checkout + pull),
-* so the agent always sees updated info, never a stale copy.
+* Provide the "/todo" command. 
+* It will ask the agent to check the current branch sttaus, PR comments and uncommitted changes.
+* It will then ask the agent to recap the TODO and suggest the next step.
+* It asks it also to create a table of the TODO content.
+* 
+* /todo      -> base command
+* /todo show -> base command plus print of the TODO.md 
 */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
@@ -31,50 +35,80 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
 
 const MAX_CHARS = 4096
 
+
+// Helper to parse command arguments
+// return number as 0 when command it is called with "end" argument
+function parseCommandArgs(args: string): { showTodo:boolean } {
+    const trimmed = args.trim()
+    return { showTodo: trimmed === "show" }
+}
+
 export default function todoExtension(pi: ExtensionAPI) {
   pi.registerCommand('todo', {
     description: 'Shows the TODO.md Backlog from the latest main branch (fresh checkout + pull)',
-      handler: async (_args, ctx) => {
+      handler: async (args, ctx) => {
+        const { showTodo } = parseCommandArgs(args)
         const projectRoot = ctx.cwd ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
 
       // Load the TODO from a fresh main branch before reading it
       pullLatestMain(ctx, projectRoot)
 
-      try {
-        const content = await fs.readFile(filePath, 'utf8')
+      if (showTodo) {
+        try {
+            const content = await fs.readFile(filePath, 'utf8')
 
-        if (!content.trim()) {
-          ctx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
-          return;
-        }
+            if (!content.trim()) {
+              ctx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
+              return;
+            }
 
-        // Truncate very large files
-        let displayContent = content.length > MAX_CHARS
-          ? `${content.slice(0, MAX_CHARS)}\n\n... [truncated]`
-          : content
+            // Truncate very large files
+            let displayContent = content.length > MAX_CHARS
+              ? `${content.slice(0, MAX_CHARS)}\n\n... [truncated]`
+              : content
 
-        // Option A: paste into editor (you get full Pi formatting when you submit)
-        // ctx.ui.pasteToEditor(displayContent)  // nice but needs a ENTER to be printed in the editor !!!
+            // Option A: paste into editor (you get full Pi formatting when you submit)
+            // ctx.ui.pasteToEditor(displayContent)  // nice but needs a ENTER to be printed in the editor !!!
 
-        pi.sendMessage({
-          customType: 'markdown-block',
-          content: `${displayContent}`,
-          display: true,
-          details: {},
-        })
-
-        // Second message: recap prompt
-        pi.sendUserMessage('Please recap the TODO and propose the next step. \
-   Also, verify the current branch status: is the job done and all the changes committed? There is a PR? There are unresolved review comments?')
-
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-          ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
-        } else {
-          ctx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
+            pi.sendMessage({
+                customType: 'markdown-block',
+                content: `${displayContent}`,
+                display: true,
+                details: {},
+            })
+          } catch (err) {
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+            ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
+          } else {
+            ctx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
+          }
         }
       }
+
+      // Second message: recap prompt
+      pi.sendUserMessage('Verify the current branch status: is the job done and all the changes committed? There is a PR? There are unresolved review comments?\n ' +
+"For open PR shows the link. \n" +        
+"Do a summary if the TODO and propose the next step.\n \
+Use this format to show the TODO: \n \
+┌──────┬──────────────────────────────┐ \n \
+│ 🟢   │ Feature (backlog, available) │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ 🐞   │ Bug fix (backlog)            │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ ⏳   │ In progress (open PR)        │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ 🔴   │ Blocked (dependency unmet)   │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ ❌   │ Dropped/rejected             │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ ☑️   │ Done (merged)                │ \n \
+├──────┼──────────────────────────────┤ \n \
+│ 📋   │ Epic (group header)          │ \n \
+└──────┴──────────────────────────────┘ \n \
+"
+      )
+      
     },
   })
 }

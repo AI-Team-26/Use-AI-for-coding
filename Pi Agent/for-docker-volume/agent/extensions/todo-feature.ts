@@ -670,22 +670,19 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   }
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
-  const reportLines = [
-    `## ${label} agent execution report`,
-    '_(first push only, without following reviews rework)_',
-    ` ⏲️ Time required: ${elapsedMinutes} minutes`,
-    ` 🤖 Model used: ${modelName}`,
-  ]
-  if (tokens !== null) reportLines.push(` 💰 Tokens used: ${tokens}`)
-  const report = reportLines.join('\n')
-  const finalContent = `${report}\n`
+  const report = 
+    `## AI agent execution report \n
+    _(first push only, without following reviews rework)_ \n
+     🤖 Model: ${modelName} \n
+     ⏲️ Time: ${elapsedMinutes} minutes \n
+     💰 Tokens: ${tokens??"n/a"}`
 
   // Append to the file
   try {
     const existing = await fs.readFile(filePath, 'utf8')
-    await fs.writeFile(filePath, existing + finalContent, 'utf8')
+    await fs.writeFile(filePath, existing + report, 'utf8')
   } catch {
-    await fs.writeFile(filePath, finalContent, 'utf8')
+    await fs.writeFile(filePath, report, 'utf8')
   }
 
   // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
