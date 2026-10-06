@@ -2,6 +2,19 @@
 
 ## Backlog
 
+- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
+  Create `extensions/_shared/common.ts` containing:
+  - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
+  - `safeSetStatus(ctx, key, text)` — guarded status bar update
+  - `safeNotify(getCtx, message, type)` — guarded notification
+  - `createDebug(name, enabled)` — returns a `debug(msg)` logger
+  Refactor `todo-task.ts`, `pr-review.ts`, and `todo.ts` to import from `_shared/common`.
+  Remove duplicated definitions from each file.
+  Constraints:
+  - `_shared/` has no `index.ts` → Pi won't discover it as an extension
+  - Keep behavior identical; pure extraction, no logic changes
+  - Max ~10 files changed, well under 500 lines delta
+
 - Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
