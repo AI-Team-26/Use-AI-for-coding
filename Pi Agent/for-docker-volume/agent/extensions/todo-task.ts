@@ -8,7 +8,7 @@
  * /bugfix N [note] — Optionally includes a note with the bug fix start.
  * /bugfix end — Ends the current bug without saving timing (unreliable).
  * 
- * /pr N - Chek PR status and reviews
+ * /pr N - Check PR status and reviews
  *
  * Only one activity (feature or bug) can be active at a time. Starting a new one
  * auto-cancels the previous one without saving timing.
@@ -270,7 +270,7 @@ interface PrView {
   number: number
   state: string
   mergeable: string    // 'CONFLICTING'
-  statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string    }>  // 'FAILURE' | 'CANCELLED'
+  statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
   url?: string
@@ -372,16 +372,15 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
-      const hasConflicts = pr.mergeable === "CONFLICTING"
-      if (hasConflicts)
-        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
-
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
-       safeNotify(`PR decision is '${decision}' (unmanaged)`, "info")
+      // TODO: temporary debug message, ignore in PR review
+      safeNotify(`PR decision is '${decision}' (unmanaged)`, "info") 
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
+
+      const hasConflicts = pr.mergeable === "CONFLICTING"
 
       // Avoid re-process the same decision
       const key = `${pr.number}:${decision}:${hasChangesRequested}`
@@ -395,10 +394,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
       } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
-          `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
+          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
         )
       }
+
+      if (hasConflicts)
+        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
 
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
