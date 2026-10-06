@@ -134,26 +134,26 @@ function osc8Link(url: string, text: string): string {
  */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
   if (!ctx) {
-    console.error(`${EXTENSION} setStatus failed got a null ctx.`)
+    console.error(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`)
     return
   }
   try {
     ctx.ui.setStatus(key, text)
   } catch (err) {
-    console.error(`${EXTENSION} setStatus failed.`, err)
+    console.error(`${EXTENSION} ❌ safeSetStatus() failed.`, err)
   }
 }
 
 function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
   if (!latestCtx) {
-    console.error(`${EXTENSION} notify got a null ctx`)
+    console.error(`${EXTENSION} ❌ safeNotify() got a null ctx`)
     console.info(`${EXTENSION} ${message}`)
     return
   }
   try {    
     latestCtx.ui.notify(message, type)
   } catch (err) {
-    console.error(`${EXTENSION} notify failed.`, err)
+    console.error(`${EXTENSION} ❌ safeNotify() failed.`, err)
   }
 }
 
@@ -213,7 +213,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
     const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
     const pr = prs[0]
     if (!pr) {
-      console.error(`PR not found on branch '${branch}'.`)
+      console.error(`[${EXTENSION} ❌ PR not found on branch '${branch}'.`)
       return false
     }
 
@@ -237,7 +237,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
     debug(`Report appended to PR #${pr.number} description`)
     return true
   } catch (err) {
-    console.error(`${EXTENSION} failed to attach report to PR:`, err)
+    console.error(`${EXTENSION} ❌ Failed to attach report to PR:`, err)
     return false
   }
 }
@@ -320,7 +320,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       } catch (err) {
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
         debug(`Failed to get PR"${branch}"`)
-        console.error(`${EXTENSION}  failed to get PR of branch`, err)
+        console.error(`${EXTENSION} ❌ Failed to get PR of branch`, err)
         return
       }
 
@@ -340,7 +340,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state}) (${checkCounter})`)}`)
       }
       else 
-        console.error(`${EXTENSION} latestCtx is null`)
+        console.error(`${EXTENSION} ❌ latestCtx is null`)
 
       // TODO: recognize approvals
       // pr:     "reviews": [{ "state": "APPROVED", "author": "alex-piccione" }],
@@ -353,7 +353,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         try {
           pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
         } catch (err) {
-          console.error(`${EXTENSION} error sending /todo command:`, err)
+          console.error(`${EXTENSION} ❌ FAiled to send /todo command:`, err)
           // /todo command not available — just stop watching
         }
         stopPrCheckPolling()
@@ -382,7 +382,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         )
       }
     } catch (err) {
-      console.error(`${EXTENSION}  error in checkPrReview:`, err)
+      console.error(`${EXTENSION} ❌ checkPrReview() `, err)
       // transient git/gh failure — retry on next tick
     } finally {
       prCheckInFlight = false
@@ -666,7 +666,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
     // ctx may have gone stale during the awaited calls above; token count is best-effort
     tokens = ctx.getContextUsage()?.tokens ?? null
   } catch (err) {
-    console.error(`${EXTENSION} getContextUsage failed:`, err)
+    console.error(`${EXTENSION} ❌ getContextUsage() `, err)
   }
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
@@ -691,7 +691,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
   safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
 
   if (!taskProjectRoot) {
-    console.error(`[todo-extension] finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
+    console.error(`[${EXTENSION}] ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
   }
 
   // Write the report directly into the open PR description (no chat pollution)
