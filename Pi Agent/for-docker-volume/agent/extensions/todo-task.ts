@@ -63,6 +63,9 @@ let completed = false                  // is current task completed ? shoud it b
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
+let watchedPr: { number: number; url: string } | null = null
+const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
+
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 let statusTimer: ReturnType<typeof setInterval> | null = null
 const STATUS_UPDATE_MS = 15_000
@@ -77,11 +80,10 @@ const PR_CHECK_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000  // 4 hours
 let checkCounter = 0
-// TODO... alculae MAX counter
+// TODO... calculae MAX counter
 let prCheckStartedAt = 0
 let prCheckInFlight = false
-//const handledReviewDecisions = new Map<string, string>()
-let watchedPr: { number: number; url: string } | null = null
+
 
 const DEBUG = false
 const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
@@ -353,57 +355,54 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // TODO: recognize approvals
       // pr:     "reviews": [{ "state": "APPROVED", "author": "alex-piccione" }],
       //if (pr.reviews.)
+      
+      // TODO: inject a message to manage PR checks (workflows?)
+      //if (pr.statusCheckRollup.findIndex( s => s.conclusion))  
 
       if (pr.state === 'MERGED') {
         
         safeNotify(`✅ PR MERGED !`, 'info')
 
         try {
-          pi.sendUserMessage('/todo', { deliverAs: 'followUp' })
+          pi.sendUserMessage('/todo Previos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
         } catch (err) {
-          console.error(`${EXTENSION} ❌ FAiled to send /todo command:`, err)
-          // /todo command not available — just stop watching
+          console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
         }
         stopPrCheckPolling()
         return
       }
 
       const hasConflicts = pr.mergeable === "CONFLICTING"
+      if (hasConflicts)
+        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
 
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
+       safeNotify(`PR decision is '${decision}' (unmanaged)`, "info")
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
-      //const key = `${pr.number}:${decision}:${hasChangesRequested}`
-      //if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
-      //  return
-      //}
-      //handledReviewDecisions.set(key, decision)
+      const key = `${pr.number}:${decision}:${hasChangesRequested}`
+      handledReviewDecisions.set(key, decision)
 
-      // TODO: inject a message to manage PR checks (workflows?)
-      //if (pr.statusCheckRollup.findIndex( s => s.conclusion))  
+      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+        return
+      }
 
       if (decision === 'APPROVED') {        
-        if (hasConflicts)
-            pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
-        else
-            // The user usually merges an approved PR themselves — just notify and keep watching until merged.
-            pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
+        // The user usually merges an approved PR themselves — just notify and keep watching until merged.
+        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
       } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
         )
-      } else
-      {
-        safeNotify(`PR decision is '${decision}' (unmanaged)`, "info")
       }
+
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
-      safeNotify(`❌ checkPrReview() failed. ${err}`, "error")
-      // transient git/gh failure — retry on next tick
+      safeNotify(`❌ checkPrReview() failed. ${err}`, "error")      
     } finally {
       prCheckInFlight = false
     }
@@ -414,7 +413,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     safeNotify(`Start PR check...`, "info")
     stopPrCheckPolling()
     prCheckStartedAt = Date.now()
-    //handledReviewDecisions.clear()
+    handledReviewDecisions.clear()
     watchedPr = null
     prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
     // Initial polling status will be set on first checkPrReview run
@@ -465,7 +464,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     number = parseFloat(numberMatch[1])
     if (isNaN(number) || number <= 0) {
-      return { number: 0, note: undefined, error: '❌ Usage: /feature <number> [optional note]  —  e.g. /+feature 10 or /feature 10 ignore existing PR' }
+      return { number: 0, note: undefined, error: '❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR' }
     }
 
     // Group 2 may be absent depending on the regex engine — guard before accessing.
@@ -646,7 +645,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // TODO if branch is main/master, switch to the PR branch
       const branch = execSync('git branch --show-current', { cwd:projectRoot, encoding: 'utf-8' }).trim()
       if (!branch || branch === 'main' || branch === 'master') {
-        safeNotify("To call /pr you need to be on a branch difefrent from the default one", "warning")
+        safeNotify("To call /pr you need to be on a branch different from the default one", "warning")
         return
       }
 
