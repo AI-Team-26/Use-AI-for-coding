@@ -75,6 +75,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
+- Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
 - Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
 - Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
 - Feature 32 [feat/32_fresh_session_on_task_v2]: todo-task starts a fresh session on task start for context purity
