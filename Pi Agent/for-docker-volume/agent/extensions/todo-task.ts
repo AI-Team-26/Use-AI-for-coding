@@ -27,7 +27,7 @@
  *
  * The extension:
  *   1. Move to updated main branch to look at up-to-date TODO
- *   2. Writes START:<timestamp> to ~/.pi/agent/todo-features/feature_<N>.txt or bug_<N>.txt
+ *   2. Writes START:<timestamp> to ~/.pi/agent/todo-tasks/task_<N>.txt or bug_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
  *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
@@ -51,9 +51,9 @@ import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
 
 const EXTENSION = "TODO-TASK"
-const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-features')
-const STATUS_KEY_TASK = "alex-piccione-todo-feature-task"
-const STATUS_KEY_PR = "alex-piccione-todo-feature-pr"
+const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-tasks')
+const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
+const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
 
@@ -311,7 +311,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
-      pi.sendMessage({ customType: 'todo-feature', content: `⏸️ Stopped watching for PR review (2h limit reached).${prRef}`, display: true, details: {} })
+      pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
       return
     }
 
@@ -368,8 +368,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return
       }
 
-    // Check PR-level reviewDecision first
-      const hasConficts = pr.mergeable === "CONFLICTING"
+      const hasConflicts = pr.mergeable === "CONFLICTING"
 
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
@@ -387,7 +386,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       //if (pr.statusCheckRollup.findIndex( s => s.conclusion))  
 
       if (decision === 'APPROVED') {        
-        if (hasConficts)
+        if (hasConflicts)
             pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
         else
             // The user usually merges an approved PR themselves — just notify and keep watching until merged.

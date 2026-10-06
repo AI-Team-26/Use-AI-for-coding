@@ -2,29 +2,29 @@
 
 ## Backlog
 
-- Feature 34 | todo-feature extension: reuse PR lookup in appendReportToPr
+- Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
   - `getBranchOpenPr` keeps requesting `number,state,reviewDecision,reviews,url`
   - `appendReportToPr` requests only `number,body` — collapsing its two gh calls (`pr list` + `pr view`) into one.
 
-- Feature 31 | todo-feature extension
+- Feature 31 | todo-task extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
-- Bug 16 | todo-feature polling
+- Bug 16 | todo-task polling
   Polling continue also after Rejection, but does not trigger any command when reject a second time.
   Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
 
-- Bug 17 | todo-feature fresh session crashes with stale ctx
+- Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
   The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
 
-- Feature 30 | todo-feature extension: unify status display
+- Feature 30 | todo-task extension: unify status display
   Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
   Use two separate status keys:
-  - STATUS_KEY = "alex-piccione-todo-feature" → elapsed time (☑️ Feature N MM:SS)
-  - POLLING_STATUS_KEY = "alex-piccione-todo-feature-polling" → polling indicator (🔍 PR #N)
+  - STATUS_KEY = "alex-piccione-todo-task" → elapsed time (☑️ Feature N MM:SS)
+  - POLLING_STATUS_KEY = "alex-piccione-todo-task-polling" → polling indicator (🔍 PR #N)
   Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
 
 - Bug 3: When Pi start I have this warning message:
@@ -43,7 +43,7 @@
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 19: todo-feature extension notified the stop of review watch after 2 hous but the feature was still active
+- Feature 19: todo-task extension notified the stop of review watch after 2 hous but the feature was still active
   How is possible the review is active ("Feature N" is shown in the status) and there is a review watcher running?
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
@@ -63,24 +63,24 @@
 
 - Bug 36 | "Select a project/action:" prompt on crash and restart of the shell does not show the options
 
-- Feature 37 | todo-feature: add "/pr N" command. It should start the PR check polling of that PR
+- Feature 37 | todo-task: add "/pr N" command. It should start the PR check polling of that PR
 
-- Feature 38 | todo-feature: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
+- Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
 - Feature 999 | Test
-  This is a fake feature, just to test the todo-feature extension.
+  This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
   DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
-- Feature 35 [feat/35_pr_status_link]: todo-feature polling status PR references are now clickable (OSC 8 hyperlinks)
+- Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
 - Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
-- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-feature starts a fresh session on task start for context purity
-- Bug 15 [fix/15_session_start_restart_timers]: todo-feature restart PR polling + status timer on session_start
-- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-feature review watcher stop message includes PR link
+- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-task starts a fresh session on task start for context purity
+- Bug 15 [fix/15_session_start_restart_timers]: todo-task restart PR polling + status timer on session_start
+- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
-- Feature 28 [feat/28_todo_extension_optional_note]: todo-feature extension accepts optional note
+- Feature 28 [feat/28_todo_extension_optional_note]: todo-task extension accepts optional note
 - Bug 1 [bug/1_aaa]: Aaa (just an example)
 - Feature 8 [feat/8_aaa]: Aaa (just an example)

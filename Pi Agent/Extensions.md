@@ -34,11 +34,12 @@ npm install -D @earendil-works/pi-coding-agent@<specific-version> typescript
   Before reading, it fetch latest main branch so the shown backlog is always loaded from a up to date TODO.
   It also ask the Agent to look for unfinished jobs and open PRs.
   
-- todo-feature
+- todo-task
   ASk the agent to implements a feature or a bugfix from the TODO backlog and measures elapsed time.
   Usage:
-  -  `/feature <number>` — starts implementing feature N (float numeration supported, e.g. `/feature 7.1`).
-  -  `/bugfix <number>`  — starts implementing a fix for Bug N.
+  - `/feature <number> [note]` — starts implementing feature N (float numeration supported, e.g. `/feature 7.1`).
+  - `/bugfix <number> [note]`  — starts implementing a fix for Bug N.
+  - `/pr [number]`             — starts scheduled check for PR.
   
   Before the agent starts, fetch the latest main branch so the TODO is up to date.
   Writes START/END timestamps and elapsed minutes to `~/.pi/agent/feature-times/feature_<N>.txt`.
@@ -46,7 +47,7 @@ npm install -D @earendil-works/pi-coding-agent@<specific-version> typescript
   Injects follow-up message to write timing into the PR.
   Completion marker: `[FEATURE N COMPLETED]`/`[BUGFIX N COMPLETED]`
 
-- pr-extension
+- pr-review
   Add the `/review` command to start a fresh session for reviewing a GitHub PR.
   Usage:
   -  `/review <pr-number>` — review PR N with no additional note.
