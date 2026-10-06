@@ -390,6 +390,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Avoid re-processing the same decision
       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+        if (checkCounter == 1 && hasConflicts)
+          pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+        
         return
       }
       handledReviewDecisions.set(key, effectiveDecision)
