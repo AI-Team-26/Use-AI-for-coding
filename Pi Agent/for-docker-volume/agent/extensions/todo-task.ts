@@ -352,12 +352,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       else 
         console.error(`${EXTENSION} ❌ latestCtx is null`)
 
-      // TODO: recognize approvals
-      // pr:     "reviews": [{ "state": "APPROVED", "author": "alex-piccione" }],
-      //if (pr.reviews.)
-      
       // TODO: inject a message to manage PR checks (workflows?)
-      //if (pr.statusCheckRollup.findIndex( s => s.conclusion))  
+      //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
 
       if (pr.state === 'MERGED') {
         
@@ -374,25 +370,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
+
       // TODO: temporary debug message, ignore in PR review
-      safeNotify(`PR decision is '${decision}' (unmanaged)`, "info") 
+      safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info") 
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
+      // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
+      // Fall back to individual reviews to detect the approval.
+      const hasApprovalInReviews = !decision && !hasChangesRequested
+        && (pr.reviews?.some(r => r.state === 'APPROVED') ?? false)
+
       const hasConflicts = pr.mergeable === "CONFLICTING"
 
-      // Avoid re-process the same decision
-      const key = `${pr.number}:${decision}:${hasChangesRequested}`
-      if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+      // Effective decision: prefer aggregate, fall back to individual reviews
+      const effectiveDecision = decision || (hasApprovalInReviews ? 'APPROVED' : '')
+
+      // Avoid re-processing the same decision
+      const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
+      if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         return
       }
-      handledReviewDecisions.set(key, decision)
+      handledReviewDecisions.set(key, effectiveDecision)
 
-      if (decision === 'APPROVED') {        
-        // The user usually merges an approved PR themselves — just notify and keep watching until merged.
-        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved — waiting for merge.`, display: true, details: {} })
-      } else if (decision === 'CHANGES_REQUESTED' || hasChangesRequested) {
+      if (effectiveDecision === 'APPROVED') {
+        const note = hasApprovalInReviews && !decision ? ' (checks may be blocking formal decision)' : ''
+        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
+      } else if (effectiveDecision === 'CHANGES_REQUESTED' || hasChangesRequested) {
         pi.sendUserMessage(
           `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
