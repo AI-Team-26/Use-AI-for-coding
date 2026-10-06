@@ -1,4 +1,4 @@
-// ~/.pi/agent/extensions/pr-extension.ts
+// ~/.pi/agent/extensions/pr-review.ts
 /**
  * /review N [note:optional] — Starts a fresh session to review a GitHub PR.
  *
@@ -14,20 +14,20 @@
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
 
 const DEBUG = false
-const EXTENSION = "TODO-PR"
+const EXTENSION = "PR-REVIEW"
 let latestCtx: ExtensionContext | null = null
 
 const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
 
 function safeNotify(message: string, type: 'info' | 'warning' | 'error' = 'info'): void {
   if (!latestCtx) {
-    console.error(`❌ ${EXTENSION} notify got a null ctx`)
+    console.error(`${EXTENSION} ❌ safeNotify got a null ctx`)
     return
   }
   try {
     latestCtx.ui.notify(message, type)
   } catch (err) {
-    console.error(`❌ ${EXTENSION} notify failed:`, err)
+    console.error(`${EXTENSION} ❌ safeNotify failed:`, err)
   }
 }
 
