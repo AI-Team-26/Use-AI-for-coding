@@ -16,6 +16,9 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
+const EXTENSION = "TODO-TASK"
+const MAX_CHARS = 4096
+
 // Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
 function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
   try {
@@ -32,9 +35,6 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
     return false
   }
 }
-
-const MAX_CHARS = 4096
-
 
 // Helper to parse command arguments
 // return number as 0 when command it is called with "end" argument
@@ -86,10 +86,9 @@ export default function todoExtension(pi: ExtensionAPI) {
         }
       }
 
-      // Second message: recap prompt
-      pi.sendUserMessage('Verify the current branch status: is the job done and all the changes committed? There is a PR? There are unresolved review comments?\n ' +
-"For open PR shows the link. \n" +        
-"Do a summary if the TODO and propose the next step.\n \
+      pi.sendMessage({ 
+        customType: `${EXTENSION}`, 
+        content: "Do a summary if the TODO and propose the next step.\n \
 Use this format to show the TODO: \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
@@ -106,8 +105,14 @@ Use this format to show the TODO: \n \
 ├──────┼──────────────────────────────┤ \n \
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
-"
-      )
+(show 'Done' only for tasks that are still in hte TODO list, not if they are properly marked/positioned as done)",
+        display: false
+      })
+
+      // Second message: recap prompt
+      pi.sendUserMessage("Verify the current branch status: is the job done and all the changes committed? There is a PR? \n \
+        There are unresolved review comments?\n \
+        For open PR shows the link.")
       
     },
   })
