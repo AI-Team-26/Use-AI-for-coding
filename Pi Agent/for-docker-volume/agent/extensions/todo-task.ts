@@ -383,12 +383,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
+      // Avoid re-process the same decision
       const key = `${pr.number}:${decision}:${hasChangesRequested}`
-      handledReviewDecisions.set(key, decision)
-
       if ((decision !== 'APPROVED' && decision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         return
       }
+      handledReviewDecisions.set(key, decision)
 
       if (decision === 'APPROVED') {        
         // The user usually merges an approved PR themselves — just notify and keep watching until merged.
