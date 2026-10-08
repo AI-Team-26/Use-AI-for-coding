@@ -694,7 +694,17 @@
         "apiKey": "{{OPENROUTER_API_KEY}}",
         "models": [
             {
-                "id": "inclusionai/ling-3.0-flash-fin:free",
+                "id": "thinkingmachines/inkling:free",
+                                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "thinkingmachines/inkling-small:free",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "inclusionai/ling-3.0-flash-sante:free",
                 "maxTokens": 8192,
                 "reasoning": true
             },            
