@@ -55,6 +55,7 @@ export default function todoExtension(pi: ExtensionAPI) {
       // Load the TODO from a fresh main branch before reading it
       pullLatestMain(ctx, projectRoot)
 
+      let displayContent: string | null = null
       if (showTodo) {
         try {
             const content = await fs.readFile(filePath, 'utf8')
@@ -65,19 +66,10 @@ export default function todoExtension(pi: ExtensionAPI) {
             }
 
             // Truncate very large files
-            let displayContent = content.length > MAX_CHARS
+            displayContent = content.length > MAX_CHARS
               ? `${content.slice(0, MAX_CHARS)}\n\n... [truncated]`
               : content
 
-            // Option A: paste into editor (you get full Pi formatting when you submit)
-            // ctx.ui.pasteToEditor(displayContent)  // nice but needs a ENTER to be printed in the editor !!!
-
-            pi.sendMessage({
-                customType: 'markdown-block',
-                content: `${displayContent}`,
-                display: true,
-                details: {},
-            })
           } catch (err) {
           if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
             ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
@@ -87,9 +79,25 @@ export default function todoExtension(pi: ExtensionAPI) {
         }
       }
 
-      pi.sendMessage({ 
-        customType: `${EXTENSION}`, 
-        content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
+      // Start a fresh session so /todo runs on clean context (no history tokens, no compaction risk).
+      // Holder object because TS does not narrow properties assigned inside closures.
+      const fresh: { ctx: ExtensionContext | null } = { ctx: null }
+      try {
+        const result = await ctx.newSession({
+          withSession: async (newCtx) => {
+            fresh.ctx = newCtx
+            await newCtx.waitForIdle()
+            if (displayContent !== null) {
+              await newCtx.sendMessage({
+                customType: 'markdown-block',
+                content: displayContent,
+                display: true,
+                details: {},
+              })
+            }
+            await newCtx.sendMessage({ 
+              customType: `${EXTENSION}`, 
+              content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
 ├──────┼──────────────────────────────┤ \n \
@@ -104,14 +112,21 @@ export default function todoExtension(pi: ExtensionAPI) {
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
 (Show only relevant data, don't show info that are not useful)",
-        display: false
-      })
+              display: false
+            })
 
-      // Second message: recap prompt
-      pi.sendUserMessage(
+            // Recap prompt delivered as steer so the agent picks it up immediately
+            await newCtx.sendUserMessage(
 "Do a summary of the TODO and propose the next step.\n \
-Shows the link of open PRs.")
-      
+Shows the link of open PRs.", { deliverAs: 'steer' })
+          },
+        })
+        if (result.cancelled) {
+          ;(fresh.ctx ?? ctx).ui.notify('⚠️ Fresh session cancelled — /todo aborted.', 'warning')
+        }
+      } catch (err) {
+        ;(fresh.ctx ?? ctx).ui.notify(`❌ Failed to start fresh session for /todo: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
     },
   })
 }
