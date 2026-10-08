@@ -90,6 +90,18 @@
   + If it is on main branch:
      "Verify branches. Do they have open PRs. If PRs are merged delete them. if there are open PRs, recap the status."
 
+- Feature 42 | todo extension: use fresh session for /todo command
+     The /todo command currently runs in the existing session context, carrying over all conversation history.
+     This makes it slower, more expensive (more tokens), and risks triggering compaction.
+
+     Modify `extensions/todo.ts` to use `ctx.newSession()` with `withSession` callback, so the agent starts with a clean context.
+     Use `{ deliverAs: 'steer' }` for the initial prompt inside `withSession`.
+
+     Constraints:
+     - Keep behavior identical (same output format, same git pull, same PR status check)
+     - Only one file changed (`todo.ts`)
+     - Well under 500 lines delta
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
