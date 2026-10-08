@@ -90,18 +90,6 @@
   + If it is on main branch:
      "Verify branches. Do they have open PRs. If PRs are merged delete them. if there are open PRs, recap the status."
 
-- Feature 42 | todo extension: use fresh session for /todo command
-     The /todo command currently runs in the existing session context, carrying over all conversation history.
-     This makes it slower, more expensive (more tokens), and risks triggering compaction.
-
-     Modify `extensions/todo.ts` to use `ctx.newSession()` with `withSession` callback, so the agent starts with a clean context.
-     Use `{ deliverAs: 'steer' }` for the initial prompt inside `withSession`.
-
-     Constraints:
-     - Keep behavior identical (same output format, same git pull, same PR status check)
-     - Only one file changed (`todo.ts`)
-     - Well under 500 lines delta
-
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
@@ -109,6 +97,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
+- Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (clean context, no history tokens, no compaction risk)
 - Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
 - Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
 - Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
