@@ -55,12 +55,17 @@ export default function todoExtension(pi: ExtensionAPI) {
       // Load the TODO from a fresh main branch before reading it
       pullLatestMain(ctx, projectRoot)
 
+      // Run the recap in a fresh session so the agent starts with a clean context
+      // (no carried-over history → cheaper, no compaction risk).
+      try {
+        await ctx.newSession({
+          withSession: async (newCtx) => {
       if (showTodo) {
         try {
             const content = await fs.readFile(filePath, 'utf8')
 
             if (!content.trim()) {
-              ctx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
+              newCtx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
               return;
             }
 
@@ -72,7 +77,7 @@ export default function todoExtension(pi: ExtensionAPI) {
             // Option A: paste into editor (you get full Pi formatting when you submit)
             // ctx.ui.pasteToEditor(displayContent)  // nice but needs a ENTER to be printed in the editor !!!
 
-            pi.sendMessage({
+            await newCtx.sendMessage({
                 customType: 'markdown-block',
                 content: `${displayContent}`,
                 display: true,
@@ -80,14 +85,14 @@ export default function todoExtension(pi: ExtensionAPI) {
             })
           } catch (err) {
           if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-            ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
+            newCtx.ui.notify('❌ TODO.md not found in the current project.', 'error')
           } else {
-            ctx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
+            newCtx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
           }
         }
       }
 
-      pi.sendMessage({ 
+      newCtx.sendMessage({ 
         customType: `${EXTENSION}`, 
         content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
@@ -107,11 +112,16 @@ export default function todoExtension(pi: ExtensionAPI) {
         display: false
       })
 
-      // Second message: recap prompt
-      pi.sendUserMessage(
+      // Recap prompt delivered into the fresh session.
+      await newCtx.sendUserMessage(
 "Do a summary of the TODO and propose the next step.\n \
-Shows the link of open PRs.")
-      
+Shows the link of open PRs.",
+              { deliverAs: 'steer' })
+          },
+        })
+      } catch (err) {
+        ctx.ui.notify(`❌ Failed to start fresh session for /todo: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
     },
   })
 }
