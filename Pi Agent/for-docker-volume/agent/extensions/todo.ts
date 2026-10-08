@@ -48,7 +48,6 @@ export default function todoExtension(pi: ExtensionAPI) {
   pi.registerCommand('todo', {
     description: 'Shows the TODO.md Backlog from the latest main branch (fresh checkout + pull)',
       handler: async (args, ctx) => {
-        pi.sendMessage({customType: `${EXTENSION}`, content: `Reading TODO ...`, display: true})
         const { showTodo } = parseCommandArgs(args)
         const projectRoot = ctx.cwd ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
@@ -90,8 +89,7 @@ export default function todoExtension(pi: ExtensionAPI) {
 
       pi.sendMessage({ 
         customType: `${EXTENSION}`, 
-        content: "Do a summary if the TODO and propose the next step.\n \
-Use this format to show the TODO: \n \
+        content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
 ├──────┼──────────────────────────────┤ \n \
@@ -111,9 +109,8 @@ Use this format to show the TODO: \n \
 
       // Second message: recap prompt
       pi.sendUserMessage(
-"Verify the current branch status: is the job done and all the changes committed? There is a PR? \n \
-There are unresolved review comments?\n \
-For open PR shows the link.")
+"Do a summary of the TODO and propose the next step.\n \
+Shows the link of open PRs.")
       
     },
   })
