@@ -57,9 +57,11 @@ export default function todoExtension(pi: ExtensionAPI) {
 
       // Run the recap in a fresh session so the agent starts with clean context
       // (no carried-over history → cheaper tokens, no compaction risk).
+      let replacementCtx: ExtensionContext | null = null
       try {
         await ctx.newSession({
           withSession: async (newCtx) => {
+            replacementCtx = newCtx
             await newCtx.waitForIdle()
 
             if (showTodo) {
@@ -118,7 +120,7 @@ Shows the link of open PRs.",
           },
         })
       } catch (err) {
-        ctx.ui.notify(`❌ Failed to start fresh session for /todo: ${err instanceof Error ? err.message : String(err)}`, 'error')
+        (replacementCtx ?? ctx).ui.notify(`❌ Failed to start fresh session for /todo: ${err instanceof Error ? err.message : String(err)}`, 'error')
       }
     },
   })
