@@ -87,9 +87,7 @@ export default function todoExtension(pi: ExtensionAPI) {
         }
       }
 
-      pi.sendMessage({ 
-        customType: `${EXTENSION}`, 
-        content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
+      const formatInstruction = "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
 ├──────┼──────────────────────────────┤ \n \
@@ -103,15 +101,29 @@ export default function todoExtension(pi: ExtensionAPI) {
 ├──────┼──────────────────────────────┤ \n \
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
-(Show only relevant data, don't show info that are not useful)",
-        display: false
-      })
+(Show only relevant data, don't show info that are not useful)"
 
-      // Second message: recap prompt
-      pi.sendUserMessage(
-"Do a summary of the TODO and propose the next step.\n \
-Shows the link of open PRs.")
-      
+      const recapPrompt = "Do a summary of the TODO and propose the next step.\n \
+Shows the link of open PRs."
+
+      // Run the recap in a fresh session so the agent starts with clean context
+      try {
+        await ctx.newSession({
+          withSession: async (newCtx) => {
+            await newCtx.waitForIdle()
+            newCtx.sendMessage({
+              customType: `${EXTENSION}`,
+              content: formatInstruction,
+              display: false,
+              details: {},
+            })
+            newCtx.sendUserMessage(recapPrompt, { deliverAs: 'steer' })
+          },
+        })
+      } catch (err) {
+        ctx.ui.notify(`❌ Failed to start fresh session for /todo: ${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
+    },
     },
   })
 }
