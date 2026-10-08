@@ -29,8 +29,9 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
     })
     return true
   } catch (err) {
+    console.error(`❌ Git update failed`, 'error')
     const e = err as { stderr?: string; message: string }
-    const detail = (e.stderr ?? '').trim() || e.message
+    const detail = (e.stderr ?? '').trim() || e.message    
     ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }
@@ -50,6 +51,8 @@ export default function todoExtension(pi: ExtensionAPI) {
         const { showTodo } = parseCommandArgs(args)
         const projectRoot = ctx.cwd ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
+
+      pi.sendMessage({customType: `${EXTENSION}`, content: `Reading TODO ...`, display: true})
 
       // Load the TODO from a fresh main branch before reading it
       pullLatestMain(ctx, projectRoot)
