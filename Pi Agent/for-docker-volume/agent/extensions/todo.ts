@@ -52,44 +52,42 @@ export default function todoExtension(pi: ExtensionAPI) {
         const projectRoot = ctx.cwd ?? process.cwd()
         const filePath = path.join(projectRoot, 'TODO.md')
 
-      // Load the TODO from a fresh main branch before reading it
-      pullLatestMain(ctx, projectRoot)
+        // Load the TODO from a fresh main branch before reading it
+        pullLatestMain(ctx, projectRoot)
 
-      if (showTodo) {
-        try {
-            const content = await fs.readFile(filePath, 'utf8')
+        await ctx.newSession({
+          withSession: async (newCtx) => {
+            if (showTodo) {
+              try {
+                const content = await fs.readFile(filePath, 'utf8')
 
-            if (!content.trim()) {
-              ctx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
-              return;
+                if (!content.trim()) {
+                  newCtx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
+                  return
+                }
+
+                let displayContent = content.length > MAX_CHARS
+                  ? `${content.slice(0, MAX_CHARS)}\n\n... [truncated]`
+                  : content
+
+                pi.sendMessage({
+                    customType: 'markdown-block',
+                    content: `${displayContent}`,
+                    display: true,
+                    details: {},
+                })
+              } catch (err) {
+                if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+                  newCtx.ui.notify('❌ TODO.md not found in the current project.', 'error')
+                } else {
+                  newCtx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
+                }
+              }
             }
 
-            // Truncate very large files
-            let displayContent = content.length > MAX_CHARS
-              ? `${content.slice(0, MAX_CHARS)}\n\n... [truncated]`
-              : content
-
-            // Option A: paste into editor (you get full Pi formatting when you submit)
-            // ctx.ui.pasteToEditor(displayContent)  // nice but needs a ENTER to be printed in the editor !!!
-
-            pi.sendMessage({
-                customType: 'markdown-block',
-                content: `${displayContent}`,
-                display: true,
-                details: {},
-            })
-          } catch (err) {
-          if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-            ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
-          } else {
-            ctx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
-          }
-        }
-      }
-
-      pi.sendMessage({ 
-        customType: `${EXTENSION}`, 
-        content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
+            pi.sendMessage({ 
+              customType: `${EXTENSION}`, 
+              content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
 ├──────┼──────────────────────────────┤ \n \
@@ -104,14 +102,16 @@ export default function todoExtension(pi: ExtensionAPI) {
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
 (Show only relevant data, don't show info that are not useful)",
-        display: false
-      })
+              display: false
+            })
 
-      // Second message: recap prompt
-      pi.sendUserMessage(
+            await newCtx.sendUserMessage(
 "Do a summary of the TODO and propose the next step.\n \
-Shows the link of open PRs.")
-      
+Shows the link of open PRs.",
+              { deliverAs: 'steer' }
+            )
+          },
+        })
     },
   })
 }
