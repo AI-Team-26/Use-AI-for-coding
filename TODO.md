@@ -83,6 +83,13 @@
 
 - Feature 40: extract common extensions helper function in a common .ts file
 
+- Feature 41: Create a new Pi extension: /continue
+  It should send a message like this: 
+  + If it is NOT on main branch: 
+    "Verify the branch status: is the job done and all the changes committed?\n There is a PR?\n There are unresolved review comments?"
+  + If it is on main branch:
+     "Verify branches. Do they have open PRs. If PRs are merged delete them. if there are open PRs, recap the status."
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
