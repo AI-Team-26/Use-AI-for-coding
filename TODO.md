@@ -90,6 +90,12 @@
   + If it is on main branch:
      "Verify branches. Do they have open PRs. If PRs are merged delete them. if there are open PRs, recap the status."
 
+- Bug 43 | pi agent todo-task extension
+  "PR decision is 'CHANGES_REQUESTED' (87)" was printed but then this error:
+  Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or
+   ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
+  
+  I think it is the pi (pi.sendMessage or pi.sendUserMessage) to be stale but... how to use a new one? and why was stale ?
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
