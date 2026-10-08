@@ -102,13 +102,26 @@
      - Only one file changed (`todo.ts`)
      - Well under 500 lines delta
 
-- Bug 43 | pi agent todo-task extension
+- Bug 43 | Pi agent todo-task extension
   "PR decision is 'CHANGES_REQUESTED' (87)" was printed but then this error:
   Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or
    ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
   
   I think it is the pi (pi.sendMessage or pi.sendUserMessage) to be stale but... how to use a new one? and why was stale ?
 
+- Bug 44 | Pi agent todo-task extension crash
+  pi exiting due to uncaughtException:
+    Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
+        at Object.assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:3578)
+        at assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:6218)
+        at Object.sendMessage (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:8976)
+        at checkPrReview (/root/.pi/agent/extensions/todo-task.ts:316:10)
+        at Timeout.<anonymous> (/root/.pi/agent/extensions/todo-task.ts:428:44)
+            at listOnTimeout (node:internal/timers:685:17)
+            at process.processTimers (node:internal/timers:618:7)
+
+        That seems to be this line:
+            prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
