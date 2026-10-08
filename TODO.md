@@ -81,6 +81,8 @@
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
+- Feature 40: extract common extensions helper function in a common .ts file
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
