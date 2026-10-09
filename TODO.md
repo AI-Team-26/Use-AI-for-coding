@@ -123,6 +123,42 @@
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
+- Bug 45 | Suppress Git error messages in git-info extension when not in a Git repository
+
+  # Description
+
+  When the Pi agent is running in a directory that is not a Git workspace (i.e., does not contain a .git folder), the git-info extension continuously floods the user's Terminal User Interface (TUI) with error  messages. These messages appear every 5 seconds, corresponding to the extension's refresh interval.
+
+  The error messages typically look like this:
+
+  ```text
+    fatal: not a git repository (or any parent up to mount point /)
+    Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+  ```
+
+  # Root Cause Analysis
+
+  The issue resides in the git-info.ts extension located in the agent's extensions directory.
+    
+  The extension uses a helper function run(cmd: string) to execute Git commands via execSync. While the function wraps the execution in a try/catch block to prevent the extension itself from crashing, it does not account for the fact that execSync writes the subprocess's stderr directly to the parent process's stderr stream.
+  
+  Because the Pi UI captures all stderr from its child processes and pipes them directly to the user's terminal view, these "fatal" messages are visible to the user even though the JavaScript error is technically "handled."
+
+  File Location: /root/.pi/agent/extensions/git-info.ts
+
+  # Current Implementation:
+
+  ```typescript
+    function run(cmd: string): string | null {
+      try {
+        const out = execSync(cmd, { cwd: process.cwd() }).toString().trim()
+        return out || null
+      } catch {
+        return null
+      }
+    }
+  ```
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
