@@ -578,9 +578,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         `**IMPORTANT**: after you publish or update the PR, include "[BUGFIX ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
 
     // Optional note: simply append to the instruction message.
-    if (note) {
-      agentMessage = agentMessage + `${note}. `
-    }
+    if (note == "repeat")
+        note = "Ignore existing PR and branches for the same task."
+
+    if (note)
+      agentMessage = agentMessage + ` ${note}`
 
     // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
     const abortStart = (freshCtx: ExtensionContext | null): void => {
