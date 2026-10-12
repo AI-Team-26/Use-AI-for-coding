@@ -15,6 +15,13 @@
   - Keep behavior identical; pure extraction, no logic changes
   - Max ~10 files changed, well under 500 lines delta
 
+  Also colors:
+  // ANSI colors — passed straight into the status line (the footer does not strip escapes)
+  const CYAN = "\x1b[36m"
+  const BLUE = "\x1b[34m"
+  const GREEN = "\x1b[32m"
+  const RESET = "\x1b[0m"
+
 - Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
