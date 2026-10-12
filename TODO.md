@@ -129,6 +129,8 @@
   For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
   I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
 
+- Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    

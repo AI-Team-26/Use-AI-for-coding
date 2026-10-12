@@ -87,9 +87,8 @@ export default function todoExtension(pi: ExtensionAPI) {
         }
       }
 
-      pi.sendMessage({ 
-        customType: `${EXTENSION}`, 
-        content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
+/*
+content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
 ┌──────┬──────────────────────────────┐ \n \
 │ 🟢   │ Feature (backlog, available) │ \n \
 ├──────┼──────────────────────────────┤ \n \
@@ -103,15 +102,24 @@ export default function todoExtension(pi: ExtensionAPI) {
 ├──────┼──────────────────────────────┤ \n \
 │ 📋   │ Epic (group header)          │ \n \
 └──────┴──────────────────────────────┘ \n \
-(Show only relevant data, don't show info that are not useful)",
+*/
+
+      pi.sendMessage({ 
+        customType: `${EXTENSION}`, 
+        content: 
+"Show all the Features and Bugs of the TODO backlog in a simple table.\n Use these icons to identify the tasks:\n \
+🟢 Feature (backlog, available), \
+🐞 Bug fix (backlog), \
+⏳ In progress (open PR),\
+🔴 Blocked (dependency unmet), \
+❌ Dropped/rejected, \
+📋 Epic (group header).\n \
+Show only relevant data, don't show info that are not useful (like done things).\n \
+Suggest to use /feature N [note] and /bugfix N [note] to start a task, /pr <PR> to review a PR and /continue N to continue the work of a task.",
         display: false
       })
 
       // Second message: recap prompt
-      pi.sendUserMessage(
-"Do a summary of the TODO and propose the next step.\n \
-Shows the link of open PRs.")
-      
-    },
+      pi.sendUserMessage("Do a summary of the TODO and propose the next step. (Shows the link of open PRs, if there are)") },
   })
 }
