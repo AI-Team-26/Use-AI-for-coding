@@ -158,6 +158,11 @@
       }
     }
   ```
+- Bug 46 | todo-task model captured doesn't work well with "/"
+  Llama.cpp/Qwen3.7-27B-AAA-BBB capture of proviider (Llama.cpp) and model (Qwen3.7-27B-AAA-BBB) works fine, 
+  but is the model used by Pi is this: "(Openrouter) minimax/minimax-m3" it doesn't capture the model properly.  
+  For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
+  I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
