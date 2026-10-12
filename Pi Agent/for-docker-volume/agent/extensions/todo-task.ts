@@ -564,25 +564,46 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     startStatusTimer()
     //startPrCheckPolling(projectRoot)
 
-    // Inject the task to the agent — code is already up to date
-    let agentMessage = type === 'feature'
-      ? `Implement feature ${number}.\nIf the feature is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+    // Inject the task to the agent
+
+    const typeData = type === "feature" ?
+        { 
+            init: `Implement feature ${number}.`, 
+            complete: `[FEATURE ${number} COMPLETED]`,
+            extra: "If the feature is too big or need to work on different areas, split it in multiple tasks and add them to the TODO. "
+        } :
+        { 
+            init: `Fix bug ${number}.`, 
+            complete: `[BUGFIX ${number} COMPLETED]`
+        } ;
+
+    let agentMessage =
+`${typeData.init}\n\
+If the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.\n\
+While you do the code changes, consider side effects and required rework. Leave "TODO" comments in the code if needed.\n\
+${typeData.extra??""}\n\
+After you publish or update the PR, resolve conflicts with main (if there are any).\n\
+**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.\n`
+
+/*
+    let agentMessage_old = type === 'feature'
+      ? `Implement feature ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The feature number is ${number}. ` +
         `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO. ` +
         `After you publish or update the PR, resolve conflicts with main if there are any. ` + 
         `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-      : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user. ` +
+      : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.` +
         (onMain ? `The code is already on main and up to date. ` : "") +
         `The bug number is ${number}. ` +
         `**IMPORTANT**: after you publish or update the PR, include "[BUGFIX ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-
+*/
     // Optional note: simply append to the instruction message.
     if (note == "repeat")
-        note = "Ignore existing PR and branches for the same task."
+        note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch/PR from scratch."
 
     if (note)
-      agentMessage = agentMessage + ` ${note}`
+      agentMessage = agentMessage + `\n${note}`
 
     // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
     const abortStart = (freshCtx: ExtensionContext | null): void => {
