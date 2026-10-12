@@ -147,5 +147,3 @@
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
 - Feature 28 [feat/28_todo_extension_optional_note]: todo-task extension accepts optional note
-- Bug 1 [bug/1_aaa]: Aaa (just an example)
-- Feature 8 [feat/8_aaa]: Aaa (just an example)

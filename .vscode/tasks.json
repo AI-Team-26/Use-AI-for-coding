@@ -7,10 +7,12 @@
             "command": "git fetch --prune origin",
             "group": "none"
         },
+        // use rebase to replay local commit ON TOP of origin main to avoid -force to discard changes of merged PRs
+        // "command_that_SILENTLY_REVERT": "git add TODO.md && git commit -m 'todo: add task' && git push --force",
         {
-            "label": "➕ GIT push TODO task",
+            "label": "☑️ GIT add TODO task",
             "type": "shell",
-            "command": "git add TODO.md && git commit -m 'todo: add task' && git push --force",
+            "command": "git add TODO.md && git commit -m 'todo: add task' && git pull --rebase --autostash origin main && git push --force",
             "group": "none"
         },
         {
