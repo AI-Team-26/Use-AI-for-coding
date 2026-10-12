@@ -586,12 +586,17 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
     const abortStart = (freshCtx: ExtensionContext | null): void => {
-      stopPrCheckPolling()
-      stopStatusTimer()
-      pending = null
-      completed = false
-      safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
-      safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
+      try {
+        stopPrCheckPolling()
+        stopStatusTimer()
+        pending = null
+        completed = false
+        safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
+        safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
+      }
+      catch (err) {
+        safeNotify(`❌ Failed abortStart(). ${err}`, 'error')
+      }
     }
 
     let replacementCtx: ExtensionContext | null = null
@@ -734,11 +739,12 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
   const report = 
-    `## AI agent execution report \n
-    _(first push only, without following reviews rework)_ \n
-     🤖 Model: ${modelName} \n
-     ⏲️ Time: ${elapsedMinutes} minutes \n
-     💰 Tokens: ${tokens??"n/a"}`
+`## AI agent execution report  
+
+_(first push only, without following reviews rework)_  
+🤖 Model: ${modelName}  
+⏲️ Time: ${elapsedMinutes} minutes  
+💰 Tokens: ${tokens??"n/a"}  `
 
   // Append to the file
   try {
