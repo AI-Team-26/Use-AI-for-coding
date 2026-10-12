@@ -138,6 +138,14 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
+- Bug 48 | todo-task extension crashes when catch the PR is reviewed and rejected.  
+   Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
+
+   PR decision is 'CHANGES_REQUESTED' (33)
+
+   The log was showing the issue was in the checkPrReview() function.
+
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    

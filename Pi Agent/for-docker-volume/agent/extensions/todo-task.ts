@@ -56,6 +56,12 @@ const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
 const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
+const CYAN = "\x1b[36m"
+const BLUE = "\x1b[34m"
+const GREEN = "\x1b[32m"
+const GRAY = "\x1b[90m"    // bright gray / dim white
+const DIM = "\x1b[2m"      // dim (renders as darker version of current fg)
+const RESET = "\x1b[0m"
 
 let latestCtx: ExtensionContext | null = null
 let pending: TimingItem | null = null  // represent hte current task, should be called CurrentTask ?
@@ -303,9 +309,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
-    safeNotify(`Checking PR review ...`, "info")
+    //safeNotify(`Checking PR review ...`, "info")
     checkCounter++
-    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️‍🗨️ (checking PR ${checkCounter})`)
+    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
 
     if (prCheckInFlight) return
 
@@ -347,7 +353,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Update polling status indicator with clickable PR reference
       if (latestCtx) {
         debug("Update PR status")
-        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state}) (${checkCounter})`)}`)
+        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)  // ${checkCounter}
       }
       else 
         console.error(`${EXTENSION} ❌ latestCtx is null`)
@@ -577,12 +583,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             complete: `[BUGFIX ${number} COMPLETED]`
         } ;
 
+    // After you publish or update the PR, resolve conflicts with main (if there are any).\n\
     let agentMessage =
 `${typeData.init}\n\
 If the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.\n\
-While you do the code changes, consider side effects and required rework. Leave "TODO" comments in the code if needed.\n\
+While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
+Test it when possible.\n\
 ${typeData.extra??""}\n\
-After you publish or update the PR, resolve conflicts with main (if there are any).\n\
 **IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.\n`
 
 /*
