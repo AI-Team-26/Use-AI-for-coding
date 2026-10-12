@@ -21,7 +21,7 @@ const RESET = "\x1b[0m"
 
 function run(cmd: string): string | null {
   try {
-    const out = execSync(cmd, { cwd: process.cwd() }).toString().trim()
+    const out = execSync(cmd, { cwd: process.cwd(), stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim()
     return out || null
   } catch {
     return null
