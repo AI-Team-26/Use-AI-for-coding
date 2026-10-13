@@ -284,6 +284,15 @@ interface PrView {
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
 
+  // Guard: skip PR review if ctx is stale (after session replacement/reload)
+  const checkPrReviewGuard = (): boolean => {
+    if (!latestCtx) {
+      console.error(`${EXTENSION} ❌ checkPrReview: latestCtx is null after session replacement, skipping`)
+      return false
+    }
+    return true
+  }
+
   const clearPending = (ctx: ExtensionContext): void => {
     if (!pending) return
     stopStatusTimer()
@@ -309,7 +318,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   const checkPrReview = async (cwd: string): Promise<void> => {
     debug("checkPrReview")
-    //safeNotify(`Checking PR review ...`, "info")
+
+    // Guard: skip if ctx is stale after session replacement/reload
+    if (!checkPrReviewGuard()) return
+
+    // ... rest of the function
     checkCounter++
     safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
 
@@ -319,7 +332,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
-      pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
+      if (latestCtx) {
+        pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
+      }
       return
     }
 
@@ -366,7 +381,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeNotify(`✅ PR MERGED !`, 'info')
 
         try {
-          pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
+          if (latestCtx) {
+            pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
+          }
         } catch (err) {
           console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
         }
@@ -396,7 +413,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Avoid re-processing the same decision
       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
-        if (checkCounter == 1 && hasConflicts)
+        if (checkCounter == 1 && hasConflicts && latestCtx)
           pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
         
         return
@@ -405,16 +422,25 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       if (effectiveDecision === 'APPROVED') {
         const note = hasApprovalInReviews && !decision ? ' (checks may be blocking formal decision)' : ''
-        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
+        if (latestCtx) {
+          pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
+        }
       } else if (effectiveDecision === 'CHANGES_REQUESTED' || hasChangesRequested) {
-        pi.sendUserMessage(
-          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
-          { deliverAs: 'followUp' }
-        )
+        if (latestCtx) {
+          pi.sendUserMessage(
+            `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
+            { deliverAs: 'followUp' }
+          )
+        } else {
+          console.error(`${EXTENSION} ❌ latestCtx is null, skipping sendUserMessage`)
+        }
       }
 
-      if (hasConflicts)
+      if (hasConflicts && latestCtx) {
         pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+      } else if (hasConflicts) {
+        console.error(`${EXTENSION} ❌ latestCtx is null, skipping sendUserMessage for conflicts`)
+      }
 
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
