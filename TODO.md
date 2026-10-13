@@ -138,23 +138,6 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
-- Bug 48 | todo-task extension crashes when catch the PR is reviewed and rejected.  
-   Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
-
-   PR decision is 'CHANGES_REQUESTED' (33)
-
-   The log was showing the issue was in the checkPrReview() function.
-
-   New data.  
-   A new log shows clearly that the exception is raised here, calling ``pi.sendUserMessage``, row 410:
-   ```
-           pi.sendUserMessage(
-          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
-          { deliverAs: 'followUp' }
-        )
-   ```     
-
-
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
@@ -162,6 +145,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
+
+- Bug 48 [fix/48_stale_ctx_pr_review_crash]: todo-task no longer crashes on PR review/rejection; timer-driven sends route through freshest sender
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
 - Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
 - Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
