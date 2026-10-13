@@ -145,6 +145,15 @@
 
    The log was showing the issue was in the checkPrReview() function.
 
+   New data.  
+   A new log shows clearly that the exception is raised here, calling ``pi.sendUserMessage``, row 410:
+   ```
+           pi.sendUserMessage(
+          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
+          { deliverAs: 'followUp' }
+        )
+   ```     
+
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
