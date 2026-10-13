@@ -69,6 +69,16 @@ let completed = false                  // is current task completed ? shoud it b
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
+// A context capable of injecting messages into the agent stream.
+// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods, 
+// but with different return types: `pi.send*Message()` returns void,
+// while `ReplacedSessionContext.send*Message()` returns Promise<void>.
+// The union below keeps both assignable while allowing callers to handle either.
+type MessageSender = {
+  sendMessage(message: Parameters<ExtensionAPI['sendMessage']>[0], options?: Parameters<ExtensionAPI['sendMessage']>[1]): void | Promise<void>
+  sendUserMessage(content: Parameters<ExtensionAPI['sendUserMessage']>[0], options?: Parameters<ExtensionAPI['sendUserMessage']>[1]): void | Promise<void>
+}
+
 let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
 
@@ -292,6 +302,40 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
+  // Freshest message-sending context. 
+  // Starts as `pi`; reassigned in the withSession callback after ctx.newSession() makes the captured `pi` stale
+  let messageSender: MessageSender = pi
+
+  // Swallow both sync throws and async rejections from a possibly-stale sender:
+  // an uncaught error inside the setInterval callback would crash Pi.
+  const onSendError = (what: string, err: unknown): void => {
+    console.error(`${EXTENSION} ❌ ${what} failed.`, err)
+    safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
+  }
+
+  const safeSendUserMessage = (
+    content: Parameters<MessageSender['sendUserMessage']>[0],
+    options?: Parameters<MessageSender['sendUserMessage']>[1],
+  ): void => {
+    try {
+      // ?.catch handles both return types: pi returns void, ReplacedSessionContext returns Promise<void>
+      messageSender.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
+    } catch (err) {
+      onSendError('safeSendUserMessage', err)
+    }
+  }
+
+  const safeSendMessage = (
+    message: Parameters<MessageSender['sendMessage']>[0],
+    options?: Parameters<MessageSender['sendMessage']>[1],
+  ): void => {
+    try {
+      messageSender.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
+    } catch (err) {
+      onSendError('safeSendMessage', err)
+    }
+  }
+
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
@@ -319,7 +363,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
-      pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
+      safeSendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
       return
     }
 
@@ -361,15 +405,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // TODO: inject a message to manage PR checks (workflows?)
       //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
 
-      if (pr.state === 'MERGED') {
-        
+      if (pr.state === 'MERGED') {        
         safeNotify(`✅ PR MERGED !`, 'info')
-
-        try {
-          pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
-        } catch (err) {
-          console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
-        }
+        safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: 'followUp' })
         stopPrCheckPolling()
         return
       }
@@ -397,7 +435,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         if (checkCounter == 1 && hasConflicts)
-          pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+          safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
         
         return
       }
@@ -405,16 +443,16 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       if (effectiveDecision === 'APPROVED') {
         const note = hasApprovalInReviews && !decision ? ' (checks may be blocking formal decision)' : ''
-        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
+        safeSendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
       } else if (effectiveDecision === 'CHANGES_REQUESTED' || hasChangesRequested) {
-        pi.sendUserMessage(
+        safeSendUserMessage(
           `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
         )
       }
 
       if (hasConflicts)
-        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+        safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
 
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
@@ -425,7 +463,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const startPrCheckPolling = (cwd: string): void => {
-    debug("startPrCheckPolling()")
     safeNotify(`Start PR check...`, "info")
     stopPrCheckPolling()
     prCheckStartedAt = Date.now()
@@ -436,7 +473,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const stopPrCheckPolling = (): void => {
-    //debug("stopPrCheckPolling()")
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
     checkCounter = 0
@@ -633,6 +669,7 @@ ${typeData.extra??""}\n\
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
+          messageSender = newCtx
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
