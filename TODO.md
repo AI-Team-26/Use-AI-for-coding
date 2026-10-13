@@ -130,7 +130,7 @@
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
-- Bug 46 | todo-task model captured doesn't work well with "/"
+- Bug 46 [SUSPENDED: some other models with the slash work well] | todo-task model captured doesn't work well with "/"
   Llama.cpp/Qwen3.7-27B-AAA-BBB capture of proviider (Llama.cpp) and model (Qwen3.7-27B-AAA-BBB) works fine, 
   but is the model used by Pi is this: "(Openrouter) minimax/minimax-m3" it doesn't capture the model properly.  
   For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
