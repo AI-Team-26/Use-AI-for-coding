@@ -70,8 +70,8 @@ let completed = false                  // is current task completed ? shoud it b
 let taskProjectRoot: string | null = null
 
 // A context capable of injecting messages into the agent stream.
-// Both the original `pi` API and a fresh ReplacedSessionContext expose these two
-// methods, but with different return types: `pi.send*Message()` returns void,
+// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods, 
+// but with different return types: `pi.send*Message()` returns void,
 // while `ReplacedSessionContext.send*Message()` returns Promise<void>.
 // The union below keeps both assignable while allowing callers to handle either.
 type MessageSender = {
@@ -302,9 +302,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
-  // Freshest message-sending context. Starts as `pi`; reassigned in the
-  // withSession callback after ctx.newSession() makes the captured `pi` stale
-  // (sending through a stale ctx throws and crashes Pi).
+  // Freshest message-sending context. 
+  // Starts as `pi`; reassigned in the withSession callback after ctx.newSession() makes the captured `pi` stale
   let messageSender: MessageSender = pi
 
   // Swallow both sync throws and async rejections from a possibly-stale sender:
@@ -406,11 +405,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // TODO: inject a message to manage PR checks (workflows?)
       //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
 
-      if (pr.state === 'MERGED') {
-        
+      if (pr.state === 'MERGED') {        
         safeNotify(`✅ PR MERGED !`, 'info')
-
-        safeSendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
+        safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: 'followUp' })
         stopPrCheckPolling()
         return
       }
@@ -466,7 +463,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const startPrCheckPolling = (cwd: string): void => {
-    debug("startPrCheckPolling()")
     safeNotify(`Start PR check...`, "info")
     stopPrCheckPolling()
     prCheckStartedAt = Date.now()
@@ -477,7 +473,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   }
 
   const stopPrCheckPolling = (): void => {
-    //debug("stopPrCheckPolling()")
     if (prCheckTimer) clearInterval(prCheckTimer)
     prCheckTimer = null
     checkCounter = 0
