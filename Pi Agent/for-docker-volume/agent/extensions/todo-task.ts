@@ -69,6 +69,16 @@ let completed = false                  // is current task completed ? shoud it b
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
+// A context capable of injecting messages into the agent stream.
+// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods.
+type Sender = Pick<ExtensionAPI, 'sendMessage' | 'sendUserMessage'>
+
+// Freshest message-sending context. The captured `pi` goes stale after a session
+// replacement (/feature N / /bugfix N trigger ctx.newSession()), so timer-driven
+// sends must route through the newest available sender rather than the original `pi`
+// (using a stale one throws and crashes Pi). Updated in the withSession callback.
+let latestSendable: Sender | null = null
+
 let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
 
@@ -292,6 +302,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
+  // Route message sends through the freshest available sender so timer-driven
+  // code never hits a stale captured `pi` (which would throw and crash Pi).
+  const activeSender = (): Sender => latestSendable ?? pi
+
+  const safeSendUserMessage = (
+    content: Parameters<Sender['sendUserMessage']>[0],
+    options?: Parameters<Sender['sendUserMessage']>[1],
+  ): void => {
+    try {
+      void activeSender().sendUserMessage(content, options)
+    } catch (err) {
+      console.error(`${EXTENSION} ❌ safeSendUserMessage() failed.`, err)
+      safeNotify(`❌ Failed to deliver follow-up message. ${err}`, 'error')
+    }
+  }
+
+  const safeSendMessage = (
+    message: Parameters<Sender['sendMessage']>[0],
+    options?: Parameters<Sender['sendMessage']>[1],
+  ): void => {
+    try {
+      void activeSender().sendMessage(message, options)
+    } catch (err) {
+      console.error(`${EXTENSION} ❌ safeSendMessage() failed.`, err)
+      safeNotify(`❌ Failed to send message. ${err}`, 'error')
+    }
+  }
+
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
@@ -319,7 +357,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
       stopPrCheckPolling()
       const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ''
-      pi.sendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
+      safeSendMessage({ customType: `${EXTENSION}-stop-pr-check-polling`, content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`, display: true, details: {} })
       return
     }
 
@@ -365,11 +403,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         
         safeNotify(`✅ PR MERGED !`, 'info')
 
-        try {
-          pi.sendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
-        } catch (err) {
-          console.error(`${EXTENSION} ❌ Failed to send /todo command:`, err)
-        }
+        safeSendUserMessage('/todo Previuos PR was merged, cleanup stale branch.', { deliverAs: 'followUp' })
         stopPrCheckPolling()
         return
       }
@@ -397,7 +431,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         if (checkCounter == 1 && hasConflicts)
-          pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+          safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
         
         return
       }
@@ -405,16 +439,16 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       if (effectiveDecision === 'APPROVED') {
         const note = hasApprovalInReviews && !decision ? ' (checks may be blocking formal decision)' : ''
-        pi.sendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
+        safeSendMessage({ customType: `${EXTENSION}-approved`, content: `✅ ${osc8Link(pr.url ?? '', `PR #${pr.number}`)} approved${note} — waiting for merge.`, display: true, details: {} })
       } else if (effectiveDecision === 'CHANGES_REQUESTED' || hasChangesRequested) {
-        pi.sendUserMessage(
+        safeSendUserMessage(
           `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
           { deliverAs: 'followUp' }
         )
       }
 
       if (hasConflicts)
-        pi.sendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp",  } )
+        safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
 
     } catch (err) {
       console.error(`${EXTENSION} ❌ checkPrReview() `, err)
@@ -633,6 +667,7 @@ ${typeData.extra??""}\n\
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
+          latestSendable = newCtx
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
