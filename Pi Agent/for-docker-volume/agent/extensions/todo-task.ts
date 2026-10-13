@@ -70,14 +70,14 @@ let completed = false                  // is current task completed ? shoud it b
 let taskProjectRoot: string | null = null
 
 // A context capable of injecting messages into the agent stream.
-// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods.
-type Sender = Pick<ExtensionAPI, 'sendMessage' | 'sendUserMessage'>
-
-// Freshest message-sending context. The captured `pi` goes stale after a session
-// replacement (/feature N / /bugfix N trigger ctx.newSession()), so timer-driven
-// sends must route through the newest available sender rather than the original `pi`
-// (using a stale one throws and crashes Pi). Updated in the withSession callback.
-let latestSendable: Sender | null = null
+// Both the original `pi` API and a fresh ReplacedSessionContext expose these two
+// methods, but with different return types: `pi.send*Message()` returns void,
+// while `ReplacedSessionContext.send*Message()` returns Promise<void>.
+// The union below keeps both assignable while allowing callers to handle either.
+type MessageSender = {
+  sendMessage(message: Parameters<ExtensionAPI['sendMessage']>[0], options?: Parameters<ExtensionAPI['sendMessage']>[1]): void | Promise<void>
+  sendUserMessage(content: Parameters<ExtensionAPI['sendUserMessage']>[0], options?: Parameters<ExtensionAPI['sendUserMessage']>[1]): void | Promise<void>
+}
 
 let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
@@ -302,38 +302,40 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
-  // Route message sends through the freshest available sender so timer-driven
-  // code never hits a stale captured `pi` (which would throw and crash Pi).
-  const activeSender = (): Sender => latestSendable ?? pi
+  // Freshest message-sending context. Starts as `pi`; reassigned in the
+  // withSession callback after ctx.newSession() makes the captured `pi` stale
+  // (sending through a stale ctx throws and crashes Pi).
+  let messageSender: MessageSender = pi
 
-  // Both sync throws and promise rejections are swallowed so timer-driven
-  // sends can never crash Pi (staleness may surface either way).
-  // `pi` senders return void; fresh session contexts return Promise<void>.
-  const guardSend = (label: string, attempt: () => void | Promise<void>): void => {
-    let result: void | Promise<void>
-    try {
-      result = attempt()
-    } catch (err) {
-      console.error(`${EXTENSION} ❌ ${label}() failed.`, err)
-      safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
-      return
-    }
-    if (!result || typeof (result as Promise<void>).catch !== 'function') return
-    void (result as Promise<void>).catch((err) => {
-      console.error(`${EXTENSION} ❌ ${label}() rejected.`, err)
-      safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
-    })
+  // Swallow both sync throws and async rejections from a possibly-stale sender:
+  // an uncaught error inside the setInterval callback would crash Pi.
+  const onSendError = (what: string, err: unknown): void => {
+    console.error(`${EXTENSION} ❌ ${what} failed.`, err)
+    safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
   }
 
   const safeSendUserMessage = (
-    content: Parameters<Sender['sendUserMessage']>[0],
-    options?: Parameters<Sender['sendUserMessage']>[1],
-  ): void => guardSend('safeSendUserMessage', () => activeSender().sendUserMessage(content, options))
+    content: Parameters<MessageSender['sendUserMessage']>[0],
+    options?: Parameters<MessageSender['sendUserMessage']>[1],
+  ): void => {
+    try {
+      // ?.catch handles both return types: pi returns void, ReplacedSessionContext returns Promise<void>
+      messageSender.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
+    } catch (err) {
+      onSendError('safeSendUserMessage', err)
+    }
+  }
 
   const safeSendMessage = (
-    message: Parameters<Sender['sendMessage']>[0],
-    options?: Parameters<Sender['sendMessage']>[1],
-  ): void => guardSend('safeSendMessage', () => activeSender().sendMessage(message, options))
+    message: Parameters<MessageSender['sendMessage']>[0],
+    options?: Parameters<MessageSender['sendMessage']>[1],
+  ): void => {
+    try {
+      messageSender.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
+    } catch (err) {
+      onSendError('safeSendMessage', err)
+    }
+  }
 
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
@@ -672,7 +674,7 @@ ${typeData.extra??""}\n\
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
-          latestSendable = newCtx
+          messageSender = newCtx
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
