@@ -306,29 +306,34 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // code never hits a stale captured `pi` (which would throw and crash Pi).
   const activeSender = (): Sender => latestSendable ?? pi
 
+  // Both sync throws and promise rejections are swallowed so timer-driven
+  // sends can never crash Pi (staleness may surface either way).
+  // `pi` senders return void; fresh session contexts return Promise<void>.
+  const guardSend = (label: string, attempt: () => void | Promise<void>): void => {
+    let result: void | Promise<void>
+    try {
+      result = attempt()
+    } catch (err) {
+      console.error(`${EXTENSION} ❌ ${label}() failed.`, err)
+      safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
+      return
+    }
+    if (!result || typeof (result as Promise<void>).catch !== 'function') return
+    void (result as Promise<void>).catch((err) => {
+      console.error(`${EXTENSION} ❌ ${label}() rejected.`, err)
+      safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
+    })
+  }
+
   const safeSendUserMessage = (
     content: Parameters<Sender['sendUserMessage']>[0],
     options?: Parameters<Sender['sendUserMessage']>[1],
-  ): void => {
-    try {
-      void activeSender().sendUserMessage(content, options)
-    } catch (err) {
-      console.error(`${EXTENSION} ❌ safeSendUserMessage() failed.`, err)
-      safeNotify(`❌ Failed to deliver follow-up message. ${err}`, 'error')
-    }
-  }
+  ): void => guardSend('safeSendUserMessage', () => activeSender().sendUserMessage(content, options))
 
   const safeSendMessage = (
     message: Parameters<Sender['sendMessage']>[0],
     options?: Parameters<Sender['sendMessage']>[1],
-  ): void => {
-    try {
-      void activeSender().sendMessage(message, options)
-    } catch (err) {
-      console.error(`${EXTENSION} ❌ safeSendMessage() failed.`, err)
-      safeNotify(`❌ Failed to send message. ${err}`, 'error')
-    }
-  }
+  ): void => guardSend('safeSendMessage', () => activeSender().sendMessage(message, options))
 
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
