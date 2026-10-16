@@ -29,9 +29,9 @@ function pullLatestMain(ctx: ExtensionContext, cwd: string): boolean {
     })
     return true
   } catch (err) {
-    console.error(`❌ Git update failed`, 'error')
+    console.error(`❌ Git update failed`, err)
     const e = err as { stderr?: string; message: string }
-    const detail = (e.stderr ?? '').trim() || e.message    
+    const detail = (e.stderr ?? '').trim() || e.message
     ctx.ui.notify(`❌ Git update failed: ${detail}`, 'error')
     return false
   }

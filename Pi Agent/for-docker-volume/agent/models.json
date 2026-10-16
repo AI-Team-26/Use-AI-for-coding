@@ -430,6 +430,7 @@
         ]
     },
     "Google": {
+        "_doc": "?",
         "_baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/", 
         "_api": "openai-completions",
         "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
