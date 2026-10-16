@@ -380,6 +380,24 @@
 
         ]
     },
+    "Cloudflare FREE": {
+        "baseUrl": "https://api.cloudflare.com/client/v4/accounts/{{CLOUDFLARE_ACCOUNT_ID}}/ai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{CLOUDFLARE_API_KEY}}",
+        "models_list_url": "",
+        "models": [
+            {
+                "id": "@cf/openai/gpt-oss-120b",
+                "maxTokens": 4096,
+                "reasoning": true
+            },
+            {
+                "id": "@cf/qwen/qwen2.5-coder-32b-instruct",
+                "maxTokens": 4096,
+                "reasoning": true
+            }
+        ]
+    },
     "Entrim": {
         "baseUrl": "https://api.entrim.ai/v1",
         "api": "openai-completions",
@@ -412,6 +430,7 @@
         ]
     },
     "Google": {
+        "_doc": "?",
         "_baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/", 
         "_api": "openai-completions",
         "baseUrl": "https://generativelanguage.googleapis.com/v1beta",

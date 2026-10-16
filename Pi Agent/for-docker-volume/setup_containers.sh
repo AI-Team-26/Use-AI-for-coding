@@ -128,6 +128,8 @@ for agent in "${!agents[@]}"; do
     # XXX_API_KEY_PI_AGENT are environment variables
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{OPENROUTER_API_KEY}}/$OPENROUTER_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{CLOUDFLARE_API_KEY}}/$CLOUDFLARE_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
+    sed -i "s/{{CLOUDFLARE_ACCOUNT_ID}}/$CLOUDFLARE_ACCOUNT_ID/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"

@@ -1,5 +1,7 @@
 # Extensions
 
+## Implement an extension
+
 Add TypeScript types to the extensions for code syntax help and check.  
 ```bash 
 cd for-docker-volume/agent/extensions
@@ -7,19 +9,26 @@ npm install -D @earendil-works/pi-coding-agent typescript
 npm install -D @earendil-works/pi-coding-agent@<specific-version> typescript
 ```
 
+
+## Known extensions
+
+### Third party
+
 - [pi-token-speed](https://github.com/gsanhueza/pi-token-speed)
   ``pi install https://github.com/gsanhueza/pi-token-speed``
   Displays tokens-per-second (tok/s) in the footer with colored text reflecting high or low speed. 
+
+- [pi-llama-cpp-stats](https://pi.dev/packages/pi-llama-cpp-stats)
+  ``pi install npm:pi-llama-cpp-stats``
+  Shows a progress bar and and estimation of duration when llama.cpp is "Prefilling".
+
+### Mine
 
 - [pi-status](https://github.com/AI-Team-26/pi-status)
   ``pi install npm:pi-idle``
   Fork of [pi-idle](https://github.com/ZoRDoK/pi-idle)
   Shows a ✓ checkmark in the terminal title when Pi is idle and displays a spinner while Pi is actively working.
   It also show the agent name first character (emoji) in the title bar.
-
-- [pi-llama-cpp-stats](https://pi.dev/packages/pi-llama-cpp-stats)
-  ``pi install npm:pi-llama-cpp-stats``
-  Shows a progress bar and and estimation of duration when llama.cpp is "Prefilling".
 
 - agent-name
   Show the Agent name (from env Pi_AGENT_NAME) in the footer
