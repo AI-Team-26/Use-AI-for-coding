@@ -42,7 +42,7 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
 4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
-5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"`
+5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"` (use an appropriate color: Lemon #fbca04, Orange: #d93f0b, Kiwi: #0e8a16)
 6. This signals to other agents: "I'm working on this"
 7. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
@@ -110,10 +110,19 @@ After applying changes, run the test suite if available:
 3. Show a clickable link to the user
 4. If PR creator is not {{GITHUB_REVIEWER}}, add them as reviewer and say "Waiting for Review"
 5. Include remaining sub-steps as a task list in the PR body; tick items off as they land
-6. If `CHANGELOG.md` exists, update it
+6. If `CHANGELOG.md` exists, update it with REALLY SHORT description of task result
 7. Push on `main` branch is blocked usually
 
----
+## GitHub Workflow File Permissions
+
+If you get the error:
+
+> refusing to allow a Personal Access Token ... without workflow scope
+
+For new files: rename them adding the postfix `.temp` (ci.yaml -> ci.yaml.temp)  
+For edited files: leave the original file unchanged and create a file with the postfix `.temp` with the new version (ci.yaml -> ci.yaml.temp)  
+Ask the user to manually push the renamed files to activate them
+ 
 
 # PR Review Workflow
 

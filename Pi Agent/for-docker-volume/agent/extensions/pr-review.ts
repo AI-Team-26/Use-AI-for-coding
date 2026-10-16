@@ -84,7 +84,11 @@ export default function prExtension(pi: ExtensionAPI) {
         await ctx.newSession({
           withSession: async (newCtx) => {
             latestCtx = newCtx
-            await newCtx.sendUserMessage(prompt)
+            //await newCtx.sendUserMessage(prompt)
+            await newCtx.sendMessage(
+              { customType: 'pr-review-task', content: prompt, display: false },
+              { triggerTurn: true },   // starts the agent run immediately
+            )
           },
         })
       } catch (err) {
