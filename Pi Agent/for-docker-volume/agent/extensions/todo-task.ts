@@ -483,6 +483,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
   pi.on('session_start', (_event, ctx: ExtensionContext) => {    
     latestCtx = ctx
+    messageSender = ctx
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
     // module scope (the user does not re-run /feature N). If an activity is still
