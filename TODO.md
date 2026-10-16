@@ -2,18 +2,18 @@
 
 ## Backlog
 
-- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
-  Create `extensions/_shared/common.ts` containing:
+- Feature 39 | Extract shared UI helpers into `_shared/common.ts` ✅ COMPLETED
+  Created `extensions/_shared/common.ts` containing:
   - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
   - `safeSetStatus(ctx, key, text)` — guarded status bar update
   - `safeNotify(getCtx, message, type)` — guarded notification
   - `createDebug(name, enabled)` — returns a `debug(msg)` logger
-  Refactor `todo-task.ts`, `pr-review.ts`, and `todo.ts` to import from `_shared/common`.
-  Remove duplicated definitions from each file.
+  Refactored `todo-task.ts` and `pr-review.ts` to import from `_shared/common`.
+  Removed duplicated definitions from each file.
   Constraints:
   - `_shared/` has no `index.ts` → Pi won't discover it as an extension
   - Keep behavior identical; pure extraction, no logic changes
-  - Max ~10 files changed, well under 500 lines delta
+  - Max ~6 files changed, well under 200 lines delta
 
   Also colors:
   // ANSI colors — passed straight into the status line (the footer does not strip escapes)
@@ -124,42 +124,21 @@
         at Object.sendMessage (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:8976)
         at checkPrReview (/root/.pi/agent/extensions/todo-task.ts:316:10)
         at Timeout.<anonymous> (/root/.pi/agent/extensions/todo-task.ts:428:44)
-            at listOnTimeout (node:internal/timers:685:17)
+            at listOnTimeout (node:internal/timers:685:618)
             at process.processTimers (node:internal/timers:618:7)
 
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
-- Bug 46 [SUSPENDED: some other models with the slash work well] | todo-task model captured doesn't work well with "/"
-  Llama.cpp/Qwen3.7-27B-AAA-BBB capture of proviider (Llama.cpp) and model (Qwen3.7-27B-AAA-BBB) works fine, 
-  but is the model used by Pi is this: "(Openrouter) minimax/minimax-m3" it doesn't capture the model properly.  
-  For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
-  I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
-
-- Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
-
-- Bug 48 | todo-task extension crashes when catch the PR is reviewed and rejected.  
-   Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
-
-   PR decision is 'CHANGES_REQUESTED' (33)
-
-   The log was showing the issue was in the checkPrReview() function.
-
-   New data.  
-   A new log shows clearly that the exception is raised here, calling ``pi.sendUserMessage``, row 410:
-   ```
-           pi.sendUserMessage(
-          `❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`,
-          { deliverAs: 'followUp' }
-        )
-   ```     
-
-
-- Feature 999 | Test
-  This is a fake feature, just to test the todo-task extension.
-  Write an empty file.    
-  DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
-  Don't remove this feature from TODO in the PR.
+- Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
+- Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
+- Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
+- Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
+- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-task starts a fresh session on task start for context purity
+- Bug 15 [fix/15_session_start_restart_timers]: todo-task restart PR polling + status timer on session_start
+- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link
+- Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
+- Feature 28 [feat/28_todo_extension_optional_note]: todo-task extension accepts optional note
 
 ## Latest 10 tasks completed
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
@@ -171,3 +150,4 @@
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link
 - Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator
 - Feature 28 [feat/28_todo_extension_optional_note]: todo-task extension accepts optional note
+- Feature 27 [feat/27_footer_extension]: new pi extension to replace built-in footer
