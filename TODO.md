@@ -2,7 +2,20 @@
 
 ## Backlog
 
-- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
+- Feature 49 | New Pi extension: API key rotation (pi-keyrouter alternative)
+  Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
+  Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
+  Key source (ideal): reuse the EXISTING `models.json` — no separate config file. Add support for a new optional provider-level property `additionalApiKeys`: an array of extra keys alongside the usual `apiKey`. The extension rotates over `apiKey` + all `additionalApiKeys` of the selected model's provider.
+  Reference for the rotation logic idea: https://github.com/lowern1ght/pi-soly/blob/master/packages/pi-keyrouter/rotation.ts
+  Build a local extension using the hooks that DO exist in 1.3.0:
+  - Read the key pool from models.json (`apiKey` + `additionalApiKeys`); per-key cooldowns/maxRetries can live in the extension or as optional models.json fields
+  - `before_provider_headers`: inject/override `Authorization` header from the currently selected key for `ctx.model.provider` before each provider HTTP call
+  - `after_provider_response`: on status 429/401/403 mark current key bad (with cooldown) and advance to next key; verify whether Pi retries the failed request natively — if not, decide fallback (per-request round-robin vs notify user to resend)
+  - Notify via ctx.ui.notify on rotation / exhaustion; runtime state only, never persisted
+  Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
+  Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
+
+- [x] Feature 39 | Extract shared UI helpers into `_shared/common.ts`
   Create `extensions/_shared/common.ts` containing:
   - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
   - `safeSetStatus(ctx, key, text)` — guarded status bar update
@@ -25,7 +38,7 @@
 - Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
-  - `getBranchOpenPr` keeps requesting `number,state,reviewDecision,reviews,url`
+  - `getBranchOpenPr` keeps requesting `number,state,mergeable,statusCheckRollup,reviewDecision,reviews,url`
   - `appendReportToPr` requests only `number,body` — collapsing its two gh calls (`pr list` + `pr view`) into one.
 
 - Feature 31 | todo-task extension
@@ -120,12 +133,12 @@
   pi exiting due to uncaughtException:
     Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
         at Object.assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:3578)
-        at assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:6218)
+        at assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:708:6218)
         at Object.sendMessage (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:8976)
         at checkPrReview (/root/.pi/agent/extensions/todo-task.ts:316:10)
         at Timeout.<anonymous> (/root/.pi/agent/extensions/todo-task.ts:428:44)
-            at listOnTimeout (node:internal/timers:685:17)
-            at process.processTimers (node:internal/timers:618:7)
+            at listOnTimeout (node:internal/timers:683:17)
+            at process.processTimers (node:internal/timers:620:7)
 
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
@@ -137,7 +150,6 @@
   I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
-
 
 
 
