@@ -51,12 +51,16 @@ MB: ASUS X99-E WS
 
 Use this table to quickly find model names for eBay searches. Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adequate bandwidth.
 
-| Model Name | PCIe Configuration (Primary Slots) | Best Use Case | Price Tier |
-| :--- | :--- | :--- | :--- |
-| **ASRock X670E Taichi** | **x16 / x8 / x8** | Best Value / Balanced | ~405€ (Used/Open Box) |
-| **ASUS ProArt X670E-Creator WiFi** | **x16 / x8 / x8** | Professional Multi-GPU Workflows | High (~600€ New / ~700€ eBay) |
-| **MSI MEG X670E ACE** | **x16 / x8 / x4** | High-end Enthusiast / Stability | High (~650€ New) |
-| **ASUS ROG Strix X670E-E Gaming** | **x16 / x8 / x4** | Premium Gaming / Single GPU focus | Mid-High |
+| Model Name                     | PCIe slots      | Best Use Case               | Price Tier                    |                  |
+| ------------------------------ | --------------- | --------------------------- | ----------------------------- | ---------------- |
+| ASRock X670E Taichi            | x16 / x8 / x8   | Best Value / Balanced       | ~405€ (Used/Open Box)         | 410 Subito.it    |
+| ASUS ProArt X670E-Creator WiFi | x16 / x8 / x8   | Professional Multi-GPU      | High (~600€ New / ~700€ eBay) |                  |
+| MSI MEG X670E ACE              | x16 / x8 / x4   | High-end / Stability        | High (~650€ New)              |                  |
+| ASUS ROG Strix TRX40-XE Gaming | x16 / x16 / x16 |                             |                               | 340 ebay         |
+
+Note good for 2 RTX 3090 24Gb at x8 / x8 (at least)
+| ASUS ROG Strix X670E-E Gaming  | x16 / x8 / x4   | Gaming / Single GPU         | Mid-High                      | 200 ebay         |
+| ASUS ProArt B760-Creator WiFi  | x16 /x4         |                             |                               |                  |
 
 ---
 
