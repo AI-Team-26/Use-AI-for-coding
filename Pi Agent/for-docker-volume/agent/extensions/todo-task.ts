@@ -427,8 +427,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
 
-      // TODO: temporary debug message, ignore in PR review
-      safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info") 
+      debug(`PR decision is '${decision}' (${checkCounter})`)
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
