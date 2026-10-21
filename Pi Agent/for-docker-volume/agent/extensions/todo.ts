@@ -109,13 +109,14 @@ content: "Use this format to show the TODO (don't wrap it in markdown or it will
         content: 
 "Show all the Features and Bugs of the TODO backlog in a simple table.\n Use these icons to identify the tasks:\n \
 🟢 Feature (backlog, available), \
-🐞 Bug fix (backlog), \
+🐞 Bug (backlog), \
 ⏳ In progress (open PR),\
 🔴 Blocked (dependency unmet), \
 ❌ Dropped/rejected, \
 📋 Epic (group header).\n \
+Show the Feature and Bug number clearly (`Feature N`, `Bug N`).\n \
 Show only relevant data, don't show info that are not useful (like done things).\n \
-Suggest to use /feature N [note] and /bugfix N [note] to start a task, /pr <PR> to review a PR and /continue N to continue the work of a task.",
+Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task, `/pr <PR>` to review a PR and `/continue <N>` to continue the work of a task.",
         display: false
       })
 
