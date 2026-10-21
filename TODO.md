@@ -6,11 +6,15 @@
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
   Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
   Key source (ideal): reuse the EXISTING `models.json` — no separate config file. Add support for a new optional provider-level property `additionalApiKeys`: an array of extra keys alongside the usual `apiKey`. The extension rotates over `apiKey` + all `additionalApiKeys` of the selected model's provider.
-  Reference for the rotation logic idea: https://github.com/lowern1ght/pi-soly/blob/master/packages/pi-keyrouter/rotation.ts
+  Inspiration/mechanism: npm `@jeryjs/pi-keyrouter` (v1.4.0) — https://pi.dev/packages/@jeryjs/pi-keyrouter .
+  NOTE: this is a DIFFERENT package than the broken `lowern1ght/pi-keyrouter`. Its key-injection mechanism works on Pi 1.3.0:
+  it reaches `ModelRuntime.setRuntimeApiKey` through the ModelRegistry facade's private `runtime` field,
+  with a capability check and graceful degradation (inert + warning) if the field disappears.
+  Secondary reference for pure rotation state machine: https://github.com/lowern1ght/pi-soly/blob/master/packages/pi-keyrouter/rotation.ts
   Build a local extension using the hooks that DO exist in 1.3.0:
   - Read the key pool from models.json (`apiKey` + `additionalApiKeys`); per-key cooldowns/maxRetries can live in the extension or as optional models.json fields
-  - `before_provider_headers`: inject/override `Authorization` header from the currently selected key for `ctx.model.provider` before each provider HTTP call
-  - `after_provider_response`: on status 429/401/403 mark current key bad (with cooldown) and advance to next key; verify whether Pi retries the failed request natively — if not, decide fallback (per-request round-robin vs notify user to resend)
+  - Key injection: `modelRegistry.runtime.setRuntimeApiKey(providerId, key)` (capability-checked), so Pi's built-in retry picks up the new key automatically
+  - `after_provider_response`: on status 429/401/403 mark current key bad (with cooldown) and rotate; classify account-wide quota errors separately (rotating cannot fix those)
   - Notify via ctx.ui.notify on rotation / exhaustion; runtime state only, never persisted
   Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
   Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
