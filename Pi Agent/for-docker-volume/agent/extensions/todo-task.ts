@@ -45,7 +45,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent, SessionContext } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
@@ -296,7 +296,7 @@ interface PrView {
   number: number
   state: string
   mergeable: string    // 'CONFLICTING'
-  statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'
+  //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
   reviewDecision: string | null
   reviews: Array<{ state: string; body: string }>
   url?: string
@@ -349,7 +349,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
-      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,mergeable,statusCheckRollup,reviewDecision,reviews,url'],
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,mergeable,reviewDecision,reviews,url'],  // statusCheckRollup
       { cwd, encoding: 'utf-8' },
     )
 
@@ -493,9 +493,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   // Track the latest ctx from every event that delivers one; command handlers also
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
-  pi.on('session_start', (_event, ctx: ExtensionContext) => {    
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
-    messageSender = ctx
+    messageSender = ctx  // TODO: session_start event has ExtensionContext thta HAS NOT "sendMesage*" functions
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
     // module scope (the user does not re-run /feature N). If an activity is still
