@@ -44,72 +44,9 @@
 - Feature 31 | todo-task extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
-- Bug 16 | todo-task polling
-  Polling continue also after Rejection, but does not trigger any command when reject a second time.
-  Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
-
-- Bug 16 — successive/successive PR rejection not detected (todo-task extension).
-
-   File: `Pi Agent/for-docker-volume/agent/extensions/todo-task.ts`
-         (deployed copy runs from `/root/.pi/agent/extensions/todo-task.ts`)
-   Function: checkPrReview()
-
-   SYMPTOM
-   When a PR is rejected (reviewDecision = CHANGES_REQUESTED) the agent gets the
-   "❌ PR was reviewed and Rejected…" followUp ONCE. After the agent makes changes
-   and requests re-review, a SECOND rejection triggers NO notification again. No errors thrown.
-
-   ROOT CAUSE
-   The dedup map `handledReviewDecisions` is keyed by the decision VALUE, not the review EVENT:
-       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`   // e.g. "7:CHANGES_REQUESTED:true"
-   Two successive rejections produce identical values (same number, same 'CHANGES_REQUESTED',
-   same hasChangesRequested=true), so the 2nd hits handledReviewDecisions.has(key) → early return →
-   never notified. The map is only cleared on a new /feature poll start, so within one session
-   every follow-up rejection is swallowed.
-
-   WHY NOT "just delete the key after handling"
-   The poller keeps running after a rejection (it only stops on MERGE). Deleting the key makes the
-   next tick (20 s later) see the still-present CHANGES_REQUESTED with an absent key → re-sends every
-   tick → spam. We must distinguish "same review seen again" from "a genuinely new review".
-
-   FIX (minimal, single file)
-   gh pr view --json …reviews… ALREADY returns full review objects incl. `id` + `submittedAt`
-   (verified). Each submission has a unique `id` = the event discriminator we need. No gh query
-   change required; only the TS type is under-declared.
-
-   1) Widen the PrView.reviews type (~line 301):
-      before: reviews: Array<{ state: string; body: string }>
-      after:  reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
-
-   2) In checkPrReview(), replace ONLY the key computation (keep everything else identical):
-      before:
-        // Avoid re-processing the same decision
-        const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
-      after:
-        // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
-        // same aggregate value but have distinct review ids.
-        const decisive = (pr.reviews ?? []).filter(r => r.state === 'APPROVED' || r.state === 'CHANGES_REQUESTED')
-        const latestEventId = decisive.length
-          ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id
-          : ''
-        const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
-
-   Result: repeated ticks of the SAME review keep the same id → suppressed (anti-spam preserved);
-   each NEW rejection/approval has a fresh id → fires once then suppresses again. Also fixes the
-   symmetric "second approval ignored" case for free.
-
-   DO NOT change: detection via hasChangesRequested/hasApprovalInReviews, MERGED handling, conflicts
-   messages, or the guard-condition structure.
-
-   OPTIONAL separate commit (same file): remove the temporary per-tick debug at ~line 431
-       safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info")
-   (and its "TODO: temporary debug message" comment) — it spams one notification every 20 s. Delete
-   or gate behind createDebug. Keep as its own small commit so the PR stays focused on the bugfix.
-
-   SCOPE NOTE
-   Bug 16 in TODO.md also mentions a second sub-issue ("polling continues when PR is closed / not
-   found; should stop"). That is OUT OF SCOPE here — leave that part of the backlog entry or track it
-   separately. This task covers only the successive-rejection dedup fix.
+- Bug 16 (remaining sub-issue) | todo-task polling keeps running when PR is closed
+  Polling continues even when the PR is closed (debug says "PR was not found"); it should stop in that case,
+  and polling start should be launched AFTER the PR is created.
 
 
 - Bug 17 | todo-task fresh session crashes with stale ctx
@@ -222,6 +159,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
+- Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
@@ -231,4 +169,3 @@
 - Feature 32 [feat/32_fresh_session_on_task_v2]: todo-task starts a fresh session on task start for context purity
 - Bug 15 [fix/15_session_start_restart_timers]: todo-task restart PR polling + status timer on session_start
 - Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link
-- Bug 14 [fix/14_todo_polling_status]: todo-extension polling CHANGES_REQUESTED detection + polling status indicator

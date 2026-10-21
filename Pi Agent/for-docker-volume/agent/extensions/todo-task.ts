@@ -298,7 +298,7 @@ interface PrView {
   mergeable: string    // 'CONFLICTING'
   //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
   reviewDecision: string | null
-  reviews: Array<{ state: string; body: string }>
+  reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
   url?: string
 }
 
@@ -427,8 +427,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
 
-      // TODO: temporary debug message, ignore in PR review
-      safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info") 
+      debug(`PR decision is '${decision}' (${checkCounter})`)
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
@@ -447,8 +446,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       safeNotify(`effectiveDecision: '${effectiveDecision}' (${checkCounter}) `, "info") 
 
-      // Avoid re-processing the same decision
-      const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
+      // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
+      // same aggregate value but have distinct review ids.
+      const decisive = (pr.reviews ?? []).filter(r => r.state === 'APPROVED' || r.state === 'CHANGES_REQUESTED')
+      const latestEventId = decisive.length
+        ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id
+        : ''
+      const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         if (checkCounter == 1 && hasConflicts)
           safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
