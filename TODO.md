@@ -151,15 +151,6 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
-- Bug 50 | todo-task session_start handler: `messageSender = ctx` is type-wrong
-     The `session_start` event delivers an `ExtensionContext` (`ctx`), not a sender.
-     Only `ExtensionAPI` (`pi`) and `ReplacedSessionContext` (inside `withSession`) have
-     `sendMessage` / `sendUserMessage`; `ExtensionContext` has neither.
-     Fix: drop `messageSender = ctx` from the `session_start` handler. Keep the existing
-     `messageSender = pi` (initial) and `messageSender = newCtx` (in `withSession`)
-     assignments, which are correct.
-     Single file: `extensions/todo-task.ts`. Remove the stale TODO comment at the same spot.
-
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
@@ -167,6 +158,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## Latest 10 tasks completed
+- Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
 - Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
