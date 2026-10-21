@@ -45,7 +45,7 @@
 
 /// <reference types="@earendil-works/pi-coding-agent" />
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from '@earendil-works/pi-coding-agent'
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent, SessionContext } from '@earendil-works/pi-coding-agent'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
@@ -154,25 +154,30 @@ function osc8Link(url: string, text: string): string {
  */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
   if (!ctx) {
-    console.error(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`)
+    safeNotify(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`, "error")
+    //console.error(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`)    
     return
   }
   try {
     ctx.ui.setStatus(key, text)
   } catch (err) {
-    console.error(`${EXTENSION} ❌ safeSetStatus() failed.`, err)
+    safeNotify(`${EXTENSION} ❌ safeSetStatus() failed. ${err}.`, "error")
+    //console.error(`${EXTENSION} ❌ safeSetStatus() failed.`, err)
   }
 }
 
 function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
   if (!latestCtx) {
+    //safeNotify(`${EXTENSION} ❌ safeNotify() got a null ctx.`, "error")
+    //safeNotify(`${EXTENSION} ${message}`, "info")
     console.error(`${EXTENSION} ❌ safeNotify() got a null ctx`)
     console.info(`${EXTENSION} ${message}`)
     return
   }
-  try {    
+  try {
     latestCtx.ui.notify(message, type)
   } catch (err) {
+    //safeNotify(`${EXTENSION} ❌ safeNotify() failed. ${err}`, "error")
     console.error(`${EXTENSION} ❌ safeNotify() failed.`, err)
   }
 }
@@ -210,7 +215,10 @@ function formatElapsed(ms: number): string {
 
 const ensureTodoDir = (): Promise<void> => 
     fs.mkdir(TODO_FEATURES_DIR, { recursive: true })
-        .catch((err) => { console.error('Failed to create features directory.', err)})
+        .catch((err) => { 
+            safeNotify(`${EXTENSION} ❌ Failed to create features directory. ${err}`, "error")
+            //console.error('Failed to create features directory.', err)
+        })
         .then(_ => {})
 
 
@@ -233,7 +241,8 @@ function appendReportToPr(cwd: string, report: string): boolean {
     const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
     const pr = prs[0]
     if (!pr) {
-      console.error(`[${EXTENSION} ❌ PR not found on branch '${branch}'.`)
+      safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
+      //console.error(`[${EXTENSION} ❌ PR not found on branch '${branch}'.`)
       return false
     }
 
@@ -257,7 +266,8 @@ function appendReportToPr(cwd: string, report: string): boolean {
     debug(`Report appended to PR #${pr.number} description`)
     return true
   } catch (err) {
-    console.error(`${EXTENSION} ❌ Failed to attach report to PR:`, err)
+    safeNotify(`${EXTENSION} ❌ Failed to attach report to PR. ${err}`, "error")
+    //console.error(`${EXTENSION} ❌ Failed to attach report to PR:`, err)
     return false
   }
 }
@@ -277,7 +287,7 @@ function pullLatestMain(cwd: string): boolean {
   } catch (err) {
     const e = err as { stderr?: string; message: string }
     const detail = (e.stderr ?? '').trim() || e.message
-    safeNotify(`❌ Git update failed: ${detail}`, 'error')
+    safeNotify(`❌ Git update failed: ${detail}. ${err}`, 'error')
     return false
   }
 }
@@ -286,9 +296,9 @@ interface PrView {
   number: number
   state: string
   mergeable: string    // 'CONFLICTING'
-  statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'
+  //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
   reviewDecision: string | null
-  reviews: Array<{ state: string; body: string }>
+  reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
   url?: string
 }
 
@@ -309,8 +319,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // Swallow both sync throws and async rejections from a possibly-stale sender:
   // an uncaught error inside the setInterval callback would crash Pi.
   const onSendError = (what: string, err: unknown): void => {
-    console.error(`${EXTENSION} ❌ ${what} failed.`, err)
-    safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
+    //console.error(`${EXTENSION} ❌ ${what} failed.`, err)
+    safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, 'error')
   }
 
   const safeSendUserMessage = (
@@ -339,7 +349,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // Return the open PR on a branch.
   const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
     const res = spawnSync(
-      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,mergeable,statusCheckRollup,reviewDecision,reviews,url'],
+      'gh', ['pr', 'list', '--head', branch, '--state', 'open', '--json', 'number,state,mergeable,reviewDecision,reviews,url'],  // statusCheckRollup
       { cwd, encoding: 'utf-8' },
     )
 
@@ -377,10 +387,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       try {
         pr = getBranchOpenPr(cwd, branch)
       } catch (err) {
-        safeNotify(`Checking PR review: ❌ Failed to get PR of branch "${branch}"`, "info")
+        safeNotify(`[safeNotify] Checking PR review: ❌ Failed to get PR of branch "${branch}".\n${err}`, "error")
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
-        debug(`Failed to get PR of branch "${branch}"`)
-        console.error(`${EXTENSION} ❌ Failed to get PR of branch "${branch}". `, err)
+        debug(`[debug] checkPrReview() Failed to get PR of branch "${branch}". Error: ${err}.`)
+        // console.erro in new Pi TUI is printed but not selectable, just super noisy.
+        //console.error(`[console.error] ${EXTENSION} ❌ Failed to get PR of branch "${branch}". `, err)
         return
       }
 
@@ -400,7 +411,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)  // ${checkCounter}
       }
       else 
-        console.error(`${EXTENSION} ❌ latestCtx is null`)
+        safeNotify(`${EXTENSION} ❌ latestCtx is null`, "error")
+        //console.error(`${EXTENSION} ❌ latestCtx is null`)
 
       // TODO: inject a message to manage PR checks (workflows?)
       //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
@@ -415,11 +427,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Check PR-level reviewDecision first
       const decision = pr.reviewDecision ?? ''
 
-      // TODO: temporary debug message, ignore in PR review
-      safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info") 
+      debug(`PR decision is '${decision}' (${checkCounter})`)
 
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
+
+      safeNotify(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter}) `, "info") 
 
       // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
       // Fall back to individual reviews to detect the approval.
@@ -431,8 +444,15 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Effective decision: prefer aggregate, fall back to individual reviews
       const effectiveDecision = decision || (hasApprovalInReviews ? 'APPROVED' : '')
 
-      // Avoid re-processing the same decision
-      const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
+      safeNotify(`effectiveDecision: '${effectiveDecision}' (${checkCounter}) `, "info") 
+
+      // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
+      // same aggregate value but have distinct review ids.
+      const decisive = (pr.reviews ?? []).filter(r => r.state === 'APPROVED' || r.state === 'CHANGES_REQUESTED')
+      const latestEventId = decisive.length
+        ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id
+        : ''
+      const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
       if ((effectiveDecision !== 'APPROVED' && effectiveDecision !== 'CHANGES_REQUESTED' && !hasChangesRequested) || handledReviewDecisions.has(key)) {
         if (checkCounter == 1 && hasConflicts)
           safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
@@ -455,7 +475,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
 
     } catch (err) {
-      console.error(`${EXTENSION} ❌ checkPrReview() `, err)
+      //console.error(`${EXTENSION} ❌ checkPrReview() `, err)
       safeNotify(`❌ checkPrReview() failed. ${err}`, "error")      
     } finally {
       prCheckInFlight = false
@@ -481,9 +501,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
   // Track the latest ctx from every event that delivers one; command handlers also
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
-  pi.on('session_start', (_event, ctx: ExtensionContext) => {    
+  pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
-    messageSender = ctx
+    // NOTE: do NOT assign `messageSender` here — session_start delivers an
+    // ExtensionContext, which has no sendMessage/sendUserMessage. Only `pi`
+    // (initial) and the ReplacedSessionContext inside withSession are valid senders.
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
     // module scope (the user does not re-run /feature N). If an activity is still
@@ -800,7 +822,8 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
     // ctx may have gone stale during the awaited calls above; token count is best-effort
     tokens = ctx.getContextUsage()?.tokens ?? null
   } catch (err) {
-    console.error(`${EXTENSION} ❌ getContextUsage() `, err)
+    safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")
+    //console.error(`${EXTENSION} ❌ getContextUsage() `, err)
   }
 
   const label = pending.type === 'feature' ? 'Feature' : 'Bug'
@@ -826,7 +849,8 @@ _(first push only, without following reviews rework)_
   safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
 
   if (!taskProjectRoot) {
-    console.error(`[${EXTENSION}] ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
+    safeNotify(`${EXTENSION} ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`, "error")
+    //console.error(`[${EXTENSION}] ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
   }
 
   // Write the report directly into the open PR description (no chat pollution)
