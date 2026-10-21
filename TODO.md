@@ -151,7 +151,14 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
-
+- Bug 48 | todo-task session_start handler: `messageSender = ctx` is type-wrong
+     The `session_start` event delivers an `ExtensionContext` (`ctx`), not a sender.
+     Only `ExtensionAPI` (`pi`) and `ReplacedSessionContext` (inside `withSession`) have
+     `sendMessage` / `sendUserMessage`; `ExtensionContext` has neither.
+     Fix: drop `messageSender = ctx` from the `session_start` handler. Keep the existing
+     `messageSender = pi` (initial) and `messageSender = newCtx` (in `withSession`)
+     assignments, which are correct.
+     Single file: `extensions/todo-task.ts`. Remove the stale TODO comment at the same spot.
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.

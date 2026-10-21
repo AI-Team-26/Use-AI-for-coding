@@ -320,7 +320,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // an uncaught error inside the setInterval callback would crash Pi.
   const onSendError = (what: string, err: unknown): void => {
     //console.error(`${EXTENSION} ❌ ${what} failed.`, err)
-    safeNotify(`❌ Failed to deliver message. ${err}`, 'error')
+    safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, 'error')
   }
 
   const safeSendUserMessage = (
