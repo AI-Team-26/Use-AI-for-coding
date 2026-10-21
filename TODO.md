@@ -48,6 +48,70 @@
   Polling continue also after Rejection, but does not trigger any command when reject a second time.
   Polling continue also when PR is closed (debug says PR was not found... it should stop in theis case but the start should be launched AFTER the PR is created).
 
+- Bug 16 — successive/successive PR rejection not detected (todo-task extension).
+
+   File: `Pi Agent/for-docker-volume/agent/extensions/todo-task.ts`
+         (deployed copy runs from `/root/.pi/agent/extensions/todo-task.ts`)
+   Function: checkPrReview()
+
+   SYMPTOM
+   When a PR is rejected (reviewDecision = CHANGES_REQUESTED) the agent gets the
+   "❌ PR was reviewed and Rejected…" followUp ONCE. After the agent makes changes
+   and requests re-review, a SECOND rejection triggers NO notification again. No errors thrown.
+
+   ROOT CAUSE
+   The dedup map `handledReviewDecisions` is keyed by the decision VALUE, not the review EVENT:
+       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`   // e.g. "7:CHANGES_REQUESTED:true"
+   Two successive rejections produce identical values (same number, same 'CHANGES_REQUESTED',
+   same hasChangesRequested=true), so the 2nd hits handledReviewDecisions.has(key) → early return →
+   never notified. The map is only cleared on a new /feature poll start, so within one session
+   every follow-up rejection is swallowed.
+
+   WHY NOT "just delete the key after handling"
+   The poller keeps running after a rejection (it only stops on MERGE). Deleting the key makes the
+   next tick (20 s later) see the still-present CHANGES_REQUESTED with an absent key → re-sends every
+   tick → spam. We must distinguish "same review seen again" from "a genuinely new review".
+
+   FIX (minimal, single file)
+   gh pr view --json …reviews… ALREADY returns full review objects incl. `id` + `submittedAt`
+   (verified). Each submission has a unique `id` = the event discriminator we need. No gh query
+   change required; only the TS type is under-declared.
+
+   1) Widen the PrView.reviews type (~line 301):
+      before: reviews: Array<{ state: string; body: string }>
+      after:  reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
+
+   2) In checkPrReview(), replace ONLY the key computation (keep everything else identical):
+      before:
+        // Avoid re-processing the same decision
+        const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
+      after:
+        // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
+        // same aggregate value but have distinct review ids.
+        const decisive = (pr.reviews ?? []).filter(r => r.state === 'APPROVED' || r.state === 'CHANGES_REQUESTED')
+        const latestEventId = decisive.length
+          ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id
+          : ''
+        const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
+
+   Result: repeated ticks of the SAME review keep the same id → suppressed (anti-spam preserved);
+   each NEW rejection/approval has a fresh id → fires once then suppresses again. Also fixes the
+   symmetric "second approval ignored" case for free.
+
+   DO NOT change: detection via hasChangesRequested/hasApprovalInReviews, MERGED handling, conflicts
+   messages, or the guard-condition structure.
+
+   OPTIONAL separate commit (same file): remove the temporary per-tick debug at ~line 431
+       safeNotify(`PR decision is '${decision}' (${checkCounter}) `, "info")
+   (and its "TODO: temporary debug message" comment) — it spams one notification every 20 s. Delete
+   or gate behind createDebug. Keep as its own small commit so the PR stays focused on the bugfix.
+
+   SCOPE NOTE
+   Bug 16 in TODO.md also mentions a second sub-issue ("polling continues when PR is closed / not
+   found; should stop"). That is OUT OF SCOPE here — leave that part of the backlog entry or track it
+   separately. This task covers only the successive-rejection dedup fix.
+
+
 - Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
