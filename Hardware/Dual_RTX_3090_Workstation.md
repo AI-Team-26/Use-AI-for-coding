@@ -50,17 +50,29 @@ MB: ASUS X99-E WS
 ### AM5 Motherboard Comparison (Optimized for Dual GPU)
 
 Use this table to quickly find model names for eBay searches. Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adequate bandwidth.
+- **PCIe Lanes:** x8/x8 is sufficient for most local LLM inference.  
+  x16/x16 is preferable for tensor-parallel inference, frequent model loading, long-prompt prefill, batched serving, and training.
 
-| Model Name                     | PCIe slots      | Best Use Case               | Price Tier                    |                  |
-| ------------------------------ | --------------- | --------------------------- | ----------------------------- | ---------------- |
-| ASRock X670E Taichi            | x16 / x8 / x8   | Best Value / Balanced       | ~405€ (Used/Open Box)         | 410 Subito.it    |
-| ASUS ProArt X670E-Creator WiFi | x16 / x8 / x8   | Professional Multi-GPU      | High (~600€ New / ~700€ eBay) |                  |
-| MSI MEG X670E ACE              | x16 / x8 / x4   | High-end / Stability        | High (~650€ New)              |                  |
-| ASUS ROG Strix TRX40-XE Gaming | x16 / x16 / x16 |                             |                               | 340 ebay         |
+| Model Name                     | PCIe slots    | Best Use Case          | Price                               |
+| ------------------------------ | ------------- | ---------------------- | ----------------------------------- |
+| ASRock X670E Taichi            | x16 / x8 / x8 | Best Value / Balanced  | 410 Subito.it  390 esseshop.it      |
+| ASUS ProArt X670E-Creator WiFi | x16 / x8 / x8 | Professional Multi-GPU |                                     |
+| MSI MEG X670E ACE              | x16 / x8 / x4 | High-end / Stability   |                                     |
 
-Note good for 2 RTX 3090 24Gb at x8 / x8 (at least)
-| ASUS ROG Strix X670E-E Gaming  | x16 / x8 / x4   | Gaming / Single GPU         | Mid-High                      | 200 ebay         |
-| ASUS ProArt B760-Creator WiFi  | x16 /x4         |                             |                               |                  |
+Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670e-taichi-amd-x670-presa-di-corrente-am5-atx-esteso-confezione-aperta-p-316833.html?utm_source=Bing&utm_medium=Bing&utm_campaign=products&msclkid=874848960d891cff07f6224515d10199
+
+
+#### ASUS ROG Strix TRX40-XE Gaming 
+ 
+340 EUR on ebay
+
+- Socket: AMD sTRX4
+- CPU: 3rd-gen Ryzen Threadripper only (3960X / 3970X / 3990X)
+- Memory: Quad-channel DDR4, 8 DIMM slots, up to 256 GB
+- GPU slots: 3 × PCIe 4.0 x16, supporting x16/x16/x16
+- Best for: Symmetric dual-GPU PCIe bandwidth at low used-board cost
+- Tradeoff: Requires a separate Threadripper platform; not compatible with AM5 CPUs or DDR5
+
 
 ---
 
@@ -80,29 +92,46 @@ Note good for 2 RTX 3090 24Gb at x8 / x8 (at least)
 
 ## Budget Summary (Full Build Estimate)
 
-| Component | Min (EUR) | Max (EUR) | Notes |
-| :--- | :--- | :--- | :--- |
-| Motherboard (MB) | 300 | 500 | Prosumer X670E range. |
-| CPU | 220 | 370 | 7950X to 9950X. |
-| Cooler (AIO) | 110 | 150 | Arctic vs. Corsair. |
-| RAM (64GB DDR5) | 180 | 250 | *Estimated placeholder.* |
-| PSU (1300W+ ATX 3.0) | 200 | 400 | MSI Used vs. Seasonic New. |
-| Case (Large/Dual GPU) | 200 | 270 | Fractal/Lian Li options. |
-| Other (Fans/Misc) | 100 | 200 | Extra fans & storage/OS. |
-| GPUs (RTX 3090 24GB) | 700 | 1,000 | Based on target prices. |
-| **GRAND TOTAL** | **2,010** | **3,140** | **Full Build Cost.** |
+| Component             | Min  | Max  | Notes                                     |
+| :-------------------- | ---: | ---: | :---------------------------------------- |
+| Motherboard (MB)      |  300 |  500 | Prosumer X670E range.                     |
+| CPU                   |  220 |  370 | 7950X to 9950X.                           |
+| Cooler (AIO)          |  110 |  150 | Arctic vs. Corsair.                       |
+| RAM (64GB DDR5)       |  250 |  550 |                                           |
+| PSU (1300W+ ATX 3.0)  |  200 |  400 | MSI Used vs. Seasonic New.                |
+| Case (Large/Dual GPU) |  200 |  270 | Fractal/Lian Li options.                  |
+| GPUs (RTX 3090 24GB)  |  800 | 1200 | Based on target prices.                   |
+| NVME 1TB              |  150 |  200 |                                           |
+| Other (Fans/Misc)     |  100 |  200 | Extra fans, cables, adapters ...          |
+| TOTAL                 | 2330 | 3840 |                                           |
+
+
+| Component             | Item                  ---------    | Platform  | Price | Link                                     |
+| :-------------------- | :--------------------------------- | :-------- | ----: | :--------------------------------------- |
+| Motherboard (MB)      | ASUS ProArt X670E-Creator WiFi     | Ebay      |   430 |                                          |
+| CPU                   | AMD Ryzen 9 7950X                  | Ebay      |   230 |                                          |
+| Cooler (AIO)          | Arctic Liquid Freezer III 360      | Ebay      |    80 |                                          |
+| RAM (64GB DDR5)       | 64GB (2x32GB) DDR5-4800 CL40       | Ebay      |   600 |                                          |
+| PSU (1300W+ ATX 3.0)  | Seasonic Prime PX1300              | Ebay      |   270 |                                          |
+| Case (Large/Dual GPU) | Lian Li Lancool III                | Ebay      |   170 |                                          |
+| GPUs (RTX 3090 24GB)  | RTX 3090 24GB                      | Subito.it |   700 |                                          |
+| NVME 1TB              |                           |          |       |                                          |
+| Other (Fans/Misc)     |                           |          |       |                                          |
+| TOTAL                 |                           |          |       |                                          |
+
+
 
 ## Deep Dive: The ASUS X99-E WS Path (High Bandwidth / Budget Optimized)
 *Best for: Users looking to maximize PCIe bandwidth on a budget via the used market.*
 
 | Feature | Detail | Impact |
 | :--- | :--- | :--- |
-| **PCIe Configuration** | Supports **x16 / x16** | **Major Advantage:** Maximum data throughput for training and large model inference. |
+| **PCIe Configuration**   | Supports **x16 / x16** | PCIex 3.0 x16 is like PCIex x8                                        |
 | **Critical Requirement** | Must use **2-slot width** GPUs | **Essential:** Ensures physical fit and prevents thermal choking between cards. |
-| **Platform** | Intel X99 (LGA 2011-v3) | Uses DDR4; older but highly stable for workstation tasks. |
+| **Platform**             | Intel X99 (LGA 2011-v3) | Uses DDR4; older but highly stable for workstation tasks. |
 
 **Pros:**
-- Massive PCIe bandwidth (x16/x16) compared to many consumer boards.
+- Massive PCIe bandwidth compared to many consumer boards.
 - Significantly lower entry cost if sourcing used parts.
 - Excellent for AI training where inter-GPU communication is frequent.
 
