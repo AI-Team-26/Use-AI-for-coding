@@ -87,23 +87,6 @@ export default function todoExtension(pi: ExtensionAPI) {
         }
       }
 
-/*
-content: "Use this format to show the TODO (don't wrap it in markdown or it will be rendered badly from TUI): \n \
-┌──────┬──────────────────────────────┐ \n \
-│ 🟢   │ Feature (backlog, available) │ \n \
-├──────┼──────────────────────────────┤ \n \
-│ 🐞   │ Bug fix (backlog)            │ \n \
-├──────┼──────────────────────────────┤ \n \
-│ ⏳   │ In progress (open PR)        │ \n \
-├──────┼──────────────────────────────┤ \n \
-│ 🔴   │ Blocked (dependency unmet)   │ \n \
-├──────┼──────────────────────────────┤ \n \
-│ ❌   │ Dropped/rejected             │ \n \
-├──────┼──────────────────────────────┤ \n \
-│ 📋   │ Epic (group header)          │ \n \
-└──────┴──────────────────────────────┘ \n \
-*/
-
       pi.sendMessage({ 
         customType: `${EXTENSION}`, 
         content: 
@@ -111,6 +94,7 @@ content: "Use this format to show the TODO (don't wrap it in markdown or it will
 🟢 Feature (backlog, available), \
 🐞 Bug (backlog), \
 ⏳ In progress (open PR),\
+⏸️ Suspended, \
 🔴 Blocked (dependency unmet), \
 ❌ Dropped/rejected, \
 📋 Epic (group header).\n \
