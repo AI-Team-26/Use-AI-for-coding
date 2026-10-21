@@ -433,6 +433,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
       // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
       const hasChangesRequested = pr.reviews?.some(r => r.state === 'CHANGES_REQUESTED') ?? false
 
+      safeNotify(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter}) `, "info") 
+
       // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
       // Fall back to individual reviews to detect the approval.
       const hasApprovalInReviews = !decision && !hasChangesRequested
@@ -442,6 +444,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
       // Effective decision: prefer aggregate, fall back to individual reviews
       const effectiveDecision = decision || (hasApprovalInReviews ? 'APPROVED' : '')
+
+      safeNotify(`effectiveDecision: '${effectiveDecision}' (${checkCounter}) `, "info") 
 
       // Avoid re-processing the same decision
       const key = `${pr.number}:${effectiveDecision}:${hasChangesRequested}`
