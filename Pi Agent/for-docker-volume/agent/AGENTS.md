@@ -92,10 +92,10 @@ After applying changes, run the test suite if available:
 - Run `cargo fmt` then `cargo clippy -- -D warnings` before commit.
 
 ## Web Apps
-- **TypeScript** — Not plain JavaScript
-- **PNPM** — Prefer over NPM
-- **Builder** — Use Vite
-- **Prettier* -  In `.prettierrc.json` use these values:
+- **TypeScript** - Not plain JavaScript
+- **PNPM** - Prefer over NPM
+- **Builder** - Use Vite
+- **Prettier** -  In `.prettierrc.json` use these values:
   "singleQuote": false,  
   "printWidth": 120
 
