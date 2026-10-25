@@ -97,7 +97,8 @@ After applying changes, run the test suite if available:
 - **Builder** - Use Vite
 - **Prettier** -  In `.prettierrc.json` use these values:
   "singleQuote": false,  
-  "printWidth": 120
+  "printWidth": 120,
+  "semi": false,
 
 ---
 
