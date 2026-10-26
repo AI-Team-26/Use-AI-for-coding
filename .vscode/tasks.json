@@ -19,6 +19,11 @@
             "label": "▶️ Run",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/run_a_tool.sh"
+        },
+        {
+            "label": "▶ Format",
+            "type": "shell",
+            "command": "pnpm run format"
         }
     ]
 }

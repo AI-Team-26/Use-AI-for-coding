@@ -1,0 +1,17 @@
+{
+  "name": "Use AI for coding",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write ./Hardware/*.md",
+    "format:check": "prettier --check ./Hardware/*.md"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "prettier": "^3.9.10"
+  }
+}
