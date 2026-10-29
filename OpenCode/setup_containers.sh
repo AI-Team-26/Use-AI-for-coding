@@ -82,8 +82,8 @@ declare -A agents
 #agents["Dev-1"]="💦 Water"
 #agents["Dev-2"]="💨 Wind" 
 #agents["Dev-3"]="🔥 Fire" 
-agents["OpenCode-1"]="🔵 blu-ai"
-agents["OpenCode-2"]="🟤 brown-ai" 
+agents["OpenCode-1"]="🔵 Blu-AI"
+agents["OpenCode-2"]="🟣 Purple-AI" 
 
 for agent in "${!agents[@]}"; do
 

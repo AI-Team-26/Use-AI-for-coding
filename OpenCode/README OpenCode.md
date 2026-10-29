@@ -15,7 +15,7 @@ Use the "Pi Agent" text in the label, because the script to start ai agents look
 cd "OpenCode"
 docker build \
     --label description="OpenCode" \
-    -t opencode:1 \
+    -t opencode:2 \
     -f Dockerfile \
     .
 ```
@@ -47,7 +47,7 @@ The bind-mount volumes:
 ```bash
 cd "OpenCode"
 docker_volumes="/p/OpenCode_Containers"
-docker_image="opencode:1"
+docker_image="opencode:2"
 
 # Agent Dev-1
 docker run \
@@ -60,6 +60,18 @@ docker run \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/Dev-1/opencode",dst=/opencode \
     --mount type=bind,src="$docker_volumes/Dev-1/projects",dst=/projects \
+    $docker_image
+
+docker run \
+    -it \
+    --name "OpenCode-Dev-2" \
+    --label "icon=🟣" \
+    --label "alias=Purple-AI" \
+    --label "description=OpenCode Dev-2" \
+    -e AI_AGENT_NAME="🟣 Purple-AI" \
+    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/Dev-2/opencode",dst=/opencode \
+    --mount type=bind,src="$docker_volumes/Dev-2/projects",dst=/projects \
     $docker_image
 
 ```
