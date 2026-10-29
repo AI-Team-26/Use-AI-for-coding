@@ -78,13 +78,12 @@ fi
 
 chmod 600 "$docker_volumes/scripts/github_pat"
 
-# Agent names (has to match the ones defined in READNE Pi Agent,md)
+# Agent names (have to match the ones defined in README_Pi_Agent.md)
 declare -A agents
 agents["Dev-1"]="🍋 Pi Lemon" 
 agents["Dev-2"]="🥝 Pi Kiwi" 
 agents["Dev-3"]="🍊 Pi Orange" 
 #agents["Manager"]="🍓 Pi Manager"
-#for agent in "Manager" "Dev-1" "Dev-2" "Dev-3" "QA"; do
 for agent in "${!agents[@]}"; do
 
     PI_AGENT_NAME=${agents[$agent]}

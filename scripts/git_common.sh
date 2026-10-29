@@ -309,16 +309,17 @@ Values are stored as <account>:<PAT>.${NC}"
 
 # --- Global GIT setup ---
 setup_git_global() {
-    local force=${1:-0}
-
-    if [ "$force" -eq 1 ] || [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
+    local AGENT_NAME=${1:-0}
+    
+    if [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
         echo -e "GIT is not configured. Set up name and email:${NC}"
 
         # The email is what set the "contributor" of the commit in GitHub
-        read -p "GitHub user name (name used for commits author, leave blank for '${PI_AGENT_NAME}'): " git_username
+        # TODO: Agent name has to be passed as argument
+        read -p "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " git_username
         read -p "GitHub user email (email used for commits contributor, leave blank for '${GITHUB_MAIN_ACCOUNT_EMAIL}'): " git_email
 
-        if [[ -z "$git_username" ]]; then git_username=${PI_AGENT_NAME};          fi
+        if [[ -z "$git_username" ]]; then git_username=${AGENT_NAME};             fi
         if [[ -z "$git_email" ]];    then git_email=${GITHUB_MAIN_ACCOUNT_EMAIL}; fi
 
         git config --global user.name "$git_username"

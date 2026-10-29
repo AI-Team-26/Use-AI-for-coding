@@ -13,10 +13,6 @@ HIGHLIGHT_AZURE=$'\033[0;44m'; HIGHLIGHT_PINK=$'\033[0;45m';
 FOLDER_EMOJI="📁"; MENU_EMOJI="📜"; ROCKET_EMOJI="🚀"; WARNING_EMOJI="⚠️"; GIT_EMOJI="🐙"; DOCKER_EMOJI="🐳"; INFO_EMOJI="ℹ️"
 
 
-#debug "Replace {{PI_AGENT_NAME}} with '$PI_AGENT_NAME'"
-sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$HOME/.pi/agent/AGENTS.md"
-
-
 # Extract the "model" property from llama.cpp running API (from first model)
 # curl -s http://localhost:8001/models | 
 get_llamacpp_loaded_model() {

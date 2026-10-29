@@ -65,9 +65,11 @@ The way to create the bind volume is with the _--mount type=bind_ of _docker run
 ### Shared folders
 
 Once a container is created, it is not possible to attach a new volume to it.  
-For this reason I use _/project_ folder as bind volumes, where I can add project/repositories any time.  
-The _mount_ operation is changing the Linux permissions to the folders and files defined by the Docker image, causing problems for the AI tool in the container.
-The workaround I found is this: 
+For this reason I use a _/projects_ folder as bind volumes, where I can add projects/repositories any time.  
+
+When a new version of the image is created and started for the fist time, the mount operation will wipe out any change done (projects).  
+To avoid this and have the continuity, a mechanism to restore the data is needed.  
+The workaround I found is this: the Dockerfile 
 
 ### root user
 

@@ -107,6 +107,6 @@ echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
 
-setup_git_global 0
+setup_git_global "$PI_AGENT_NAME"
 
 select_project
