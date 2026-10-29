@@ -35,9 +35,13 @@ RUN curl -fsSL https://opencode.ai/install | bash
 # Add OpenCode bin path to ENV (installer defaults to $HOME/.opencode/bin)
 ENV PATH="${PATH}:/root/.opencode/bin"
 
-# Backup the .opencode directory structure so it survives volume mounts
-RUN echo "Preparing OpenCode backup state..."
-RUN mkdir -p /root/.opencode \
-    && tar -cf /root/.opencode_backup.tar -C /root/.opencode . || true
+#COPY opencode.json ~/.config/opencode/opencode.json
+COPY opencode.json /root/.config/opencode/opencode.json
 
+# Backup the .opencode directory structure so it survives volume mounts
+#RUN echo "Preparing OpenCode backup state..."
+#RUN mkdir -p /root/.opencode \
+#    && tar -cf /root/.opencode_backup.tar -C /root/.opencode . || true
+
+EXPOSE 8080
 ENTRYPOINT ["/scripts/start.sh"]

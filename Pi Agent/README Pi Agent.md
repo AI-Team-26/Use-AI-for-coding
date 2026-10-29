@@ -24,7 +24,7 @@ docker build \
 
 ## Run the Containers
 
-### Setup of Container
+### Setup of Containers
 
 Run the _setup.sh_ script.  
 ```bash
@@ -36,14 +36,12 @@ docker_volumes="/p/PiAgent_Container"
 cd ..
 ```
 
-### Run the Container
+### Run the Containers
 
-[TODO: review, update and complete]
 The containers share a common *scripts* folder and also share their own *.pi* and *projects* folders.  
 The scripts folder contains general setup scripts.  
 The .pi folder is where each container has its skills, extensions and model settings (it is not common so the selected model is not inherited from last selection of another container).  
-The projects folder allows to work on the same code from the host, allowing agent-driver/pair programming.  
-
+The **projects** folder allows to work on the same code from the host, making possible agent-driven/pair programming.  
 
 The bind-mount volumes:
 - (shared)   /scripts    -> for common
@@ -56,7 +54,7 @@ docker_volumes="/p/PiAgent_Container"
 docker_image="pi-agent:14"
 
 # Agent Manager 
-# Use shared /projects folder soit is accessible also from host for agent-driven coding
+# Use shared /projects folder, so it is accessible also from host for agent-driven coding
 docker run \
     -it \
     --name PiAgent-Manager \

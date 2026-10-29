@@ -1,0 +1,6 @@
+{
+     "model": "claude-3-5-sonnet",
+     "agent": {
+       "prompt": "/opencode/SYSTEM.md"
+     }
+}

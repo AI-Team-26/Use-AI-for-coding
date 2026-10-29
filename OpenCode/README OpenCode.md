@@ -1,42 +1,65 @@
 # OpenCode
 
-** PAUSED **  
-
-https://opencode.ai/download
-
-https://opencode.ai/docs/#install
-
+I'm trying this because hte OpenCode free models works only with opencode running app.  
+  
+https://opencode.ai/download  
+https://opencode.ai/docs/#install  
 
 ## Docker
 
-### Building the Container
+### Build the Image
+
+Use the "Pi Agent" text in the label, because the script to start ai agents looks for that.
 
 ```bash
-docker build -t opencode:1 .
-docker build -t opencode:2 -f Dockerfile_2 .
+cd "OpenCode"
+docker build \
+    --label description="OpenCode" \
+    -t opencode:1 \
+    -f Dockerfile \
+    .
 ```
 
-## Running the Container
+### Setup the Containers
 
-### With a project directory mounted:
+Run the _setup.sh_ script.  
 ```bash
-MSYS_NO_PATHCONV=1
-# run with Windows user so it has permission on volume in the host
-    #--user $(id -u):$(id -g) \
-docker run -it \
-    -v //d/Programming/opencode_workspace:/workspace \
-    opencode:2
+cd "OpenCode"
+mkdir -p "$docker_volumes"
+./setup_containers.sh "$docker_volumes"
+
+cd ..
 ```
 
-### For interactive development:
+### Run the containers
+
+The containers share a common *scripts* folder and also share their own *opencode* and *projects* folders.  
+The scripts folder contains general setup scripts.  
+The .opencode folder is where each container has its distinctive instructions.    
+The **projects** folder allows to work on the same code from the host, making possible agent-driven/pair programming.  
+  
+The bind-mount volumes:
+- (shared)   /scripts    -> for common
+- (container)/projects   -> for the GIT repositories, local projects and other utility files (start script, .env, README etc...)
+- (container)/opencode   -> for the settings, skills etc...
+
+
 ```bash
-docker run -it opencode:1
+cd "OpenCode"
+docker_volumes="/p/OpenCode_Containers"
+docker_image="opencode:1"
+
+# Agent Dev-1
+docker run \
+    -it \
+    --name "OpenCode-Dev-1" \
+    --label "icon=🔵" \
+    --label "alias=Blu-AI" \
+    --label "description=OpenCode Dev-1" \
+    -e AI_AGENT_NAME="🔵 Blu-AI" \
+    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/Dev-1/opencode",dst=/opencode \
+    --mount type=bind,src="$docker_volumes/Dev-1/projects",dst=/projects \
+    $docker_image
+
 ```
-
-## Default User
-
-The container runs as the `developer` user (password: `developer`) with sudo privileges.
-
-## Ports
-
-Port 8080 is exposed by default. Modify the Dockerfile if you need other ports.
