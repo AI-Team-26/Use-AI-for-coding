@@ -60,6 +60,7 @@ Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adeq
 | ASRock X670E Taichi 🔥         | x16 / x8 / x8 | Best Value / Balanced  | 410 Subito.it 390 esseshop.it |
 | ASUS ProArt X670E-Creator WiFi | x16 / x8 / x8 | Professional Multi-GPU |                               |
 | MSI MEG X670E ACE              | x16 / x8 / x4 | High-end / Stability   |                               |
+| ASRock X870E Taichi Lite       | x16 / x8 / x8 |                        | 395 Amazon.it  380 Pixmart.it | 
 
 Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670e-taichi-amd-x670-presa-di-corrente-am5-atx-esteso-confezione-aperta-p-316833.html?utm_source=Bing&utm_medium=Bing&utm_campaign=products&msclkid=874848960d891cff07f6224515d10199
 
@@ -78,13 +79,13 @@ Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670
 
 ## CPU
 
-|     | Model               | TDP    | Note                                      | Price |
-| --- | ------------------- | ------ | ----------------------------------------- | ----- |
-|     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |       |
-| 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |       |
-|     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |       |
-| 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |       |
-|     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             |       |
+|     | Model               | TDP    | Note                                      | Price                  |
+| --- | ------------------- | ------ | ----------------------------------------- | ---------------------- |
+|     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |  302 Primart.it        |
+| 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                        |
+|     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |                        |
+| 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |                        |
+|     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress     |
 
 Best Efficiency: The Ryzen 9 9900X (or 7900X3D) have 120W TDP.  
 Zen 5 (9000 series): The 9900X offers ~15% better single-core CPU IPC over the 7000 series at the same 120W TDP, making it a strong alternative to the 7900X3D if prices are close.  
@@ -108,6 +109,19 @@ _Prioritize ATX 3.0/3.1 compliance to handle transient spikes from RTX 3090/4090
 
 ---
 
+## RAM
+
+### DDR5
+
+| Brand          | Speed | CL | Model               | Size           | Price                                             |
+|----------------|----------------------------------|--------------- |---------------------------------------------------|
+| CUSU           | 6000  |    |                     |  32 GB (16 x2) | 375 AliExpress                                    |
+| Kingstom Fury  | 6000  | 36 | KF560C36BBE2AK2-32  |  32 GB (16 x2) | 750 Amazon                                        | 
+| Kingstom Fury  | 5600  | 36 | KF556C36BWEA-32     |  32 GB (32 x1) | 560 Pixmart                                       | 
+| Crucial        | 6000  | 36 |                     |  32 GB (16 x2) | 720 AliExpress                                    |
+
+---
+
 ## Budget Summary (Full Build Estimate)
 
 | Component             |  Min |  Max | Notes                            |
@@ -123,7 +137,7 @@ _Prioritize ATX 3.0/3.1 compliance to handle transient spikes from RTX 3090/4090
 | Other (Fans/Misc)     |  100 |  200 | Extra fans, cables, adapters ... |
 | TOTAL                 | 2330 | 3840 |                                  |
 
-| Component             | Item ---------                 | Platform  | Price | Link |
+| Component             | Item                           | Platform  | Price | Link |
 | :-------------------- | :----------------------------- | :-------- | ----: | :--- |
 | Motherboard (MB)      | ASUS ProArt X670E-Creator WiFi | Ebay      |   430 |      |
 | CPU                   | AMD Ryzen 9 7950X              | Ebay      |   230 |      |
@@ -134,7 +148,7 @@ _Prioritize ATX 3.0/3.1 compliance to handle transient spikes from RTX 3090/4090
 | GPUs (RTX 3090 24GB)  | RTX 3090 24GB                  | Subito.it |   700 |      |
 | NVME 1TB              |                                |           |       |      |
 | Other (Fans/Misc)     |                                |           |       |      |
-| TOTAL                 |                                |           |       |      |
+| TOTAL                 |                                |           |  2480 |      |
 
 ## Deep Dive: The ASUS X99-E WS Path (High Bandwidth / Budget Optimized)
 

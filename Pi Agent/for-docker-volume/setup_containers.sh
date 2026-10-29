@@ -8,9 +8,9 @@ set -e  # Exit on error
 
 # check required environment variables are set
 required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
-#required_vars=("NOVITAAI_API_KEY" "OPENROUTER_API_KEY")
 # PAT for PI AGENT GitHub account and Organization
 required_vars=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
+# API keys of AI providers
 required_vars=("NOVITAAI_API_KEY_PI_AGENT" "OPENROUTER_API_KEY_PI_AGENT" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT" "ENTRIM_API_KEY_PI_AGENT")
 
 for var in "${required_vars[@]}" ; do
@@ -31,7 +31,7 @@ cp ../../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
 cp ../../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
 cp start.sh "$docker_volumes/scripts/start.sh"
 cp .env "$docker_volumes/scripts/.env"
-cp run_loop.sh "$docker_volumes/scripts/run_loop.sh"
+#cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 
 # Set GitHub PAT (for Agent Account and Organization)
 account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  # Read from .env

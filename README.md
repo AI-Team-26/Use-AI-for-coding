@@ -3,17 +3,19 @@
 What I was working on? --> [TODO](TODO.md).  
 
 This repository contains documentation, notes, scripts about the use of AI for coding assistance.  
-In the end I started to work with AI "tools" that runs on Docker containers.  
-The Docker containers can be customized to satisfy basic stuff (Git + GitHub auth) and specific requirements (customized prompt for particular languages, predefined skills etc...).  
-For my specific situation, I found **Pi Agent** the best tool I can use.   
-**Qwen Code** is a very good tool too, but, due to its huge system context + tools, it is too limited with local LLM and, probably, also more tokens-consuming.
+In the end I ended to work with AI "harness" that runs on Docker containers.  
+The Docker containers can be customized to satisfy basic stuff (Git + GitHub auth) and specific requirements (customized prompt for particular languages, predefined skills and toos and much more).  
+For my specific situation, I found **Pi Agent** the best tool I can use because it is **Fast**, requires a **Small Context** for the LLM chat and is super customizable.     
+**Qwen Code** is a very good tool too, but, due to its huge system context + tools, it is too limited with local LLM and, probably, also more tokens-consuming.  
+**OpenCode** is something that I'm testing now.  
   
 I tried local LLM and also different LLM providers.  
 I did tests using my old graphic card with 16GB of VRAM.  
 I started with Ollama and then moved to **llama.cpp**, that allowed me to obtain better performance.  
 Here my experiments:  
-- 👌 [Ollama](Ollama&%20models)
 - 💪 [llama.cpp](https://github.com/alex-piccione/learning.Llama-cpp) (dedicated repository)
+- 👌 [Ollama](Ollama&%20models)
+- vLLM (not yet tested, maybe "required" for multi-user scenario if llama.cpp is not good enough)  
 
 The _scripts_ folder contains Bash scripts to create and test the models.  
 Essentially the *create_models.sh* and the *test_models.sh* are the one with _public_ functions to use.  
@@ -30,9 +32,9 @@ There are three categories of tools:
 
 **IDE plugins** are usually too much "restricted" in usage; you need to follow their way to work, but are very well integrated with the IDE and GitHub trought it.
 They are not 100% secure, because they still have access to ... who knows? AND you can inadvertitley share secrets very easily.
+- [Cline](Cline/README.md)
 - GitHub Copilot (VS & VS Code)
 - Continue.DEV
-- [Cline](Cline/README.md)
 - LllamaCode
 - CodeGeeX 
   
@@ -48,11 +50,11 @@ Their connector are a little bit fragile and sometimes doesn't work.
 They have a CLI and sometime a web UI exposed on the guest.  
 
 | --- | --- |
-| [Aider](Aider/Aider.md)                          | ❌ Found an issue very earlier and abandoned before having it really working |
-| [OpenCode](OpenCode/OpenCode.md)                 | ❔ Abandoned before having it fully setup                                     |
-| [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Good                                                                      |
 | [Pi Agent](Pi%20Agent/README%20Pi%20Agent.md)    | ✔️ Fantastic!                                                                |
-| Mistral Vibe (local)                             | ❔ Never tried                                                                |
+| [OpenCode](OpenCode/OpenCode.md)                 | ❔ Under test                                                                 |
+| [Qwen Code](Qwen%20Code/README%20Qwen%20Code.md) | ✔️ Good                                                                      |
+| [Aider](Aider/Aider.md)                          | ❌ Found an issue very earlier and abandoned before having it really working |
+| Mistral Vibe CLI                                 | ❔ Never tried                                                                |
 
 
 ## 🐳 Docker
@@ -60,13 +62,19 @@ They have a CLI and sometime a web UI exposed on the guest.
 I run the tools in a Docker container and Binded Volumes to store the projects (GitHub repositories) and tool settings/customization, so that I can easily access all within the host. This allows to open the projects with local IDE (usefull to check the changes done by the AI tool) and update settings/customization easily.   
 The way to create the bind volume is with the _--mount type=bind_ of _docker run_ command (*-v** parameter also works, but is the old way), because it needs to NOT be created by the Docker build or you can have permissions issues (this happens if you create the volume in the Dockerfile).  
 
+### Shared folders
+
 Once a container is created, it is not possible to attach a new volume to it.  
-For this reason I use _/project_ folder as bind  volume, where I can add project/repositories any time.  
+For this reason I use _/project_ folder as bind volumes, where I can add project/repositories any time.  
+The _mount_ operation is changing the Linux permissions to the folders and files defined by the Docker image, causing problems for the AI tool in the container.
+The workaround I found is this: 
 
 ### root user
 
 At the moment I'm not switching user, so the tool runs with _root_.  
-[TODO] ** It will be good to switch to use a not-root user, but tehre are limitations and extra setup. Not a priority for now.**   
+It made easy to let the model to change and test some Pi Agent expension itself.  
+It also allowed to easyily install some required utilities (JQ, updated Rust environment, ffmpeg etc...)  
+[TODO] **It will be good to switch to use a not-root user, but tehre are limitations and extra setup. Not a priority for now.**   
 
 Pros
  + The agent can use apt-get and install whenever it needs a library (ffmpeg for example)

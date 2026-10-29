@@ -128,10 +128,11 @@ PAYLOAD=$(cat <<EOF
 EOF
 )
 
-curl -X POST "$BASE_URL" \
+curl -i -X POST "$BASE_URL/chat/completions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
-  -d "$PAYLOAD"
+  -d "$PAYLOAD" \
+  -w '\n→ HTTP %{http_code}\n'
 ```
 
 https://codestral.mistral.ai/v1/fim/completions
@@ -141,6 +142,35 @@ https://codestral.mistral.ai/v1/chat/completions
 ### AliBaba
 
 [TODO]
+
+
+### OpenCode
+
+```sh
+BASE_URL=https://opencode.ai/inference/openai/v1
+API_KEY=$OPENCODE_API_KEY_2
+MODEL="beam-free"
+
+PAYLOAD=$(cat <<EOF
+{
+  "model": "$MODEL",
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Say hello in exactly 3 words."}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 50
+}
+EOF
+)
+
+curl -i -X POST "$BASE_URL/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d "$PAYLOAD" \
+  -w '\n→ HTTP %{http_code}\n'
+```
+
 
 ## Anthropic-compatible endpoint
 

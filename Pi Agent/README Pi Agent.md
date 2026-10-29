@@ -6,8 +6,8 @@ It shares settings and can share projects folder (using a bind mount volume) wit
 
 TODO:
 - Add a simple and light web-ui:  https://github.com/ygncode/pi-web
-- Add a multi-sesison web-ui manager: https://github.com/04mg/caw
-
+- Add a multi-session web-ui manager: https://github.com/04mg/caw
+- Add STT capability
 
 ## Build the Docker Image
 
@@ -21,7 +21,6 @@ docker build \
     -f Dockerfile \
     .
 ```
-
 
 ## Run the Containers
 
@@ -40,7 +39,7 @@ cd ..
 ### Run the Container
 
 [TODO: review, update and complete]
-The containers share a common *scripts* folder (the same), and also share their own *.pi* and *projects* folders.  
+The containers share a common *scripts* folder and also share their own *.pi* and *projects* folders.  
 The scripts folder contains general setup scripts.  
 The .pi folder is where each container has its skills, extensions and model settings (it is not common so the selected model is not inherited from last selection of another container).  
 The projects folder allows to work on the same code from the host, allowing agent-driver/pair programming.  

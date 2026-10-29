@@ -7,10 +7,6 @@
 source /scripts/start_common.sh
 source /scripts/.env
 
-# export to the current session all the variabled in .env
-#set -a; source .env; set +a
-
-
 # check required environment variables are set
 required_vars=("PI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
 
@@ -18,8 +14,6 @@ for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then
         echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
         exit 1
-    #else
-    #    echo "✅ $var is set."
     fi
 done
 
