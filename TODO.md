@@ -161,11 +161,26 @@
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
 
+- Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
+     ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
+
+  Let me know if you want me to add it to TODO.md (it would be its own small branch + PR, or I can just add the line if you prefer).
+
+  Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
+
+I prefer Option 2 if /quit or /exit does the same.
+  
+  Allows copy "as normal":
+     { "terminal": { "copy": "select" } }
+
+    
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
   DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
   Don't remove this feature from TODO in the PR.
+ 
 
 ## Latest 10 tasks completed
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
