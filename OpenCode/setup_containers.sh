@@ -101,6 +101,10 @@ for agent in "${!agents[@]}"; do
     #mkdir -p "$docker_volume_ai_agent/skills"
     #mkdir -p "$docker_volume_ai_agent/extensions"
 
+    # Copy commands
+    mkdir -p "$docker_volume_opencode/commands"
+    cp commands/*.md "$docker_volume_opencode/commands/" 2>/dev/null || true
+
     # Copy configuration files
     cp AGENTS.md "$docker_volume_opencode/AGENTS.md"
     #cp SYSTEM.md "$docker_volume_opencode/SYSTEM.md"
