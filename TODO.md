@@ -152,7 +152,7 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
-- Feature 51 | Create a /todo command for OpenCode (take inspiration from the Pi todo.ts extension)
+
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
   Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
   Obviously it has to create a branch and a PR. 
