@@ -17,6 +17,10 @@ Show the Feature and Bug number clearly (`Feature N`, `Bug N`).
 Show only relevant data, don't show info that are not useful (like done things).
 Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task.
 
-TODO.md content:
+Fetch the latest TODO.md from main branch (without switching):
+
+!`git fetch origin main && git show origin/main:TODO.md`
+
+If the above fails (not a git repo or no remote), fall back to local file:
 
 !`cat TODO.md`
