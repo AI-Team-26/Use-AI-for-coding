@@ -82,8 +82,8 @@ declare -A agents
 #agents["Dev-1"]="💦 Water"
 #agents["Dev-2"]="💨 Wind" 
 #agents["Dev-3"]="🔥 Fire" 
-agents["OpenCode-1"]="🔵 Blu-AI"
-agents["OpenCode-2"]="🟣 Purple-AI" 
+agents["Dev-1"]="🔵 Blu-AI"
+agents["Dev-2"]="🟣 Purple-AI" 
 
 for agent in "${!agents[@]}"; do
 
@@ -103,19 +103,19 @@ for agent in "${!agents[@]}"; do
 
     # Copy configuration files
     cp AGENTS.md "$docker_volume_opencode/AGENTS.md"
-    cp SYSTEM.md "$docker_volume_opencode/SYSTEM.md"
+    #cp SYSTEM.md "$docker_volume_opencode/SYSTEM.md"
     #cp Hardware_and_Software.md "$docker_volume_opencode/Hardware_and_Software.md"
 
     # Set accounts on SYSTEM.md
-    sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_opencode/SYSTEM.md" 
-    sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_opencode/SYSTEM.md"
+    #sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_opencode/SYSTEM.md" 
+    #sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_opencode/SYSTEM.md"
 
     # Set accounts on AGENTS.md
     sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_opencode/AGENTS.md"
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_opencode/AGENTS.md"
 
     # Set AI Agent name
-    sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/SYSTEM.md" 
+    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/SYSTEM.md" 
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/AGENTS.md"
 
     echo "✓ Done copying for ${agent}"
