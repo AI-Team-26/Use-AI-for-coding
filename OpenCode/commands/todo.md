@@ -19,6 +19,6 @@ Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task.
 
 Fetch the latest TODO.md from origin/main (read-only, no branch switch):
 
-!`git fetch origin main && git show origin/main:TODO.md`
+!`git fetch origin main && git show origin/main:TODO.md || cat TODO.md`
 
-After showing the table, do a summary of the TODO and propose the next step. Show the links of open PRs, if there are.
+After showing the table, do a summary of the TODO and propose the next step. Check open PRs with `gh pr list --state open --json number,title,headRefName,url` and show their links; mark matching backlog items as ⏳ In progress with the PR link.
