@@ -75,6 +75,7 @@ docker run \
     -e PI_AGENT_NAME="🍋 Pi Lemon" \
     -e PI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-1/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/Dev-1/projects",dst=/projects \
     $docker_image
@@ -89,6 +90,7 @@ docker run \
     -e PI_AGENT_NAME="🥝 Pi Kiwi" \
     -e PI_AGENT_DEFAULT_MODEL="mindai/macaron-v1-venti" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-2/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/Dev-2/projects",dst=/projects \
     $docker_image
@@ -103,6 +105,7 @@ docker run \
     -e PI_AGENT_NAME="🍊 Pi Orange" \
     -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-3/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/Dev-3/projects",dst=/projects \
     $docker_image
@@ -117,6 +120,7 @@ docker run \
     -e PI_AGENT_NAME="🌹 Pi Rose" \
     -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Reviewer/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/Reviewer/projects",dst=/projects \
     $docker_image
@@ -128,6 +132,7 @@ docker run \
     --label "description=Pi Agent QA" \
     -e PI_AGENT_NAME="🍒 Pi QA" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
+    --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/QA/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/QA/projects",dst=/projects \
     $docker_image
