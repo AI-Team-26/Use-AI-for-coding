@@ -1,10 +1,9 @@
 # Setup the OpenCode containers
 # - Copy the scripts
 
-docker_volumes=${1:?The path to docker volumes folder is required}
-
 set -euo pipefail
 
+source constants.sh
 source .env
 
 # check required environment variables are set
@@ -12,7 +11,7 @@ required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAI
 # PAT for PI AGENT GitHub account and Organization
 required_vars=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
 
-
+#mkdir -p "$docker_volumes"
 mkdir -p "$docker_volumes/scripts"
 
 # Copy common startup scripts and configurations
@@ -23,7 +22,7 @@ cp .env "$docker_volumes/scripts/.env"
 
 
 
-# === Set GitHub PAT (for Agent Account and Organization) ===
+# Set GitHub PAT (for Agent Account and Organization) =============================================
 
 account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  # Read from .env
 if [[ $account_pat == ENV:* ]]; then
@@ -70,20 +69,7 @@ fi
 chmod 600 "$docker_volumes/scripts/github_pat"
 
 
-# === Setup Agents ===
-
-# Agent names (have to match the ones defined in README_Pi_Agent.md)
-declare -A agents
-
-# 🍌 🍇 🍆 🍉 🍎
-# ♍ Virgo  ♊ Gemini ♉ Taurus ♈ Aries
-# 🔵 🟣 🟤
-# Ⓜ️ M 🅿️ P
-#agents["Dev-1"]="💦 Water"
-#agents["Dev-2"]="💨 Wind" 
-#agents["Dev-3"]="🔥 Fire" 
-agents["Dev-1"]="🔵 Blu-AI"
-agents["Dev-2"]="🟣 Purple-AI" 
+# Setup Agents ====================================================================================
 
 for agent in "${!agents[@]}"; do
 
@@ -98,12 +84,15 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volumes/$agent/projects"
     docker_volume_opencode="$docker_volumes/$agent/opencode"
     mkdir -p "$docker_volume_opencode"
-    #mkdir -p "$docker_volume_ai_agent/skills"
-    #mkdir -p "$docker_volume_ai_agent/extensions"
+
+    # Copy opencode config
+    cp opencode.json "$docker_volume_opencode/opencode.json"
+    #cp opencode.json "$docker_volume_opencode/cli.json"
 
     # Copy commands
     mkdir -p "$docker_volume_opencode/commands"
     cp commands/*.md "$docker_volume_opencode/commands/" 2>/dev/null || true
+
 
     # Copy configuration files
     cp AGENTS.md "$docker_volume_opencode/AGENTS.md"

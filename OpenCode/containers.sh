@@ -10,7 +10,7 @@ set -euo pipefail
 
 steps=${1:-"<steps> argument must be defined"}
 
-docker_volumes="/p/OpenCode_Containers"
+source constants.sh
 docker_image="opencode-agent:4"
 
 
@@ -25,19 +25,13 @@ fi
 
 
 # Setup -------------------------------------------------------------------------------------------
-if [[ "$steps" == *setup* ]]; then
-    mkdir -p "$docker_volumes"
-    ./containers_setup.sh "$docker_volumes"
+if [[ "$steps" == *setup* ]]; then    
+    ./containers_setup.sh
 fi
 
 
 # Run ---------------------------------------------------------------------------------------------
 if [[ "$steps" == *run* ]]; then
-
-    declare -A agents
-    agents["Dev-1"]="🔵 Blu-AI"
-    agents["Dev-2"]="🟣 Purple-AI"
-    # 🦋🐼👽🐲ִֶָ🦢་ 🦄  🥕 🐻‍❄️🧊
 
     for id in "${!agents[@]}"; do
         AGENT_ID="$id"                        # "Dev-1"  (the assoc-array key)
