@@ -17,6 +17,10 @@ Show the Feature and Bug number clearly (`Feature N`, `Bug N`).
 Show only relevant data, don't show info that are not useful (like done things).
 Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task.
 
+Update the local main branch first, so the TODO.md content is the latest:
+
+!`git checkout main && git pull`
+
 TODO.md content:
 
 !`cat TODO.md`
