@@ -159,6 +159,9 @@
   Maybe also print the "[FEATUE N COMPLETED]" message but no management of PR completion or other complicated stuff for now. REally minimal.
   Add TODO comments and new tasks in the TODO.md if needed.
 
+- Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
+- Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
