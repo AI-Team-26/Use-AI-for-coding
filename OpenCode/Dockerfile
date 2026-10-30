@@ -30,7 +30,7 @@ RUN git config --global credential.https://github.com.helper "!gh auth git-crede
 #--- OpenCode Agent
 
 # OpenCode Installation (official install script)
-RUN curl -fsSL https://opencode.ai/install | bash
+RUN curl -fsSL https://opencode.ai/v2/install | bash
 
 # Add OpenCode bin path to ENV (installer defaults to $HOME/.opencode/bin)
 ENV PATH="${PATH}:/root/.opencode/bin"
