@@ -1,18 +1,20 @@
 # OpenCode
 
 I'm trying this because hte OpenCode free models works only with opencode running app.  
-  
-https://opencode.ai/download  
-https://opencode.ai/docs/#install  
+
+**OBSOLETE** All the scripts here are obsolete and have been moved into the _containers.sh_ script file.  
 
 ## Docker
 
 ### Build the Image
 
-Use the "Pi Agent" text in the label, because the script to start ai agents looks for that.
+Use the "OpenCode" text in the label because the utility script (outside of this project) called to start the ai agents, looks for that string.  
 
 ```bash
-cd "OpenCode"
+cd OpenCode
+containers.sh create
+
+# example:
 docker build \
     --label description="OpenCode" \
     -t opencode:3 \
@@ -22,13 +24,12 @@ docker build \
 
 ### Setup the Containers
 
-Run the _setup.sh_ script.  
-```bash
-cd "OpenCode"
-mkdir -p "$docker_volumes"
-./setup_containers.sh "$docker_volumes"
+Copy necessary customized files into the bind volumes.  
+Replace placeholders with secrets.
 
-cd ..
+```bash
+cd OpenCode
+containers.sh setup
 ```
 
 ### Run the containers
@@ -39,42 +40,12 @@ The .opencode folder is where each container has its distinctive instructions.
 The **projects** folder allows to work on the same code from the host, making possible agent-driven/pair programming.  
   
 The bind-mount volumes:
-- (shared)   /scripts    -> for common
-- (container)/projects   -> for the GIT repositories, local projects and other utility files (start script, .env, README etc...)
-- (container)/opencode   -> for the settings, skills etc...
-
+- (shared)   /scripts    -> common scripts and settings
+- (shared)   /share      -> for sharing files between agents and with the Host
+- (container)/projects   -> the GIT repositories (projects)
+- (container)/opencode   -> the OpenCode settings, skills etc...
 
 ```bash
-cd "OpenCode"
-docker_volumes="/p/OpenCode_Containers"
-docker_image="opencode:3"
-
-# Agent Dev-1
-docker run \
-    -it \
-    --name "OpenCode-Dev-1" \
-    --label "icon=🔵" \
-    --label "alias=Blu-AI" \
-    --label "description=OpenCode Dev-1" \
-    -e AI_AGENT_NAME="🔵 Blu-AI" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/share \
-    --mount type=bind,src="$docker_volumes/Dev-1/opencode",dst=/root/.config/opencode \
-    --mount type=bind,src="$docker_volumes/Dev-1/projects",dst=/projects \
-    $docker_image
-
-# Agent Dev-2
-docker run \
-    -it \
-    --name "OpenCode-Dev-2" \
-    --label "icon=🟣" \
-    --label "alias=Purple-AI" \
-    --label "description=OpenCode Dev-2" \
-    -e AI_AGENT_NAME="🟣 Purple-AI" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/share \
-    --mount type=bind,src="$docker_volumes/Dev-1/opencode",dst=/root/.config/opencode \
-    --mount type=bind,src="$docker_volumes/Dev-2/projects",dst=/projects \
-    $docker_image
-
+cd OpenCode
+containers.sh run
 ```
