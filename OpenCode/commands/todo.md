@@ -20,3 +20,6 @@ Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task.
 TODO.md content (latest from main, falls back to local):
 
 !`git fetch origin main && git show origin/main:TODO.md || cat TODO.md`
+
+After showing the table, do a summary of the TODO and propose the next step.
+Check for open PRs (e.g. `gh pr list --state open --json number,title,headRefName,url`) and mark matching backlog items as ⏳ In progress with their PR link.
