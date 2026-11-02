@@ -60,7 +60,7 @@ Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adeq
 | ASRock X670E Taichi 🔥         | x16 / x8 / x8 | Best Value / Balanced  | 410 Subito.it 390 esseshop.it |
 | ASUS ProArt X670E-Creator WiFi | x16 / x8 / x8 | Professional Multi-GPU |                               |
 | MSI MEG X670E ACE              | x16 / x8 / x4 | High-end / Stability   |                               |
-| ASRock X870E Taichi Lite       | x16 / x8 / x8 |                        | 395 Amazon.it  380 Pixmart.it | 
+| ASRock X870E Taichi Lite       | x16 / x8 / x8 |                        | 395 Amazon.it 380 Pixmart.it  |
 
 Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670e-taichi-amd-x670-presa-di-corrente-am5-atx-esteso-confezione-aperta-p-316833.html?utm_source=Bing&utm_medium=Bing&utm_campaign=products&msclkid=874848960d891cff07f6224515d10199
 
@@ -79,18 +79,22 @@ Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670
 
 ## CPU
 
-|     | Model               | TDP    | Note                                      | Price                             |
-| --- | ------------------- | ------ | ----------------------------------------- | --------------------------------- |
-|     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |  302 Primart.it                   |
-| 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                                   |
-|     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |                                   |
-| 🔸  | AMD Ryzen 9 9700X   |        |  (Zen 5)                                  |                                   |
-| 🔸  | AMD Ryzen 9 9800X3D |        |  (Zen 5)                                  |                                   |
-| 🔸  | AMD Ryzen 9 9850X   |        |  (Zen 5)                                  |                                   |
-| 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |                                   |
-|     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress                |
+|     | Model               | TDP      | Note                                      | Price              |
+| --- | ------------------- | -------- | ----------------------------------------- | ------------------ |
+| 🔸  | AMD Ryzen 9 7900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 4)             |                    |
+|     | AMD Ryzen 9 7900X   | 170 W ➖ | 12 Cores / 24 Threads (Zen 4)             | 302 EUR Primart.it |
+| 🔸  | AMD Ryzen 9 7900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                    |
+|     | AMD Ryzen 9 7950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 4)             |                    |
+| 🔸  | AMD Ryzen 9 7950X3D | 120 W ✔️ | 16 Cores / 32 Threads (Zen 4, 3D V-Cache) |                    |
+| 🔸  | AMD Ryzen 7 9700X   |  65 W ⭐ | 8 Cores / 16 Threads (Zen 5)              |                    |
+| 🔸  | AMD Ryzen 7 9800X3D | 120 W ✔️ | 8 Cores / 16 Threads (Zen 5, 3D V-Cache)  |                    |
+| 🔸  | AMD Ryzen 7 9850X3D | 120 W ✔️ | 8 Cores / 16 Threads (Zen 5, 3D V-Cache)  |                    |
+| 🔸  | AMD Ryzen 9 9900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 5)             |                    |
+| 🔸  | AMD Ryzen 9 9900X   | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5)             |                    |
+| 🔸  | AMD Ryzen 9 9900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5, 3D V-Cache) |                    |
+|     | AMD Ryzen 9 9950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress |
+| 🔸  | AMD Ryzen 9 9950X3D | 170 W ➖ | 16 Cores / 32 Threads (Zen 5, 3D V-Cache) |                    |
 
-Best Efficiency: The Ryzen 9 9900X (or 7900X3D) have 120W TDP.  
 Zen 5 (9000 series): The 9900X offers ~15% better single-core CPU IPC over the 7000 series at the same 120W TDP, making it a strong alternative to the 7900X3D if prices are close.  
 Difference vs 7900X3D: The standard 7900X runs at a higher 170W TDP out of the box (faster clock speeds in standard multi-threaded tasks, but uses more power and lacks the extra 3D V-Cache).  
 Eco Mode: You can easily enable 65W or 105W Eco Mode in the BIOS for the 7900X to match or beat the power efficiency of the X3D chips while keeping almost all of its performance.
@@ -116,12 +120,12 @@ _Prioritize ATX 3.0/3.1 compliance to handle transient spikes from RTX 3090/4090
 
 ### DDR5
 
-| Brand          | Speed | CL | Model               | Size           | Price                                             |
+| Brand | Speed | CL | Model | Size | Price |
 |----------------|----------------------------------|--------------- |---------------------------------------------------|
-| CUSU           | 6000  |    |                     |  32 GB (16 x2) | 375 AliExpress                                    |
-| Kingstom Fury  | 6000  | 36 | KF560C36BBE2AK2-32  |  32 GB (16 x2) | 750 Amazon                                        | 
-| Kingstom Fury  | 5600  | 36 | KF556C36BWEA-32     |  32 GB (32 x1) | 560 Pixmart                                       | 
-| Crucial        | 6000  | 36 |                     |  32 GB (16 x2) | 720 AliExpress                                    |
+| CUSU | 6000 | | | 32 GB (16 x2) | 375 AliExpress |
+| Kingstom Fury | 6000 | 36 | KF560C36BBE2AK2-32 | 32 GB (16 x2) | 750 Amazon |
+| Kingstom Fury | 5600 | 36 | KF556C36BWEA-32 | 32 GB (32 x1) | 560 Pixmart |
+| Crucial | 6000 | 36 | | 32 GB (16 x2) | 720 AliExpress |
 
 ---
 
