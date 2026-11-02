@@ -84,6 +84,9 @@ Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670
 |     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |  302 Primart.it                   |
 | 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                                   |
 |     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |                                   |
+| 🔸  | AMD Ryzen 9 9700X   |        |  (Zen 5)                                  |                                   |
+| 🔸  | AMD Ryzen 9 9800X3D |        |  (Zen 5)                                  |                                   |
+| 🔸  | AMD Ryzen 9 9850X   |        |  (Zen 5)                                  |                                   |
 | 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |                                   |
 |     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress                |
 
