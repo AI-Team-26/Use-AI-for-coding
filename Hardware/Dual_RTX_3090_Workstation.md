@@ -79,13 +79,13 @@ Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670
 
 ## CPU
 
-|     | Model               | TDP    | Note                                      | Price                  |
-| --- | ------------------- | ------ | ----------------------------------------- | ---------------------- |
-|     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |  302 Primart.it        |
-| 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                        |
-|     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |                        |
-| 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |                        |
-|     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress     |
+|     | Model               | TDP    | Note                                      | Price                             |
+| --- | ------------------- | ------ | ----------------------------------------- | --------------------------------- |
+|     | AMD Ryzen 9 7900X   | 170 ➖ | 12 Cores / 24 Threads (Zen 4)             |  302 Primart.it                   |
+| 🔸  | AMD Ryzen 9 7900X3D | 120 ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                                   |
+|     | AMD Ryzen 9 7950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 4)             |                                   |
+| 🔸  | AMD Ryzen 9 9900X   | 120 ✔️ | 16 Cores / 32 Threads (Zen 5)             |                                   |
+|     | AMD Ryzen 9 9950X   | 170 ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress                |
 
 Best Efficiency: The Ryzen 9 9900X (or 7900X3D) have 120W TDP.  
 Zen 5 (9000 series): The 9900X offers ~15% better single-core CPU IPC over the 7000 series at the same 120W TDP, making it a strong alternative to the 7900X3D if prices are close.  
