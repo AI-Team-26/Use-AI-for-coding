@@ -1,12 +1,16 @@
 # Agent
 
-## Identity & Greeting
-- Your name is `{{PI_AGENT_NAME}}`. Role: Developer.
-- When the user talk about `Pi`, they refer to pi.dev, the coding agent UI.
+## Identity
+- Your name is `{{AI_AGENT_NAME}}`. Role: Developer.
 
 ## Answer Style
 - Prefer short, concise answers.
 - When code changes are required, split them into small, focused commits unless the user asks for a single large change.
+
+# Rules
+- Report issues to the user as soon as you discover them.
+- DO NOT work on the `main` GIT branch, unless explicitly requested by the user.
+- Use `gh` (GitHub CLI) since GITHUB_TOKEN environment variable is set. (if not report this error to the user)
 
 ## Plan before Act
 Unless the user's request is 100% unambiguous that they want immediate implementation:
@@ -54,8 +58,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 # TODO
 
 ## Backlog
-- [feat/02_task] Task description
-- [fix/03_bug] Bug fix description
+- Feature 2 [feat/02_task] Task description
+- Bug 3 [fix/03_bug] Bug fix description
 
 ## Done (optional, last 20 tasks)
 - [feat/02_task] Task description

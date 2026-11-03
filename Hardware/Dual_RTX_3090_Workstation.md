@@ -79,24 +79,24 @@ Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670
 
 ## CPU
 
-|     | Model               | TDP      | Note                                      | Price              |
-| --- | ------------------- | -------- | ----------------------------------------- | ------------------ |
-| 🔸  | AMD Ryzen 9 7900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 4)             |                    |
-|     | AMD Ryzen 9 7900X   | 170 W ➖ | 12 Cores / 24 Threads (Zen 4)             | 302 EUR Primart.it |
-| 🔸  | AMD Ryzen 9 7900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 4, 3D V-Cache) |                    |
-|     | AMD Ryzen 9 7950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 4)             |                    |
-| 🔸  | AMD Ryzen 9 7950X3D | 120 W ✔️ | 16 Cores / 32 Threads (Zen 4, 3D V-Cache) |                    |
-| 🔸  | AMD Ryzen 7 9700X   |  65 W ⭐ | 8 Cores / 16 Threads (Zen 5)              |                    |
-| 🔸  | AMD Ryzen 7 9800X3D | 120 W ✔️ | 8 Cores / 16 Threads (Zen 5, 3D V-Cache)  |                    |
-| 🔸  | AMD Ryzen 7 9850X3D | 120 W ✔️ | 8 Cores / 16 Threads (Zen 5, 3D V-Cache)  |                    |
-| 🔸  | AMD Ryzen 9 9900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 5)             |                    |
-| 🔸  | AMD Ryzen 9 9900X   | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5)             |                    |
-| 🔸  | AMD Ryzen 9 9900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5, 3D V-Cache) |                    |
-|     | AMD Ryzen 9 9950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 5)             | 410 EUR AliExpress |
-| 🔸  | AMD Ryzen 9 9950X3D | 170 W ➖ | 16 Cores / 32 Threads (Zen 5, 3D V-Cache) |                    |
+|     | Model               | TDP      | Note                           | Price              |
+| --- | ------------------- | -------- | ------------------------------ | ------------------ |
+|     | AMD Ryzen 7 9700X   |  65 W ⭐ |  8 Cores / 16 Threads (Zen 5)  |                    |
+|     | AMD Ryzen 7 9800X3D | 120 W ✔️ |  8 Cores / 16 Threads (Zen 5)  |                    |
+|     | AMD Ryzen 7 9850X3D | 120 W ✔️ |  8 Cores / 16 Threads (Zen 5)  |                    |
+| 🔸  | AMD Ryzen 9 7900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 4) |                    |
+| 🔸  | AMD Ryzen 9 7900X   | 170 W ➖ | 12 Cores / 24 Threads (Zen 4) | 302 EUR Primart.it |
+| 🔸  | AMD Ryzen 9 7900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 4) |                    |
+| 🔸  | AMD Ryzen 9 7950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 4) |                    |
+| 🔸  | AMD Ryzen 9 7950X3D | 120 W ✔️ | 16 Cores / 32 Threads (Zen 4) |                    |
+| 🔸  | AMD Ryzen 9 9900    |  65 W ⭐ | 12 Cores / 24 Threads (Zen 5) |                    |
+| 🔸  | AMD Ryzen 9 9900X   | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5) |                    |
+| 🔸  | AMD Ryzen 9 9900X3D | 120 W ✔️ | 12 Cores / 24 Threads (Zen 5) |                    |
+| 🔸  | AMD Ryzen 9 9950X   | 170 W ➖ | 16 Cores / 32 Threads (Zen 5) | 410 EUR AliExpress |
+| 🔸  | AMD Ryzen 9 9950X3D | 170 W ➖ | 16 Cores / 32 Threads (Zen 5) |                    |
 
 Zen 5 (9000 series): The 9900X offers ~15% better single-core CPU IPC over the 7000 series at the same 120W TDP, making it a strong alternative to the 7900X3D if prices are close.  
-Difference vs 7900X3D: The standard 7900X runs at a higher 170W TDP out of the box (faster clock speeds in standard multi-threaded tasks, but uses more power and lacks the extra 3D V-Cache).  
+Difference vs X3D: The 3D models have 3D V-Cache that helps for gaming and some high demand-CPU work, but is not useful for AI inference.
 Eco Mode: You can easily enable 65W or 105W Eco Mode in the BIOS for the 7900X to match or beat the power efficiency of the X3D chips while keeping almost all of its performance.
 
 ---

@@ -1,0 +1,18 @@
+# NOTE. this file has to use LF, not CRLF !!
+GITHUB_AGENT_ACCOUNT=your GH agent account          (used to show the author of the commit in GitHub)
+GITHUB_ORG=your GH organization
+GITHUB_REVIEWER=GH account to be set as reviewer    (can be your account or an agent account)
+GITHUB_MAIN_ACCOUNT_EMAIL=your GH obfuscated email  (used to define the contributor of the commit in GitHub)
+
+GITHUB_AGENT_ACCOUNT_PAT="${PI_AGENT_GITHUB_ACCOUNT_PAT}"  <-- you can use this to get it from Environment variable
+GITHUB_ORG_PAT="${PI_AGENT_GITHUB_ORG_PAT}"
+
+# For access repositories of main Account (optional)
+GITHUB_MAIN_ACCOUNT=your GH account
+GITHUB_MAIN_ACCOUNT_PAT="${GITHUB_ACCOUNT_PAT}" 
+
+# 3rd party APIs
+EXA_API_KEY=        (not used in theis harness)
+
+# OpenCode
+OPENCODE_API_KEY=

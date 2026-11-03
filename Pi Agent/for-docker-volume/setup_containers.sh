@@ -4,7 +4,7 @@ docker_volumes=${1:?The path to docker volumes folder is required}
 #set -a; source .env; set +a
 source .env
 
-set -e  # Exit on error
+set -eu  # Exit on error
 
 # check required environment variables are set
 required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
@@ -34,45 +34,14 @@ cp .env "$docker_volumes/scripts/.env"
 #cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 
 # Set GitHub PAT (for Agent Account and Organization)
-account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  # Read from .env
-if [[ $account_pat == ENV:* ]]; then
-    var_name="${account_pat#ENV:}"  # Remove "ENV:"
-    account_pat="${!var_name}"
-fi
-
-if [[ -z "$account_pat" ]]; then
-    echo -e "${RED}⛔ Failed to get GitHub Account PAT from GITHUB_AGENT_ACCOUNT_PAT ${NC}"
-    exit 1
-fi
-
-org_pat="$GITHUB_ORG_PAT"  # Read from .env
-if [[ $org_pat == ENV:* ]]; then
-    var_name="${org_pat#ENV:}"  # Remove "ENV:"
-    org_pat="${!var_name}"
-fi
-
-if [[ -z "$org_pat" ]]; then
-    echo -e "${RED}⛔ Failed to get GitHub Organiation PAT from GITHUB_ORG_PAT ${NC}"
-    exit 1
-fi
-
+account_pat="$GITHUB_AGENT_ACCOUNT_PAT"
+org_pat="$GITHUB_ORG_PAT" 
 echo "$GITHUB_AGENT_ACCOUNT:$account_pat" > "$docker_volumes/scripts/github_pat"  # Write
-echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"  # Append
+echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"               # Append
 
 # GITHUB_MAIN_ACCOUNT is optional (it allows access to personal GitHub account repositories)
 if [[ -n "$GITHUB_MAIN_ACCOUNT" ]]; then
-
-    main_account_pat="$GITHUB_MAIN_ACCOUNT_PAT"  # Read from .env
-    if [[ $main_account_pat == ENV:* ]]; then
-        var_name="${main_account_pat#ENV:}"  # Remove "ENV:"
-        main_account_pat="${!var_name}"
-    fi
-
-    if [[ -z "$main_account_pat" ]]; then
-        echo -e "${RED}⛔ Failed to get optional GitHub MAIN account PAT from GITHUB_MAIN_ACCOUNT_PAT ${NC}"
-        exit 1
-    fi
-
+    main_account_pat="$GITHUB_MAIN_ACCOUNT_PAT"
     echo "$GITHUB_MAIN_ACCOUNT:$main_account_pat" >> "$docker_volumes/scripts/github_pat"  # Append
 fi
 
@@ -124,10 +93,9 @@ for agent in "${!agents[@]}"; do
     cp agent/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
 
     # Set secret keys
-    # XXX_API_KEY_PI_AGENT are environment variables
-    sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{OPENROUTER_API_KEY}}/$OPENROUTER_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{CLOUDFLARE_API_KEY}}/$CLOUDFLARE_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
+    sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{OPENROUTER_API_KEY}}/$OPENROUTER_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{CLOUDFLARE_API_KEY}}/$CLOUDFLARE_API_KEY/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{CLOUDFLARE_ACCOUNT_ID}}/$CLOUDFLARE_ACCOUNT_ID/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
@@ -135,6 +103,7 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{MISTRAL_AI_API_KEY}}/$MISTRAL_AI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GROQ_API_KEY}}/$GROQ_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{TOKENHARBOR_API_KEY}}/$TOKENHARBOR_API_KEY/g" "$docker_volume_pi_agent/models.json"
 
     echo "✓ Done copying for ${agent}"
 done
