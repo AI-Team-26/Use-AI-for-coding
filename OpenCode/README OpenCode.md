@@ -12,7 +12,7 @@ Use the "OpenCode" text in the label because the utility script (outside of this
 
 ```bash
 cd OpenCode
-./containers.sh create
+./containers.sh create_image
 
 # example:
 docker build \
@@ -47,5 +47,5 @@ The bind-mount volumes:
 
 ```bash
 cd OpenCode
-./containers.sh run
+./containers.sh create_container
 ```
