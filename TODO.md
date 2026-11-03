@@ -162,8 +162,8 @@ I prefer Option 2 if /quit or /exit does the same.
 
 - Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
 
-- Feature 57 | todo-task: when the agent find the "CHANGES_REQUEST" PR status and start to work on it... it should stop to ping the sttaus !!
-  I can see that while it is working, it still print the log "effectiveDecision: 'CHANGES_REQUESTED' (51)"
+- Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
+  Is it possible to delay this check start timer at the end ?
   
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
