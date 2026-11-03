@@ -49,19 +49,20 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
+import {
+  CYAN, BLUE, GREEN, GRAY, DIM, RESET,
+  osc8Link,
+  safeNotify as sharedSafeNotify,
+  safeSetStatus as sharedSafeSetStatus,
+  createDebug,
+  type NotifyType,
+} from './_shared/common.ts'
 
 const EXTENSION = "TODO-TASK"
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-tasks')
 const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
 const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
-
-const CYAN = "\x1b[36m"
-const BLUE = "\x1b[34m"
-const GREEN = "\x1b[32m"
-const GRAY = "\x1b[90m"    // bright gray / dim white
-const DIM = "\x1b[2m"      // dim (renders as darker version of current fg)
-const RESET = "\x1b[0m"
 
 let latestCtx: ExtensionContext | null = null
 let pending: TimingItem | null = null  // represent hte current task, should be called CurrentTask ?
@@ -102,7 +103,7 @@ let prCheckInFlight = false
 
 
 const DEBUG = false
-const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
+const debug = createDebug(EXTENSION, DEBUG)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -133,53 +134,12 @@ interface TimingItem {
 }
 
 
-/**
- * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
- * support it (iTerm2/Kitty/WezTerm/VS Code) render it as a clickable link.
- * Degrades gracefully to plain text in unsupported terminals.
- *
- * TODO(2026-10-15): If Approach A proves unreliable across terminals,
- * fall back to Approach B: custom footer via ctx.ui.setFooter(factory)
- * using <Link href={url}>PR #N</Link>. See Feature 35 in TODO.md.
- */
-function osc8Link(url: string, text: string): string {
-  if (!url) return text
-  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
+function safeNotify(message: string, type: NotifyType = 'info'): void {
+  sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
 }
 
-/**
- * Guarded UI access for calls made outside a fresh handler/event scope
- * (timers, post-await code). Skips only when no ctx arrived yet; any other
- * failure is logged, never silenced.
- */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
-  if (!ctx) {
-    safeNotify(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`, "error")
-    //console.error(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`)    
-    return
-  }
-  try {
-    ctx.ui.setStatus(key, text)
-  } catch (err) {
-    safeNotify(`${EXTENSION} ❌ safeSetStatus() failed. ${err}.`, "error")
-    //console.error(`${EXTENSION} ❌ safeSetStatus() failed.`, err)
-  }
-}
-
-function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
-  if (!latestCtx) {
-    //safeNotify(`${EXTENSION} ❌ safeNotify() got a null ctx.`, "error")
-    //safeNotify(`${EXTENSION} ${message}`, "info")
-    console.error(`${EXTENSION} ❌ safeNotify() got a null ctx`)
-    console.info(`${EXTENSION} ${message}`)
-    return
-  }
-  try {
-    latestCtx.ui.notify(message, type)
-  } catch (err) {
-    //safeNotify(`${EXTENSION} ❌ safeNotify() failed. ${err}`, "error")
-    console.error(`${EXTENSION} ❌ safeNotify() failed.`, err)
-  }
+  sharedSafeSetStatus(ctx, key, text, safeNotify, EXTENSION)
 }
 
 function startStatusTimer(): void {
