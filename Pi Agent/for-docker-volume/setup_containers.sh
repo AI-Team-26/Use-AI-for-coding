@@ -9,9 +9,9 @@ set -eu  # Exit on error
 # check required environment variables are set
 required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
 # PAT for PI AGENT GitHub account and Organization
-required_vars=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
+required_vars+=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
 # API keys of AI providers
-required_vars=("NOVITAAI_API_KEY_PI_AGENT" "OPENROUTER_API_KEY_PI_AGENT" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT" "ENTRIM_API_KEY_PI_AGENT")
+required_vars+=("NOVITAAI_API_KEY" "OPENROUTER_API_KEY" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT" "ENTRIM_API_KEY_PI_AGENT")
 
 for var in "${required_vars[@]}" ; do
     if [[ -z "${!var}" ]]; then

@@ -1,6 +1,6 @@
 docker_volumes="/p/OpenCode_Containers"
 
 declare -A agents
-agents["Dev-1"]="🔵 Blu-AI"
-agents["Dev-2"]="🟣 Purple-AI"
+agents["Dev-1"]="🐼 OpenCode Panda"
+agents["Dev-2"]="👽 OpenCode Alien"
 # 🦋🐼👽🐲ִֶָ🦢་ 🦄  🥕 🐻‍❄️🧊

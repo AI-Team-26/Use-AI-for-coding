@@ -9,7 +9,16 @@ source .env
 # check required environment variables are set
 required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
 # PAT for PI AGENT GitHub account and Organization
-required_vars=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
+required_vars+=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
+
+for var in "${required_vars[@]}" ; do
+    if [[ -z "${!var}" ]]; then
+        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
+        exit 1
+    else
+        echo "✅ $var is set."
+    fi
+done
 
 #mkdir -p "$docker_volumes"
 mkdir -p "$docker_volumes/scripts"
