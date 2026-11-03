@@ -124,11 +124,9 @@ After applying changes, run the test suite if available:
 ## GitHub Workflow File Permissions
 
 GitHub PAT normally doesn't have `workflow` permissions.  
-If you get the error `refusing to allow a Personal Access Token ... without workflow scope`, use a `.temp` postfix in the name.  
-
-For new files: rename them adding the postfix `.temp` (ci.yaml -> ci.yaml.temp)  
-For edited files: leave the original file unchanged and create a file with the postfix `.temp` with the new version (ci.yaml -> ci.yaml.temp)  
-Ask the user to manually push the renamed files to activate them
+If you get the error `refusing to allow a Personal Access Token ... without workflow scope`, the whole `.github/workflows` folder is blocked.  
+1. Put the file in `.github/_workflow` folder instead.
+2. Ask the user to manually move the renamed files.
  
 
 # PR Review Workflow
