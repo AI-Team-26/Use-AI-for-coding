@@ -64,6 +64,7 @@ for agent in "${!agents[@]}"; do
 
     # Copy opencode config
     cp opencode.json "$docker_volume_opencode/opencode.json"
+    cp tui.json "$docker_volume_opencode/tui.json"
     #cp opencode.json "$docker_volume_opencode/cli.json"
 
     # Copy commands

@@ -165,6 +165,11 @@ I prefer Option 2 if /quit or /exit does the same.
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
   
+### OpenCode
+
+- Feature 58 | Shows a icon on the shell title to indicate if the agent is working or idle
+  NikolayXHD/pi-status takes over the title completely and shows :⏳ name while working or :🖐️ name while idle. It does this by intercepting OSC 0/2 title writes on process.stdout.
+
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
   Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
@@ -186,7 +191,7 @@ I prefer Option 2 if /quit or /exit does the same.
   Don't remove this feature from TODO in the PR.
  
 
-## Latest 10 tasks completed
+## DONE (latest tasks completed)
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection

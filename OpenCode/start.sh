@@ -53,9 +53,12 @@ start_project() {
 
     # --model
 
+    export OPENCODE_DISABLE_TERMINAL_TITLE=1
+    printf '\033]0;%s | %s\007' "$AI_AGENT_NAME" "(repo not defined yet)"
+
     #exec opencode web  --continue
     #exec opencode run --continue
-    exec opencode 
+    exec opencode --continue
 
     echo -e "OpenCode session closed. Bye!"
 }

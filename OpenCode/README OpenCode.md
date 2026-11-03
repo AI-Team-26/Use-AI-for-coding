@@ -12,7 +12,7 @@ Use the "OpenCode" text in the label because the utility script (outside of this
 
 ```bash
 cd OpenCode
-containers.sh create
+./containers.sh create
 
 # example:
 docker build \
@@ -29,7 +29,7 @@ Replace placeholders with secrets.
 
 ```bash
 cd OpenCode
-containers.sh setup
+./containers.sh setup
 ```
 
 ### Run the containers
@@ -47,5 +47,5 @@ The bind-mount volumes:
 
 ```bash
 cd OpenCode
-containers.sh run
+./containers.sh run
 ```
