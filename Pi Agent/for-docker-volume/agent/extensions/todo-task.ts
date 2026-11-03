@@ -69,16 +69,6 @@ let completed = false                  // is current task completed ? shoud it b
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
-// A context capable of injecting messages into the agent stream.
-// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods, 
-// but with different return types: `pi.send*Message()` returns void,
-// while `ReplacedSessionContext.send*Message()` returns Promise<void>.
-// The union below keeps both assignable while allowing callers to handle either.
-type MessageSender = {
-  sendMessage(message: Parameters<ExtensionAPI['sendMessage']>[0], options?: Parameters<ExtensionAPI['sendMessage']>[1]): void | Promise<void>
-  sendUserMessage(content: Parameters<ExtensionAPI['sendUserMessage']>[0], options?: Parameters<ExtensionAPI['sendUserMessage']>[1]): void | Promise<void>
-}
-
 let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
 
@@ -312,35 +302,30 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pending = null
   }
 
-  // Freshest message-sending context. 
-  // Starts as `pi`; reassigned in the withSession callback after ctx.newSession() makes the captured `pi` stale
-  let messageSender: MessageSender = pi
-
-  // Swallow both sync throws and async rejections from a possibly-stale sender:
-  // an uncaught error inside the setInterval callback would crash Pi.
+  // Use the original ExtensionAPI (pi) for sending messages.
+  // It remains valid across session replacements, unlike captured ReplacedSessionContext.
+  // Swallow both sync throws and async rejections to prevent crashing Pi from timer callbacks.
   const onSendError = (what: string, err: unknown): void => {
-    //console.error(`${EXTENSION} ❌ ${what} failed.`, err)
     safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, 'error')
   }
 
   const safeSendUserMessage = (
-    content: Parameters<MessageSender['sendUserMessage']>[0],
-    options?: Parameters<MessageSender['sendUserMessage']>[1],
+    content: Parameters<ExtensionAPI['sendUserMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendUserMessage']>[1],
   ): void => {
     try {
-      // ?.catch handles both return types: pi returns void, ReplacedSessionContext returns Promise<void>
-      messageSender.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
+      pi.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
     } catch (err) {
       onSendError('safeSendUserMessage', err)
     }
   }
 
   const safeSendMessage = (
-    message: Parameters<MessageSender['sendMessage']>[0],
-    options?: Parameters<MessageSender['sendMessage']>[1],
+    message: Parameters<ExtensionAPI['sendMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendMessage']>[1],
   ): void => {
     try {
-      messageSender.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
+      pi.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
     } catch (err) {
       onSendError('safeSendMessage', err)
     }
@@ -503,9 +488,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
   pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
-    // NOTE: do NOT assign `messageSender` here — session_start delivers an
-    // ExtensionContext, which has no sendMessage/sendUserMessage. Only `pi`
-    // (initial) and the ReplacedSessionContext inside withSession are valid senders.
+    // NOTE: We use the original `pi` ExtensionAPI for sending messages, which
+    // remains valid across session replacements. No need to capture ReplacedSessionContext.
     // Session replacement (e.g. /new, model switch, context overflow) fires
     // session_shutdown, which stops both watchers but leaves `pending` alive at
     // module scope (the user does not re-run /feature N). If an activity is still
@@ -692,7 +676,6 @@ ${typeData.extra??""}\n\
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
-          messageSender = newCtx
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
