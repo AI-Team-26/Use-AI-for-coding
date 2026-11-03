@@ -173,8 +173,8 @@ I prefer Option 2 if /quit or /exit does the same.
   Allows copy "as normal":
      { "terminal": { "copy": "select" } }
 
-    
-
+- Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
+  
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
@@ -187,9 +187,3 @@ I prefer Option 2 if /quit or /exit does the same.
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
-- Bug 38 [fix/38_pr_approval_detection_failing_checks]: detect approval from individual reviews when reviewDecision is null due to failing checks; remove debug spam
-- Feature 35 [feat/35_pr_status_link]: todo-task polling status PR references are now clickable (OSC 8 hyperlinks)
-- Feature 33 [feat/33_pr_extension]: pr-extension adds /review command for PR review sessions
-- Feature 32 [feat/32_fresh_session_on_task_v2]: todo-task starts a fresh session on task start for context purity
-- Bug 15 [fix/15_session_start_restart_timers]: todo-task restart PR polling + status timer on session_start
-- Feature 18 [feat/18_todo_review_watcher_pr_link]: todo-task review watcher stop message includes PR link

@@ -21,48 +21,16 @@ cp start.sh "$docker_volumes/scripts/start.sh"
 cp .env "$docker_volumes/scripts/.env"
 
 
-
 # Set GitHub PAT (for Agent Account and Organization) =============================================
 
-account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  # Read from .env
-if [[ $account_pat == ENV:* ]]; then
-    var_name="${account_pat#ENV:}"  # Remove "ENV:"
-    account_pat="${!var_name}"
-fi
-
-if [[ -z "$account_pat" ]]; then
-    echo -e "${RED}⛔ Failed to get GitHub Account PAT from GITHUB_AGENT_ACCOUNT_PAT ${NC}"
-    exit 1
-fi
-
-org_pat="$GITHUB_ORG_PAT"  # Read from .env
-if [[ $org_pat == ENV:* ]]; then
-    var_name="${org_pat#ENV:}"  # Remove "ENV:"
-    org_pat="${!var_name}"
-fi
-
-if [[ -z "$org_pat" ]]; then
-    echo -e "${RED}⛔ Failed to get GitHub Organiation PAT from GITHUB_ORG_PAT ${NC}"
-    exit 1
-fi
-
+account_pat="$GITHUB_AGENT_ACCOUNT_PAT"  
+org_pat="$GITHUB_ORG_PAT"
 echo "$GITHUB_AGENT_ACCOUNT:$account_pat" > "$docker_volumes/scripts/github_pat"  # Write
-echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"  # Append
+echo "$GITHUB_ORG:$org_pat" >> "$docker_volumes/scripts/github_pat"               # Append
 
 # GITHUB_MAIN_ACCOUNT is optional (it allows access to personal GitHub account repositories)
 if [[ -n "$GITHUB_MAIN_ACCOUNT" ]]; then
-
-    main_account_pat="$GITHUB_MAIN_ACCOUNT_PAT"  # Read from .env
-    if [[ $main_account_pat == ENV:* ]]; then
-        var_name="${main_account_pat#ENV:}"  # Remove "ENV:"
-        main_account_pat="${!var_name}"
-    fi
-
-    if [[ -z "$main_account_pat" ]]; then
-        echo -e "${RED}⛔ Failed to get optional GitHub MAIN account PAT from GITHUB_MAIN_ACCOUNT_PAT ${NC}"
-        exit 1
-    fi
-
+    main_account_pat="$GITHUB_MAIN_ACCOUNT_PAT"
     echo "$GITHUB_MAIN_ACCOUNT:$main_account_pat" >> "$docker_volumes/scripts/github_pat"  # Append
 fi
 
