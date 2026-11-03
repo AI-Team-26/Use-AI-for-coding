@@ -22,12 +22,15 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 DRY_RUN=false
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true && shift
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true && shift    ## shift Removes $1 from argument list ($2 becomes $1, etc.)
+
 
 # Get PAT for curl authentication
-GITHUB_TOKEN="$(gh auth token 2>/dev/null)"
+#GITHUB_TOKEN="$(gh auth token)"
+
 if [[ -z "$GITHUB_TOKEN" ]]; then
-    echo -e "${RED}❌ Not authenticated with gh. Run 'gh auth login' first.${NC}"
+    #echo -e "${RED}❌ Not authenticated with gh. Run 'gh auth login' first.${NC}"
+    echo -e "${RED}❌ GITHUB_TOKEN variable is not set. ${NC}"
     exit 1
 fi
 
@@ -75,15 +78,19 @@ RULESET_PAYLOAD='{
   ]
 }'
 
+
 process_repo() {
     local repo="$1"  # format: owner/repo
+    # TODO: should also accept URL format https://github.com/<owner>/<repo>.git
+
+    echo -e "Create ruleset for ${repo}"
 
     # Check if ruleset already exists (by name)
     local existing_name
     existing_name=$(gh api "/repos/${repo}/rulesets" 2>/dev/null | jq -r '.[].name' 2>/dev/null || echo "")
 
     if echo "$existing_name" | grep -q "^main branch$"; then
-        echo -e "${YELLOW}⊘  ${repo} — ruleset already exists, skipping${NC}"
+        echo -e "${YELLOW}⛔  ${repo} — ruleset already exists, skipping${NC}"
         return 0
     fi
 
@@ -108,9 +115,9 @@ process_repo() {
     local status=$(echo "$response" | jq -r '.name // .message // "unknown"' 2>/dev/null)
 
     if echo "$response" | jq -e '.id' >/dev/null 2>&1; then
-        echo -e "${GREEN}✓  Created: ${status}${NC}"
+        echo -e "${GREEN}✅  Ruleset Created: ${status}${NC}"
     else
-        echo -e "${RED}❌  Failed on ${repo}: ${status}${NC}"
+        echo -e "${RED}❌  Ruleset creation Failed on ${repo}: ${status}${NC}"
         return 1
     fi
 }
@@ -119,7 +126,7 @@ process_repo() {
 
 # If repos are passed as args, use them; otherwise read from stdin
 if [[ $# -gt 0 ]]; then
-    for repo in "$@"; do
+    for repo in "$@"; do        
         process_repo "$repo"
     done
 else
