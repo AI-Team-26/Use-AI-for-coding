@@ -2,7 +2,7 @@
 
 ## Backlog
 
-- [x] Feature 39 | Extract shared UI helpers into `_shared/common.ts`
+- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
   Create `extensions/_shared/common.ts` containing:
   - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
   - `safeSetStatus(ctx, key, text)` — guarded status bar update
