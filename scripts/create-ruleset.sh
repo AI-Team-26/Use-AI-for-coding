@@ -9,8 +9,6 @@ set -euo pipefail
 #   echo "owner/repo" | bash scripts/create-ruleset.sh
 #   cat repos.txt | bash scripts/create-ruleset.sh
 #
-# Optionally: pass --dry-run to preview without creating.
-#
 # Uses the same PAT as git_common.sh (~/scripts/github_pat).
 # Handles GitHub's 307 redirect on POST by using curl -L.
 # ============================================================
@@ -20,9 +18,6 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
-
-DRY_RUN=false
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true && shift    ## shift Removes $1 from argument list ($2 becomes $1, etc.)
 
 
 # Get PAT for curl authentication
@@ -94,11 +89,6 @@ process_repo() {
         return 0
     fi
 
-    if $DRY_RUN; then
-        echo -e "${GREEN}DRY RUN${NC} — would create ruleset on ${repo}"
-        return 0
-    fi
-
     echo -e "→  Creating ruleset on ${repo} ..."
 
     # GitHub redirects POST /repos/{owner}/{repo}/rulesets → /repositories/{id}/rulesets
@@ -118,6 +108,11 @@ process_repo() {
         echo -e "${GREEN}✅  Ruleset Created: ${status}${NC}"
     else
         echo -e "${RED}❌  Ruleset creation Failed on ${repo}: ${status}${NC}"
+        local errors
+        errors=$(echo "$response" | jq -r '.errors[]? | if type == "object" then (.message // tostring) else . end' 2>/dev/null || true)
+        if [[ -n "$errors" ]]; then
+            echo "$errors" | sed 's/^/     • /'
+        fi
         return 1
     fi
 }
