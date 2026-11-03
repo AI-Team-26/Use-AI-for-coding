@@ -125,8 +125,8 @@ After applying changes, run the test suite if available:
 
 GitHub PAT normally doesn't have `workflow` permissions.  
 If you get the error `refusing to allow a Personal Access Token ... without workflow scope`, the whole `.github/workflows` folder is blocked.  
-1. Put the file in `.github/_workflow` folder instead.
-2. Ask the user to manually move the renamed files.
+1. Put the file in `.github` folder instead.
+2. Ask the user to manually move the files into `.github/workflows` (can be done editing hte name in GitHub UI).
  
 
 # PR Review Workflow
