@@ -95,15 +95,17 @@ for agent in "${!agents[@]}"; do
     # Set secret keys
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{OPENROUTER_API_KEY}}/$OPENROUTER_API_KEY/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{CLOUDFLARE_API_KEY}}/$CLOUDFLARE_API_KEY/g" "$docker_volume_pi_agent/models.json"    
-    sed -i "s/{{CLOUDFLARE_ACCOUNT_ID}}/$CLOUDFLARE_ACCOUNT_ID/g" "$docker_volume_pi_agent/models.json"    
+    sed -i "s/{{CLOUDFLARE_API_KEY}}/$CLOUDFLARE_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{CLOUDFLARE_ACCOUNT_ID}}/$CLOUDFLARE_ACCOUNT_ID/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{INFERX_API_KEY}}/$INFERX_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{TOKENHARBOR_API_KEY}}/$TOKENHARBOR_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{MISTRAL_AI_API_KEY}}/$MISTRAL_AI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GROQ_API_KEY}}/$GROQ_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{TOKENHARBOR_API_KEY}}/$TOKENHARBOR_API_KEY/g" "$docker_volume_pi_agent/models.json"
 
     echo "✓ Done copying for ${agent}"
 done

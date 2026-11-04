@@ -397,7 +397,7 @@
         "baseUrl": "https://tokenharbor.ai/v1",
         "api": "openai-completions",
         "apiKey": "{{TOKENHARBOR_API_KEY}}",
-                "models": [
+        "models": [
             {
                 "id": "mimo-v2.6-flash:free",
                 "maxTokens": 4096,
@@ -405,6 +405,18 @@
             },
             {
                 "id": "deepseek-v4.1-flash:free",
+                "maxTokens": 4096,
+                "reasoning": true
+            }
+        ]
+    },
+    "InferX FREE": {
+        "baseUrl": "https://model.inferx.net/endpoints/v1",
+        "api": "openai-completions",
+        "apiKey": "{{INFERX_API_KEY}}",
+        "models": [
+            {
+                "id": "deepseek-v4.1-flash-1017-basic",
                 "maxTokens": 4096,
                 "reasoning": true
             }

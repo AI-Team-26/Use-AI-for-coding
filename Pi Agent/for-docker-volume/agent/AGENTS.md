@@ -61,13 +61,13 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - Feature 2 [feat/02_task] Task description
 - Bug 3 [fix/03_bug] Bug fix description
 
-## Done (optional, last 20 tasks)
-- [feat/02_task] Task description
+## Done
+- [feat/01_task] Very short task description
 ```
 
-- The `Done` section is optional (mostrly used by the user to remember at what point is the app development and what was the last tasks done)
+- The `Done` section is optional and only used to help understand at what point is the app development and to avoid reuse old numbers. Keep it small, it isn't a changelog.
 - Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
-- A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
+- A new agent session resumes by reading the PR body (`gh pr view <N> --json body`)
 
 ## Running Tests
 After applying changes, run the test suite if available:
