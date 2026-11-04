@@ -71,6 +71,10 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volume_opencode/commands"
     cp commands/*.md "$docker_volume_opencode/commands/" 2>/dev/null || true
 
+    # Copy plugins
+    mkdir -p "$docker_volume_opencode/plugins"
+    cp plugins/*.ts "$docker_volume_opencode/plugins/" 2>/dev/null || true
+
 
     # Copy configuration files
     cp AGENTS.md "$docker_volume_opencode/AGENTS.md"
