@@ -164,6 +164,18 @@ I prefer Option 2 if /quit or /exit does the same.
 
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
+
+- Feature 59 | Pi Agent /todo crash when is already on main
+  
+  Error: ❌ Git update failed: Already on 'main'
+  From https://github.com/AI-Team-26/learning.Llama-cpp
+     b779584..a2237cd  main       -> origin/main
+  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
+  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
+  error: Your local changes to the following files would be overwritten by merge:
+    TODO.md
+  Please commit your changes or stash them before you merge.
+  Aborting
   
 ### OpenCode
 
