@@ -140,9 +140,7 @@ clone_repo() {
     # "https://github.com/account/repo.git" -> "account/repo"
     local repo_path; repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
 
-    echo "3"
     check_repo_access "$repo_path"
-    echo "4"
 
     case $? in
         0)

@@ -92,10 +92,9 @@ check_repo_access() {
     fi
 
     if [[ "$owner_type" == "Organization" ]]; then
-        echo "341"
         local org_role
         org_role=$(gh api "orgs/$owner/memberships/$me" --template '{{.role}}' 2>/dev/null || true)
-        echo "342"
+
         if [[ "$org_role" == "admin" ]]; then
             echo -e "✔️ You are an ${YELLOW}org owner${NC} of $owner (organization owner)"
             return 0

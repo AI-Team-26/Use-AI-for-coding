@@ -48,11 +48,10 @@ fi
 
 start_project() {
     local proj=$1
-
     #clear
 
-    # Pi save the used model in ~/.pi/agent/settings.json file, defaultModel property
-    #If that is NOT set we can try to use the default model for this agent or peek tthe one that is running in local llama.cpp
+    # Pi save the used model in ~/.pi/agent/settings.json file, in the "defaultModel" property
+    # If that is NOT set, we can try to use the default model for this agent or peek the one that is running in local llama.cpp
 
     # [OBSOLETE] Removed to allow to use a previous selected model within this Pi agent
     if [[ 1 == 2 ]]; then 
@@ -76,23 +75,14 @@ start_project() {
         exec pi "$model_param" --continue
     fi
 
-	# Use regular if fullscreen causes issues in the shell of Windows Terminal
-    #exec pi --continue --tui-mode regular
-    exec pi --continue
+    # pi-status extension
+    # extract the initial EMOJI or take the first 2 characters
+    local agent_icon=${AI_AGENT_NAME%%[[:ascii:]]*}
+    [[ -z $agent_icon ]] && agent_icon=${AGENT_NAME:0:2}
+    export PI_STATUS_AGENT_ICON=$agent_icon
+    export PI_STATUS_DONE_ICON="🎉"
 
-    # [OBSOLETE]
-    # user choice
-    #echo -e "\e[34m-------------------\e[0m"
-    #PS3=$'\e[34mSelect an option: \e[0m'
-    #select choice in Continue Resume New ; do
-    #    # use exec so when the host shell close the pi process is killed
-    #    case "$choice" in
-    #        Continue)  exec pi $model_param --continue ;;
-    #        Resume)    exec pi $model_param --resume ;;
-    #        New)       exec pi $model_param --name $(date +%y.%m.%d) ;; # YY.MM.DD
-    #        #No-session|*) exec pi $model_param --no-session ;;
-    #    esac
-    #done
+    exec pi --continue
 
     echo -e "Pi Agent session closed. Bye!"
 }

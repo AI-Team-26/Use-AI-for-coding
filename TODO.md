@@ -164,6 +164,10 @@ I prefer Option 2 if /quit or /exit does the same.
 
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
+
+- Feature 59 [URGENT] | Use teh same logic of centralized containers.sh script used in OpenCode for PiAgent .
+  Use a loop for the agents.
+
   
 ### OpenCode
 
