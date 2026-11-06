@@ -4,30 +4,26 @@
 #   - Lists projects in /projects (bind-mounted folder from host).
 #   - Allows cloning new repos interactively.
 
-source /scripts/start_common.sh
+set -euo pipefail
+
 source /scripts/.env
+source /scripts/utils.sh
+source /scripts/start_common.sh
 
 # check required environment variables are set
-required_vars=("PI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
+required_vars "AI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY"
 
-for var in "${required_vars[@]}" ; do
-    if [[ -z "${!var}" ]]; then
-        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
-        exit 1
-    fi
-done
-
-# set API KEYS and other secrets
+# set API KEYS and other secrets used by skills and extensions
 export EXA_API_KEY=$EXA_API_KEY
-export PI_AGENT_NAME="${PI_AGENT_NAME:-Pi Agent}" ## passed by docker run
+export AI_AGENT_NAME="${AI_AGENT_NAME:-Pi Agent}" ## passed by docker run
 
 # First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
-    echo setup customized agent files
-
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
+    #echo setup customized agent files
+    # TODO: is this required ???
+    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
+    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
 
     echo "Restoring /root/.pi from TAR backup..."
 
@@ -73,8 +69,8 @@ start_project() {
         fi
 
         # Launch Pi Agent
-        if [[ -n "$PI_AGENT_DEFAULT_MODEL" ]]; then 
-            model_param="$PI_AGENT_DEFAULT_MODEL"
+        if [[ -n "$AI_AGENT_DEFAULT_MODEL" ]]; then 
+            model_param="$AI_AGENT_DEFAULT_MODEL"
         fi
 
         exec pi "$model_param" --continue
@@ -107,6 +103,6 @@ echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
 
-setup_git_global "$PI_AGENT_NAME"
+setup_git_global "$AI_AGENT_NAME"
 
 select_project

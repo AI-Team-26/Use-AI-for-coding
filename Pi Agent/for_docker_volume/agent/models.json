@@ -380,6 +380,35 @@
 
         ]
     },
+
+    "X.ai FREE": {
+        "baseUrl": "https://api.x.ai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{XAI_API_KEY}}",
+        "models_list_url": "",
+        "models": [
+            {
+                "id": "grok-build-0.1",
+                "maxTokens": 4096,
+                "reasoning": true
+            }
+        ]
+    },
+
+    "SambaNova": {
+        "baseUrl": "https://api.sambanova.ai/v1",
+        "api": "openai-completions",
+        "apiKey": "{{SAMBANOVA_API_KEY}}",
+        "models_list_url": "",
+        "models": [
+            {
+                "id": "MiniMax-M3.1-Flash",
+                "maxTokens": 4096,
+                "reasoning": true
+            }
+        ]
+    },
+
     "Cloudflare FREE": {
         "baseUrl": "https://api.cloudflare.com/client/v4/accounts/{{CLOUDFLARE_ACCOUNT_ID}}/ai/v1",
         "api": "openai-completions",
@@ -499,7 +528,11 @@
         "api": "openai-completions",
         "apiKey": "{{NOVITAAI_API_KEY}}",
         "models": [
-
+            {
+                "id": "apodex/apodex-1.1-mini",
+                "maxTokens": 4096,
+                "reasoning": true
+            }
         ]
     },
     "Novita AI": {

@@ -1,6 +1,8 @@
 # COMMON script for the start.sh script in the different tools folders (pi.dev, Qwen-Coder ...)
 # The start_project function is defined in the single tool because it needs to use specific commands of the tool
 
+set -euo pipefail
+
 source /scripts/git_common.sh
 
 # --- Config ---
@@ -85,17 +87,6 @@ select_project() {
                 manage_git_credentials
                 action_done=1
                 break
-            #elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
-            #    echo -e "${YELLOW}GIT credentials${NC}"
-            #    cat ~/.git-credentials
-            #
-            #    echo ""
-            #    read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
-            #    case "$choice" in
-            #        Y|y|Yes|yes) setup_git_global 1 ;;
-            #    esac
-            #
-            #    break
             elif [[ "$proj" == "❌ Exit" ]]; then
                 return 0
             elif [[ -n "$proj" ]]; then
@@ -138,7 +129,7 @@ clone_repo() {
     echo ""
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
     read -p "Directory name (leave blank for repo name): " proj_dir
-    local proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    local proj_dir; proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
     if [ -d "$project_folder/$proj_dir" ]; then
         echo -e "${RED}${WARNING_EMOJI} Directory '$project_folder/$dir_name' already exists!${NC}"
         return 1
@@ -147,9 +138,11 @@ clone_repo() {
     set_github_auth_for_repo "$repo_url"
 
     # "https://github.com/account/repo.git" -> "account/repo"
-    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+    local repo_path; repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
 
+    echo "3"
     check_repo_access "$repo_path"
+    echo "4"
 
     case $? in
         0)

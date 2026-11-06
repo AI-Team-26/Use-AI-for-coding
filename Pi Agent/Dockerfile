@@ -32,7 +32,7 @@ RUN git config --global credential.https://github.com.helper "!gh auth git-crede
 #--- Pi Agent
 
 # Pi Installation
-RUN curl -fsSL https://pi.dev/install.sh | sh
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
 # Pi Extensions
 RUN pi install https://github.com/gsanhueza/pi-token-speed
@@ -42,7 +42,7 @@ RUN pi install npm:pi-llama-cpp-stats
 #RUN pi install npm:pi-voice-stt     crash Pi after update to new TUI version (0.9x)
 
 # Copy the entire .pi directory (which now contains the installs)
-# to the backup locations so it survives the volume mount
+# to the backup locations, so it survives the volume mount
 #RUN cp -r /root/.pi/. /root/.pi_backup/
 RUN echo "Backing up .pi..."
 RUN tar -cf /root/.pi_backup.tar -C /root/.pi . && rm -rf /root/.pi/*
