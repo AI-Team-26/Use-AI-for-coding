@@ -148,10 +148,10 @@ clone_repo() {
     check_repo_access "$repo_path" || rc=$?
 
     case $rc in
-        0)
+        "$REPO_ACCESS_OK")
             # OK, Owner or collaborator, can use it
         ;;
-        2)
+        "$REPO_ACCESS_READ_ONLY")
             echo -e "Check if ${YELLOW}$repo_path${NC} is public..."
             local api_url="https://api.github.com/repos/$repo_path"
 
@@ -176,7 +176,7 @@ clone_repo() {
             fi
         ;;
         *)
-            return 1
+            return "$REPO_ACCESS_ERROR"
         ;;
     esac
 
