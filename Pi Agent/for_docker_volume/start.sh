@@ -78,7 +78,7 @@ start_project() {
     # pi-status extension
     # extract the initial EMOJI or take the first 2 characters
     local agent_icon=${AI_AGENT_NAME%%[[:ascii:]]*}
-    [[ -z $agent_icon ]] && agent_icon=${AGENT_NAME:0:2}
+    [[ -z $agent_icon ]] && agent_icon=${AI_AGENT_NAME:0:2}
     export PI_STATUS_AGENT_ICON=$agent_icon
     export PI_STATUS_DONE_ICON="🎉"
 
