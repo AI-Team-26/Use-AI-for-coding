@@ -1,4 +1,9 @@
+source /scripts/utils.sh
+
+required_vars GITHUB_AGENT_ACCOUNT GITHUB_MAIN_ACCOUNT_EMAIL
+
 github_pat_file="/scripts/github_pat"
+
 
 if [[ ! -r "$github_pat_file" ]]; then
    echo -e "${RED}❌ The PAT file '${github_pat_file}' is not readable.${NC}"
@@ -50,7 +55,7 @@ set_default_github_token() {
     #echo "set_default_github_token"
     local pat=$(grep "^${GITHUB_AGENT_ACCOUNT}:" "$github_pat_file" | cut -d':' -f2 || true)
     if [ -z "$pat" ]; then
-        echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for '${GITHUB_AGENT_ACCOUNT}' ${NC}"
+        echo -e "❌ ${RED}Failed to get PAT from file '${github_pat_file}' for '${GITHUB_AGENT_ACCOUNT}' ${NC}"
         return 1
     fi
 
@@ -58,6 +63,12 @@ set_default_github_token() {
     echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${GITHUB_AGENT_ACCOUNT}${NC}"
     export GITHUB_TOKEN=$pat
 }
+
+
+# Exit codes returned by check_repo_access()
+REPO_ACCESS_OK=0
+REPO_ACCESS_ERROR=1
+REPO_ACCESS_READ_ONLY=2
 
 
 check_repo_access() {
@@ -69,11 +80,11 @@ check_repo_access() {
     local resp
     resp=$(gh api "repos/$repo_path" \
         --template '{{.owner.login}}|{{.owner.type}}|{{.permissions.push}}|{{.permissions.admin}}' \
-        2>/dev/null)
+        2>/dev/null || true)
 
     if [[ -z "$resp" ]]; then
-        echo -e "${RED}❌ Could not fetch repo info for $repo_path${NC}"
-        return 1
+        echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
+        return "$REPO_ACCESS_ERROR"
     fi
 
     local owner owner_type push admin
@@ -83,28 +94,30 @@ check_repo_access() {
 
     if [[ "$owner_type" == "User" && "$me" == "$owner" ]]; then
         echo -e "✔️ You are the ${YELLOW}owner${NC} of $repo_path"
-        return 0
+        return "$REPO_ACCESS_OK"
     fi
 
     if [[ "$owner_type" == "Organization" ]]; then
         local org_role
-        org_role=$(gh api "orgs/$owner/memberships/$me" --template '{{.role}}' 2>/dev/null)
+        org_role=$(gh api "orgs/$owner/memberships/$me" --template '{{.role}}' 2>/dev/null || true)
+
         if [[ "$org_role" == "admin" ]]; then
             echo -e "✔️ You are an ${YELLOW}org owner${NC} of $owner (organization owner)"
-            return 0
+            return "$REPO_ACCESS_OK"
         fi
     fi
 
     if [[ "$push" == "true" ]]; then
         echo -e "✔️ You are a ${YELLOW}collaborator${NC} (write access) on $repo_path"
-        return 0
+        return "$REPO_ACCESS_OK"
     fi
 
     check_and_accept_invite "$repo_path"
+
     case $? in
         0)
             # invite accepted. Continue.
-            return 0
+            return "$REPO_ACCESS_OK"
         ;;
         2)
             # invite not found... continue
@@ -112,12 +125,12 @@ check_repo_access() {
         ;;
         *)
             echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
-            return 1
+            return "$REPO_ACCESS_ERROR"
         ;;
     esac
 
-    #echo -e "${RED}⚠️ You only have read access to $repo_path (not a collaborator)${NC}"
-    return 2
+    #echo -e "⚠️ ${RED}You only have read access to $repo_path (not a collaborator)${NC}"
+    return "$REPO_ACCESS_READ_ONLY"
 }
 
 
@@ -315,12 +328,11 @@ setup_git_global() {
         echo -e "GIT is not configured. Set up name and email:${NC}"
 
         # The email is what set the "contributor" of the commit in GitHub
-        # TODO: Agent name has to be passed as argument
         read -p "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " git_username
         read -p "GitHub user email (email used for commits contributor, leave blank for '${GITHUB_MAIN_ACCOUNT_EMAIL}'): " git_email
 
-        if [[ -z "$git_username" ]]; then git_username=${AGENT_NAME};             fi
-        if [[ -z "$git_email" ]];    then git_email=${GITHUB_MAIN_ACCOUNT_EMAIL}; fi
+        git_username="${git_username:-$AGENT_NAME}"
+        git_email="${git_email:-$GITHUB_MAIN_ACCOUNT_EMAIL}"
 
         git config --global user.name "$git_username"
         git config --global user.email "$git_email"
