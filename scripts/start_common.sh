@@ -145,7 +145,7 @@ clone_repo() {
     # Running it in a `||` context also disables errexit inside check_repo_access,
     # so its internal `check_and_accept_invite` + `case $?` works as intended.
     local rc=0
-    check_repo_access "$repo_path" || rc=$?
+    check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
     case $rc in
         "$REPO_ACCESS_OK")
