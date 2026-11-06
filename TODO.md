@@ -142,6 +142,26 @@ I prefer Option 2 if /quit or /exit does the same.
 
 - Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
 
+- Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
+  Is it possible to delay this check start timer at the end ?
+
+- Bug 59 | Pi Agent /todo crash when is already on main
+
+  Error: ❌ Git update failed: Already on 'main'
+  From https://github.com/AI-Team-26/learning.Llama-cpp
+     b779584..a2237cd  main       -> origin/main
+  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
+  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
+  error: Your local changes to the following files would be overwritten by merge:
+    TODO.md
+  Please commit your changes or stash them before you merge.
+  Aborting
+  
+### OpenCode
+
+- Feature 58 | Shows a icon on the shell title to indicate if the agent is working or idle
+  NikolayXHD/pi-status takes over the title completely and shows :⏳ name while working or :🖐️ name while idle. It does this by intercepting OSC 0/2 title writes on process.stdout.
+
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
   Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
@@ -163,7 +183,8 @@ I prefer Option 2 if /quit or /exit does the same.
   Don't remove this feature from TODO in the PR.
  
 
-## Latest 10 tasks completed
+## DONE (latest tasks completed)
+- [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders

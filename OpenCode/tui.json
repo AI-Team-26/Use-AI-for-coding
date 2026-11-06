@@ -1,0 +1,5 @@
+{
+  "keybinds": {
+    "app_exit": "<leader>q"
+  }
+}

@@ -1,6 +1,8 @@
 # COMMON script for the start.sh script in the different tools folders (pi.dev, Qwen-Coder ...)
 # The start_project function is defined in the single tool because it needs to use specific commands of the tool
 
+set -euo pipefail
+
 source /scripts/git_common.sh
 
 # --- Config ---
@@ -66,7 +68,8 @@ select_project() {
         action_done=0
         select proj in "${projects[@]}" ; do
             if [[ "$proj" == "➕ Clone a repository" ]]; then
-                clone_repo
+                # clone_repo returns 1 on failure; keep the menu alive under errexit
+                clone_repo || :
                 action_done=1
                 break
             elif [[ "$proj" == "➕ Create a new project" ]]; then
@@ -82,20 +85,9 @@ select_project() {
                 action_done=1
                 break  
             elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
-                manage_git_credentials
+                manage_git_credentials || :
                 action_done=1
                 break
-            #elif [[ "$proj" == "🐙 Check GIT credentials" ]]; then
-            #    echo -e "${YELLOW}GIT credentials${NC}"
-            #    cat ~/.git-credentials
-            #
-            #    echo ""
-            #    read -p "Do you want to (re)set the global GIT credentials? [Yy]es/[N]o " choice
-            #    case "$choice" in
-            #        Y|y|Yes|yes) setup_git_global 1 ;;
-            #    esac
-            #
-            #    break
             elif [[ "$proj" == "❌ Exit" ]]; then
                 return 0
             elif [[ -n "$proj" ]]; then
@@ -138,24 +130,28 @@ clone_repo() {
     echo ""
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
     read -p "Directory name (leave blank for repo name): " proj_dir
-    local proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    local proj_dir; proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
     if [ -d "$project_folder/$proj_dir" ]; then
-        echo -e "${RED}${WARNING_EMOJI} Directory '$project_folder/$dir_name' already exists!${NC}"
+        echo -e "${RED}${WARNING_EMOJI} Directory '$project_folder/$proj_dir' already exists!${NC}"
         return 1
     fi
 
-    set_github_auth_for_repo "$repo_url"
+    set_github_auth_for_repo "$repo_url" || return 1
 
     # "https://github.com/account/repo.git" -> "account/repo"
-    local repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
+    local repo_path; repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
 
-    check_repo_access "$repo_path"
+    # Guard the call: a bare non-zero return would abort the script under errexit.
+    # Running it in a `||` context also disables errexit inside check_repo_access,
+    # so its internal `check_and_accept_invite` + `case $?` works as intended.
+    local rc=0
+    check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
-    case $? in
-        0)
+    case $rc in
+        "$REPO_ACCESS_OK")
             # OK, Owner or collaborator, can use it
         ;;
-        2)
+        "$REPO_ACCESS_READ_ONLY")
             echo -e "Check if ${YELLOW}$repo_path${NC} is public..."
             local api_url="https://api.github.com/repos/$repo_path"
 
@@ -166,8 +162,9 @@ clone_repo() {
                 # Repository is public
                 echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"
             else
-                check_and_accept_invite
-                case $? in
+                local invite_rc=0
+                check_and_accept_invite "$repo_path" || invite_rc=$?
+                case $invite_rc in
                     0)
                     # invite accepted. Continue.
                     ;;
@@ -179,7 +176,7 @@ clone_repo() {
             fi
         ;;
         *)
-            return 1
+            return "$REPO_ACCESS_ERROR"
         ;;
     esac
 

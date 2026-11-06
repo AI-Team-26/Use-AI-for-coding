@@ -76,14 +76,14 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 2. For each task, check `gh pr list --state open`
 3. If a matching PR exists with `agent: <someone_else>` → **Skip (Collision)**
 4. If no matching PR → **Task is available**
-5. If matching PR with `agent: {{PI_AGENT_NAME}}` → **Continue working**
+5. If matching PR with `agent: {{AI_AGENT_NAME}}` → **Continue working**
 
 ### Starting a New Task
 1. Create branch: `git checkout -b feat/01_task_name`
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
-4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
-5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"` (use an appropriate color: Blu-AI: #0052cc, Purple-AI: #870bd9)
+4. **Create label if it doesn't exist:** `gh label create "agent: {{AI_AGENT_NAME}}" --description "Identity label for {{AI_AGENT_NAME}}"`
+5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{AI_AGENT_NAME}}"` (use an appropriate color: Blu-AI: #0052cc, Purple-AI: #870bd9)
 6. This signals to other agents: "I'm working on this"
 7. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
@@ -98,13 +98,13 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - Feature 2 [feat/02_task] Task description
 - Bug 3 [fix/03_bug] Bug fix description
 
-## Done (optional, last 20 tasks)
-- [feat/02_task] Task description
+## Done
+- [feat/01_task] Very short task description
 ```
 
-- The `Done` section is optional (mostrly used by the user to remember at what point is the app development and what was the last tasks done)
+- The `Done` section is optional and only used to help understand at what point is the app development and to avoid reuse old numbers. Keep it small, it isn't a changelog.
 - Active work = open branch + PR; its sub-steps live in the **PR description** (GitHub task list)
-- A new Pi session resumes by reading the PR body (`gh pr view <N> --json body`)
+- A new agent session resumes by reading the PR body (`gh pr view <N> --json body`)
 
 ## Running Tests
 After applying changes, run the test suite if available:
@@ -147,7 +147,7 @@ After applying changes, run the test suite if available:
 
 ## Authentication
 - `git` and `gh` must work smoothly
-- Set PR author and sign comments with your name ({{PI_AGENT_NAME}})
+- Set PR author and sign comments with your name ({{AI_AGENT_NAME}})
 
 ## PR Creation
 1. After making changes, create a PR
@@ -161,11 +161,9 @@ After applying changes, run the test suite if available:
 ## GitHub Workflow File Permissions
 
 GitHub PAT normally doesn't have `workflow` permissions.  
-If you get the error `refusing to allow a Personal Access Token ... without workflow scope`, use a `.temp` postfix in the name.  
-
-For new files: rename them adding the postfix `.temp` (ci.yaml -> ci.yaml.temp)  
-For edited files: leave the original file unchanged and create a file with the postfix `.temp` with the new version (ci.yaml -> ci.yaml.temp)  
-Ask the user to manually push the renamed files to activate them
+If you get the error `refusing to allow a Personal Access Token ... without workflow scope`, the whole `.github/workflows` folder is blocked.  
+1. Put the file in `.github` folder instead.
+2. Ask the user to manually move the files into `.github/workflows` (can be done editing hte name in GitHub UI).
  
 
 # PR Review Workflow
@@ -203,7 +201,7 @@ query {
 ```
 
 ### Step 2 — Reply to Individual Comments
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{PI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{AI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
 **USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`
 
 **Correct Syntax (Form Fields):**
