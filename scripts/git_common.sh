@@ -65,6 +65,12 @@ set_default_github_token() {
 }
 
 
+# Exit codes returned by check_repo_access()
+REPO_ACCESS_OK=0
+REPO_ACCESS_ERROR=1
+REPO_ACCESS_READ_ONLY=2
+
+
 check_repo_access() {
     #echo "check_repo_access()"
     local repo_path=$1   # "owner/repo"
@@ -78,7 +84,7 @@ check_repo_access() {
 
     if [[ -z "$resp" ]]; then
         echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
-        return 1
+        return "$REPO_ACCESS_ERROR"
     fi
 
     local owner owner_type push admin
@@ -88,7 +94,7 @@ check_repo_access() {
 
     if [[ "$owner_type" == "User" && "$me" == "$owner" ]]; then
         echo -e "✔️ You are the ${YELLOW}owner${NC} of $repo_path"
-        return 0
+        return "$REPO_ACCESS_OK"
     fi
 
     if [[ "$owner_type" == "Organization" ]]; then
@@ -97,13 +103,13 @@ check_repo_access() {
 
         if [[ "$org_role" == "admin" ]]; then
             echo -e "✔️ You are an ${YELLOW}org owner${NC} of $owner (organization owner)"
-            return 0
+            return "$REPO_ACCESS_OK"
         fi
     fi
 
     if [[ "$push" == "true" ]]; then
         echo -e "✔️ You are a ${YELLOW}collaborator${NC} (write access) on $repo_path"
-        return 0
+        return "$REPO_ACCESS_OK"
     fi
 
     check_and_accept_invite "$repo_path"
@@ -111,7 +117,7 @@ check_repo_access() {
     case $? in
         0)
             # invite accepted. Continue.
-            return 0
+            return "$REPO_ACCESS_OK"
         ;;
         2)
             # invite not found... continue
@@ -119,12 +125,12 @@ check_repo_access() {
         ;;
         *)
             echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
-            return 1
+            return "$REPO_ACCESS_ERROR"
         ;;
     esac
 
     #echo -e "⚠️ ${RED}You only have read access to $repo_path (not a collaborator)${NC}"
-    return 2
+    return "$REPO_ACCESS_READ_ONLY"
 }
 
 
