@@ -131,14 +131,6 @@
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
-- Bug 46 [SUSPENDED: some other models with the slash work well] | todo-task model captured doesn't work well with "/"
-  Llama.cpp/Qwen3.7-27B-AAA-BBB capture of proviider (Llama.cpp) and model (Qwen3.7-27B-AAA-BBB) works fine, 
-  but is the model used by Pi is this: "(Openrouter) minimax/minimax-m3" it doesn't capture the model properly.  
-  For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
-  I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
-
-- Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
-
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
   Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
   Obviously it has to create a branch and a PR. 
@@ -204,6 +196,8 @@ I prefer Option 2 if /quit or /exit does the same.
  
 
 ## DONE (latest tasks completed)
+- Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
+- Bug 46 [obsolete]: todo-task resolves the model from `ctx.model` (and `/models` for Llama.cpp), so it no longer parses footer text and cannot capture `34 tok/s`; removed from backlog
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
