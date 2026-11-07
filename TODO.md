@@ -145,6 +145,12 @@
   After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
   '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
 
+- Bug 62 | pi-agent  /pr command is not executed when we are on main branch
+  Warning: To call /pr you need to be on a branch different from the default one
+  
+  It should move on the bramch and work on hte PR, why this warning? 
+  If there are uncommitted file, report to the user and if is not trivial and not clear what to do: propose some choice to the user.
+  If this second part is not a super quick thing... create a separate task in the TODO.
 
   
 ### OpenCode
