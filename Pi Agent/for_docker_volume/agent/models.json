@@ -451,6 +451,25 @@
             }
         ]
     },
+    "Deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "api": "openai-completions",
+        "apiKey": "{{DEEPSEEK_API_KEY}}",
+        "models": [
+            { 
+                "id": "DeepSeek-V4.1-Flash-1017",
+                "maxTokens": 4096,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-07",
+                    "input": 0.3,
+                    "output": 0.12,
+                    "cacheRead": 0.006,
+                    "cacheWrite": 0.12
+                }
+            }
+        ]
+    },
     "Entrim": {
         "baseUrl": "https://api.entrim.ai/v1",
         "api": "openai-completions",
