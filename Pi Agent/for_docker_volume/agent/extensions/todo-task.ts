@@ -49,6 +49,14 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
+import {
+  GRAY, RESET,
+  osc8Link,
+  safeNotify as sharedSafeNotify,
+  safeSetStatus as sharedSafeSetStatus,
+  createDebug,
+  type NotifyType,
+} from './_shared/common.ts'
 
 const EXTENSION = "TODO-TASK"
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? '', '.pi', 'agent', 'todo-tasks')
@@ -56,31 +64,44 @@ const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
 const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = 'Llama.cpp'  // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
-const CYAN = "\x1b[36m"
-const BLUE = "\x1b[34m"
-const GREEN = "\x1b[32m"
-const GRAY = "\x1b[90m"    // bright gray / dim white
-const DIM = "\x1b[2m"      // dim (renders as darker version of current fg)
-const RESET = "\x1b[0m"
-
 let latestCtx: ExtensionContext | null = null
 let pending: TimingItem | null = null  // represent hte current task, should be called CurrentTask ?
 let completed = false                  // is current task completed ? shoud it be a property of CurrentTask ?
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
-// A context capable of injecting messages into the agent stream.
-// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods, 
-// but with different return types: `pi.send*Message()` returns void,
-// while `ReplacedSessionContext.send*Message()` returns Promise<void>.
-// The union below keeps both assignable while allowing callers to handle either.
+let watchedPr: { number: number; url: string } | null = null
+const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
+
+// A context capable of injecting messages into the agent stream: either the `pi` API
+// (stale after any session replacement) or a fresh ReplacedSessionContext.
 type MessageSender = {
   sendMessage(message: Parameters<ExtensionAPI['sendMessage']>[0], options?: Parameters<ExtensionAPI['sendMessage']>[1]): void | Promise<void>
   sendUserMessage(content: Parameters<ExtensionAPI['sendUserMessage']>[0], options?: Parameters<ExtensionAPI['sendUserMessage']>[1]): void | Promise<void>
 }
 
-let watchedPr: { number: number; url: string } | null = null
-const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
+// Sender state is module-scope for the same reason as the polling state below:
+// Pi can re-instantiate the extension factory on session replacement without
+// shutting the previous instance down, so per-instance copies would disagree
+// about which context is still usable.
+let messageSender: MessageSender | null = null  // fresh ctx from our own withSession
+let hasValidSender = false                     // true only while our own withSession runs
+let ownSessionReplacement = false              // ctx.newSession() is in flight
+
+// Message queue for timer-driven sends (PR review polling).
+// Messages are queued when the sender is stale and flushed when we get a fresh
+// ReplacedSessionContext inside our own withSession callback.
+type QueuedMessage =
+  | { kind: 'sendMessage'; message: Parameters<ExtensionAPI['sendMessage']>[0]; options?: Parameters<ExtensionAPI['sendMessage']>[1] }
+  | { kind: 'sendUserMessage'; content: Parameters<ExtensionAPI['sendUserMessage']>[0]; options?: Parameters<ExtensionAPI['sendUserMessage']>[1] };
+const messageQueue: QueuedMessage[] = [];
+
+function resetSender(): void {
+  hasValidSender = false
+  ownSessionReplacement = false
+  messageSender = null
+  messageQueue.length = 0
+}
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 let statusTimer: ReturnType<typeof setInterval> | null = null
@@ -102,7 +123,7 @@ let prCheckInFlight = false
 
 
 const DEBUG = false
-const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
+const debug = createDebug(EXTENSION, DEBUG)
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -133,53 +154,12 @@ interface TimingItem {
 }
 
 
-/**
- * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
- * support it (iTerm2/Kitty/WezTerm/VS Code) render it as a clickable link.
- * Degrades gracefully to plain text in unsupported terminals.
- *
- * TODO(2026-10-15): If Approach A proves unreliable across terminals,
- * fall back to Approach B: custom footer via ctx.ui.setFooter(factory)
- * using <Link href={url}>PR #N</Link>. See Feature 35 in TODO.md.
- */
-function osc8Link(url: string, text: string): string {
-  if (!url) return text
-  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
+function safeNotify(message: string, type: NotifyType = 'info'): void {
+  sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
 }
 
-/**
- * Guarded UI access for calls made outside a fresh handler/event scope
- * (timers, post-await code). Skips only when no ctx arrived yet; any other
- * failure is logged, never silenced.
- */
 function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
-  if (!ctx) {
-    safeNotify(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`, "error")
-    //console.error(`${EXTENSION} ❌ safeSetStatus() got a null ctx.`)    
-    return
-  }
-  try {
-    ctx.ui.setStatus(key, text)
-  } catch (err) {
-    safeNotify(`${EXTENSION} ❌ safeSetStatus() failed. ${err}.`, "error")
-    //console.error(`${EXTENSION} ❌ safeSetStatus() failed.`, err)
-  }
-}
-
-function safeNotify(message: string, type: 'info' | 'warning' | 'error'): void {
-  if (!latestCtx) {
-    //safeNotify(`${EXTENSION} ❌ safeNotify() got a null ctx.`, "error")
-    //safeNotify(`${EXTENSION} ${message}`, "info")
-    console.error(`${EXTENSION} ❌ safeNotify() got a null ctx`)
-    console.info(`${EXTENSION} ${message}`)
-    return
-  }
-  try {
-    latestCtx.ui.notify(message, type)
-  } catch (err) {
-    //safeNotify(`${EXTENSION} ❌ safeNotify() failed. ${err}`, "error")
-    console.error(`${EXTENSION} ❌ safeNotify() failed.`, err)
-  }
+  sharedSafeSetStatus(ctx, key, text, safeNotify, EXTENSION)
 }
 
 function startStatusTimer(): void {
@@ -308,39 +288,63 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (!pending) return
     stopStatusTimer()
     stopPrCheckPolling()
+    resetSender()
     safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
     pending = null
   }
 
-  // Freshest message-sending context. 
-  // Starts as `pi`; reassigned in the withSession callback after ctx.newSession() makes the captured `pi` stale
-  let messageSender: MessageSender = pi
-
   // Swallow both sync throws and async rejections from a possibly-stale sender:
   // an uncaught error inside the setInterval callback would crash Pi.
   const onSendError = (what: string, err: unknown): void => {
-    //console.error(`${EXTENSION} ❌ ${what} failed.`, err)
     safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, 'error')
   }
 
+  // Flush queued messages using the current messageSender.
+  // Called when we obtain a fresh sender (inside our withSession).
+  const flushMessageQueue = (): void => {
+    if (messageQueue.length === 0) return
+    const queue = [...messageQueue]
+    messageQueue.length = 0
+    const sender = messageSender ?? pi
+    for (const msg of queue) {
+      try {
+        if (msg.kind === 'sendMessage') {
+          sender.sendMessage(msg.message, msg.options)?.catch?.(e => onSendError('flush:sendMessage', e))
+        } else {
+          sender.sendUserMessage(msg.content, msg.options)?.catch?.(e => onSendError('flush:sendUserMessage', e))
+        }
+      } catch (err) {
+        onSendError('flush', err)
+      }
+    }
+  }
+
   const safeSendUserMessage = (
-    content: Parameters<MessageSender['sendUserMessage']>[0],
-    options?: Parameters<MessageSender['sendUserMessage']>[1],
+    content: Parameters<ExtensionAPI['sendUserMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendUserMessage']>[1],
   ): void => {
+    if (!hasValidSender) {
+      // Sender is stale — queue for delivery when we get a fresh one in withSession
+      messageQueue.push({ kind: 'sendUserMessage', content, options })
+      return
+    }
     try {
-      // ?.catch handles both return types: pi returns void, ReplacedSessionContext returns Promise<void>
-      messageSender.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
+      (messageSender ?? pi).sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
     } catch (err) {
       onSendError('safeSendUserMessage', err)
     }
   }
 
   const safeSendMessage = (
-    message: Parameters<MessageSender['sendMessage']>[0],
-    options?: Parameters<MessageSender['sendMessage']>[1],
+    message: Parameters<ExtensionAPI['sendMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendMessage']>[1],
   ): void => {
+    if (!hasValidSender) {
+      messageQueue.push({ kind: 'sendMessage', message, options })
+      return
+    }
     try {
-      messageSender.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
+      (messageSender ?? pi).sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
     } catch (err) {
       onSendError('safeSendMessage', err)
     }
@@ -503,22 +507,33 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
   pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
-    // NOTE: do NOT assign `messageSender` here — session_start delivers an
-    // ExtensionContext, which has no sendMessage/sendUserMessage. Only `pi`
-    // (initial) and the ReplacedSessionContext inside withSession are valid senders.
-    // Session replacement (e.g. /new, model switch, context overflow) fires
-    // session_shutdown, which stops both watchers but leaves `pending` alive at
-    // module scope (the user does not re-run /feature N). If an activity is still
-    // active, resume polling and the elapsed-time ticker with the fresh ctx.
-    if (pending) {
+    if (!pending) return
+    // ctx.newSession() emits session_shutdown and session_start BEFORE running the
+    // withSession callback (see finishSessionReplacement in pi's agent-session-runtime),
+    // so the session_start of our own replacement must not be mistaken for an external
+    // one: withSession re-arms the sender and the timers.
+    if (ownSessionReplacement) return
+    // session_start delivers ExtensionContext (no send methods) and hasValidSender is
+    // true only after our withSession ran, so a false value here means an external
+    // replacement (/new, model switch, ...) invalidated the sender.
+    if (hasValidSender) {
       startPrCheckPolling(ctx.cwd ?? process.cwd())
       startStatusTimer()
+    } else {
+      stopPrCheckPolling()
+      stopStatusTimer()
+      safeNotify('⚠️ PR polling paused after session switch. Run /feature N or /bugfix N to resume.', 'warning')
+      safeSetStatus(ctx, STATUS_KEY_PR, undefined)
     }
   })
 
   pi.on('session_shutdown', () => {
     stopPrCheckPolling()
     stopStatusTimer()
+    // Any session replacement invalidates the sender; our own withSession re-establishes it.
+    // ownSessionReplacement is deliberately kept: its session_start fires before withSession.
+    hasValidSender = false
+    messageSender = null
   })
 
   // Helper to parse command arguments for feature/bug
@@ -678,6 +693,7 @@ ${typeData.extra??""}\n\
         stopStatusTimer()
         pending = null
         completed = false
+        resetSender()
         safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
         safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
       }
@@ -687,12 +703,19 @@ ${typeData.extra??""}\n\
     }
 
     let replacementCtx: ExtensionContext | null = null
+    ownSessionReplacement = true
     try {
       const result = await ctx.newSession({
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
           messageSender = newCtx
+          hasValidSender = true
+          ownSessionReplacement = false
+          flushMessageQueue()
+          // session_shutdown stopped the ticker before the replacement; re-arm it here
+          // so it does not depend on whether session_start ran first.
+          startStatusTimer()
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
@@ -706,8 +729,10 @@ ${typeData.extra??""}\n\
           }
         },
       })
+      ownSessionReplacement = false
       if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
+      ownSessionReplacement = false
       abortStart(replacementCtx)
       safeNotify(`❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
@@ -860,6 +885,8 @@ _(first push only, without following reviews rework)_
     safeNotify(`⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
   }
 
+  // Clean up state (also clears message queue and resets sender validity)
+  resetSender()
   pending = null
   completed = false
 }

@@ -39,14 +39,14 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 2. For each task, check `gh pr list --state open`
 3. If a matching PR exists with `agent: <someone_else>` → **Skip (Collision)**
 4. If no matching PR → **Task is available**
-5. If matching PR with `agent: {{PI_AGENT_NAME}}` → **Continue working**
+5. If matching PR with `agent: {{AI_AGENT_NAME}}` → **Continue working**
 
 ### Starting a New Task
 1. Create branch: `git checkout -b feat/01_task_name`
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
-4. **Create label if it doesn't exist:** `gh label create "agent: {{PI_AGENT_NAME}}" --description "Identity label for {{PI_AGENT_NAME}}"`
-5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{PI_AGENT_NAME}}"` (use an appropriate color: Lemon #fbca04, Orange: #d93f0b, Kiwi: #0e8a16)
+4. **Create label if it doesn't exist:** `gh label create "agent: {{AI_AGENT_NAME}}" --description "Identity label for {{AI_AGENT_NAME}}"`
+5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{AI_AGENT_NAME}}"` (use an appropriate color: Lemon #eafb04, Orange: #d93f0b, Kiwi: #0e8a16)
 6. This signals to other agents: "I'm working on this"
 7. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
@@ -110,7 +110,7 @@ After applying changes, run the test suite if available:
 
 ## Authentication
 - `git` and `gh` must work smoothly
-- Set PR author and sign comments with your name ({{PI_AGENT_NAME}})
+- Set PR author and sign comments with your name ({{AI_AGENT_NAME}})
 
 ## PR Creation
 1. After making changes, create a PR
@@ -164,7 +164,7 @@ query {
 ```
 
 ### Step 2 — Reply to Individual Comments
-**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{PI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
+**CRITICAL:** You MUST reply to each individual review comment via its specific `/replies` endpoint. Sign your comments with {{AI_AGENT_NAME}} if you are using {{GITHUB_REVIEWER}}.
 **USE:** gh api with this URL: `https://api.github.com/repos/<owner>/<repo>/pulls/<PR_number>/comments/<comment_id>/replies`
 
 **Correct Syntax (Form Fields):**

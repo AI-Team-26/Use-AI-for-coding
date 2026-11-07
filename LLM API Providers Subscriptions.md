@@ -56,7 +56,7 @@ Pricing:
 ```bash
   curl https://openrouter.ai/api/v1/chat/completions \
     -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $OPENROUTER_API_KEY_PI_AGENT" \
+    -H "Authorization: Bearer $OPENROUTER_API_KEY" \
     -d '{
     "model": "poolside/laguna-m.1:free",
     "messages": [

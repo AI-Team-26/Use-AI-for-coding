@@ -3,35 +3,33 @@ docker_volumes=${1:?The path to docker volumes folder is required}
 
 #set -a; source .env; set +a
 source .env
+source ../scripts/utils.sh
 
-set -eu  # Exit on error
+set -eu  # Exit on error, check unbound variable
 
-# check required environment variables are set
-required_vars=("GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL")
-# PAT for PI AGENT GitHub account and Organization
-required_vars+=("GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT")
+# check required environment variables for THIS script are set
+required_vars GITHUB_AGENT_ACCOUNT GITHUB_ORG GITHUB_REVIEWER  
+required_vars GITHUB_AGENT_ACCOUNT_PAT GITHUB_ORG_PAT
 # API keys of AI providers
-required_vars+=("NOVITAAI_API_KEY" "OPENROUTER_API_KEY" "OFOX_API_KEY_PI_AGENT" "GEMINI_API_KEY_PI_AGENT" "ALIBABA_API_KEY_PI_AGENT" "ENTRIM_API_KEY_PI_AGENT")
-
-for var in "${required_vars[@]}" ; do
-    if [[ -z "${!var}" ]]; then
-        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
-        exit 1
-    else
-        echo "✅ $var is set."
-    fi
-done
+required_vars NOVITAAI_API_KEY  OPENROUTER_API_KEY  OFOX_API_KEY  GEMINI_API_KEY_PI_AGENT  ALIBABA_API_KEY_PI_AGENT  ENTRIM_API_KEY_PI_AGENT
+required_vars CLOUDFLARE_API_KEY  CLOUDFLARE_ACCOUNT_ID  INFERX_API_KEY   TOKENHARBOR_API_KEY   XAI_API_KEY   SAMBANOVA_API_KEY  MISTRAL_API_KEY
 
 
 # Create the shared scripts folder
 mkdir -p "$docker_volumes/scripts"
 
 # Copy common startup scripts and configurations
-cp ../../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
-cp ../../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
-cp start.sh "$docker_volumes/scripts/start.sh"
-cp .env "$docker_volumes/scripts/.env"
+cp ../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
+cp ../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
+cp ../scripts/utils.sh "$docker_volumes/scripts/utils.sh"
+cp for_docker_volume/start.sh "$docker_volumes/scripts/start.sh"
+#cp .env "$docker_volumes/scripts/.env"
 #cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
+cat << EOF > "$docker_volumes/scripts/.env"
+GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
+GITHUB_MAIN_ACCOUNT_EMAIL=$GITHUB_MAIN_ACCOUNT_EMAIL
+EXA_API_KEY=$EXA_API_KEY
+EOF
 
 # Set GitHub PAT (for Agent Account and Organization)
 account_pat="$GITHUB_AGENT_ACCOUNT_PAT"
@@ -52,14 +50,15 @@ declare -A agents
 agents["Dev-1"]="🍋 Pi Lemon" 
 agents["Dev-2"]="🥝 Pi Kiwi" 
 agents["Dev-3"]="🍊 Pi Orange" 
+agents["Reviewer"]="🌹 Pi Rose"
 #agents["Manager"]="🍓 Pi Manager"
 for agent in "${!agents[@]}"; do
 
-    PI_AGENT_NAME=${agents[$agent]}
+    AI_AGENT_NAME=${agents[$agent]}
 
     echo ""
     echo "=== Processing agent ${agent} ==="
-    echo "PI_AGENT_NAME: ${PI_AGENT_NAME}"
+    echo "AI_AGENT_NAME: ${AI_AGENT_NAME}"
     echo "Target: ${docker_volumes}/${agent}"
 
     # Create target directory structure
@@ -69,10 +68,10 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volume_pi_agent/extensions"
 
     # Copy configuration files
-    cp agent/AGENTS.md "$docker_volume_pi_agent/AGENTS.md"
-    cp agent/SYSTEM.md "$docker_volume_pi_agent/SYSTEM.md"
-    cp agent/Hardware_and_Software.md "$docker_volume_pi_agent/Hardware_and_Software.md"
-    cp agent/models.json "$docker_volume_pi_agent/models.json"
+    cp for_docker_volume/agent/AGENTS.md "$docker_volume_pi_agent/AGENTS.md"
+    cp for_docker_volume/agent/SYSTEM.md "$docker_volume_pi_agent/SYSTEM.md"
+    cp for_docker_volume/agent/Hardware_and_Software.md "$docker_volume_pi_agent/Hardware_and_Software.md"
+    cp for_docker_volume/agent/models.json "$docker_volume_pi_agent/models.json"
     
     # Set accounts on SYSTEM.md
     sed -i "s/{{GITHUB_AGENT_ACCOUNT}}/$GITHUB_AGENT_ACCOUNT/g" "$docker_volume_pi_agent/SYSTEM.md" 
@@ -83,14 +82,15 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{GITHUB_REVIEWER}}/$GITHUB_REVIEWER/g" "$docker_volume_pi_agent/AGENTS.md"
 
     # Set PI agent name
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$docker_volume_pi_agent/SYSTEM.md" 
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "$docker_volume_pi_agent/AGENTS.md"
+    sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_pi_agent/SYSTEM.md" 
+    sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_pi_agent/AGENTS.md"
 
     # Copy skills and extensions recursively
-    cp -r agent/skills/* "$docker_volume_pi_agent/skills/" || true
+    cp -r for_docker_volume/agent/skills/* "$docker_volume_pi_agent/skills/" || true
     # WARN careful to not copy node_modules !
     #cp -r agent/extensions/* "$docker_volume_pi_agent/extensions/" || true
-    cp agent/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
+    cp for_docker_volume/agent/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
+    cp -r for_docker_volume/agent/extensions/_shared "$docker_volume_pi_agent/extensions/" || true
 
     # Set secret keys
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
@@ -99,14 +99,17 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{CLOUDFLARE_ACCOUNT_ID}}/$CLOUDFLARE_ACCOUNT_ID/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{INFERX_API_KEY}}/$INFERX_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{TOKENHARBOR_API_KEY}}/$TOKENHARBOR_API_KEY/g" "$docker_volume_pi_agent/models.json"
-    
-    sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
+    sed -i "s/{{XAI_API_KEY}}/$XAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{SAMBANOVA_API_KEY}}/$SAMBANOVA_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{GROQ_API_KEY}}/$GROQ_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{MISTRAL_API_KEY}}/$MISTRAL_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{DEEPSEEK_API_KEY}}/$DEEPSEEK_API_KEY/g" "$docker_volume_pi_agent/models.json"
+
+    sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
-    sed -i "s/{{MISTRAL_AI_API_KEY}}/$MISTRAL_AI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"    
-    sed -i "s/{{GROQ_API_KEY}}/$GROQ_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
 
-    echo "✓ Done copying for ${agent}"
+    echo -e "✔️  Done copying for ${agent}"
 done
 
