@@ -63,16 +63,19 @@ for agent in "${!agents[@]}"; do
 
     # Copy opencode config
     cp opencode.json "$docker_volume_opencode/opencode.json"
-    cp tui.json "$docker_volume_opencode/tui.json"
-    #cp opencode.json "$docker_volume_opencode/cli.json"
+    cp cli.json "$docker_volume_opencode/cli.json"
 
     # Copy commands
     mkdir -p "$docker_volume_opencode/commands"
     cp commands/*.md "$docker_volume_opencode/commands/" 2>/dev/null || true
 
-    # Copy plugins
+    # Copy plugins (one directory per plugin)
+    rm -rf "$docker_volume_opencode/plugins"
     mkdir -p "$docker_volume_opencode/plugins"
-    cp plugins/*.ts "$docker_volume_opencode/plugins/" 2>/dev/null || true
+    for plugin in plugins/*/; do
+        [ -d "$plugin" ] || continue
+        cp -R "${plugin%/}" "$docker_volume_opencode/plugins/"
+    done
 
 
     # Copy configuration files
