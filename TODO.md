@@ -152,7 +152,11 @@
   Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
   Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
   Start PR check...
-  ``` 
+  ```
+### Pi
+
+- Feature 65 | pi-agent, reorganize containers.sh fulction to do the same as in OpenCode: create image, setup containers, create containers
+  Copy the structure of OpenCode, where all the job is done by function in containers.sh and the README just expose the calls.  
   
 ### OpenCode
 
