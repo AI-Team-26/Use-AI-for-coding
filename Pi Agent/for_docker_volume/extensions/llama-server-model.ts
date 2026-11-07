@@ -5,8 +5,6 @@
  * taken from /scripts/llama-server-current-model.txt.
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { readFileSync } from "node:fs"
 

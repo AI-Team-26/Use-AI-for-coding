@@ -4,9 +4,6 @@
 * Displays the agent name, taken from env AI_AGENT_NAME.
 */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-/// <reference types="@types/node" />
-
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 
 const STATUS_KEY = "alex-piccione-agent-name"

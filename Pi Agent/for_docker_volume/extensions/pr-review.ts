@@ -9,8 +9,6 @@
  *   /review 42 'quick look'     — Same, with single-quoted note.
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { safeNotify as sharedSafeNotify, createDebug, type NotifyType } from "./_shared/common.ts"
 
