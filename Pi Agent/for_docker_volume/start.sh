@@ -47,6 +47,9 @@ start_project() {
     local proj=$1
     #clear
 
+
+    printf '\033]0;%s | %s\007' "$AI_AGENT_NAME" "($proj)"
+
     # Pi save the used model in ~/.pi/agent/settings.json file, in the "defaultModel" property
     # If that is NOT set, we can try to use the default model for this agent or peek the one that is running in local llama.cpp
 

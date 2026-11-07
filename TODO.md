@@ -155,6 +155,16 @@
 - Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
+
+- Bug 64 | pi-agent /todo-task command  fails to find the PR
+   
+  TUI shows this:
+  ```
+  Start PR check...
+  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
+  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
+  Start PR check...
+  ``` 
   
 ### OpenCode
 
