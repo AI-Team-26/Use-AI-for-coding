@@ -199,6 +199,16 @@ const ensureTodoDir = (): Promise<void> =>
         .then((_) => {})
 
 /**
+ * Shared low-level helper: run `gh pr list --head <branch> --state open --json <fields>`.
+ * Returns the parsed JSON array (empty when no matching PR).
+ */
+function ghPrList<T>(cwd: string, branch: string, fields: string): T[] {
+    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
+    if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
+    return JSON.parse(res.stdout) as T[]
+}
+
+/**
  * Append the unified execution report to the open PR of the current branch.
  * Returns true when the report is present in the PR body (added or already there).
  */
@@ -207,20 +217,14 @@ function appendReportToPr(cwd: string, report: string): boolean {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
         if (!branch || branch === "main" || branch === "master") return false
 
-        //const prNumber = getBranchOpenPr(branch)
-        const listRes = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", "number"], { cwd, encoding: "utf-8" })
-        if (listRes.status !== 0) throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
-        const prs = JSON.parse(listRes.stdout) as Array<{ number: number }>
+        const prs = ghPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
         const pr = prs[0]
         if (!pr) {
             safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
-            //console.error(`[${EXTENSION} ❌ PR not found on branch '${branch}'.`)
             return false
         }
 
-        const viewRes = spawnSync("gh", ["pr", "view", String(pr.number), "--json", "body"], { cwd, encoding: "utf-8" })
-        if (viewRes.status !== 0) throw new Error(`gh pr view failed (${viewRes.status}): ${viewRes.stderr}`)
-        const body = ((JSON.parse(viewRes.stdout) as { body?: string }).body ?? "").trimEnd()
+        const body = (pr.body ?? "").trimEnd()
 
         // First push only — do not duplicate the report after review rework
         if (/^### (Feature|Bug) agent work report$/m.test(body)) return true
@@ -231,7 +235,6 @@ function appendReportToPr(cwd: string, report: string): boolean {
         return true
     } catch (err) {
         safeNotify(`${EXTENSION} ❌ Failed to attach report to PR. ${err}`, "error")
-        //console.error(`${EXTENSION} ❌ Failed to attach report to PR:`, err)
         return false
     }
 }
@@ -329,17 +332,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Return the open PR on a branch.
     const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-        const res = spawnSync(
-            "gh",
-            ["pr", "list", "--head", branch, "--state", "open", "--json", "number,state,mergeable,reviewDecision,reviews,url"], // statusCheckRollup
-            { cwd, encoding: "utf-8" },
-        )
-
-        // A non-zero status is a real gh failure.
-        if (res.status !== 0) throw new Error(`gh call failed (${res.status}): ${res.stderr}`)
-
-        const prs: PrView[] = JSON.parse(res.stdout) // [] when no PR — no exception, no regex
-        return prs[0] ?? null // assume there is 1 PR and points to "main"
+        const prs = ghPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
+        return prs[0] ?? null
     }
 
     const checkPrReview = async (cwd: string): Promise<void> => {
