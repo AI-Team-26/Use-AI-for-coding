@@ -164,6 +164,18 @@ I prefer Option 2 if /quit or /exit does the same.
 
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
+
+- Bug 59 | Pi Agent /todo crash when is already on main
+
+  Error: ❌ Git update failed: Already on 'main'
+  From https://github.com/AI-Team-26/learning.Llama-cpp
+     b779584..a2237cd  main       -> origin/main
+  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
+  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
+  error: Your local changes to the following files would be overwritten by merge:
+    TODO.md
+  Please commit your changes or stash them before you merge.
+  Aborting
   
 ### OpenCode
 
@@ -192,6 +204,7 @@ I prefer Option 2 if /quit or /exit does the same.
  
 
 ## DONE (latest tasks completed)
+- [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection

@@ -7,9 +7,12 @@ It shares settings and can share projects folder (using a bind mount volume) wit
 TODO:
 - Add a simple and light web-ui:  https://github.com/ygncode/pi-web
 - Add a multi-session web-ui manager: https://github.com/04mg/caw
+- Add routing of API keys
 - Add STT capability
 
-## Build the Docker Image
+## Docker
+
+### Build the Image
 
 Use the "Pi Agent" text in the label, because the script to start ai agents looks for that.
 
@@ -17,19 +20,16 @@ Use the "Pi Agent" text in the label, because the script to start ai agents look
 cd "Pi Agent"
 docker build \
     --label description="Pi Agent" \
-    -t pi-agent:14 \
+    -t pi-agent:15 \
     -f Dockerfile \
     .
 ```
 
-## Run the Containers
-
-### Setup of Containers
+### Setup the Containers
 
 Run the _setup.sh_ script.  
 ```bash
 cd "Pi Agent"
-cd "for-docker-volume"
 docker_volumes="/p/PiAgent_Container"
 ./setup_containers.sh "$docker_volumes"
 
@@ -51,29 +51,29 @@ The bind-mount volumes:
 ```bash
 cd "Pi Agent"
 docker_volumes="/p/PiAgent_Container"
-docker_image="pi-agent:14"
+docker_image="pi-agent:15"
 
 # Agent Manager 
 # Use shared /projects folder, so it is accessible also from host for agent-driven coding
-docker run \
+docker create \
     -it \
     --name PiAgent-Manager \
     --label "description=Pi Agent Manager" \
-    -e PI_AGENT_NAME="🍓 Pi Manager" \
+    -e AI_AGENT_NAME="🍓 Pi Manager" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/Manager/.pi",dst=/root/.pi \
     --mount type=bind,src="$docker_volumes/Manager/projects",dst=/projects \
     $docker_image
 
 # Agent Dev-1
-docker run \
+docker create \
     -it \
     --name "PiAgent-Dev-1" \
     --label "icon=🍋" \
     --label "alias=Pi Lemon" \
     --label "description=Pi Agent Dev-1" \
-    -e PI_AGENT_NAME="🍋 Pi Lemon" \
-    -e PI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
+    -e AI_AGENT_NAME="🍋 Pi Lemon" \
+    -e AI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-1/.pi",dst=/root/.pi \
@@ -81,14 +81,14 @@ docker run \
     $docker_image
 
 # Agent Dev-2
-docker run \
+docker create \
     -it \
     --name PiAgent-Dev-2 \
     --label "icon=🥝" \
     --label "alias=Pi Kiwi" \
     --label "description=Pi Agent Dev 2" \
-    -e PI_AGENT_NAME="🥝 Pi Kiwi" \
-    -e PI_AGENT_DEFAULT_MODEL="mindai/macaron-v1-venti" \
+    -e AI_AGENT_NAME="🥝 Pi Kiwi" \
+    -e AI_AGENT_DEFAULT_MODEL="mindai/macaron-v1-venti" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-2/.pi",dst=/root/.pi \
@@ -96,14 +96,14 @@ docker run \
     $docker_image
 
 # Agent Dev-3
-docker run \
+docker create \
     -it \
     --name PiAgent-Dev-3 \
     --label "icon=🍊" \
     --label "alias=Pi Orange" \
     --label "description=Pi Agent Dev 3" \
-    -e PI_AGENT_NAME="🍊 Pi Orange" \
-    -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
+    -e AI_AGENT_NAME="🍊 Pi Orange" \
+    -e AI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Dev-3/.pi",dst=/root/.pi \
@@ -111,14 +111,14 @@ docker run \
     $docker_image
 
 # Agent Reviewer
-docker run \
+docker create \
     -it \
     --name PiAgent-Reviewer \
     --label "icon=🌹" \
     --label "alias=Pi Rose" \
     --label "description=Pi Agent for Reviews" \
-    -e PI_AGENT_NAME="🌹 Pi Rose" \
-    -e PI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
+    -e AI_AGENT_NAME="🌹 Pi Rose" \
+    -e AI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/Reviewer/.pi",dst=/root/.pi \
@@ -126,11 +126,11 @@ docker run \
     $docker_image
 
 # Agent QA
-docker run \
+docker create \
     -it \
     --name PiAgent-QA \
     --label "description=Pi Agent QA" \
-    -e PI_AGENT_NAME="🍒 Pi QA" \
+    -e AI_AGENT_NAME="🍒 Pi QA" \
     --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
     --mount type=bind,src="$docker_volumes/share",dst=/share \
     --mount type=bind,src="$docker_volumes/QA/.pi",dst=/root/.pi \
@@ -138,18 +138,3 @@ docker run \
     $docker_image
 
 ```
-
-
-## Analysis of NOT sharing the .pi folder
-
-It contains: 
-- AGENTS.md
-- SYSTEM.md
-
-**Setup**
-Currently the setup is done with a script that copy the files in hte shared folder.  
-Without the shared folder, they need to be 
-
-
-**Update**
-Hp

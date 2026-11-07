@@ -253,11 +253,10 @@
     },
 
 
-    "Mistral": {
+  "Mistral": {
       "baseUrl": "https://api.mistral.ai/v1",
       "api": "openai-completions",
-      "apiKey": "{{MISTRAL_AI_API_KEY}}",
-      "model_DOC": "ctx 4096 6144 4096 10240 12288 16384 18432 20480 22528 24576 28672 32768 65536 131072",
+      "apiKey": "{{MISTRAL_API_KEY}}",
       "models": [ 
         {
           "id": "mistral-small-latest",

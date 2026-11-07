@@ -21,11 +21,6 @@ export PNPM_STORE_DIR="/scripts"  ## set the folder wherne PNPM will set the .pm
 # First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
-    #echo setup customized agent files
-    # TODO: is this required ???
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
-
     echo "Restoring /root/.pi from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
