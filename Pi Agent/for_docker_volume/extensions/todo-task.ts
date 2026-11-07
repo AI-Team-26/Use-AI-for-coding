@@ -111,6 +111,12 @@ let checkCounter = 0
 // TODO... calculae MAX counter
 let prCheckStartedAt = 0
 let prCheckInFlight = false
+// Consecutive ticks with no open PR on the branch: the agent may not have created it yet,
+// so we only give up after a grace period — or immediately if a previously watched PR vanished.
+let consecutivePrMisses = 0
+const PR_MISS_LIMIT = 15 // ~5 min of 20s ticks before concluding there is no PR for this task
+// Transient gh failures are notified once per run (the first tick), then demoted to debug.
+let consecutiveGhFailures = 0
 
 const DEBUG = false
 const debug = createDebug(EXTENSION, DEBUG)
@@ -367,19 +373,30 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             try {
                 pr = getBranchOpenPr(cwd, branch)
             } catch (err) {
-                safeNotify(`[safeNotify] Checking PR review: ❌ Failed to get PR of branch "${branch}".\n${err}`, "error")
-                safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
-                debug(`[debug] checkPrReview() Failed to get PR of branch "${branch}". Error: ${err}.`)
-                // console.erro in new Pi TUI is printed but not selectable, just super noisy.
-                //console.error(`[console.error] ${EXTENSION} ❌ Failed to get PR of branch "${branch}". `, err)
+                // Transient failure (network/auth/rate-limit): keep polling, notify only the first time.
+                consecutiveGhFailures++
+                if (consecutiveGhFailures === 1) {
+                    safeNotify(`${EXTENSION} ❌ Failed to fetch PR of branch "${branch}" (will retry). ${err instanceof Error ? err.message : String(err)}`, "error")
+                }
+                debug(`checkPrReview() gh failed (${consecutiveGhFailures}x): ${err}`)
                 return
             }
+            consecutiveGhFailures = 0
 
             if (pr == null) {
-                safeSetStatus(latestCtx, STATUS_KEY_PR, "PR is null")
-                debug(`No open PR on the branch "${branch}"`)
-                return // no open PR on this branch yet
+                consecutivePrMisses++
+                const gone = watchedPr ? ` Watched ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} is no longer open (closed or merged?).` : ""
+                // Stop when a previously seen PR vanished, or after the grace period with none ever found.
+                if (watchedPr || consecutivePrMisses >= PR_MISS_LIMIT) {
+                    stopPrCheckPolling()
+                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: no open PR on branch '${branch}'.${gone}`, "info")
+                    return
+                }
+                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
+                debug(`No open PR on the branch "${branch}" yet (${consecutivePrMisses}/${PR_MISS_LIMIT})`)
+                return // no open PR on this branch yet — agent may still be creating it
             }
+            consecutivePrMisses = 0
 
             watchedPr = { number: pr.number, url: pr.url ?? "" }
 
@@ -463,6 +480,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = null
+        consecutivePrMisses = 0
+        consecutiveGhFailures = 0
         prCheckTimer = setInterval(() => {
             void checkPrReview(cwd)
         }, PR_CHECK_INTERVAL_MS)
