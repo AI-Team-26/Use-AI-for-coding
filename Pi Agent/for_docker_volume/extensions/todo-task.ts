@@ -202,7 +202,7 @@ const ensureTodoDir = (): Promise<void> =>
  * Shared low-level helper: run `gh pr list --head <branch> --state open --json <fields>`.
  * Returns the parsed JSON array (empty when no matching PR).
  */
-function ghPrList<T>(cwd: string, branch: string, fields: string): T[] {
+function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
     const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
     if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
     return JSON.parse(res.stdout) as T[]
@@ -217,7 +217,7 @@ function appendReportToPr(cwd: string, report: string): boolean {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
         if (!branch || branch === "main" || branch === "master") return false
 
-        const prs = ghPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
+        const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
         const pr = prs[0]
         if (!pr) {
             safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
@@ -332,7 +332,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Return the open PR on a branch.
     const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-        const prs = ghPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
+        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
         return prs[0] ?? null
     }
 
