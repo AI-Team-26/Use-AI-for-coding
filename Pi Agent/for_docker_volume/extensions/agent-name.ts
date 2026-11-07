@@ -5,6 +5,7 @@
 */
 
 /// <reference types="@earendil-works/pi-coding-agent" />
+/// <reference types="@types/node" />
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 
