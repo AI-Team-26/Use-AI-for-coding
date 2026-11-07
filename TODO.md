@@ -143,6 +143,17 @@
   Error: Failed to load extension "/root/.pi/agent/extensions/todo-task.ts": Failed to load extension: Cannot find module './_shared/common.ts'
   Require stack:
   - /root/.pi/agent/extensions/todo-task.ts
+
+- Bug 61 | pi-agent errors break the TUI
+  Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
+    Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
+  Please commit your changes or stash them before you switch branches.
+  Aborting
+
+  After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
+  '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
+
+
   
 ### OpenCode
 
