@@ -90,7 +90,6 @@ for agent in "${!agents[@]}"; do
     # WARN careful to not copy node_modules !
     #cp -r agent/extensions/* "$docker_volume_pi_agent/extensions/" || true
     cp for_docker_volume/agent/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
-    # `*.ts` does not match subdirectories: extensions/_shared must be copied explicitly
     cp -r for_docker_volume/agent/extensions/_shared "$docker_volume_pi_agent/extensions/" || true
 
     # Set secret keys
