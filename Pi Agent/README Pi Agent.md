@@ -13,7 +13,7 @@ TODO:
 ## Docker
 
 All the Docker job (build the image, provision the volumes, create the containers) is done by `containers.sh`.  
-The steps are comma-concatenable:
+The steps are comma-concatenable (spaces tolerated, unknown steps are rejected):
 - `create_image` → build the Docker image (the label `description="Pi Agent"` is looked for by the ai-start script; the image tag is set in `containers.sh`)
 - `setup` → create the docker-volumes folders and copy the configuration (shared scripts, per-agent `.pi`, `github_pat`); the logic is in `containers_setup.sh`
 - `create_container` → `docker create` one container per agent
