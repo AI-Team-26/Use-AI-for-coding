@@ -451,13 +451,13 @@
             }
         ]
     },
-    "Deepseek": {
+    "DeepSeek": {
         "baseUrl": "https://api.deepseek.com",
         "api": "openai-completions",
         "apiKey": "{{DEEPSEEK_API_KEY}}",
         "models": [
             { 
-                "id": "DeepSeek-V4.1-Flash-1017",
+                "id": "deepseek-flash",
                 "maxTokens": 4096,
                 "reasoning": true,
                  "cost": {
