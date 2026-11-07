@@ -124,18 +124,6 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
-- Bug 59 | Pi Agent /todo crash when is already on main
-
-  Error: ❌ Git update failed: Already on 'main'
-  From https://github.com/AI-Team-26/learning.Llama-cpp
-     b779584..a2237cd  main       -> origin/main
-  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
-  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
-  error: Your local changes to the following files would be overwritten by merge:
-    TODO.md
-  Please commit your changes or stash them before you merge.
-  Aborting
-
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
@@ -211,6 +199,7 @@
  
 
 ## DONE (latest tasks completed)
+- Bug 59 [fix/59_todo_crash_on_main]: `/todo` now reads TODO.md via `git fetch` + `git show origin/main:TODO.md` instead of `git checkout main && git pull`, so it no longer switches branches or crashes on uncommitted local changes
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
