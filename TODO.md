@@ -159,9 +159,6 @@ I prefer Option 2 if /quit or /exit does the same.
   
 ### OpenCode
 
-- Feature 58 | Shows a icon on the shell title to indicate if the agent is working or idle
-  NikolayXHD/pi-status takes over the title completely and shows :⏳ name while working or :🖐️ name while idle. It does this by intercepting OSC 0/2 title writes on process.stdout.
-
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
   Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
