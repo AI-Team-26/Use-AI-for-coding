@@ -145,13 +145,6 @@
   After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
   '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
 
-- Bug 62 | pi-agent  /pr command is not executed when we are on main branch
-  Warning: To call /pr you need to be on a branch different from the default one
-  
-  It should move on the bramch and work on hte PR, why this warning? 
-  If there are uncommitted file, report to the user and if is not trivial and not clear what to do: propose some choice to the user.
-  If this second part is not a super quick thing... create a separate task in the TODO.
-
 - Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
@@ -211,6 +204,7 @@
  
 
 ## DONE (latest tasks completed)
+- Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()

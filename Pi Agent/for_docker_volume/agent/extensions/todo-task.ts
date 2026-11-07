@@ -8,7 +8,8 @@
  * /bugfix N [note] — Optionally includes a note with the bug fix start.
  * /bugfix end — Ends the current bug without saving timing (unreliable).
  * 
- * /pr N - Check PR status and reviews
+ * /pr [N] - Check PR status and reviews. When on the default branch it moves
+ * to the open PR branch first (asking to stash uncommitted changes when needed).
  *
  * Only one activity (feature or bug) can be active at a time. Starting a new one
  * auto-cancels the previous one without saving timing.
@@ -765,31 +766,122 @@ ${typeData.extra??""}\n\
     },
   })
 
+  // Resolve the open PR to watch when on the default branch: a single open PR is
+  // picked automatically, several are offered through a dialog, and /pr <number>
+  // always targets that specific PR.
+  const resolveOpenPr = async (
+    ctx: ExtensionCommandContext,
+    cwd: string,
+    prNumberArg?: number,
+  ): Promise<{ number: number; headRefName: string; title: string } | null> => {
+    const listRes = spawnSync(
+      'gh', ['pr', 'list', '--state', 'open', '--json', 'number,headRefName,title', '--limit', '50'],
+      { cwd, encoding: 'utf-8' },
+    )
+    if (listRes.status !== 0)
+      throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
+    const prs = JSON.parse(listRes.stdout) as Array<{ number: number; headRefName: string; title: string }>
+
+    if (prs.length === 0) {
+      safeNotify('No open PR found on this repository.', 'warning')
+      return null
+    }
+    if (prNumberArg) {
+      const pr = prs.find(p => p.number === prNumberArg)
+      if (!pr) {
+        safeNotify(`❌ PR #${prNumberArg} is not open on this repository.`, 'warning')
+        return null
+      }
+      return pr
+    }
+    if (prs.length === 1) return prs[0]
+
+    if (!ctx.hasUI) {
+      safeNotify(`Multiple open PRs — run "/pr <number>" to pick one:\n${prs.map(p => `#${p.number} ${p.headRefName}`).join('\n')}`, 'warning')
+      return null
+    }
+    const options = prs.map(p => `#${p.number} ${p.headRefName} — ${p.title}`)
+    const choice = await ctx.ui.select('Which open PR do you want to work on?', options)
+    return prs[options.indexOf(choice ?? '')] ?? null
+  }
+
+  // Move to the branch of the PR we want to watch. Uncommitted changes would
+  // silently follow the checkout and pollute the PR branch, so report them and
+  // ask the user (stash-and-continue vs abort) before switching.
+  const switchToPrBranch = async (
+    ctx: ExtensionCommandContext,
+    cwd: string,
+    pr: { number: number; headRefName: string; title: string },
+  ): Promise<boolean> => {
+    const current = execSync('git branch --show-current', { cwd, encoding: 'utf-8' }).trim()
+    if (current === pr.headRefName) return true
+
+    const status = execSync('git status --porcelain', { cwd, encoding: 'utf-8' }).trim()
+    if (status) {
+      const files = status.split('\n').slice(0, 10).map(l => l.trim()).join('\n')
+      safeNotify(`⚠️ Uncommitted changes present — they would follow the branch switch:\n${files}`, 'warning')
+      if (!ctx.hasUI) {
+        safeNotify('Commit or stash your changes first, then run /pr again.', 'warning')
+        return false
+      }
+      const stash = await ctx.ui.confirm(
+        'Switch to PR branch',
+        `PR #${pr.number} (${pr.headRefName}) needs a branch switch. Stash your uncommitted changes and continue? (run "git stash pop" to restore them later)`,
+      )
+      if (!stash) {
+        safeNotify('Aborted — nothing was stashed.', 'info')
+        return false
+      }
+      const stashRes = spawnSync('git', ['stash', 'push', '-u', '-m', 'pi /pr auto-stash before branch switch'], { cwd, encoding: 'utf-8' })
+      if (stashRes.status !== 0) {
+        safeNotify(`❌ git stash failed: ${stashRes.stderr}`, 'error')
+        return false
+      }
+      safeNotify('Changes stashed — run "git stash pop" when back on your branch.', 'info')
+    }
+
+    const checkoutRes = spawnSync('gh', ['pr', 'checkout', String(pr.number)], { cwd, encoding: 'utf-8' })
+    if (checkoutRes.status !== 0) {
+      safeNotify(`❌ Failed to switch to PR #${pr.number}: ${checkoutRes.stderr}`, 'error')
+      return false
+    }
+    safeNotify(`Switched to branch '${pr.headRefName}' (PR #${pr.number}).`, 'info')
+    return true
+  }
+
   pi.registerCommand('pr', {
     description: 'Check PR reviews. Continue to work on a PR. Usage: /pr [number]',
-    handler: async (_args, ctx) => {      
-
+    handler: async (args, ctx) => {
+      latestCtx = ctx
       const projectRoot = ctx.cwd ?? process.cwd()
       taskProjectRoot = projectRoot
-     
-      // TODO if branch is main/master, switch to the PR branch
-      const branch = execSync('git branch --show-current', { cwd:projectRoot, encoding: 'utf-8' }).trim()
-      if (!branch || branch === 'main' || branch === 'master') {
-        safeNotify("To call /pr you need to be on a branch different from the default one", "warning")
+
+      const trimmed = args.trim()
+      const prNumberArg = /^\d+$/.test(trimmed) ? parseInt(trimmed, 10) : undefined
+      if (trimmed && !prNumberArg) {
+        safeNotify('❌ Usage: /pr [number] — e.g. /pr or /pr 42', 'warning')
         return
       }
 
-      //let pr: PrView|null
-      //try {
-      //  pr = getBranchOpenPr(projectRoot, branch)
-      //} catch( error) {
-      //
-      //}
+      try {
+        const branch = execSync('git branch --show-current', { cwd: projectRoot, encoding: 'utf-8' }).trim()
+        const onDefaultBranch = !branch || branch === 'main' || branch === 'master'
 
-      //if (note) append a note using sendUserMessage
+        // On a working branch without an explicit target: watch the current branch's PR.
+        if (!onDefaultBranch && !prNumberArg) {
+          startPrCheckPolling(projectRoot)
+          return
+        }
 
-      // TODO: for now get the PR from the cirrent branch
-      startPrCheckPolling(projectRoot)      
+        // On the default branch (or with an explicit /pr <number>): move to the PR branch first.
+        const pr = await resolveOpenPr(ctx, projectRoot, prNumberArg)
+        if (!pr) return
+
+        if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
+        startPrCheckPolling(projectRoot)
+      } catch (err) {
+        safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
     },
   })
 
