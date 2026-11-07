@@ -18,6 +18,7 @@ export EXA_API_KEY=$EXA_API_KEY
 export AI_AGENT_NAME="${AI_AGENT_NAME:-Pi Agent}" ## passed by docker run
 export PNPM_STORE_DIR="/scripts"  ## set the folder wherne PNPM will set the .pmpm-store
 
+
 # First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
