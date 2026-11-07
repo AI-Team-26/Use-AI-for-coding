@@ -70,18 +70,38 @@ let completed = false                  // is current task completed ? shoud it b
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
-// A context capable of injecting messages into the agent stream.
-// Both the original `pi` API and a fresh ReplacedSessionContext expose these two methods, 
-// but with different return types: `pi.send*Message()` returns void,
-// while `ReplacedSessionContext.send*Message()` returns Promise<void>.
-// The union below keeps both assignable while allowing callers to handle either.
+let watchedPr: { number: number; url: string } | null = null
+const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
+
+// A context capable of injecting messages into the agent stream: either the `pi` API
+// (stale after any session replacement) or a fresh ReplacedSessionContext.
 type MessageSender = {
   sendMessage(message: Parameters<ExtensionAPI['sendMessage']>[0], options?: Parameters<ExtensionAPI['sendMessage']>[1]): void | Promise<void>
   sendUserMessage(content: Parameters<ExtensionAPI['sendUserMessage']>[0], options?: Parameters<ExtensionAPI['sendUserMessage']>[1]): void | Promise<void>
 }
 
-let watchedPr: { number: number; url: string } | null = null
-const handledReviewDecisions = new Map<string, string>()  // track reviews to not "resend" messages/action multiple time for the same
+// Sender state is module-scope for the same reason as the polling state below:
+// Pi can re-instantiate the extension factory on session replacement without
+// shutting the previous instance down, so per-instance copies would disagree
+// about which context is still usable.
+let messageSender: MessageSender | null = null  // fresh ctx from our own withSession
+let hasValidSender = false                     // true only while our own withSession runs
+let ownSessionReplacement = false              // ctx.newSession() is in flight
+
+// Message queue for timer-driven sends (PR review polling).
+// Messages are queued when the sender is stale and flushed when we get a fresh
+// ReplacedSessionContext inside our own withSession callback.
+type QueuedMessage =
+  | { kind: 'sendMessage'; message: Parameters<ExtensionAPI['sendMessage']>[0]; options?: Parameters<ExtensionAPI['sendMessage']>[1] }
+  | { kind: 'sendUserMessage'; content: Parameters<ExtensionAPI['sendUserMessage']>[0]; options?: Parameters<ExtensionAPI['sendUserMessage']>[1] };
+const messageQueue: QueuedMessage[] = [];
+
+function resetSender(): void {
+  hasValidSender = false
+  ownSessionReplacement = false
+  messageSender = null
+  messageQueue.length = 0
+}
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 let statusTimer: ReturnType<typeof setInterval> | null = null
@@ -268,39 +288,63 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     if (!pending) return
     stopStatusTimer()
     stopPrCheckPolling()
+    resetSender()
     safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
     pending = null
   }
 
-  // Freshest message-sending context. 
-  // Starts as `pi`; reassigned in the withSession callback after ctx.newSession() makes the captured `pi` stale
-  let messageSender: MessageSender = pi
-
   // Swallow both sync throws and async rejections from a possibly-stale sender:
   // an uncaught error inside the setInterval callback would crash Pi.
   const onSendError = (what: string, err: unknown): void => {
-    //console.error(`${EXTENSION} ❌ ${what} failed.`, err)
     safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, 'error')
   }
 
+  // Flush queued messages using the current messageSender.
+  // Called when we obtain a fresh sender (inside our withSession).
+  const flushMessageQueue = (): void => {
+    if (messageQueue.length === 0) return
+    const queue = [...messageQueue]
+    messageQueue.length = 0
+    const sender = messageSender ?? pi
+    for (const msg of queue) {
+      try {
+        if (msg.kind === 'sendMessage') {
+          sender.sendMessage(msg.message, msg.options)?.catch?.(e => onSendError('flush:sendMessage', e))
+        } else {
+          sender.sendUserMessage(msg.content, msg.options)?.catch?.(e => onSendError('flush:sendUserMessage', e))
+        }
+      } catch (err) {
+        onSendError('flush', err)
+      }
+    }
+  }
+
   const safeSendUserMessage = (
-    content: Parameters<MessageSender['sendUserMessage']>[0],
-    options?: Parameters<MessageSender['sendUserMessage']>[1],
+    content: Parameters<ExtensionAPI['sendUserMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendUserMessage']>[1],
   ): void => {
+    if (!hasValidSender) {
+      // Sender is stale — queue for delivery when we get a fresh one in withSession
+      messageQueue.push({ kind: 'sendUserMessage', content, options })
+      return
+    }
     try {
-      // ?.catch handles both return types: pi returns void, ReplacedSessionContext returns Promise<void>
-      messageSender.sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
+      (messageSender ?? pi).sendUserMessage(content, options)?.catch?.(e => onSendError('safeSendUserMessage', e))
     } catch (err) {
       onSendError('safeSendUserMessage', err)
     }
   }
 
   const safeSendMessage = (
-    message: Parameters<MessageSender['sendMessage']>[0],
-    options?: Parameters<MessageSender['sendMessage']>[1],
+    message: Parameters<ExtensionAPI['sendMessage']>[0],
+    options?: Parameters<ExtensionAPI['sendMessage']>[1],
   ): void => {
+    if (!hasValidSender) {
+      messageQueue.push({ kind: 'sendMessage', message, options })
+      return
+    }
     try {
-      messageSender.sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
+      (messageSender ?? pi).sendMessage(message, options)?.catch?.(e => onSendError('safeSendMessage', e))
     } catch (err) {
       onSendError('safeSendMessage', err)
     }
@@ -463,22 +507,33 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
   // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
   pi.on('session_start', (_event, ctx: ExtensionContext) => {
     latestCtx = ctx
-    // NOTE: do NOT assign `messageSender` here — session_start delivers an
-    // ExtensionContext, which has no sendMessage/sendUserMessage. Only `pi`
-    // (initial) and the ReplacedSessionContext inside withSession are valid senders.
-    // Session replacement (e.g. /new, model switch, context overflow) fires
-    // session_shutdown, which stops both watchers but leaves `pending` alive at
-    // module scope (the user does not re-run /feature N). If an activity is still
-    // active, resume polling and the elapsed-time ticker with the fresh ctx.
-    if (pending) {
+    if (!pending) return
+    // ctx.newSession() emits session_shutdown and session_start BEFORE running the
+    // withSession callback (see finishSessionReplacement in pi's agent-session-runtime),
+    // so the session_start of our own replacement must not be mistaken for an external
+    // one: withSession re-arms the sender and the timers.
+    if (ownSessionReplacement) return
+    // session_start delivers ExtensionContext (no send methods) and hasValidSender is
+    // true only after our withSession ran, so a false value here means an external
+    // replacement (/new, model switch, ...) invalidated the sender.
+    if (hasValidSender) {
       startPrCheckPolling(ctx.cwd ?? process.cwd())
       startStatusTimer()
+    } else {
+      stopPrCheckPolling()
+      stopStatusTimer()
+      safeNotify('⚠️ PR polling paused after session switch. Run /feature N or /bugfix N to resume.', 'warning')
+      safeSetStatus(ctx, STATUS_KEY_PR, undefined)
     }
   })
 
   pi.on('session_shutdown', () => {
     stopPrCheckPolling()
     stopStatusTimer()
+    // Any session replacement invalidates the sender; our own withSession re-establishes it.
+    // ownSessionReplacement is deliberately kept: its session_start fires before withSession.
+    hasValidSender = false
+    messageSender = null
   })
 
   // Helper to parse command arguments for feature/bug
@@ -638,6 +693,7 @@ ${typeData.extra??""}\n\
         stopStatusTimer()
         pending = null
         completed = false
+        resetSender()
         safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
         safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
       }
@@ -647,12 +703,19 @@ ${typeData.extra??""}\n\
     }
 
     let replacementCtx: ExtensionContext | null = null
+    ownSessionReplacement = true
     try {
       const result = await ctx.newSession({
         withSession: async (newCtx) => {
           replacementCtx = newCtx
           latestCtx = newCtx
           messageSender = newCtx
+          hasValidSender = true
+          ownSessionReplacement = false
+          flushMessageQueue()
+          // session_shutdown stopped the ticker before the replacement; re-arm it here
+          // so it does not depend on whether session_start ran first.
+          startStatusTimer()
           try {
             await newCtx.waitForIdle()
             safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, 'info')
@@ -666,8 +729,10 @@ ${typeData.extra??""}\n\
           }
         },
       })
+      ownSessionReplacement = false
       if (result.cancelled) abortStart(replacementCtx)
     } catch (err) {
+      ownSessionReplacement = false
       abortStart(replacementCtx)
       safeNotify(`❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, 'error')
     }
@@ -820,6 +885,8 @@ _(first push only, without following reviews rework)_
     safeNotify(`⚠️ No open PR found on the current branch — execution report not attached to a PR.`, 'warning')
   }
 
+  // Clean up state (also clears message queue and resets sender validity)
+  resetSender()
   pending = null
   completed = false
 }
