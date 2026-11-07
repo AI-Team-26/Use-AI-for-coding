@@ -25,9 +25,6 @@ export type ContextGetter = () => ExtensionContext | null
  * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
  * support it (iTerm2/Kitty/WezTerm/VS Code) render it as a clickable link.
  * Degrades gracefully to plain text in unsupported terminals.
- *
- * TODO: if OSC 8 proves unreliable across terminals, fall back to
- * `ctx.ui.setFooter()` with `<Link href={url}>PR #N</Link>` (Feature 35).
  */
 export function osc8Link(url: string, text: string): string {
   if (!url) return text

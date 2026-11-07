@@ -50,7 +50,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { execSync, spawnSync } from 'node:child_process'
 import {
-  CYAN, BLUE, GREEN, GRAY, DIM, RESET,
+  GRAY, RESET,
   osc8Link,
   safeNotify as sharedSafeNotify,
   safeSetStatus as sharedSafeSetStatus,
