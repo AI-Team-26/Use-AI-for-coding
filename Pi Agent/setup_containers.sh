@@ -50,6 +50,7 @@ declare -A agents
 agents["Dev-1"]="🍋 Pi Lemon" 
 agents["Dev-2"]="🥝 Pi Kiwi" 
 agents["Dev-3"]="🍊 Pi Orange" 
+agents["Reviewer"]="🌹 Pi Rose"
 #agents["Manager"]="🍓 Pi Manager"
 for agent in "${!agents[@]}"; do
 
@@ -101,6 +102,7 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{SAMBANOVA_API_KEY}}/$SAMBANOVA_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{GROQ_API_KEY}}/$GROQ_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{MISTRAL_API_KEY}}/$MISTRAL_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{DEEPSEEK_API_KEY}}/$DEEPSEEK_API_KEY/g" "$docker_volume_pi_agent/models.json"
 
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"    
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
