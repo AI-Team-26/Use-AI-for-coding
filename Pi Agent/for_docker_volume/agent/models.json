@@ -979,6 +979,12 @@
                 "reasoning": true
             },
             {
+                "id": "glm-5.3",
+                "free quota": true,
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
                 "id": "qwen3.7-flash",
                 "maxTokens": 8192,
                 "reasoning": true,
