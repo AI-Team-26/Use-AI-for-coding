@@ -4,31 +4,24 @@
 #   - Lists projects in /projects (bind-mounted folder from host).
 #   - Allows cloning new repos interactively.
 
-source /scripts/start_common.sh
+set -euo pipefail
+
 source /scripts/.env
+source /scripts/utils.sh
+source /scripts/start_common.sh
 
 # check required environment variables are set
-required_vars=("PI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
+required_vars "AI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY"
 
-for var in "${required_vars[@]}" ; do
-    if [[ -z "${!var}" ]]; then
-        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
-        exit 1
-    fi
-done
-
-# set API KEYS and other secrets
+# set API KEYS and other secrets used by skills and extensions
 export EXA_API_KEY=$EXA_API_KEY
-export PI_AGENT_NAME="${PI_AGENT_NAME:-Pi Agent}" ## passed by docker run
+export AI_AGENT_NAME="${AI_AGENT_NAME:-Pi Agent}" ## passed by docker run
+export PNPM_STORE_DIR="/scripts"  ## set the folder wherne PNPM will set the .pmpm-store
+
 
 # First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
-    echo setup customized agent files
-
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
-    sed -i "s/{{PI_AGENT_NAME}}/$PI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
-
     echo "Restoring /root/.pi from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
@@ -52,11 +45,10 @@ fi
 
 start_project() {
     local proj=$1
-
     #clear
 
-    # Pi save the used model in ~/.pi/agent/settings.json file, defaultModel property
-    #If that is NOT set we can try to use the default model for this agent or peek tthe one that is running in local llama.cpp
+    # Pi save the used model in ~/.pi/agent/settings.json file, in the "defaultModel" property
+    # If that is NOT set, we can try to use the default model for this agent or peek the one that is running in local llama.cpp
 
     # [OBSOLETE] Removed to allow to use a previous selected model within this Pi agent
     if [[ 1 == 2 ]]; then 
@@ -73,30 +65,21 @@ start_project() {
         fi
 
         # Launch Pi Agent
-        if [[ -n "$PI_AGENT_DEFAULT_MODEL" ]]; then 
-            model_param="$PI_AGENT_DEFAULT_MODEL"
+        if [[ -n "$AI_AGENT_DEFAULT_MODEL" ]]; then 
+            model_param="$AI_AGENT_DEFAULT_MODEL"
         fi
 
         exec pi "$model_param" --continue
     fi
 
-	# Use regular if fullscreen causes issues in the shell of Windows Terminal
-    #exec pi --continue --tui-mode regular
-    exec pi --continue
+    # pi-status extension
+    # extract the initial EMOJI or take the first 2 characters
+    local agent_icon=${AI_AGENT_NAME%%[[:ascii:]]*}
+    [[ -z $agent_icon ]] && agent_icon=${AI_AGENT_NAME:0:2}
+    export PI_STATUS_AGENT_ICON=$agent_icon
+    export PI_STATUS_DONE_ICON="🎉"
 
-    # [OBSOLETE]
-    # user choice
-    #echo -e "\e[34m-------------------\e[0m"
-    #PS3=$'\e[34mSelect an option: \e[0m'
-    #select choice in Continue Resume New ; do
-    #    # use exec so when the host shell close the pi process is killed
-    #    case "$choice" in
-    #        Continue)  exec pi $model_param --continue ;;
-    #        Resume)    exec pi $model_param --resume ;;
-    #        New)       exec pi $model_param --name $(date +%y.%m.%d) ;; # YY.MM.DD
-    #        #No-session|*) exec pi $model_param --no-session ;;
-    #    esac
-    #done
+    exec pi --continue
 
     echo -e "Pi Agent session closed. Bye!"
 }
@@ -107,6 +90,6 @@ echo -e "\n${BOLD_PURPLE}================${NC}"
 echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
 echo -e "${BOLD_PURPLE}================${NC}"
 
-setup_git_global "$PI_AGENT_NAME"
+setup_git_global "$AI_AGENT_NAME"
 
 select_project

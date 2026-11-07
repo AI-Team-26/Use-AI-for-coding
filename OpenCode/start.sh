@@ -4,31 +4,22 @@
 #   - Lists projects in /projects (bind-mounted folder from host).
 #   - Allows cloning new repos interactively.
 
-source /scripts/start_common.sh
 source /scripts/.env
+source /scripts/utils.sh
+source /scripts/start_common.sh
+
 
 # check required environment variables are set
-required_vars=("AI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY" )
-
-for var in "${required_vars[@]}" ; do
-    if [[ -z "${!var}" ]]; then
-        echo -e "${RED}⛔ $var is not found. Set it in the .env file${NC}"
-        exit 1
-    fi
-done
+required_vars "AI_AGENT_NAME" "EXA_API_KEY"
 
 # set API KEYS and other secrets
-export EXA_API_KEY=$EXA_API_KEY
 export AI_AGENT_NAME="${AI_AGENT_NAME:-AI Agent}" ## passed by docker run
+export EXA_API_KEY=$EXA_API_KEY
+
 
 # First run only
 # Restore the .opencode folder content that is "masked" by the bind mount 
 if [[ -f /root/.opencode_backup.tar ]]; then
-    echo setup customized agent files
-
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.opencode/SYSTEM.md" 
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.opencode/AGENTS.md" 
-
     echo "Restoring /root/.opencode from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
@@ -52,10 +43,16 @@ start_project() {
     local proj=$1
 
     # --model
+    # --continue
+
+    OPENCODE_DISABLE_TERMINAL_TITLE=true
+    export OPENCODE_DISABLE_TERMINAL_TITLE=true
+    printf '\033]0;%s | %s\007' "$AI_AGENT_NAME" "(repo not defined yet)"
 
     #exec opencode web  --continue
     #exec opencode run --continue
-    exec opencode 
+    #exec opencode --continue
+    opencode --continue
 
     echo -e "OpenCode session closed. Bye!"
 }

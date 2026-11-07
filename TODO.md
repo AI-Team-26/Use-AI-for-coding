@@ -2,26 +2,6 @@
 
 ## Backlog
 
-- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
-  Create `extensions/_shared/common.ts` containing:
-  - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
-  - `safeSetStatus(ctx, key, text)` — guarded status bar update
-  - `safeNotify(getCtx, message, type)` — guarded notification
-  - `createDebug(name, enabled)` — returns a `debug(msg)` logger
-  Refactor `todo-task.ts`, `pr-review.ts`, and `todo.ts` to import from `_shared/common`.
-  Remove duplicated definitions from each file.
-  Constraints:
-  - `_shared/` has no `index.ts` → Pi won't discover it as an extension
-  - Keep behavior identical; pure extraction, no logic changes
-  - Max ~10 files changed, well under 500 lines delta
-
-  Also colors:
-  // ANSI colors — passed straight into the status line (the footer does not strip escapes)
-  const CYAN = "\x1b[36m"
-  const BLUE = "\x1b[34m"
-  const GREEN = "\x1b[32m"
-  const RESET = "\x1b[0m"
-
 - Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
@@ -78,7 +58,7 @@
      and not communicated to the user).
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
-- Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
+- Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 35 | "Select a project/action:" prompt should accept ESC
 
@@ -89,7 +69,7 @@
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
-- Feature 40: extract common extensions helper function in a common .ts file
+- Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
 
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
@@ -139,6 +119,42 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
+- Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
+
+- Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
+  Is it possible to delay this check start timer at the end ?
+
+- Bug 59 | Pi Agent /todo crash when is already on main
+
+  Error: ❌ Git update failed: Already on 'main'
+  From https://github.com/AI-Team-26/learning.Llama-cpp
+     b779584..a2237cd  main       -> origin/main
+  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
+  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
+  error: Your local changes to the following files would be overwritten by merge:
+    TODO.md
+  Please commit your changes or stash them before you merge.
+  Aborting
+
+- Bug 61 | pi-agent errors break the TUI
+  Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
+    Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
+  Please commit your changes or stash them before you switch branches.
+  Aborting
+
+  After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
+  '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
+
+- Bug 62 | pi-agent  /pr command is not executed when we are on main branch
+  Warning: To call /pr you need to be on a branch different from the default one
+  
+  It should move on the bramch and work on hte PR, why this warning? 
+  If there are uncommitted file, report to the user and if is not trivial and not clear what to do: propose some choice to the user.
+  If this second part is not a super quick thing... create a separate task in the TODO.
+
+  
+### OpenCode
+
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
   Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
   Obviously it has to create a branch and a PR. 
@@ -155,16 +171,11 @@
 
   Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
 
-I prefer Option 2 if /quit or /exit does the same.
+  I prefer Option 2 if /quit or /exit does the same.
   
   Allows copy "as normal":
      { "terminal": { "copy": "select" } }
 
-- Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
-
-- Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
-  Is it possible to delay this check start timer at the end ?
-  
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
   Background: npm `pi-keyrouter` (v0.4.0) crashes on Pi 1.3.0 — it calls `ctx.modelRegistry.authStorage.setRuntimeApiKey(...)`, but @earendil-works/pi-coding-agent 1.3.0 does not expose `authStorage` (nor `setRuntimeApiKey`) to extensions at all.
@@ -186,8 +197,11 @@ I prefer Option 2 if /quit or /exit does the same.
   Don't remove this feature from TODO in the PR.
  
 
-## Latest 10 tasks completed
+## DONE (latest tasks completed)
+- [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
+- Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
+- Bug 60 [fix/60_deploy_shared_common]: `setup_containers.sh` now copies `extensions/_shared/` into the Pi docker volume (`*.ts` glob skipped subdirectories, breaking `./_shared/common.ts` imports)
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository

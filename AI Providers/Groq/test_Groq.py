@@ -3,7 +3,7 @@ import os
 
 # https://console.groq.com/docs/models
 
-#api_key = os.environ.get("GROQ_API_KEY_PI_AGENT")
+#api_key = os.environ.get("GROQ_API_KEY")
 api_key = os.environ.get("Groq_api_key_continue_dev")
 url = "https://api.groq.com/openai/v1/models"
 
