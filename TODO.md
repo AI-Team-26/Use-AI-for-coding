@@ -104,14 +104,6 @@
         That seems to be this line:
             prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
 
-- Bug 46 [SUSPENDED: some other models with the slash work well] | todo-task model captured doesn't work well with "/"
-  Llama.cpp/Qwen3.7-27B-AAA-BBB capture of proviider (Llama.cpp) and model (Qwen3.7-27B-AAA-BBB) works fine, 
-  but is the model used by Pi is this: "(Openrouter) minimax/minimax-m3" it doesn't capture the model properly.  
-  For some reason it captured "34 tok/s" that is the outpunf of the extension that print inference speed of the model.
-  I believe it gets confused by the "/" in the model name when use something difefrent from local "Llama.cpp" provider.
-
-- Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
-
 - Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
 
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
@@ -193,6 +185,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
+- Bug 46 [obsolete]: todo-task resolves the model from `ctx.model` (and `/models` for Llama.cpp), so it no longer parses footer text and cannot capture `34 tok/s`; removed from backlog
 - Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
 - Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls; 2 VS Code tasks to run `containers.sh setup` (Pi Agent + OpenCode)
 - Feature 34 [feat/34_reuse_pr_lookup_in_append_report]: extracted shared `ghPrList<T>()` helper; `appendReportToPr` now makes one gh call instead of two
