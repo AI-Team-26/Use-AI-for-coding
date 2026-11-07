@@ -58,7 +58,7 @@
      and not communicated to the user).
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
-- Feature 26: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
+- Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 35 | "Select a project/action:" prompt should accept ESC
 
@@ -119,27 +119,6 @@
 
 - Bug 47 | git-info extension: probe `isGitRepo()` once on `session_start`; if not a Git repo, skip starting the refresh interval entirely (and remove the per-tick `isGitRepo()` call from `buildStatus()`)
 
-- Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
-  Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
-  Obviously it has to create a branch and a PR. 
-  Maybe also print the "[FEATUE N COMPLETED]" message but no management of PR completion or other complicated stuff for now. REally minimal.
-  Add TODO comments and new tasks in the TODO.md if needed.
-
-- Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
-- Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
-
-- Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
-     ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
-
-  Let me know if you want me to add it to TODO.md (it would be its own small branch + PR, or I can just add the line if you prefer).
-
-  Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
-
-I prefer Option 2 if /quit or /exit does the same.
-  
-  Allows copy "as normal":
-     { "terminal": { "copy": "select" } }
-
 - Feature 56 | GITHUB_MAIN_ACCOUNT_EMAIL  has to be replaced by GITHUB_ACCOUNT_COMMIT_EMAIL and well explain that this is the account that is "credited" for the commits
 
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
@@ -156,8 +135,37 @@ I prefer Option 2 if /quit or /exit does the same.
     TODO.md
   Please commit your changes or stash them before you merge.
   Aborting
+
+- Bug 60 (URGENT) | pi agent extension is broken
+  Error: Failed to load extension "/root/.pi/agent/extensions/pr-review.ts": Failed to load extension: Cannot find module './_shared/common.ts'
+  Require stack:
+  - /root/.pi/agent/extensions/pr-review.ts
+  Error: Failed to load extension "/root/.pi/agent/extensions/todo-task.ts": Failed to load extension: Cannot find module './_shared/common.ts'
+  Require stack:
+  - /root/.pi/agent/extensions/todo-task.ts
   
 ### OpenCode
+
+- Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
+  Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
+  Obviously it has to create a branch and a PR. 
+  Maybe also print the "[FEATUE N COMPLETED]" message but no management of PR completion or other complicated stuff for now. REally minimal.
+  Add TODO comments and new tasks in the TODO.md if needed.
+
+- Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
+- Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
+
+- Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
+     ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
+
+  Let me know if you want me to add it to TODO.md (it would be its own small branch + PR, or I can just add the line if you prefer).
+
+  Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
+
+  I prefer Option 2 if /quit or /exit does the same.
+  
+  Allows copy "as normal":
+     { "terminal": { "copy": "select" } }
 
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
