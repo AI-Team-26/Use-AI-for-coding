@@ -6,6 +6,11 @@
 - Feature 31 | todo-task extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
+- Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
+  Polling currently arms immediately at task start and uses a ~5 min grace period while the agent
+  creates its branch/PR. Replace that heuristic with a true discovery phase: keep the watcher dormant
+  until the first open PR appears on the working branch, then switch to review-watching mode.
+
 - Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
@@ -190,9 +195,8 @@
 
 
 ## DONE (latest tasks completed)
-- Bug 16 + Bug 64 [fix/69_todo_polling_stop]: todo-task PR polling now stops when no open PR exists on the branch — immediately if a previously watched PR vanished (closed/merged), otherwise after a ~5 min grace period while the agent creates it; transient gh failures are notified once per run instead of every tick
--
- Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls; 2 VS Code tasks to run `containers.sh setup` (Pi Agent + OpenCode)
+- Bug 16 (stop side) + Bug 64 [fix/69_todo_polling_stop]: todo-task PR polling now stops when no open PR exists on the branch — immediately if a previously watched PR vanished (closed/merged, also detected from the default branch via `gh pr view`), otherwise after a ~5 min grace period; transient gh failures are notified once per run instead of every tick
+- Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls; 2 VS Code tasks to run `containers.sh setup` (Pi Agent + OpenCode)
 - Feature 34 [feat/34_reuse_pr_lookup_in_append_report]: extracted shared `ghPrList<T>()` helper; `appendReportToPr` now makes one gh call instead of two
 - Bug 59 [fix/59_todo_crash_on_main]: `/todo` now reads TODO.md via `git fetch` + `git show origin/main:TODO.md` instead of `git checkout main && git pull`, so it no longer switches branches or crashes on uncommitted local changes
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo

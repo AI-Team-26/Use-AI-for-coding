@@ -367,7 +367,36 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
         try {
             const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
-            if (!branch || branch === "main" || branch === "master") return
+            if (!branch || branch === "main" || branch === "master") {
+                // Discovery phase: at task start the repo is on main and the agent may not have
+                // created its branch/PR yet — keep waiting without counting misses.
+                if (!watchedPr) {
+                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
+                    debug(`On default/detached branch '${branch}' before any PR was seen — keeping discovery alive`)
+                    return
+                }
+                // Watched a PR but we're back on the default branch (typical post-merge flow):
+                // resolve it by number so its closed/merged state can end the watch here.
+                const res = spawnSync("gh", ["pr", "view", String(watchedPr.number), "--json", "state"], { cwd, encoding: "utf-8" })
+                if (res.status !== 0) {
+                    consecutiveGhFailures++
+                    if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ Failed to fetch PR #${watchedPr.number} state (will retry). ${res.stderr?.trim() ?? res.status}`, "error")
+                    return
+                }
+                consecutiveGhFailures = 0
+                const state = (JSON.parse(res.stdout) as { state: string }).state
+                if (state === "MERGED") {
+                    safeNotify(`✅ PR MERGED !`, "info")
+                    safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
+                    stopPrCheckPolling()
+                } else if (state === "CLOSED") {
+                    stopPrCheckPolling()
+                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} was closed without merge.`, "info")
+                } else {
+                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${state})`)}`)
+                }
+                return
+            }
 
             let pr: PrView | null
             try {
