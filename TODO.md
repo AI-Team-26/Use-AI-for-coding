@@ -152,6 +152,9 @@
   If there are uncommitted file, report to the user and if is not trivial and not clear what to do: propose some choice to the user.
   If this second part is not a super quick thing... create a separate task in the TODO.
 
+- Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
+  It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
+  Solutions?
   
 ### OpenCode
 
