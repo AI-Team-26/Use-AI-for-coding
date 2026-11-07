@@ -19,15 +19,23 @@ docker_image="pi-agent:15"
 
 valid_steps="create_image, setup, create_container"
 IFS=',' read -ra step_list <<< "$steps"
+normalized_steps=""
 for step in "${step_list[@]}"; do
+    step="${step//[[:space:]]/}"        # no valid step name contains a space
+    [[ -z "$step" ]] && continue
     case "$step" in
         create_image|setup|create_container) ;;
         *) echo "❌ Unknown step '${step}'. Valid steps: ${valid_steps}" >&2; exit 2 ;;
     esac
+    normalized_steps="${normalized_steps:+$normalized_steps,}$step"
 done
+# dispatch on the normalized list, so 'a, b' and 'a,b' behave identically
+steps=",$normalized_steps,"
 
 # Create image ------------------------------------------------------------------------------------
-if [[ ",$steps," == *",create_image,"* ]]; then
+has_step() { [[ "$steps" == *",$1,"* ]]; }
+
+if has_step create_image; then
     docker build \
         --label description="Pi Agent" \
         -t "$docker_image" \
@@ -36,12 +44,12 @@ if [[ ",$steps," == *",create_image,"* ]]; then
 fi
 
 # Setup -------------------------------------------------------------------------------------------
-if [[ ",$steps," == *",setup,"* ]]; then
+if has_step setup; then
     ./containers_setup.sh
 fi
 
 # Create containers -------------------------------------------------------------------------------
-if [[ ",$steps," == *",create_container,"* ]]; then
+if has_step create_container; then
 
     for id in "${!agents[@]}"; do
         AGENT_ID="$id"                        # "Dev-1"  (the assoc-array key)
