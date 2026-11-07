@@ -446,8 +446,27 @@
         "models": [
             {
                 "id": "deepseek-v4.1-flash-1017-basic",
-                "maxTokens": 4096,
+                "maxTokens": 8192,
                 "reasoning": true
+            }
+        ]
+    },
+    "DeepSeek": {
+        "baseUrl": "https://api.deepseek.com",
+        "api": "openai-completions",
+        "apiKey": "{{DEEPSEEK_API_KEY}}",
+        "models": [
+            { 
+                "id": "deepseek-flash",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-07",
+                    "input": 0.3,
+                    "output": 0.12,
+                    "cacheRead": 0.006,
+                    "cacheWrite": 0.12
+                }
             }
         ]
     },
@@ -936,7 +955,7 @@
             }
         ]
     },
-    "AliBaba": {
+    "AliBaba (Alex)": {
         "_baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         "baseUrl": "https://ws-ne77ev3gyh866avy.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
         "api": "openai-completions",
@@ -947,6 +966,30 @@
         },
 
         "models": [
+            {
+                "id": "qwen3.8-flash",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "deepseek-v4.1-flash-1017",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "glm-5.3",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "kimi-k3.1-pro",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
             {
                 "id": "qwen3.7-flash",
                 "maxTokens": 8192,

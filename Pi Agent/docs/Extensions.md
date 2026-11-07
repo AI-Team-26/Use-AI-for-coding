@@ -4,9 +4,9 @@
 
 Add TypeScript types to the extensions for code syntax help and check.  
 ```bash 
-cd for-docker-volume/agent/extensions
-npm install -D @earendil-works/pi-coding-agent typescript
-npm install -D @earendil-works/pi-coding-agent@<specific-version> typescript
+cd for_docker_volume/extensions
+pnpm add -D @earendil-works/pi-coding-agent typescript
+pnpm add -D @earendil-works/pi-coding-agent@<specific-version> typescript
 ```
 
 
