@@ -99,10 +99,15 @@ After applying changes, run the test suite if available:
 - **TypeScript** - Not plain JavaScript
 - **PNPM** - Prefer over NPM
 - **Builder** - Use Vite
-- **Prettier** -  In `.prettierrc.json` use these values:
-  "singleQuote": false,  
-  "printWidth": 120,
-  "semi": false,
+- **Prettier** - `.prettierrc.json`:
+  ```
+  {
+      "tabWidth": 4,
+      "singleQuote": false,
+      "printWidth": 160,
+      "semi": false
+  }
+  ```
 
 ---
 

@@ -2,11 +2,6 @@
 
 ## Backlog
 
-- Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
-  `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
-  Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
-  - `getBranchOpenPr` keeps requesting `number,state,mergeable,statusCheckRollup,reviewDecision,reviews,url`
-  - `appendReportToPr` requests only `number,body` — collapsing its two gh calls (`pr list` + `pr view`) into one.
 
 - Feature 31 | todo-task extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
@@ -49,7 +44,12 @@
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
-- Feature 12: Complete the documentation for GIT and GitHub setup
+- Feature 12 | Complete the documentation for GIT and GitHub setup
+  Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
+  - Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
+  - Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
+  - Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
+  - Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
@@ -124,18 +124,6 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
-- Bug 59 | Pi Agent /todo crash when is already on main
-
-  Error: ❌ Git update failed: Already on 'main'
-  From https://github.com/AI-Team-26/learning.Llama-cpp
-     b779584..a2237cd  main       -> origin/main
-  * [new branch]      chore/29_remove_update_llamacpp_dry_run -> origin/chore/29_remove_update_llamacpp_dry_run
-  * [new branch]      fix/35_bug17_startup_timeout -> origin/fix/35_bug17_startup_timeout
-  error: Your local changes to the following files would be overwritten by merge:
-    TODO.md
-  Please commit your changes or stash them before you merge.
-  Aborting
-
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
@@ -157,8 +145,7 @@
   Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
   Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
   Start PR check...
-  ``` 
-  
+  ```
 ### OpenCode
 
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
@@ -202,9 +189,23 @@
   DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
   Don't remove this feature from TODO in the PR.
  
+- Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
+  A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
+  Skip (or recreate) containers that already exist, so the step can be re-run safely.
+
+- Feature 67 | OpenCode/containers.sh: apply the same hardening done for Pi Agent in Feature 65
+  - add `#!/usr/bin/env bash` shebang (the file is executable, so `sh containers.sh` would die on `pipefail`)
+  - `${1:?}` instead of `${1:-}` for the `<steps>` arg: a missing arg currently silently no-ops
+  - strict step validation instead of substring matching (e.g. `create_containers` would run `create_image`)
+  - resolve `constants.sh` / CWD against the script location, not the caller's CWD
+  - quote `$docker_image`
+
 
 ## DONE (latest tasks completed)
 - Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
+- Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls; 2 VS Code tasks to run `containers.sh setup` (Pi Agent + OpenCode)
+- Feature 34 [feat/34_reuse_pr_lookup_in_append_report]: extracted shared `ghPrList<T>()` helper; `appendReportToPr` now makes one gh call instead of two
+- Bug 59 [fix/59_todo_crash_on_main]: `/todo` now reads TODO.md via `git fetch` + `git show origin/main:TODO.md` instead of `git checkout main && git pull`, so it no longer switches branches or crashes on uncommitted local changes
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()

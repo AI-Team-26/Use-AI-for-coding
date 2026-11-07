@@ -24,6 +24,16 @@
             "label": "▶ Format",
             "type": "shell",
             "command": "pnpm run format"
+        },
+        {
+            "label": "🐳 Setup containers: Pi Agent",
+            "type": "shell",
+            "command": "cd \"Pi Agent\" && ./containers.sh setup"
+        },
+        {
+            "label": "🐳 Setup containers: OpenCode",
+            "type": "shell",
+            "command": "cd OpenCode && ./containers.sh setup"
         }
     ]
 }
