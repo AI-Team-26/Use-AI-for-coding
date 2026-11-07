@@ -45,8 +45,6 @@ start_project() {
     # --model
     # --continue
 
-    OPENCODE_DISABLE_TERMINAL_TITLE=true
-    export OPENCODE_DISABLE_TERMINAL_TITLE=true
     printf '\033]0;%s | %s\007' "$AI_AGENT_NAME" "(repo not defined yet)"
 
     #exec opencode web  --continue

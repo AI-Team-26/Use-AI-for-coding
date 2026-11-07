@@ -1,7 +1,12 @@
 {
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.19.5",
-    "typescript": "^7.0.2",
-    "@types/node": "^26.6.6"
+    "@opencode/plugin": "^2.2.6",
+    "@opentui/core": "^0.8.1",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
   }
 }
