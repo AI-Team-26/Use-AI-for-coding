@@ -153,11 +153,6 @@
   Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
   Start PR check...
   ```
-### Pi
-
-- Feature 65 | pi-agent, reorganize containers.sh fulction to do the same as in OpenCode: create image, setup containers, create containers
-  Copy the structure of OpenCode, where all the job is done by function in containers.sh and the README just expose the calls.  
-  
 ### OpenCode
 
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
@@ -203,6 +198,7 @@
  
 
 ## DONE (latest tasks completed)
+- Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls
 - Bug 59 [fix/59_todo_crash_on_main]: `/todo` now reads TODO.md via `git fetch` + `git show origin/main:TODO.md` instead of `git checkout main && git pull`, so it no longer switches branches or crashes on uncommitted local changes
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
 - Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies

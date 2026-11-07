@@ -12,31 +12,27 @@ TODO:
 
 ## Docker
 
-### Build the Image
+All the Docker job (build the image, provision the volumes, create the containers) is done by `containers.sh`.  
+The steps are comma-concatenable:
+- `create_image` → build the Docker image (the label `description="Pi Agent"` is looked for by the ai-start script; the image tag is set in `containers.sh`)
+- `setup` → create the docker-volumes folders and copy the configuration (shared scripts, per-agent `.pi`, `github_pat`); the logic is in `containers_setup.sh`
+- `create_container` → `docker create` one container per agent
 
-Use the "Pi Agent" text in the label, because the script to start ai agents looks for that.
+The agents (icon + alias), their default models and the docker-volumes path are defined in `constants.sh`.
 
 ```bash
 cd "Pi Agent"
-docker build \
-    --label description="Pi Agent" \
-    -t pi-agent:15 \
-    -f Dockerfile \
-    .
+
+# all the steps
+./containers.sh create_image,setup,create_container
+
+# single steps
+./containers.sh create_image
+./containers.sh setup
+./containers.sh create_container
 ```
 
-### Setup the Containers
-
-Run the _setup.sh_ script.  
-```bash
-cd "Pi Agent"
-docker_volumes="/p/PiAgent_Container"
-./setup_containers.sh "$docker_volumes"
-
-cd ..
-```
-
-### Run the Containers
+### Volumes
 
 The containers share a common *scripts* folder and also share their own *.pi* and *projects* folders.  
 The scripts folder contains general setup scripts.  
@@ -44,97 +40,7 @@ The .pi folder is where each container has its skills, extensions and model sett
 The **projects** folder allows to work on the same code from the host, making possible agent-driven/pair programming.  
 
 The bind-mount volumes:
-- (shared)   /scripts    -> for common
-- (container)/projects   -> for the GIT repositories, local projects and other utility files (start script, .env, README etc...)
-- (container)/root/.pi   -> for the settings, skills etc...
-
-```bash
-cd "Pi Agent"
-docker_volumes="/p/PiAgent_Container"
-docker_image="pi-agent:15"
-
-# Agent Manager 
-# Use shared /projects folder, so it is accessible also from host for agent-driven coding
-docker create \
-    -it \
-    --name PiAgent-Manager \
-    --label "description=Pi Agent Manager" \
-    -e AI_AGENT_NAME="🍓 Pi Manager" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/Manager/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/Manager/projects",dst=/projects \
-    $docker_image
-
-# Agent Dev-1
-docker create \
-    -it \
-    --name "PiAgent-Dev-1" \
-    --label "icon=🍋" \
-    --label "alias=Pi Lemon" \
-    --label "description=Pi Agent Dev-1" \
-    -e AI_AGENT_NAME="🍋 Pi Lemon" \
-    -e AI_AGENT_DEFAULT_MODEL="KAT-Coder-V2.5-Dev-Cerebellum (deucebucket) [160k]" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/share",dst=/share \
-    --mount type=bind,src="$docker_volumes/Dev-1/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/Dev-1/projects",dst=/projects \
-    $docker_image
-
-# Agent Dev-2
-docker create \
-    -it \
-    --name PiAgent-Dev-2 \
-    --label "icon=🥝" \
-    --label "alias=Pi Kiwi" \
-    --label "description=Pi Agent Dev 2" \
-    -e AI_AGENT_NAME="🥝 Pi Kiwi" \
-    -e AI_AGENT_DEFAULT_MODEL="mindai/macaron-v1-venti" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/share",dst=/share \
-    --mount type=bind,src="$docker_volumes/Dev-2/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/Dev-2/projects",dst=/projects \
-    $docker_image
-
-# Agent Dev-3
-docker create \
-    -it \
-    --name PiAgent-Dev-3 \
-    --label "icon=🍊" \
-    --label "alias=Pi Orange" \
-    --label "description=Pi Agent Dev 3" \
-    -e AI_AGENT_NAME="🍊 Pi Orange" \
-    -e AI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/share",dst=/share \
-    --mount type=bind,src="$docker_volumes/Dev-3/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/Dev-3/projects",dst=/projects \
-    $docker_image
-
-# Agent Reviewer
-docker create \
-    -it \
-    --name PiAgent-Reviewer \
-    --label "icon=🌹" \
-    --label "alias=Pi Rose" \
-    --label "description=Pi Agent for Reviews" \
-    -e AI_AGENT_NAME="🌹 Pi Rose" \
-    -e AI_AGENT_DEFAULT_MODEL="inclusionai/ling-3.0-flash" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/share",dst=/share \
-    --mount type=bind,src="$docker_volumes/Reviewer/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/Reviewer/projects",dst=/projects \
-    $docker_image
-
-# Agent QA
-docker create \
-    -it \
-    --name PiAgent-QA \
-    --label "description=Pi Agent QA" \
-    -e AI_AGENT_NAME="🍒 Pi QA" \
-    --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
-    --mount type=bind,src="$docker_volumes/share",dst=/share \
-    --mount type=bind,src="$docker_volumes/QA/.pi",dst=/root/.pi \
-    --mount type=bind,src="$docker_volumes/QA/projects",dst=/projects \
-    $docker_image
-
-```
+- (shared)    /scripts   -> for common
+- (shared)    /share     -> shared data
+- (container) /projects  -> for the GIT repositories, local projects and other utility files (start script, .env, README etc...)
+- (container) /root/.pi  -> for the settings, skills etc...
