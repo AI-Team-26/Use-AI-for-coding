@@ -9,8 +9,6 @@
  * immediately after reading so that normal Pi startup is unaffected.
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import fs from "node:fs/promises"
 import path from "node:path"
 import type { ExtensionAPI, ExtensionContext, SessionStartEvent, SessionBeforeSwitchEvent } from "@earendil-works/pi-coding-agent"

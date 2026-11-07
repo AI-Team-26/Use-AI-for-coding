@@ -9,9 +9,7 @@
  * /todo show -> base command plus print of the TODO.md
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { execSync } from "node:child_process"
 
 const EXTENSION = "TODO-TASK"

@@ -43,8 +43,6 @@
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent, SessionContext } from "@earendil-works/pi-coding-agent"
 import fs from "node:fs/promises"
 import path from "node:path"
@@ -777,7 +775,7 @@ ${typeData.extra ?? ""}\n\
         if (msg?.role !== "assistant") return
         const text = msg.content
             .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
-            .map((b) => b.text)
+            .map((b: { text: any }) => b.text)
             .join("")
         // strip common model decorations (backticks/bold/whitespace) around the marker
         const cleaned = text.replace(/[\s`*_]+/g, " ")
