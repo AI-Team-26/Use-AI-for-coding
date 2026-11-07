@@ -136,14 +136,6 @@
   Please commit your changes or stash them before you merge.
   Aborting
 
-- Bug 60 (URGENT) | pi agent extension is broken
-  Error: Failed to load extension "/root/.pi/agent/extensions/pr-review.ts": Failed to load extension: Cannot find module './_shared/common.ts'
-  Require stack:
-  - /root/.pi/agent/extensions/pr-review.ts
-  Error: Failed to load extension "/root/.pi/agent/extensions/todo-task.ts": Failed to load extension: Cannot find module './_shared/common.ts'
-  Require stack:
-  - /root/.pi/agent/extensions/todo-task.ts
-
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
@@ -205,4 +197,5 @@
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
+- Bug 60 [fix/60_deploy_shared_common]: `setup_containers.sh` now copies `extensions/_shared/` into the Pi docker volume (`*.ts` glob skipped subdirectories, breaking `./_shared/common.ts` imports)
 - Bug 45 [fix/45_suppress_git_errors_in_git_info]: Suppress Git error messages in git-info extension when not in a Git repository
