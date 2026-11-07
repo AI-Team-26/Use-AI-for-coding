@@ -12,23 +12,16 @@
 /// <reference types="@earendil-works/pi-coding-agent" />
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
+import { safeNotify as sharedSafeNotify, createDebug, type NotifyType } from './_shared/common.ts'
 
 const DEBUG = false
 const EXTENSION = "PR-REVIEW"
 let latestCtx: ExtensionContext | null = null
 
-const debug = (msg:string) => DEBUG && console.debug(`\n[DEBUG][${EXTENSION}] ${msg}`)
+const debug = createDebug(EXTENSION, DEBUG)
 
-function safeNotify(message: string, type: 'info' | 'warning' | 'error' = 'info'): void {
-  if (!latestCtx) {
-    console.error(`${EXTENSION} ❌ safeNotify got a null ctx`)
-    return
-  }
-  try {
-    latestCtx.ui.notify(message, type)
-  } catch (err) {
-    console.error(`${EXTENSION} ❌ safeNotify failed:`, err)
-  }
+function safeNotify(message: string, type: NotifyType = 'info'): void {
+  sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
 }
 
 

@@ -2,26 +2,6 @@
 
 ## Backlog
 
-- Feature 39 | Extract shared UI helpers into `_shared/common.ts`
-  Create `extensions/_shared/common.ts` containing:
-  - `osc8Link(url, text)` — OSC 8 hyperlink formatter (pure)
-  - `safeSetStatus(ctx, key, text)` — guarded status bar update
-  - `safeNotify(getCtx, message, type)` — guarded notification
-  - `createDebug(name, enabled)` — returns a `debug(msg)` logger
-  Refactor `todo-task.ts`, `pr-review.ts`, and `todo.ts` to import from `_shared/common`.
-  Remove duplicated definitions from each file.
-  Constraints:
-  - `_shared/` has no `index.ts` → Pi won't discover it as an extension
-  - Keep behavior identical; pure extraction, no logic changes
-  - Max ~10 files changed, well under 500 lines delta
-
-  Also colors:
-  // ANSI colors — passed straight into the status line (the footer does not strip escapes)
-  const CYAN = "\x1b[36m"
-  const BLUE = "\x1b[34m"
-  const GREEN = "\x1b[32m"
-  const RESET = "\x1b[0m"
-
 - Feature 34 | todo-task extension: reuse PR lookup in appendReportToPr
   `appendReportToPr` duplicates the gh plumbing of `getBranchOpenPr`, which fetches heavy fields (`reviews`) it never uses.
   Generalize the field list into a shared low-level helper (`gh pr list --json <fields>`):
@@ -89,7 +69,7 @@
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
-- Feature 40: extract common extensions helper function in a common .ts file
+- Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
 
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
@@ -205,6 +185,7 @@ I prefer Option 2 if /quit or /exit does the same.
 
 ## DONE (latest tasks completed)
 - [fix/60_errexit_check_repo_access] `start_common.sh`: guard `check_repo_access`, its invite fallback, `set_github_auth_for_repo` and menu actions against `errexit`; name the `check_repo_access` exit codes (`REPO_ACCESS_*`); fix `$dir_name` typo
+- Feature 39 [feat/39_shared_ui_helpers_v2]: `extensions/_shared/common.ts` holds `osc8Link`, `safeSetStatus`, `safeNotify`, `createDebug` and the ANSI colors; `todo-task.ts` and `pr-review.ts` import them instead of defining their own copies
 - Bug 16 [fix/16_successive_pr_rejection]: todo-task PR-review dedup now keyed by the latest decisive review event id instead of the decision value — successive rejections/approvals are detected again without re-notifying the same review; per-tick decision log gated behind debug()
 - Bug 50 [fix/50_message_sender_session_start]: drop type-wrong `messageSender = ctx` from todo-task session_start handler (ExtensionContext has no send methods); keep only `pi` and withSession `newCtx` as valid senders
 - Bug 48 [fix/48_stale_ctx_pr_rejected]: fix stale messageSender in todo-task on session_start so checkPrReview doesn't crash on PR rejection
