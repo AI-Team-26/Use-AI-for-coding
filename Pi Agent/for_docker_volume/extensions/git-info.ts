@@ -5,8 +5,6 @@
  * with the owner and the repo name rendered in different colors.
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync } from "node:child_process"
 

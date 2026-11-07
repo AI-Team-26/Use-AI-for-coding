@@ -43,8 +43,6 @@
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent, SessionContext } from "@earendil-works/pi-coding-agent"
 import fs from "node:fs/promises"
 import path from "node:path"

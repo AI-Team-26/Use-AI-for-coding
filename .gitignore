@@ -6,5 +6,3 @@ Modelfile
 Ollama models/modelfiles/
 
 **/node_modules/
-**/extensions/package-lock.json
-**/extensions/package.json
