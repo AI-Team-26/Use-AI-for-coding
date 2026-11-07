@@ -16,15 +16,12 @@ required_vars "AI_AGENT_NAME" "GITHUB_AGENT_ACCOUNT" "EXA_API_KEY"
 # set API KEYS and other secrets used by skills and extensions
 export EXA_API_KEY=$EXA_API_KEY
 export AI_AGENT_NAME="${AI_AGENT_NAME:-Pi Agent}" ## passed by docker run
+export PNPM_STORE_DIR="/scripts"  ## set the folder wherne PNPM will set the .pmpm-store
+
 
 # First run only
 # Restore the .pi folder content that is "masked" by the bind mount 
 if [[ -f /root/.pi_backup.tar ]]; then
-    #echo setup customized agent files
-    # TODO: is this required ???
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/SYSTEM.md" 
-    #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "/.pi/agent/AGENTS.md" 
-
     echo "Restoring /root/.pi from TAR backup..."
 
     # Ensure the target directory exists (it might be masked by volume)
