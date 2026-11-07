@@ -775,7 +775,7 @@ ${typeData.extra ?? ""}\n\
         if (msg?.role !== "assistant") return
         const text = msg.content
             .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
-            .map((b: { text: any }) => b.text)
+            .map((b) => b.text)
             .join("")
         // strip common model decorations (backticks/bold/whitespace) around the marker
         const cleaned = text.replace(/[\s`*_]+/g, " ")

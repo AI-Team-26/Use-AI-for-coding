@@ -8,9 +8,6 @@
  * the extensions folder and `<dir>/index.ts` are loaded).
  */
 
-/// <reference types="@earendil-works/pi-coding-agent" />
-/// <reference types="@types/node" />
-
 import type { ExtensionContext } from '@earendil-works/pi-coding-agent'
 
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
