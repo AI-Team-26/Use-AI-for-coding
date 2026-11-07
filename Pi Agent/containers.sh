@@ -29,6 +29,7 @@ for step in "${step_list[@]}"; do
     esac
     normalized_steps="${normalized_steps:+$normalized_steps,}$step"
 done
+[[ -z "$normalized_steps" ]] && { echo "❌ No valid step given. Valid steps: ${valid_steps}" >&2; exit 2; }
 # dispatch on the normalized list, so 'a, b' and 'a,b' behave identically
 steps=",$normalized_steps,"
 
