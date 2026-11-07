@@ -12,8 +12,6 @@
 /// <reference types="@earendil-works/pi-coding-agent" />
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
-import fs from 'node:fs/promises'
-import path from 'node:path'
 import { execSync } from 'node:child_process'
 
 const EXTENSION = "TODO-TASK"
@@ -34,8 +32,8 @@ function loadLatestMainTodo(cwd: string): TodoLoadResult {
     return { ok: true, content }
   } catch (err) {
     const e = err as { stderr?: string; message: string }
-    // Keep only the first line so the notification stays readable.
-    const detail = ((e.stderr ?? '').trim() || e.message).split('\n')[0]
+    // Show up to 3 lines: enough context without flooding the notification.
+    const detail = (((e.stderr ?? '').trim() || e.message).split('\n').slice(0, 3)).join('\n')
     return { ok: false, detail }
   }
 }
@@ -53,32 +51,18 @@ export default function todoExtension(pi: ExtensionAPI) {
       handler: async (args, ctx) => {
         const { showTodo } = parseCommandArgs(args)
         const projectRoot = ctx.cwd ?? process.cwd()
-        const filePath = path.join(projectRoot, 'TODO.md')
 
-      // Load the latest TODO.md from origin/main before reading it.
+      // Load the latest TODO.md from origin/main before reading it. Failing to
+      // fetch the freshest copy is a blocker: we must NOT show potentially stale
+      // local content, so bail out after notifying.
       const loaded = loadLatestMainTodo(projectRoot)
       if (!loaded.ok) {
-        ctx.ui.notify(`❌ Git update failed: ${loaded.detail}`, 'error')
+        ctx.ui.notify(`❌ Failed to fetch latest TODO.md: ${loaded.detail}`, 'error')
+        return
       }
 
       if (showTodo) {
-        let displayContent: string | undefined
-
-        if (loaded.ok && loaded.content !== undefined) {
-          displayContent = loaded.content
-        } else {
-          // Fall back to the local file when the remote read failed.
-          try {
-            displayContent = await fs.readFile(filePath, 'utf8')
-          } catch (err) {
-            if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-              ctx.ui.notify('❌ TODO.md not found in the current project.', 'error')
-            } else {
-              ctx.ui.notify(`⚠️ Error reading TODO.md: ${(err as Error).message}`, 'error')
-            }
-            return
-          }
-        }
+        const displayContent = loaded.content ?? ''
 
         if (!displayContent.trim()) {
           ctx.ui.notify('📄 TODO.md exists but is empty.', 'warning')
