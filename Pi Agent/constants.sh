@@ -1,4 +1,4 @@
-docker_volumes="/p/PiAgent_Container"
+docker_volumes="${PI_AGENT_VOLUMES:-/p/PiAgent_Container}"
 
 # Agent names, format "<icon> <alias>" → become the container icon/alias labels
 declare -A agents
@@ -7,6 +7,10 @@ agents["Dev-2"]="🥝 Pi Kiwi"
 agents["Dev-3"]="🍊 Pi Orange"
 agents["Reviewer"]="🌹 Pi Rose"
 agents["QA"]="🍒 Pi QA"
+
+# NOTE: the old Manager was not a regular agent: it mounted the HOST /projects folder
+# ("accessible also from host") and had no /share mount. Uncommenting the line below
+# creates a normal agent instead ($docker_volumes/Manager/projects + /share).
 #agents["Manager"]="🍓 Pi Manager"
 
 # Optional default model per agent (AI_AGENT_DEFAULT_MODEL env var of the container)

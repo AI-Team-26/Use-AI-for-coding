@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Usage:
 # containers.sh <steps>
 # where steps is a comma-concatenation of these possible values:
@@ -10,25 +11,37 @@ set -euo pipefail
 
 steps=${1:?"<steps> argument must be defined"}
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$script_dir"
+
 source constants.sh
 docker_image="pi-agent:15"
 
+valid_steps="create_image, setup, create_container"
+IFS=',' read -ra step_list <<< "$steps"
+for step in "${step_list[@]}"; do
+    case "$step" in
+        create_image|setup|create_container) ;;
+        *) echo "❌ Unknown step '${step}'. Valid steps: ${valid_steps}" >&2; exit 2 ;;
+    esac
+done
+
 # Create image ------------------------------------------------------------------------------------
-if [[ "$steps" == *create_image* ]]; then
+if [[ ",$steps," == *",create_image,"* ]]; then
     docker build \
         --label description="Pi Agent" \
-        -t $docker_image \
+        -t "$docker_image" \
         -f Dockerfile \
         .
 fi
 
 # Setup -------------------------------------------------------------------------------------------
-if [[ "$steps" == *setup* ]]; then
+if [[ ",$steps," == *",setup,"* ]]; then
     ./containers_setup.sh
 fi
 
 # Create containers -------------------------------------------------------------------------------
-if [[ "$steps" == *create_container* ]]; then
+if [[ ",$steps," == *",create_container,"* ]]; then
 
     for id in "${!agents[@]}"; do
         AGENT_ID="$id"                        # "Dev-1"  (the assoc-array key)
@@ -39,6 +52,8 @@ if [[ "$steps" == *create_container* ]]; then
 
         echo "$AGENT_ID | $AGENT_FULL_NAME | icon=$AGENT_ICON | name=$AGENT_NAME | default_model=${AGENT_DEFAULT_MODEL:-<none>}"
 
+        # TODO: create_container is not idempotent - a re-run aborts on "name already in use"
+        # and, with set -e, leaves the remaining agents uncreated. Skip (or recreate) existing ones.
         docker create \
             -it \
             --name "PiAgent-${AGENT_ID}" \
@@ -51,6 +66,6 @@ if [[ "$steps" == *create_container* ]]; then
             --mount type=bind,src="$docker_volumes/share",dst=/share \
             --mount type=bind,src="$docker_volumes/$AGENT_ID/.pi",dst=/root/.pi \
             --mount type=bind,src="$docker_volumes/$AGENT_ID/projects",dst=/projects \
-            $docker_image
+            "$docker_image"
     done
 fi

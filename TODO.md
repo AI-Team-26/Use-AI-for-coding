@@ -196,6 +196,17 @@
   DO NOT work on existing branch and existing PR. Ignore them and create a new branch and PR.
   Don't remove this feature from TODO in the PR.
  
+- Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
+  A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
+  Skip (or recreate) containers that already exist, so the step can be re-run safely.
+
+- Feature 67 | OpenCode/containers.sh: apply the same hardening done for Pi Agent in Feature 65
+  - add `#!/usr/bin/env bash` shebang (the file is executable, so `sh containers.sh` would die on `pipefail`)
+  - `${1:?}` instead of `${1:-}` for the `<steps>` arg: a missing arg currently silently no-ops
+  - strict step validation instead of substring matching (e.g. `create_containers` would run `create_image`)
+  - resolve `constants.sh` / CWD against the script location, not the caller's CWD
+  - quote `$docker_image`
+
 
 ## DONE (latest tasks completed)
 - Feature 65 [feat/65_pi_containers_reorg]: Pi Agent Docker work reorganized OpenCode-style: `containers.sh` steps (create_image/setup/create_container) + `constants.sh` (agents, default models, volumes) + `containers_setup.sh`; `setup_containers.sh` removed, README now only exposes the calls; 2 VS Code tasks to run `containers.sh setup` (Pi Agent + OpenCode)

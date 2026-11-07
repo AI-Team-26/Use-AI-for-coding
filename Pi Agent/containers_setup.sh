@@ -1,9 +1,18 @@
+#!/usr/bin/env bash
 # Setup the Pi Agent docker volumes
 # - Copy the shared scripts and the per-agent .pi configuration
 
-set -euo pipefail
+set -eo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+cd "$script_dir"
+
+# .env legitimately references environment variables (e.g. GITHUB_AGENT_PAT="${...}"),
+# so nounset must be off while sourcing it
+set +u
 source .env
+set -u
+
 source ../scripts/utils.sh
 source constants.sh
 
@@ -17,6 +26,7 @@ required_vars CLOUDFLARE_API_KEY  CLOUDFLARE_ACCOUNT_ID  INFERX_API_KEY   TOKENH
 
 # Create the shared scripts folder
 mkdir -p "$docker_volumes/scripts"
+mkdir -p "$docker_volumes/share"
 
 # Copy common startup scripts and configurations
 cp ../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
@@ -96,7 +106,7 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{XAI_API_KEY}}/$XAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{SAMBANOVA_API_KEY}}/$SAMBANOVA_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{GROQ_API_KEY}}/${GROQ_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{MISTRAL_API_KEY}}/${MISTRAL_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{MISTRAL_API_KEY}}/$MISTRAL_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{DEEPSEEK_API_KEY}}/${DEEPSEEK_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
 
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"

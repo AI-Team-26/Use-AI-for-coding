@@ -18,7 +18,8 @@ The steps are comma-concatenable:
 - `setup` → create the docker-volumes folders and copy the configuration (shared scripts, per-agent `.pi`, `github_pat`); the logic is in `containers_setup.sh`
 - `create_container` → `docker create` one container per agent
 
-The agents (icon + alias), their default models and the docker-volumes path are defined in `constants.sh`.
+The agents (icon + alias), their default models and the docker-volumes path are defined in `constants.sh`.  
+The docker-volumes path can be overridden without editing the tracked file: `PI_AGENT_VOLUMES=/my/path ./containers.sh setup`.
 
 ```bash
 cd "Pi Agent"
