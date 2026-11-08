@@ -56,8 +56,6 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
     }
 
     const buildStatus = (): string | undefined => {
-        if (!isGitRepo()) return undefined
-
         const branch = run("git branch --show-current")
         const url = run("git remote get-url origin")
 
@@ -78,6 +76,13 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
         return branch ? `🌿 ${GREEN}${branch}${RESET}` : undefined
     }
 
+    const stopRefresh = () => {
+        if (intervalId !== null) {
+            clearInterval(intervalId)
+            intervalId = null
+        }
+    }
+
     const refresh = () => {
         const ctx = latestCtx
         if (!ctx) return
@@ -95,8 +100,21 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
 
     pi.on("session_start", (_event, ctx: ExtensionContext) => {
         latestCtx = ctx
+        // A new session needs a fresh status write even if the text is unchanged.
+        lastText = ""
+
+        if (!isGitRepo()) {
+            stopRefresh()
+            try {
+                ctx.ui.setStatus(STATUS_KEY, undefined)
+            } catch {
+                // ctx went stale mid-call; the next event delivers a fresh one
+            }
+            return
+        }
+
+        refresh()
         if (intervalId === null) {
-            refresh()
             intervalId = setInterval(refresh, REFRESH_MS)
         }
     })
@@ -109,9 +127,6 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
     // "session_shutdown". A new session_start always follows replacement reasons, so
     // clearing here cannot leave the status permanently empty.
     pi.on("session_shutdown", () => {
-        if (intervalId !== null) {
-            clearInterval(intervalId)
-            intervalId = null
-        }
+        stopRefresh()
     })
 }
