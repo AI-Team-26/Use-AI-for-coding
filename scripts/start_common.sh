@@ -46,6 +46,7 @@ select_project() {
     # when stdin hits EOF (terminal closed at the prompt), because `select`
     # aborts without running its body and would re-enter the function endlessly.
     while true; do
+        #mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d ! -name ".pnpm-store" -printf "%f\n")
         mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
         echo $'\n\e[34m------------------------------------------------\e[0m'
@@ -54,29 +55,32 @@ select_project() {
         PS3=$'\e[34mSelect a project/action: \e[0m'
         COLUMNS=1  # ← force one item per line
 
+        # ≫ ══ • ⬩➤ ⇢╰┈➤ ➝🏝️💥➕➔🌟✨
+        # 🗑️
+
         projects+=(
-           "➕ Clone a repository"
-           "➕ Create a new project"
-           "➖ Delete a project"
+           "🧩 Clone a repository"
+           "🏝️ Create a new project"
+           "🗑️ Delete a project"
            ">_ Shell"
            "🔑 Manage GitHub credentials"
-           # "🔑 Add GitHub PAT for a repo"
+           #"🔑 Add GitHub PAT for a repo"
            #"🐙 Check GIT credentials"       
            "❌ Exit"
         )
 
         action_done=0
         select proj in "${projects[@]}" ; do
-            if [[ "$proj" == "➕ Clone a repository" ]]; then
+            if [[ "$proj" == "🧩 Clone a repository" ]]; then
                 # clone_repo returns 1 on failure; keep the menu alive under errexit
                 clone_repo || :
                 action_done=1
                 break
-            elif [[ "$proj" == "➕ Create a new project" ]]; then
+            elif [[ "$proj" == "🏝️ Create a new project" ]]; then
                 create_new_proj
                 action_done=1
                 break
-            elif [[ "$proj" == "➖ Delete a project" ]]; then
+            elif [[ "$proj" == "🗑️ Delete a project" ]]; then
                 delete_proj
                 action_done=1
                 break
