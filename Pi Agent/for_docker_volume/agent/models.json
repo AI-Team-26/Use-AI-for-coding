@@ -973,6 +973,18 @@
                 "reasoning": true
             },
             {
+                "id": "qwen3.8-2.4t-a95b",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
+                "id": "kimi-k3",
+                "name": "Free quota",
+                "maxTokens": 8192,
+                "reasoning": true
+            },            
+            {
                 "id": "deepseek-v4.1-flash-1017",
                 "name": "Free quota",
                 "maxTokens": 8192,
