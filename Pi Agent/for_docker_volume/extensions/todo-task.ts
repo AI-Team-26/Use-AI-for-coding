@@ -206,13 +206,18 @@ const ensureTodoDir = (): Promise<void> =>
         .then((_) => {})
 
 /**
- * Shared low-level helper: run `gh pr list --head <branch> --state open --json <fields>`.
- * Returns the parsed JSON array (empty when no matching PR).
+ * Shared low-level helper: run `gh pr list --head <branch> --state <state> --json <fields>`.
+ * With `state: "all"` merged/closed PRs are returned too, so an empty result means the
+ * branch never had a PR at all.
  */
-function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
-    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
+function getBranchPrList<T>(cwd: string, branch: string, fields: string, state: "open" | "all"): T[] {
+    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", state, "--json", fields], { cwd, encoding: "utf-8" })
     if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
     return JSON.parse(res.stdout) as T[]
+}
+
+function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
+    return getBranchPrList<T>(cwd, branch, fields, "open")
 }
 
 /**
@@ -344,10 +349,26 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
     }
 
-    // Return the open PR on a branch.
-    const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
+    // Return the PR of a branch in any state, so merged/closed is reported as fact.
+    const getBranchPr = (cwd: string, branch: string): PrView | null => {
+        const prs = getBranchPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url", "all")
         return prs[0] ?? null
+    }
+
+    // Announces a finished PR and stops the watcher. Returns true when the watch ended.
+    const stopIfPrFinished = (prNumber: number, url: string, state: string): boolean => {
+        if (state === "MERGED") {
+            safeNotify(`✅ PR MERGED !`, "info")
+            safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
+            stopPrCheckPolling()
+            return true
+        }
+        if (state === "CLOSED") {
+            stopPrCheckPolling()
+            safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(url, `PR #${prNumber}`)} was closed without merge.`, "info")
+            return true
+        }
+        return false
     }
 
     const checkPrReview = async (cwd: string): Promise<void> => {
@@ -385,30 +406,21 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 }
                 // Watched a PR but we're back on the default branch (typical post-merge flow):
                 // resolve it by number so its closed/merged state can end the watch here.
-                const res = spawnSync("gh", ["pr", "view", String(watchedPr.number), "--json", "state"], { cwd, encoding: "utf-8" })
-                if (res.status !== 0) {
+                const exact = viewPr(cwd, watchedPr.number)
+                if (!exact) {
                     consecutiveGhFailures++
-                    if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ Failed to fetch PR #${watchedPr.number} state (will retry). ${res.stderr?.trim() ?? res.status}`, "error")
+                    if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ Failed to fetch PR #${watchedPr.number} state (will retry).`, "error")
                     return
                 }
                 consecutiveGhFailures = 0
-                const state = (JSON.parse(res.stdout) as { state: string }).state
-                if (state === "MERGED") {
-                    safeNotify(`✅ PR MERGED !`, "info")
-                    safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
-                    stopPrCheckPolling()
-                } else if (state === "CLOSED") {
-                    stopPrCheckPolling()
-                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} was closed without merge.`, "info")
-                } else {
-                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${state})`)}`)
-                }
+                if (stopIfPrFinished(exact.number, watchedPr.url, exact.state)) return
+                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${exact.state})`)}`)
                 return
             }
 
             let pr: PrView | null
             try {
-                pr = getBranchOpenPr(cwd, branch)
+                pr = getBranchPr(cwd, branch)
             } catch (err) {
                 // Transient failure (network/auth/rate-limit): keep polling, notify only the first time.
                 consecutiveGhFailures++
@@ -422,16 +434,29 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             if (pr == null) {
                 consecutivePrMisses++
-                const gone = watchedPr ? ` Watched ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} is no longer open (closed or merged?).` : ""
-                // Stop when a previously seen PR vanished, or after the grace period with none ever found.
-                if (watchedPr || consecutivePrMisses >= PR_MISS_LIMIT) {
+                // A watched PR missing from the branch lookup is resolved by number, so the
+                // outcome is reported as fact instead of being guessed.
+                if (watchedPr) {
+                    const exact = viewPr(cwd, watchedPr.number)
+                    if (!exact) {
+                        stopPrCheckPolling()
+                        safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} cannot be found anymore.`, "warning")
+                        return
+                    }
+                    if (stopIfPrFinished(exact.number, watchedPr.url, exact.state)) return
                     stopPrCheckPolling()
-                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: no open PR on branch '${branch}'.${gone}`, "info")
+                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} is open but its head is no longer branch '${branch}'.`, "info")
+                    return
+                }
+                // No PR was ever seen: keep waiting for the agent to create it, then give up.
+                if (consecutivePrMisses >= PR_MISS_LIMIT) {
+                    stopPrCheckPolling()
+                    safeNotify(`${EXTENSION} ⏹️ Sorry, no PR could be found for branch '${branch}'.`, "info")
                     return
                 }
                 safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
-                debug(`No open PR on the branch "${branch}" yet (${consecutivePrMisses}/${PR_MISS_LIMIT})`)
-                return // no open PR on this branch yet — agent may still be creating it
+                debug(`No PR on the branch "${branch}" yet (${consecutivePrMisses}/${PR_MISS_LIMIT})`)
+                return // no PR on this branch yet — agent may still be creating it
             }
             consecutivePrMisses = 0
 
@@ -449,12 +474,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // TODO: inject a message to manage PR checks (workflows?)
             //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
 
-            if (pr.state === "MERGED") {
-                safeNotify(`✅ PR MERGED !`, "info")
-                safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
-                stopPrCheckPolling()
-                return
-            }
+            if (stopIfPrFinished(pr.number, pr.url ?? "", pr.state)) return
 
             // Check PR-level reviewDecision first
             const decision = pr.reviewDecision ?? ""
