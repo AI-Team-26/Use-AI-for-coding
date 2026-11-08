@@ -181,6 +181,29 @@
      Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
   """"
 
+- Feature 74 | todo-task: extract `_shared/github.ts` and `_shared/session-sender.ts` (from PR #129 review)
+  `todo-task.ts` is ~990 lines with ~7 responsibilities. Three blocks are not todo-task's business:
+  - GitHub layer: `getOpenPrList` / `viewPr` / `resolveOpenPr` / `switchToPrBranch` + `PrView`/`PrSummary`
+    → `_shared/github.ts` (Feature 37 and Bug 64 will add callers; `viewPr()` already serves `/pr` and the poller).
+  - session-sender machinery: `MessageSender`, `messageQueue`, `flushMessageQueue`, `safeSendUserMessage`,
+    `safeSendMessage`, `hasValidSender` / `ownSessionReplacement` / `resetSender` (~100 lines)
+    → `_shared/session-sender.ts` (generic "survive newSession/fork" plumbing; Bugs 43/44/48/50 fix it).
+  - `parseCommandArgs` (`todo-task.ts`) and `parseReviewArgs` (`pr-review.ts`) are the same ~25 lines.
+  ≈ −230 lines with zero behaviour change, so it must be a mechanical PR of its own.
+  Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
+  Also removes the 400-line forward reference to `viewPr()` in the poller.
+
+- Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
+  Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
+  by live container runs. Move `checkPrReview` / `startPrCheckPolling` / `stopPrCheckPolling` / `watchedPr`
+  into their own module and test it with a stubbed `gh`/`git`/`setInterval`: discovery with no PR yet,
+  discovery → merge, reused branch with only old closed PRs, transient failure → retry → recovery,
+  merge detected while on `main`/detached HEAD, closed without merge, and no per-tick toasts.
+  A throwaway harness proving these seven scenarios passed was used to validate PR #129.
+  Same PR can delete the ~45 zero-risk leftover lines in `todo-task.ts` (commented `agentMessage_old`
+  block, commented "Auto-detect" block, `//console.error` / `//safeNotify` leftovers, `checkCounter`
+  replaced by a `firstTick` boolean).
+
 ### OpenCode
 
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
