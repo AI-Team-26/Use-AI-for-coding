@@ -132,6 +132,17 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
+- Bug 64 (remaining) | todo-task execution report is not attached when the PR is not open
+  `appendReportToPr()` (`:228`) and `finishActivity()` (`:1023-1026`) still look the branch PR up with
+  `--state open`, so a merged/closed PR yields an empty list and the report is dropped. Reported as:
+  ```
+  Start PR check...
+  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
+  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
+  ```
+  Only the poller half is fixed; this one needs the same any-state lookup as the poller
+  (`getBranchPrList(..., "all")`) plus a decision on whether a report should be appended to a merged PR.
+
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
@@ -199,7 +210,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Bug 16 (stop side) + Bug 64 [fix/69_todo_polling_stop]: todo-task PR polling now stops when no open PR exists on the branch — immediately if a previously watched PR vanished (closed/merged, also detected from the default branch via `gh pr view`), otherwise after a ~5 min grace period; transient gh failures are notified once per run instead of every tick
+- Bug 16 (stop side) [fix/69_todo_polling_stop]: todo-task PR polling now stops when the watched PR is no longer open — merged/closed is resolved by number (`gh pr view`) or found by the branch lookup (`gh pr list --state all`), and a fully absent PR keeps waiting under the 4 h safenet instead of a guessed grace period; transient gh failures are notified once per run instead of every tick. Bug 64's report-attachment half stays in the Backlog
 - Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
 - Bug 46 [obsolete]: todo-task resolves the model from `ctx.model` (and `/models` for Llama.cpp), so it no longer parses footer text and cannot capture `34 tok/s`; removed from backlog
 - Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
