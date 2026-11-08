@@ -340,28 +340,32 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return prs[0] ?? null
     }
 
-    // Watching: always the watched PR by number, whatever branch is checked out.
-    const viewPrForReview = (cwd: string, prNumber: number): PrView | null =>
-        viewPr<PrView>(cwd, prNumber, "number,state,mergeable,reviewDecision,reviews,url")
+    // Watching: always the watched PR by number, whatever branch is checked out. The URL is
+    // preferred so a re-arm from another repository cannot resolve a same-numbered PR.
+    const viewPrForReview = (cwd: string, prNumber: number, url?: string): PrView | null =>
+        viewPr<PrView>(cwd, url || prNumber, "number,state,mergeable,reviewDecision,reviews,url")
 
     // Transient gh failures are notified once per run, then demoted to debug: a single network,
     // auth or rate-limit error must not end the watch (PR_CHECKING_MAX_MS bounds it instead).
     const onGhFailure = (context: string, err: unknown): void => {
         consecutiveGhFailures++
+        safeSetStatus(latestCtx, STATUS_KEY_PR, `⚠️ ${GRAY}PR check failing (${consecutiveGhFailures}x)${RESET}`)
         if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ ${context} (will retry).`, "error")
         debug(`${context} failed (${consecutiveGhFailures}x): ${err}`)
     }
 
-    // Announces a finished PR and stops the watcher. Returns true when the watch ended.
+    // Announce a finished PR and stop the watch. The agent is told too: it may be sitting in a
+    // long session waiting for a review that will never arrive.
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         stopPrCheckPolling()
         if (pr.state === "MERGED") {
-            safeNotify(`✅ PR MERGED !`, "info")
-            safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
+            safeNotify(`✅ PR MERGED ! ${link}`, "info")
+            safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
         } else {
             safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${link} was closed without merge.`, "info")
+            safeSendUserMessage(`PR #${pr.number} was closed without merge — confirm with the user before continuing.`, { deliverAs: "followUp" })
         }
         return true
     }
@@ -390,7 +394,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // number — so a merge or close is detected from any branch, including main/detached.
             let pr: PrView | null
             if (watchedPr) {
-                pr = viewPrForReview(cwd, watchedPr.number)
+                pr = viewPrForReview(cwd, watchedPr.number, watchedPr.url)
                 if (!pr) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
             } else {
                 let branch = ""
@@ -415,10 +419,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
             }
             consecutiveGhFailures = 0
+            // Keep the identity and the URL in sync with what `gh` just returned.
+            watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
 
-            if (latestCtx) {
-                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
-            } else safeNotify(`${EXTENSION} ❌ latestCtx is null`, "error")
+            safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
 
             if (stopIfPrFinished(pr)) return
 
@@ -474,12 +478,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
     }
 
-    const startPrCheckPolling = (cwd: string): void => {
+    // A caller that already knows the PR hands it in, so the watch starts by number instead of
+    // falling back to branch discovery (which cannot see a PR that is already merged or closed).
+    const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
         safeNotify(`Start PR check...`, "info")
         stopPrCheckPolling()
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
-        watchedPr = null
+        watchedPr = pr
         consecutiveGhFailures = 0
         prCheckTimer = setInterval(() => {
             checkPrReview(cwd)
@@ -508,7 +514,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // true only after our withSession ran, so a false value here means an external
         // replacement (/new, model switch, ...) invalidated the sender.
         if (hasValidSender) {
-            startPrCheckPolling(ctx.cwd ?? process.cwd())
+            // The number survives the replacement: re-discovery would look for an open PR that may
+            // have been merged or closed while the session was switched.
+            startPrCheckPolling(ctx.cwd ?? process.cwd(), watchedPr)
             startStatusTimer()
         } else {
             stopPrCheckPolling()
@@ -765,8 +773,8 @@ ${typeData.extra ?? ""}\n\
     // closed can be reported distinctly from "does not exist".
     // Single-PR lookup shared by `/pr` and the poller. Returns null when `gh` fails or the
     // output cannot be parsed; callers that must not mistake a failure for "PR gone" retry it.
-    const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, prNumber: number, fields = "number,state,title,headRefName,url"): T | null => {
-        const res = spawnSync("gh", ["pr", "view", String(prNumber), "--json", fields], { cwd, encoding: "utf-8" })
+    const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, ref: number | string, fields = "number,state,title,headRefName,url"): T | null => {
+        const res = spawnSync("gh", ["pr", "view", String(ref), "--json", fields], { cwd, encoding: "utf-8" })
         if (res.status !== 0) return null
         try {
             return JSON.parse(res.stdout) as T
@@ -882,7 +890,7 @@ ${typeData.extra ?? ""}\n\
                 if (!pr) return
                 if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
 
-                startPrCheckPolling(projectRoot)
+                startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
             } catch (err) {
                 safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, "error")
             }

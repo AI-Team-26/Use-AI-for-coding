@@ -17,6 +17,8 @@
   - PRs created outside the bash tool (GH web UI, `gh api`, scripts) never raise the event: keep a slow
     fallback poll (~2-5 min instead of 20 s) and keep `/pr <number>` as manual arming.
   - Once landed, the `pr == null` wait branch and the whole default/detached-branch discovery path can go.
+  - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
+    open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
 
 - Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
@@ -133,15 +135,16 @@
   Is it possible to delay this check start timer at the end ?
 
 - Bug 64 (remaining) | todo-task execution report is not attached when the PR is not open
-  `appendReportToPr()` (`:228`) and `finishActivity()` (`:1023-1026`) still look the branch PR up with
-  `--state open`, so a merged/closed PR yields an empty list and the report is dropped. Reported as:
+  `appendReportToPr()` and `finishActivity()` still look the branch PR up with `--state open`, so a
+  merged/closed PR yields an empty list and the report is dropped. Reported as:
   ```
   Start PR check...
   Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
   Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
   ```
-  Only the poller half is fixed; this one needs the same any-state lookup as the poller
-  (`getBranchPrList(..., "all")`) plus a decision on whether a report should be appended to a merged PR.
+  Only the poller half is fixed; this needs its own lookup plus a decision on whether a report should
+  be appended to a merged PR. The poller cannot be reused: it resolves a PR by number/URL that it
+  already knows, while `appendReportToPr()` starts from a branch name.
 
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
@@ -202,7 +205,8 @@
   A throwaway harness proving these seven scenarios passed was used to validate PR #129.
   Same PR can delete the ~45 zero-risk leftover lines in `todo-task.ts` (commented `agentMessage_old`
   block, commented "Auto-detect" block, `//console.error` / `//safeNotify` leftovers, `checkCounter`
-  replaced by a `firstTick` boolean).
+  replaced by a `firstTick` boolean, and the empty `if` body next to the report attach where every
+  `appendReportToPr` failure is reported as "no open PR" — real fix is Bug 64).
 
 ### OpenCode
 
@@ -258,7 +262,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Bug 16 (stop side) [fix/69_todo_polling_stop]: todo-task PR polling now stops when the watched PR is no longer open — merged/closed is resolved by number (`gh pr view`) or found by the branch lookup (`gh pr list --state all`), and a fully absent PR keeps waiting under the 4 h safenet instead of a guessed grace period; transient gh failures are notified once per run instead of every tick. Bug 64's report-attachment half stays in the Backlog
+- Bug 16 (stop side, partial) [fix/69_todo_polling_stop]: todo-task PR polling stops as soon as it can see the watched PR is finished. The PR identity is kept across re-arms (`/pr <n>`, session replacement), a finished PR is resolved by URL/number so merged/closed is reported as fact, and an absent PR keeps waiting under the 4 h safenet instead of a guessed grace period. Transient gh failures are notified once and shown in the status line. Known gap, hence "partial": a PR merged/closed *before* discovery first observed it is never seen (discovery only lists open PRs) and the watcher idles to the safenet — arming at PR creation (Bug 16 backlog) closes it. Bug 64's report-attachment half stays in the Backlog
 - Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
 - Bug 46 [obsolete]: todo-task resolves the model from `ctx.model` (and `/models` for Llama.cpp), so it no longer parses footer text and cannot capture `34 tok/s`; removed from backlog
 - Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
