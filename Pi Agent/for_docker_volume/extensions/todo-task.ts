@@ -109,9 +109,7 @@ const PR_CHECK_INTERVAL_MS = 20_000
 // Safenet: stop polling after this long even if no decision was made (can be increased later).
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours
 let checkCounter = 0
-// TODO... calculae MAX counter
 let prCheckStartedAt = 0
-let prCheckInFlight = false
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
@@ -201,19 +199,10 @@ const ensureTodoDir = (): Promise<void> =>
         })
         .then((_) => {})
 
-/**
- * Shared low-level helper: run `gh pr list --head <branch> --state <state> --json <fields>`.
- * With `state: "all"` merged/closed PRs are returned too, so an empty result means the
- * branch never had a PR at all.
- */
-function getBranchPrList<T>(cwd: string, branch: string, fields: string, state: "open" | "all"): T[] {
-    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", state, "--json", fields], { cwd, encoding: "utf-8" })
+function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
+    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
     if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
     return JSON.parse(res.stdout) as T[]
-}
-
-function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
-    return getBranchPrList<T>(cwd, branch, fields, "open")
 }
 
 /**
@@ -345,35 +334,43 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
     }
 
-    // Return the PR of a branch in any state, so merged/closed is reported as fact.
-    const getBranchPr = (cwd: string, branch: string): PrView | null => {
-        const prs = getBranchPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url", "all")
+    // Discovery: the open PR of a branch, used only until a PR has been watched once.
+    const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
+        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
         return prs[0] ?? null
     }
 
-    // Announces a finished PR and stops the watcher. Returns true when the watch ended.
-    const stopIfPrFinished = (prNumber: number, url: string, state: string): boolean => {
-        if (state === "MERGED") {
-            safeNotify(`✅ PR MERGED !`, "info")
-            safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
-            stopPrCheckPolling()
-            return true
-        }
-        if (state === "CLOSED") {
-            stopPrCheckPolling()
-            safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(url, `PR #${prNumber}`)} was closed without merge.`, "info")
-            return true
-        }
-        return false
+    // Watching: always the watched PR by number, whatever branch is checked out.
+    const viewPrForReview = (cwd: string, prNumber: number): PrView | null =>
+        viewPr<PrView>(cwd, prNumber, "number,state,mergeable,reviewDecision,reviews,url")
+
+    // Transient gh failures are notified once per run, then demoted to debug: a single network,
+    // auth or rate-limit error must not end the watch (PR_CHECKING_MAX_MS bounds it instead).
+    const onGhFailure = (context: string, err: unknown): void => {
+        consecutiveGhFailures++
+        if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ ${context} (will retry).`, "error")
+        debug(`${context} failed (${consecutiveGhFailures}x): ${err}`)
     }
 
-    const checkPrReview = async (cwd: string): Promise<void> => {
+    // Announces a finished PR and stops the watcher. Returns true when the watch ended.
+    const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
+        if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
+        const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
+        stopPrCheckPolling()
+        if (pr.state === "MERGED") {
+            safeNotify(`✅ PR MERGED !`, "info")
+            safeSendUserMessage("PR was merged (delete branch if wasn't).", { deliverAs: "followUp" })
+        } else {
+            safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${link} was closed without merge.`, "info")
+        }
+        return true
+    }
+
+    const checkPrReview = (cwd: string): void => {
         debug("checkPrReview")
         //safeNotify(`Checking PR review ...`, "info")
         checkCounter++
         safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
-
-        if (prCheckInFlight) return
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
@@ -388,83 +385,42 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        prCheckInFlight = true
-
         try {
-            const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
-            if (!branch || branch === "main" || branch === "master") {
-                // Discovery phase: at task start the repo is on main and the agent may not have
-                // created its branch/PR yet — keep waiting without counting misses.
-                if (!watchedPr) {
-                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
-                    debug(`On default/detached branch '${branch}' before any PR was seen — keeping discovery alive`)
-                    return
-                }
-                // Watched a PR but we're back on the default branch (typical post-merge flow):
-                // resolve it by number so its closed/merged state can end the watch here.
-                const exact = viewPr(cwd, watchedPr.number)
-                if (!exact) {
-                    consecutiveGhFailures++
-                    if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ Failed to fetch PR #${watchedPr.number} state (will retry).`, "error")
-                    return
-                }
-                consecutiveGhFailures = 0
-                if (stopIfPrFinished(exact.number, watchedPr.url, exact.state)) return
-                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${exact.state})`)}`)
-                return
-            }
-
+            // Two modes: discover the branch's open PR until one is found, then follow that PR by
+            // number — so a merge or close is detected from any branch, including main/detached.
             let pr: PrView | null
-            try {
-                pr = getBranchPr(cwd, branch)
-            } catch (err) {
-                // Transient failure (network/auth/rate-limit): keep polling, notify only the first time.
-                consecutiveGhFailures++
-                if (consecutiveGhFailures === 1) {
-                    safeNotify(`${EXTENSION} ❌ Failed to fetch PR of branch "${branch}" (will retry). ${err instanceof Error ? err.message : String(err)}`, "error")
+            if (watchedPr) {
+                pr = viewPrForReview(cwd, watchedPr.number)
+                if (!pr) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
+            } else {
+                let branch = ""
+                try {
+                    branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
+                } catch (err) {
+                    return onGhFailure("Failed to read the current branch", err)
                 }
-                debug(`checkPrReview() gh failed (${consecutiveGhFailures}x): ${err}`)
-                return
+                if (branch && branch !== "main" && branch !== "master") {
+                    try {
+                        pr = getBranchOpenPr(cwd, branch)
+                    } catch (err) {
+                        return onGhFailure(`Failed to fetch PR of branch "${branch}"`, err)
+                    }
+                } else pr = null
+                if (!pr) {
+                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
+                    debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
+                    return
+                }
+                watchedPr = { number: pr.number, url: pr.url ?? "" }
+                debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
             }
             consecutiveGhFailures = 0
 
-            if (pr == null) {
-                // A watched PR missing from the branch lookup is resolved by number, so the
-                // outcome is reported as fact instead of being guessed.
-                if (watchedPr) {
-                    const exact = viewPr(cwd, watchedPr.number)
-                    if (!exact) {
-                        stopPrCheckPolling()
-                        safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} cannot be found anymore.`, "warning")
-                        return
-                    }
-                    if (stopIfPrFinished(exact.number, watchedPr.url, exact.state)) return
-                    stopPrCheckPolling()
-                    safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} is open but its head is no longer branch '${branch}'.`, "info")
-                    return
-                }
-                // No PR was ever seen: the agent may still be creating it, so keep waiting.
-                // Bounded by PR_CHECKING_MAX_MS; the task-ended case is Bug 70.
-                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
-                debug(`No PR on the branch "${branch}" yet (${checkCounter})`)
-                return
-            }
-
-            watchedPr = { number: pr.number, url: pr.url ?? "" }
-
-            debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
-
-            // Update polling status indicator with clickable PR reference
             if (latestCtx) {
-                debug("Update PR status")
-                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`) // ${checkCounter}
+                safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
             } else safeNotify(`${EXTENSION} ❌ latestCtx is null`, "error")
-            //console.error(`${EXTENSION} ❌ latestCtx is null`)
 
-            // TODO: inject a message to manage PR checks (workflows?)
-            //if (pr.statusCheckRollup.findIndex( s => s.conclusion))
-
-            if (stopIfPrFinished(pr.number, pr.url ?? "", pr.state)) return
+            if (stopIfPrFinished(pr)) return
 
             // Check PR-level reviewDecision first
             const decision = pr.reviewDecision ?? ""
@@ -474,7 +430,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
             const hasChangesRequested = pr.reviews?.some((r) => r.state === "CHANGES_REQUESTED") ?? false
 
-            safeNotify(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter}) `, "info")
+            debug(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter})`)
 
             // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
             // Fall back to individual reviews to detect the approval.
@@ -485,7 +441,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // Effective decision: prefer aggregate, fall back to individual reviews
             const effectiveDecision = decision || (hasApprovalInReviews ? "APPROVED" : "")
 
-            safeNotify(`effectiveDecision: '${effectiveDecision}' (${checkCounter}) `, "info")
+            debug(`effectiveDecision: '${effectiveDecision}' (${checkCounter})`)
 
             // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
             // same aggregate value but have distinct review ids.
@@ -514,10 +470,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
         } catch (err) {
-            //console.error(`${EXTENSION} ❌ checkPrReview() `, err)
-            safeNotify(`❌ checkPrReview() failed. ${err}`, "error")
-        } finally {
-            prCheckInFlight = false
+            onGhFailure("checkPrReview() failed", err)
         }
     }
 
@@ -529,7 +482,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         watchedPr = null
         consecutiveGhFailures = 0
         prCheckTimer = setInterval(() => {
-            void checkPrReview(cwd)
+            checkPrReview(cwd)
         }, PR_CHECK_INTERVAL_MS)
         // Initial polling status will be set on first checkPrReview run
     }
@@ -810,11 +763,13 @@ ${typeData.extra ?? ""}\n\
 
     // Single-PR lookup, used when the PR is missing from the open list so merged and
     // closed can be reported distinctly from "does not exist".
-    const viewPr = (cwd: string, prNumber: number): (PrSummary & { state: string; url?: string }) | null => {
-        const res = spawnSync("gh", ["pr", "view", String(prNumber), "--json", "number,state,title,headRefName,url"], { cwd, encoding: "utf-8" })
+    // Single-PR lookup shared by `/pr` and the poller. Returns null when `gh` fails or the
+    // output cannot be parsed; callers that must not mistake a failure for "PR gone" retry it.
+    const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, prNumber: number, fields = "number,state,title,headRefName,url"): T | null => {
+        const res = spawnSync("gh", ["pr", "view", String(prNumber), "--json", fields], { cwd, encoding: "utf-8" })
         if (res.status !== 0) return null
         try {
-            return JSON.parse(res.stdout) as PrSummary & { state: string; url?: string }
+            return JSON.parse(res.stdout) as T
         } catch {
             return null
         }
