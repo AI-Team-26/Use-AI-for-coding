@@ -23,6 +23,21 @@
   - POLLING_STATUS_KEY = "alex-piccione-todo-task-polling" → polling indicator (🔍 PR #N)
   Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
 
+- Bug 70 | todo-task: PR polling never stops when the agent settles with no active task
+  `agent_settled` returns early when `pending` is null — which is exactly the case when the poller itself injects a followUp message and the agent answers without touching the task state. `stopPrCheckPolling()` is then never reached and the timer runs on.
+  Reproduced live on PR #125: `/feature end` → "Polling stopped", then `/pr 125` started it again and 4 poller-injected followUps settled with `pending: null` → "Polling stopped" never logged; the 🔍 PR indicator stayed until the `/feature end` of the next task.
+  Fix: on `agent_settled`, stop the PR polling whenever there is no active `pending` (a poller-driven settle ends the activity); passing `pending` into `checkPrReview()` instead of reading the module-level variable would also make the flow testable.
+  Note: PR #129 stops the poller when *no open PR exists on the branch*; this is the other leak — the PR is still open and the task has already ended. Re-check after #129 lands.
+
+- Feature 71 | todo-task: single watcher loop replacing the two independent timers
+  `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of Bug 70 and of the Feature 30 flicker.
+  Refactor into one watcher holding `{ pending, pr, startedAt, phase }` with explicit phases (`working` → `awaiting_review` → `ended`); the two status keys of Feature 30 stay separate.
+
+- Bug 72 | todo-task + pr-review: two pollers can watch the same PR
+  `/pr` (todo-task.ts `startPrCheckPolling`, ~20 s) and `/todo-task` (pr-review.ts `ensurePolling`, ~120 s) are independent pollers that both send the APPROVED/REJECTED message to the agent; running them together makes the fast one clear the notification state of the slow one.
+  `watchedPr`, `handledReviewDecisions` and `checkCounter` are reset by `startPrCheckPolling()`, but the other poller's timer keeps running untouched.
+  Fix: one owner for the poller (the other command delegates to it) or shared state; related to Feature 30 (one status, one source of truth).
+
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
   ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
@@ -63,6 +78,7 @@
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
 - Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
+  Note (from the #125 review): the `~/.pi/agent/extensions/*.ts` copies are stale — they still use the pre-Feature-30 single `STATUS_KEY` and `prReview.ts` (lowercase `e`), while the repo moved to `Pi Agent/for_docker_volume/extensions/` with `pr-review.ts`. Only `todo-task.ts` is up to date there. Refresh the deployed folder (or the deploy step) together with this task.
 
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
