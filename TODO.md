@@ -147,6 +147,32 @@
   Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
   Start PR check...
   ```
+
+- Bug 73 | todo-task /pr must watch unresolved review threads (/pr + /review: use GitHub review threads (isResolved))
+
+  Comment by Pi Lemon (qwen3.8-flash):
+  """ 
+  todo-task /pr + /review: use GitHub review threads (isResolved) as the review protocol
+     /review posts each finding as an inline comment on file:line (a thread); /pr polls reviewThreads and wakes the
+     agent while any thread is unresolved, then tells the human it is ready to merge. No numbering/body parsing.
+     Also: with all agents on one account a formal APPROVE/REQUEST_CHANGES is impossible (GitHub 422 for the PR author),
+     so reviewDecision stays REVIEW_REQUIRED forever and the current poller acts on nothing — it must switch to threads.
+     Follow-up: set required_review_thread_resolution=true in the "main branch" ruleset (admin token).
+  """
+
+  Comamnt by Pi Orange ():
+  """
+  todo-task: `/pr N` must watch unresolved GitHub review threads
+     All agents share one GitHub account, so formal APPROVED/CHANGES_REQUESTED reviews cannot be relied on.
+     `/pr N` currently checks `reviewDecision` and reviews but can miss actionable inline review comments.
+     Use GitHub GraphQL `reviewThreads` and the native `isResolved` field to detect unresolved findings.
+     Notify the agent once per new review comment, deduplicating by comment ID, and stop notifying once
+     the thread is resolved. Replies must use the native thread `/replies` endpoint.
+     Actionable findings must be posted as inline review threads; review summaries remain informational.
+     Do not add custom review numbering, titles, checkbox parsing, or comment-body state tracking.
+     Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
+  """"
+
 ### OpenCode
 
 - Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
