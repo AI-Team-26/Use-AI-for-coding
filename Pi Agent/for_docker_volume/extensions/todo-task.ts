@@ -112,10 +112,6 @@ let checkCounter = 0
 // TODO... calculae MAX counter
 let prCheckStartedAt = 0
 let prCheckInFlight = false
-// Consecutive ticks with no open PR on the branch: the agent may not have created it yet,
-// so we only give up after a grace period — or immediately if a previously watched PR vanished.
-let consecutivePrMisses = 0
-const PR_MISS_LIMIT = 15 // ~5 min of 20s ticks before concluding there is no PR for this task
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
@@ -433,7 +429,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             consecutiveGhFailures = 0
 
             if (pr == null) {
-                consecutivePrMisses++
                 // A watched PR missing from the branch lookup is resolved by number, so the
                 // outcome is reported as fact instead of being guessed.
                 if (watchedPr) {
@@ -448,17 +443,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)} is open but its head is no longer branch '${branch}'.`, "info")
                     return
                 }
-                // No PR was ever seen: keep waiting for the agent to create it, then give up.
-                if (consecutivePrMisses >= PR_MISS_LIMIT) {
-                    stopPrCheckPolling()
-                    safeNotify(`${EXTENSION} ⏹️ Sorry, no PR could be found for branch '${branch}'.`, "info")
-                    return
-                }
+                // No PR was ever seen: the agent may still be creating it, so keep waiting.
+                // Bounded by PR_CHECKING_MAX_MS; the task-ended case is Bug 70.
                 safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
-                debug(`No PR on the branch "${branch}" yet (${consecutivePrMisses}/${PR_MISS_LIMIT})`)
-                return // no PR on this branch yet — agent may still be creating it
+                debug(`No PR on the branch "${branch}" yet (${checkCounter})`)
+                return
             }
-            consecutivePrMisses = 0
 
             watchedPr = { number: pr.number, url: pr.url ?? "" }
 
@@ -537,7 +527,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = null
-        consecutivePrMisses = 0
         consecutiveGhFailures = 0
         prCheckTimer = setInterval(() => {
             void checkPrReview(cwd)

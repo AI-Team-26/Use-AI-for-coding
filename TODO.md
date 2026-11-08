@@ -7,9 +7,16 @@
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
 - Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
-  Polling currently arms immediately at task start and uses a ~5 min grace period while the agent
-  creates its branch/PR. Replace that heuristic with a true discovery phase: keep the watcher dormant
-  until the first open PR appears on the working branch, then switch to review-watching mode.
+  Polling is armed by `/feature N` / `/bugfix N`, i.e. long before a PR exists; the watcher then has to
+  idle through a discovery phase (currently unbounded, bounded only by the 4 h `PR_CHECKING_MAX_MS`).
+  Arm it from the creation event instead and delete the discovery machinery:
+  - `pi.on("tool_execution_end")`: when `toolName === "bash"`, `!isError` and the command matches
+    `\bgh\s+pr\s+create\b`, parse the PR number from the printed PR URL and call
+    `startPrCheckPolling()` with `watchedPr` already set (checks by number from the first tick).
+  - Guard: only when a task is `pending`, never re-arm while `prCheckTimer` is already running.
+  - PRs created outside the bash tool (GH web UI, `gh api`, scripts) never raise the event: keep a slow
+    fallback poll (~2-5 min instead of 20 s) and keep `/pr <number>` as manual arming.
+  - Once landed, the `pr == null` wait branch and the whole default/detached-branch discovery path can go.
 
 - Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
