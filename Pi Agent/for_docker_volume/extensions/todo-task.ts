@@ -677,7 +677,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
 
         startStatusTimer()
-        //startPrCheckPolling(projectRoot)
 
         // Inject the task to the agent
 
