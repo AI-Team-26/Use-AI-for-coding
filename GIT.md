@@ -228,5 +228,6 @@ repository permissions:
 - Contents: Read only
 - Pull requests: Read & Write
 
-It is installed only for the organization. The final decision (GitHub App vs. second account) is part of the
-PAT/access documentation; see `GitHub access for Agent.md`.
+It is installed only for the organization. The decision is recorded in
+[`GitHub access for Agent.md`](GitHub%20access%20for%20Agent.md#pr-review-account): second account as
+reviewer (adopted), GitHub App trialled and not adopted.

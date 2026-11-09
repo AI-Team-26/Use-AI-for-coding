@@ -29,7 +29,7 @@ Topics with **no documentation at all** today: fine-grained PAT permission check
 ## Sub-tasks
 
 - **12.1 — "Git & GitHub auth: current implementation"** ✅ (rewritten `GIT.md` / merged the overlap): env-var table → `github_pat` format → per-owner PAT resolution → `GITHUB_TOKEN` → gh credential helper → git identity. Obsolete `.git-credentials` sections deleted, `[TODO]`s closed. The not-owned-repository path is documented against the current code and should be revisited after Feature 22.
-- **12.2 — "Creating the PATs"**: step-by-step fine-grained PAT with the exact permissions (including Workflows *Read* vs *Read & Write* and the secret-exfiltration warning), org-level "Allow access via fine-grained personal access tokens", the pending-request approval gotcha; record the GitHub App / second-reviewer decision from `GIT.md`.
+- **12.2 — "Creating the PATs"** ✅: step-by-step fine-grained PAT section in `GitHub access for Agent.md` with the permission checklist (Workflows *Read* vs *Read & Write* + secret-exfiltration warning), org-level "Allow access via fine-grained personal access tokens" toggle, the pending-request approval gotcha, and the recorded PR-review-account decision (second account adopted, GitHub App trialled/not adopted); the stale `[TODO]` credential-helper form closed.
 - **12.3 — "Troubleshooting"**: fill the empty `## Troubleshooting` section, see the table below.
 - **12.4 — Rulesets & branch protection**: document `scripts/create-ruleset.sh` (it reads `~/scripts/github_pat`) and the `.github/workflows` push limits; cross-link from `Pi Agent/README Pi Agent.md`.
 
