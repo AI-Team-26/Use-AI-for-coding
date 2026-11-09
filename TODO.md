@@ -54,7 +54,6 @@
 - 
 - Feature 12 | Complete the documentation for GIT and GitHub setup
   Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
-- Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
 - Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
 - Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
 - Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
