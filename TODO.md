@@ -243,6 +243,13 @@
   - resolve `constants.sh` / CWD against the script location, not the caller's CWD
   - quote `$docker_image`
 
+- Feature 76 | todo-task: drop the redundant `hasValidSender` flag
+  `hasValidSender` is always changed together with `messageSender` (set in `withSession`, cleared in
+  `resetSender()` and `session_shutdown`), so `messageSender !== null` is equivalent in every place.
+  Delete the flag and replace its usages (`safeSendMessage`, `safeSendUserMessage`, `session_start` handler)
+  with a `messageSender === null` / `!== null` check — removes a sync-risk pair of module-scope variables.
+  Likely folds into Feature 74 (`_shared/session-sender.ts` extraction).
+
 - Feature 77 | Delete Feature 30, already implemented.
 
 - Feature 999 | Test
