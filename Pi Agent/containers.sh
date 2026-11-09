@@ -44,10 +44,12 @@ if has_step create_image; then
         .
 fi
 
+
 # Setup -------------------------------------------------------------------------------------------
 if has_step setup; then
     ./containers_setup.sh
 fi
+
 
 # Create containers -------------------------------------------------------------------------------
 if has_step create_container; then

@@ -965,15 +965,9 @@
             "supportsReasoningEffort": false
         },
         "models:free_quota_exausted": [
-            "deepseek-v4.1-flash-1017", "kimi-3", "qwen3.8-flash"
+            "deepseek-v4.1-flash-1017", "kimi-3", "qwen3.8-flash", "deepseek-v4-pro-0813"
         ],
         "models":[
-            {
-                "id": "deepseek-v4-pro-0813",
-                "name": "Free quota",
-                "maxTokens": 8192,
-                "reasoning": true
-            },
             {
                 "id": "qwen3.8-max-0902",
                 "name": "Free quota",
