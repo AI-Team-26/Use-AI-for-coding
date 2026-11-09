@@ -8,17 +8,18 @@
  * the extensions folder and `<dir>/index.ts` are loaded).
  */
 
-import type { ExtensionContext } from '@earendil-works/pi-coding-agent'
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
+import { execSync, spawnSync } from "node:child_process"
 
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 export const CYAN = "\x1b[36m"
 export const BLUE = "\x1b[34m"
 export const GREEN = "\x1b[32m"
-export const GRAY = "\x1b[90m"    // bright gray / dim white
-export const DIM = "\x1b[2m"      // dim (renders as darker version of current fg)
+export const GRAY = "\x1b[90m" // bright gray / dim white
+export const DIM = "\x1b[2m" // dim (renders as darker version of current fg)
 export const RESET = "\x1b[0m"
 
-export type NotifyType = 'info' | 'warning' | 'error'
+export type NotifyType = "info" | "warning" | "error"
 export type ContextGetter = () => ExtensionContext | null
 
 /**
@@ -27,8 +28,8 @@ export type ContextGetter = () => ExtensionContext | null
  * Degrades gracefully to plain text in unsupported terminals.
  */
 export function osc8Link(url: string, text: string): string {
-  if (!url) return text
-  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
+    if (!url) return text
+    return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
 }
 
 /**
@@ -37,23 +38,18 @@ export function osc8Link(url: string, text: string): string {
  * replaced by a session swap while the caller is running.
  * Skips only when no ctx arrived yet; any other failure is logged, never silenced.
  */
-export function safeNotify(
-  getCtx: ContextGetter,
-  message: string,
-  type: NotifyType = 'info',
-  source = 'EXTENSION',
-): void {
-  const ctx = getCtx()
-  if (!ctx) {
-    console.error(`${source} ❌ safeNotify() got a null ctx`)
-    console.info(`${source} ${message}`)
-    return
-  }
-  try {
-    ctx.ui.notify(message, type)
-  } catch (err) {
-    console.error(`${source} ❌ safeNotify() failed.`, err)
-  }
+export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyType = "info", source = "EXTENSION"): void {
+    const ctx = getCtx()
+    if (!ctx) {
+        console.error(`${source} ❌ safeNotify() got a null ctx`)
+        console.info(`${source} ${message}`)
+        return
+    }
+    try {
+        ctx.ui.notify(message, type)
+    } catch (err) {
+        console.error(`${source} ❌ safeNotify() failed.`, err)
+    }
 }
 
 /**
@@ -62,21 +58,21 @@ export function safeNotify(
  * and the delivery channel stay those of the calling extension.
  */
 export function safeSetStatus(
-  ctx: ExtensionContext | null,
-  key: string,
-  text: string | undefined,
-  notify: (message: string, type: NotifyType) => void,
-  source = 'EXTENSION',
+    ctx: ExtensionContext | null,
+    key: string,
+    text: string | undefined,
+    notify: (message: string, type: NotifyType) => void,
+    source = "EXTENSION",
 ): void {
-  if (!ctx) {
-    notify(`${source} ❌ safeSetStatus() got a null ctx.`, 'error')
-    return
-  }
-  try {
-    ctx.ui.setStatus(key, text)
-  } catch (err) {
-    notify(`${source} ❌ safeSetStatus() failed. ${err}.`, 'error')
-  }
+    if (!ctx) {
+        notify(`${source} ❌ safeSetStatus() got a null ctx.`, "error")
+        return
+    }
+    try {
+        ctx.ui.setStatus(key, text)
+    } catch (err) {
+        notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+    }
 }
 
 /**
@@ -84,7 +80,27 @@ export function safeSetStatus(
  * of the extension it belongs to.
  */
 export function createDebug(name: string, enabled = false): (message: string) => void {
-  return (message: string) => {
-    if (enabled) console.debug(`\n[DEBUG][${name}] ${message}`)
-  }
+    return (message: string) => {
+        if (enabled) console.debug(`\n[DEBUG][${name}] ${message}`)
+    }
+}
+
+// Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
+export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
+    try {
+        // --rebase reconciles divergent branches without a merge commit;
+        // --autostash keeps uncommitted work out of the way.
+        execSync("git checkout main && git pull --rebase --autostash", {
+            cwd,
+            encoding: "utf-8",
+            stdio: "pipe",
+        })
+        safeNotify(getCtx, `Moved to updated main branch`, "info")
+        return true
+    } catch (err) {
+        const e = err as { stderr?: string; message: string }
+        const detail = (e.stderr ?? "").trim() || e.message
+        safeNotify(getCtx, `❌ Git update failed: ${detail}. ${err}`, "error")
+        return false
+    }
 }

@@ -44,11 +44,11 @@
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent, SessionContext } from "@earendil-works/pi-coding-agent"
+import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from "@earendil-works/pi-coding-agent"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
-import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as sharedSafeSetStatus, createDebug, type NotifyType } from "./_shared/common.ts"
+import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as sharedSafeSetStatus, createDebug, pullLatestMain, type NotifyType } from "./_shared/common.ts"
 
 const EXTENSION = "TODO-TASK"
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? "", ".pi", "agent", "todo-tasks")
@@ -57,13 +57,17 @@ const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
 const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs served by llama-server (in models.json Pi file)
 
 let latestCtx: ExtensionContext | null = null
-let pending: TimingItem | null = null // represent hte current task, should be called CurrentTask ?
-let completed = false // is current task completed ? shoud it be a property of CurrentTask ?
+let currentTask: CurrentTask | null = null
+//let completed = false // is current task completed ? shoud it be a property of CurrentTask ?
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
-
 let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>() // track reviews to not "resend" messages/action multiple time for the same
+
+// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
+let taskStatusTimer: ReturnType<typeof setInterval> | null = null
+const STATUS_UPDATE_MS = 15_000
+
 
 // A context capable of injecting messages into the agent stream: either the `pi` API
 // (stale after any session replacement) or a fresh ReplacedSessionContext.
@@ -95,9 +99,6 @@ function resetSender(): void {
     messageQueue.length = 0
 }
 
-// Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
-let statusTimer: ReturnType<typeof setInterval> | null = null
-const STATUS_UPDATE_MS = 15_000
 
 // PR review-watcher state lives at module scope rather than per extension instance:
 // Pi can instantiate the factory again on session replacement without shutting the
@@ -106,8 +107,7 @@ const STATUS_UPDATE_MS = 15_000
 // clears any leaked interval before arming a fresh one.
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
-// Safenet: stop polling after this long even if no decision was made (can be increased later).
-const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours
+const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 let checkCounter = 0
 let prCheckStartedAt = 0
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
@@ -138,10 +138,12 @@ async function resolveModelName(): Promise<string> {
     return `${m.provider}/${m.name ?? "unknown"}`
 }
 
-interface TimingItem {
+interface CurrentTask {
     type: "feature" | "bug"
     number: number
     startTime: number
+    completed: boolean
+    //name: () => `${type} ${number}`
 }
 
 function safeNotify(message: string, type: NotifyType = "info"): void {
@@ -154,26 +156,26 @@ function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string |
 
 function startStatusTimer(): void {
     stopStatusTimer()
-    if (!pending) return
+    if (currentTask === null) return
     const refresh = () => {
-        if (!pending) {
+        if (!currentTask) {
             stopStatusTimer()
             return
         }
-        const emoji = pending.type === "feature" ? "☑️" : "🐛"
+        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
         safeSetStatus(
             latestCtx,
             STATUS_KEY_TASK,
-            `${emoji} ${pending.type === "feature" ? "Feature" : "Bug"} ${pending.number} (${formatElapsed(Date.now() - pending.startTime)})`,
+            `${emoji} ${currentTask.type === "feature" ? "Feature" : "Bug"} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`,
         )
     }
     refresh()
-    statusTimer = setInterval(refresh, STATUS_UPDATE_MS)
+    taskStatusTimer = setInterval(refresh, STATUS_UPDATE_MS)
 }
 
 function stopStatusTimer(): void {
-    if (statusTimer) clearInterval(statusTimer)
-    statusTimer = null
+    if (taskStatusTimer) clearInterval(taskStatusTimer)
+    taskStatusTimer = null
 }
 
 // TODO is the fff part really needed ?
@@ -205,20 +207,16 @@ function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
     return JSON.parse(res.stdout) as T[]
 }
 
-/**
- * Append the unified execution report to the open PR of the current branch.
- * Returns true when the report is present in the PR body (added or already there).
- */
-function appendReportToPr(cwd: string, report: string): boolean {
+function appendReportToPr(cwd: string, report: string) {
     try {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
         if (!branch || branch === "main" || branch === "master") return false
 
         const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
-        const pr = prs[0]
-        if (!pr) {
+        const pr = prs[0]        
+        if (pr === null) {
             safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
-            return false
+            return;
         }
 
         const body = (pr.body ?? "").trimEnd()
@@ -228,33 +226,11 @@ function appendReportToPr(cwd: string, report: string): boolean {
 
         const editRes = spawnSync("gh", ["pr", "edit", String(pr.number), "--body", `${body}\n\n${report}`], { cwd, encoding: "utf-8" })
         if (editRes.status !== 0) throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
-        debug(`Report appended to PR #${pr.number} description`)
-        return true
     } catch (err) {
         safeNotify(`${EXTENSION} ❌ Failed to attach report to PR. ${err}`, "error")
-        return false
     }
 }
 
-// Checkout main + pull so we read the latest TODO.md; notifies with the real error on failure.
-function pullLatestMain(cwd: string): boolean {
-    try {
-        // --rebase reconciles divergent branches without a merge commit;
-        // --autostash keeps uncommitted work out of the way.
-        execSync("git checkout main && git pull --rebase --autostash", {
-            cwd,
-            encoding: "utf-8",
-            stdio: "pipe",
-        })
-        safeNotify(`Moved to updated main branch`, "info")
-        return true
-    } catch (err) {
-        const e = err as { stderr?: string; message: string }
-        const detail = (e.stderr ?? "").trim() || e.message
-        safeNotify(`❌ Git update failed: ${detail}. ${err}`, "error")
-        return false
-    }
-}
 
 // Minimal PR info needed to pick and switch to a branch.
 interface PrSummary {
@@ -274,13 +250,14 @@ interface PrView {
 }
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-    const clearPending = (ctx: ExtensionContext): void => {
-        if (!pending) return
+    const clearCurrentTask= (ctx: ExtensionContext, reason: string): void => {
+        if (currentTask === null) return
+        safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         stopStatusTimer()
         stopPrCheckPolling()
         resetSender()
         safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
-        pending = null
+        currentTask = null
     }
 
     // Swallow both sync throws and async rejections from a possibly-stale sender:
@@ -483,15 +460,15 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // A caller that already knows the PR hands it in, so the watch starts by number instead of
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
     const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
-        safeNotify(`Start PR check...`, "info")
+        safeNotify(`Start PR check... 1`, "info")
+        safeNotify(`Start PR check... 2`, "info")
+        safeNotify(`Start PR check... 3`, "info")
         stopPrCheckPolling()
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
-        prCheckTimer = setInterval(() => {
-            checkPrReview(cwd)
-        }, PR_CHECK_INTERVAL_MS)
+        prCheckTimer = setInterval(() => { checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
         // Initial polling status will be set on first checkPrReview run
     }
 
@@ -500,13 +477,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         prCheckTimer = null
         checkCounter = 0
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
+        //safeNotify(`Stop PR check.`, "info")
     }
 
     // Track the latest ctx from every event that delivers one; command handlers also
     // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
     pi.on("session_start", (_event, ctx: ExtensionContext) => {
         latestCtx = ctx
-        if (!pending) return
+        if (currentTask === null) return
         // ctx.newSession() emits session_shutdown and session_start BEFORE running the
         // withSession callback (see finishSessionReplacement in pi's agent-session-runtime),
         // so the session_start of our own replacement must not be mistaken for an external
@@ -580,19 +558,19 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         const END = 0 // "end" command argument is managed to send "0"
 
         if (number === END) {
-            if (!pending) {
+            if (currentTask === null) {
                 safeNotify("❌ No active feature or bug to end.", "info")
                 return
             }
-            const { type: pendingType, number: pendingNumber } = pending
+            const { type: pendingType, number: pendingNumber } = currentTask
             stopPrCheckPolling()
-            clearPending(ctx)
+            clearCurrentTask(ctx, "Forceed END of task.")
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
         }
 
-        // Auto-cancel any pending activity before starting a new one
-        if (pending) clearPending(ctx)
+        // Cancel any currentTask activity before starting a new one
+        if (currentTask) clearCurrentTask(ctx, `Start new task (${type} ${number}).`)
 
         await ensureTodoDir()
 
@@ -603,7 +581,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         await fs.writeFile(filePath, startContent, "utf8")
 
         // Run git checkout main && git pull before sending the prompt
-        const onMain = pullLatestMain(projectRoot)
+        if (pullLatestMain(() => latestCtx, projectRoot) == false) return;
 
         // Check the number refers to an exising Feature or Bug entry in TODO.md
         let content: string
@@ -621,20 +599,19 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
 
         /*
-    // Auto-detect if number refers to a Feature or a Bug
-    if (new Set(matches.map(m => m[1])).size > 1) {
-      safeNotify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
-      return
-    }
-    */
+        // Auto-detect if number refers to a Feature or a Bug
+        if (new Set(matches.map(m => m[1])).size > 1) {
+        safeNotify(`\u274c Ambiguous: "${number}" exists as both a Feature and a Bug in the TODO backlog. Use /feature or specify which one.`, 'error')
+        return
+        }
+        */
 
-        pending = { type, number, startTime }
-        completed = false
+        currentTask = { type, number, startTime, completed:false }
 
         const label = type === "feature" ? "Feature" : "Bug"
-        const emoji = pending.type === "feature" ? "☑️" : "🐛"
+        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
         try {
-            pi.setSessionName(`${emoji} ${label} ${pending.number}`)
+            pi.setSessionName(`${emoji} ${label} ${currentTask.number}`)
         } catch {
             safeNotify(`❌ Failed to set the session name.`, "error")
         }
@@ -687,8 +664,7 @@ ${typeData.extra ?? ""}\n\
             try {
                 stopPrCheckPolling()
                 stopStatusTimer()
-                pending = null
-                completed = false
+                currentTask = null
                 resetSender()
                 safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
                 safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
@@ -903,8 +879,8 @@ ${typeData.extra ?? ""}\n\
     // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
     // a number must match the active pending item.
     pi.on("turn_end", (event: TurnEndEvent) => {
-        if (!pending) return
-        const { type, number: pendingNumber } = pending
+        if (currentTask === null) return
+        const { type, number: pendingNumber } = currentTask
         const msg = event.message
         if (msg?.role !== "assistant") return
         const text = msg.content
@@ -922,7 +898,7 @@ ${typeData.extra ?? ""}\n\
         if (!match) return
         // if a number was given it must refer to the active pending item
         if (match[1] !== undefined && parseFloat(match[1]) !== pendingNumber) return
-        completed = true
+        currentTask.completed = true
     })
 
     // Finalize once the run has fully settled (no retries/compactions/queued continuations
@@ -931,20 +907,19 @@ ${typeData.extra ?? ""}\n\
     // the timer keeps running until the marker is seen or /feature end / /bug end cancels it.
     pi.on("agent_settled", async (_event: AgentSettledEvent, ctx: ExtensionContext) => {
         latestCtx = ctx
-        if (!pending || !completed) return
-        await finishActivity(ctx)
+        if (currentTask?.completed) await finishActivity(ctx)
     })
 }
 
 async function finishActivity(ctx: ExtensionContext): Promise<void> {
-    if (!pending || !completed) return
+    if (!currentTask?.completed) return
     latestCtx = ctx
 
     const endTime = Date.now()
-    const elapsedMs = endTime - pending.startTime
-    const elapsedMinutes = (elapsedMs / 60000).toFixed(1)
+    const elapsedMs = endTime - currentTask.startTime
+    const elapsedMinutes = (elapsedMs / 60_000).toFixed(1)
 
-    const fileName = pending.type === "feature" ? `feature_${pending.number}.txt` : `bug_${pending.number}.txt`
+    const fileName = currentTask.type === "feature" ? `feature_${currentTask.number}.txt` : `bug_${currentTask.number}.txt`
     const filePath = path.join(TODO_FEATURES_DIR, fileName)
 
     // Get model info
@@ -954,11 +929,10 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
         // ctx may have gone stale during the awaited calls above; token count is best-effort
         tokens = ctx.getContextUsage()?.tokens ?? null
     } catch (err) {
-        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")
-        //console.error(`${EXTENSION} ❌ getContextUsage() `, err)
+        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")        
     }
 
-    const label = pending.type === "feature" ? "Feature" : "Bug"
+    const label = currentTask.type === "feature" ? "Feature" : "Bug"
     const report = `## AI agent execution report  
 
 _(first push only, without following reviews rework)_  
@@ -975,24 +949,15 @@ _(first push only, without following reviews rework)_
     }
 
     // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
-    safeNotify(`✅ ${label} ${pending.number} completed in ${elapsedMinutes} minutes.`, "info")
+    safeNotify(`✅ ${label} ${currentTask.number} completed in ${elapsedMinutes} minutes.`, "info")
     stopStatusTimer()
     safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
 
-    if (!taskProjectRoot) {
-        safeNotify(`${EXTENSION} ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`, "error")
-        //console.error(`[${EXTENSION}] ❌ finishActivity(). Unexpected taskProjectRoot: '${taskProjectRoot}'.`)
-    }
+    if (taskProjectRoot === null)
+        safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
+    else
+        appendReportToPr(taskProjectRoot, report)
 
-    // Write the report directly into the open PR description (no chat pollution)
-    if (taskProjectRoot && appendReportToPr(taskProjectRoot, report)) {
-        //safeNotify(ctx, `📝 Execution report added to the PR description.`, 'info')
-    } else {
-        safeNotify(`⚠️ No open PR found on the current branch — execution report not attached to a PR.`, "warning")
-    }
-
-    // Clean up state (also clears message queue and resets sender validity)
     resetSender()
-    pending = null
-    completed = false
+    currentTask = null
 }
