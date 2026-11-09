@@ -360,6 +360,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         stopPrCheckPolling()
+        // The outcome is delivered, so a re-arm (session_start) must not announce it a second time.
+        // Deliberately not in stopPrCheckPolling(): the session-replacement re-arm needs the number.
+        watchedPr = null
         if (pr.state === "MERGED") {
             safeNotify(`✅ PR MERGED ! ${link}`, "info")
             safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
@@ -415,8 +418,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
                     return
                 }
-                watchedPr = { number: pr.number, url: pr.url ?? "" }
-                debug(`PR "#${watchedPr.number}" found on the branch "${branch}"`)
+                debug(`PR "#${pr.number}" found on the branch "${branch}"`)
             }
             consecutiveGhFailures = 0
             // Keep the identity and the URL in sync with what `gh` just returned.
