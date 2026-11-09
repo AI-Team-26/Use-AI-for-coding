@@ -58,10 +58,10 @@ const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs 
 
 let latestCtx: ExtensionContext | null = null
 let currentTask: CurrentTask | null = null
+let watchedPr: WatchedPr | null = null
 //let completed = false // is current task completed ? shoud it be a property of CurrentTask ?
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
-let watchedPr: { number: number; url: string } | null = null
 const handledReviewDecisions = new Map<string, string>() // track reviews to not "resend" messages/action multiple time for the same
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
@@ -100,21 +100,54 @@ function resetSender(): void {
 }
 
 
-// PR review-watcher state lives at module scope rather than per extension instance:
-// Pi can instantiate the factory again on session replacement without shutting the
-// previous one down, leaking a stale poll interval whose 2h clock never resets
-// Sharing the state guarantees a single watcher process-wide; startPrPolling()
-// clears any leaked interval before arming a fresh one.
+// The timer lives at module scope because Pi never disposes the old extension instance on session swap, 
+// so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 let checkCounter = 0
-let prCheckStartedAt = 0
+let prCheckStartedAt = 0  // TOSO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
 const DEBUG = false
 const debug = createDebug(EXTENSION, DEBUG)
+
+// Ojects 
+// -------------------------------------------------------------------------------------------------------------------------------------------
+
+interface CurrentTask {
+    type: "feature" | "bug"
+    number: number
+    startTime: number
+    completed: boolean
+    //name: () => `${type} ${number}`
+}
+
+interface WatchedPr {
+    number: number
+    url: string 
+}
+
+// Minimal PR info needed to pick and switch to a branch.
+interface PrSummary {
+    number: number
+    headRefName: string
+    title: string
+}
+
+interface PrView {
+    number: number
+    state: string
+    mergeable: string // 'CONFLICTING'
+    //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
+    reviewDecision: string | null
+    reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
+    url?: string
+}
+
+// Helper functions 
+// -------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  * Resolve the model actually serving requests, formatted as `<provider>/<model>`.
@@ -138,13 +171,6 @@ async function resolveModelName(): Promise<string> {
     return `${m.provider}/${m.name ?? "unknown"}`
 }
 
-interface CurrentTask {
-    type: "feature" | "bug"
-    number: number
-    startTime: number
-    completed: boolean
-    //name: () => `${type} ${number}`
-}
 
 function safeNotify(message: string, type: NotifyType = "info"): void {
     sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
@@ -232,22 +258,8 @@ function appendReportToPr(cwd: string, report: string) {
 }
 
 
-// Minimal PR info needed to pick and switch to a branch.
-interface PrSummary {
-    number: number
-    headRefName: string
-    title: string
-}
-
-interface PrView {
-    number: number
-    state: string
-    mergeable: string // 'CONFLICTING'
-    //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
-    reviewDecision: string | null
-    reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
-    url?: string
-}
+// Extension 
+// -------------------------------------------------------------------------------------------------------------------------------------------
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask= (ctx: ExtensionContext, reason: string): void => {
@@ -460,10 +472,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // A caller that already knows the PR hands it in, so the watch starts by number instead of
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
     const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
-        safeNotify(`Start PR check... 1`, "info")
-        safeNotify(`Start PR check... 2`, "info")
-        safeNotify(`Start PR check... 3`, "info")
         stopPrCheckPolling()
+        safeNotify(`Start PR check...`, "info")  // after stopPrCheckPolling so we see the notification        
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
@@ -477,7 +487,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         prCheckTimer = null
         checkCounter = 0
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
-        //safeNotify(`Stop PR check.`, "info")
+        safeNotify(`Stop PR check.`, "info")
     }
 
     // Track the latest ctx from every event that delivers one; command handlers also
