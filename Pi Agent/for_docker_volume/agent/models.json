@@ -959,6 +959,22 @@
         "_baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         "baseUrl": "https://ws-ne77ev3gyh866avy.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
         "api": "openai-completions",
+        "apiKey": "{{ALIBABA_API_KEY___TBD}}",
+        "compat": {
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": false
+        },
+        "models_free_quota_exausted": [
+            "deepseek-v4.1-flash-1017", "kimi-3", "qwen3.8-flash"
+        ],
+        "model":[
+
+        ]
+    },
+    
+    "AliBaba (Alex) Token Plan": {
+        "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+        "api": "openai-completions",
         "apiKey": "{{ALIBABA_API_KEY}}",
         "compat": {
             "supportsDeveloperRole": false,
