@@ -3,9 +3,6 @@
 ## Backlog
 
 
-- Feature 31 | todo-task extension
-  Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
-  
 - Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
   Polling is armed by `/feature N` / `/bugfix N`, i.e. long before a PR exists; the watcher then has to
   idle through a discovery phase (currently unbounded, bounded only by the 4 h `PR_CHECKING_MAX_MS`).
@@ -24,13 +21,6 @@
   After starting a fresh session (Feature 32), Pi crashes:
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
   The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
-
-- Feature 30 | todo-task extension: unify status display
-  Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
-  Use two separate status keys:
-  - STATUS_KEY = "alex-piccione-todo-task" → elapsed time (☑️ Feature N MM:SS)
-  - POLLING_STATUS_KEY = "alex-piccione-todo-task-polling" → polling indicator (🔍 PR #N)
-  Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
 
 - Bug 70 | todo-task: PR polling never stops when the agent settles with no active task
   `agent_settled` returns early when `pending` is null — which is exactly the case when the poller itself injects a followUp message and the agent answers without touching the task state. `stopPrCheckPolling()` is then never reached and the timer runs on.
@@ -61,12 +51,13 @@
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
+- 
 - Feature 12 | Complete the documentation for GIT and GitHub setup
   Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
-  - Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
-  - Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
-  - Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
-  - Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
+- Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
+- Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
+- Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
+- Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
