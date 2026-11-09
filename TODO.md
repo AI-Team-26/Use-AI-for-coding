@@ -25,13 +25,6 @@
   "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
   The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
 
-- Feature 30 | todo-task extension: unify status display
-  Currently the elapsed-time timer (☑️ Feature N) and the PR polling indicator (🔍 PR #N) fight for the same status key (STATUS_KEY), causing flicker.
-  Use two separate status keys:
-  - STATUS_KEY = "alex-piccione-todo-task" → elapsed time (☑️ Feature N MM:SS)
-  - POLLING_STATUS_KEY = "alex-piccione-todo-task-polling" → polling indicator (🔍 PR #N)
-  Both show simultaneously; polling status auto-clears when polling stops (merge, timeout, /feature end, shutdown).
-
 - Bug 70 | todo-task: PR polling never stops when the agent settles with no active task
   `agent_settled` returns early when `pending` is null — which is exactly the case when the poller itself injects a followUp message and the agent answers without touching the task state. `stopPrCheckPolling()` is then never reached and the timer runs on.
   Reproduced live on PR #125: `/feature end` → "Polling stopped", then `/pr 125` started it again and 4 poller-injected followUps settled with `pending: null` → "Polling stopped" never logged; the 🔍 PR indicator stayed until the `/feature end` of the next task.
