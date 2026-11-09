@@ -46,10 +46,6 @@
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 19: todo-task extension notified the stop of review watch after 2 hous but the feature was still active
-  How is possible the review is active ("Feature N" is shown in the status) and there is a review watcher running?
-  If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
-  That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
 - 
 - Feature 12 | Complete the documentation for GIT and GitHub setup
