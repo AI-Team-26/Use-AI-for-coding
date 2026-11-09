@@ -3,9 +3,6 @@
 ## Backlog
 
 
-- Feature 31 | todo-task extension
-  Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
-  
 - Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
   Polling is armed by `/feature N` / `/bugfix N`, i.e. long before a PR exists; the watcher then has to
   idle through a discovery phase (currently unbounded, bounded only by the 4 h `PR_CHECKING_MAX_MS`).
