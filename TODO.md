@@ -46,8 +46,6 @@
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
-- 
 - Feature 12 | Complete the documentation for GIT and GitHub setup
   Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
 - Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
