@@ -614,7 +614,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/gm)].filter((m) => parseFloat(m[2]) === number)
+        const matches = [...content.matchAll(/^[ \t]*[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/gm)].filter((m) => parseFloat(m[2]) === number)
         if (matches.length === 0) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
