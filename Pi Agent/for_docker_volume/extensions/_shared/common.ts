@@ -40,7 +40,7 @@ export function osc8Link(url: string, text: string): string {
  */
 export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyType = "info", source = "EXTENSION"): void {
     const ctx = getCtx()
-    if (!ctx) {
+    if (ctx === null) {
         console.error(`${source} ❌ safeNotify() got a null ctx`)
         console.info(`${source} ${message}`)
         return
@@ -58,20 +58,21 @@ export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyT
  * and the delivery channel stay those of the calling extension.
  */
 export function safeSetStatus(
-    ctx: ExtensionContext | null,
+    getCtx: ContextGetter,
     key: string,
     text: string | undefined,
-    notify: (message: string, type: NotifyType) => void,
     source = "EXTENSION",
 ): void {
-    if (!ctx) {
-        notify(`${source} ❌ safeSetStatus() got a null ctx.`, "error")
+    const ctx = getCtx()
+    if (ctx === null) {        
+        console.error(`${source} ❌ safeSetStatus() got a null ctx`)
+        console.info(`${source} ${key} ${text}`)
         return
     }
     try {
         ctx.ui.setStatus(key, text)
     } catch (err) {
-        notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
     }
 }
 

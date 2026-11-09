@@ -127,6 +127,7 @@ interface CurrentTask {
 interface WatchedPr {
     number: number
     url: string 
+    // watchStartAt: number   // last watch start   // ms Epoch?
 }
 
 // Minimal PR info needed to pick and switch to a branch.
@@ -176,8 +177,8 @@ function safeNotify(message: string, type: NotifyType = "info"): void {
     sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
 }
 
-function safeSetStatus(ctx: ExtensionContext | null, key: string, text: string | undefined): void {
-    sharedSafeSetStatus(ctx, key, text, safeNotify, EXTENSION)
+function safeSetStatus(key: string, text: string | undefined): void {
+    sharedSafeSetStatus(() => latestCtx, key, text, EXTENSION)
 }
 
 function startStatusTimer(): void {
@@ -190,7 +191,6 @@ function startStatusTimer(): void {
         }
         const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
         safeSetStatus(
-            latestCtx,
             STATUS_KEY_TASK,
             `${emoji} ${currentTask.type === "feature" ? "Feature" : "Bug"} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`,
         )
@@ -233,6 +233,58 @@ function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
     return JSON.parse(res.stdout) as T[]
 }
 
+
+async function finishActivity(ctx: ExtensionContext): Promise<void> {
+    if (!currentTask?.completed) return
+    latestCtx = ctx
+
+    const endTime = Date.now()
+    const elapsedMs = endTime - currentTask.startTime
+    const elapsedMinutes = (elapsedMs / 60_000).toFixed(1)
+
+    const fileName = currentTask.type === "feature" ? `feature_${currentTask.number}.txt` : `bug_${currentTask.number}.txt`
+    const filePath = path.join(TODO_FEATURES_DIR, fileName)
+
+    // Get model info
+    const modelName = await resolveModelName()
+    let tokens: number | null = null
+    try {
+        // ctx may have gone stale during the awaited calls above; token count is best-effort
+        tokens = ctx.getContextUsage()?.tokens ?? null
+    } catch (err) {
+        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")        
+    }
+
+    const label = currentTask.type === "feature" ? "Feature" : "Bug"
+    const report = `## AI agent execution report  
+
+_(first push only, without following reviews rework)_  
+🤖 Model: ${modelName}  
+⏲️ Time: ${elapsedMinutes} minutes  
+💰 Tokens: ${tokens ?? "n/a"}  `
+
+    // Append to the file
+    try {
+        const existing = await fs.readFile(filePath, "utf8")
+        await fs.writeFile(filePath, existing + report, "utf8")
+    } catch {
+        await fs.writeFile(filePath, report, "utf8")
+    }
+
+    // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
+    safeNotify(`✅ ${label} ${currentTask.number} completed in ${elapsedMinutes} minutes.`, "info")
+    stopStatusTimer()
+    safeSetStatus(STATUS_KEY_TASK, undefined)
+
+    if (taskProjectRoot === null)
+        safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
+    else
+        appendReportToPr(taskProjectRoot, report)
+
+    resetSender()
+    currentTask = null
+}
+
 function appendReportToPr(cwd: string, report: string) {
     try {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
@@ -262,13 +314,13 @@ function appendReportToPr(cwd: string, report: string) {
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-    const clearCurrentTask= (ctx: ExtensionContext, reason: string): void => {
+    const clearCurrentTask= (reason: string): void => {
         if (currentTask === null) return
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         stopStatusTimer()
         stopPrCheckPolling()
         resetSender()
-        safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
+        safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
     }
 
@@ -338,7 +390,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // auth or rate-limit error must not end the watch (PR_CHECKING_MAX_MS bounds it instead).
     const onGhFailure = (context: string, err: unknown): void => {
         consecutiveGhFailures++
-        safeSetStatus(latestCtx, STATUS_KEY_PR, `⚠️ ${GRAY}PR check failing (${consecutiveGhFailures}x)${RESET}`)
+        safeSetStatus(STATUS_KEY_PR, `⚠️ ${GRAY}PR check failing (${consecutiveGhFailures}x)${RESET}`)
         if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ ${context} (will retry).`, "error")
         debug(`${context} failed (${consecutiveGhFailures}x): ${err}`)
     }
@@ -366,7 +418,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         debug("checkPrReview")
         //safeNotify(`Checking PR review ...`, "info")
         checkCounter++
-        safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
+        safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
@@ -403,7 +455,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     }
                 } else pr = null
                 if (!pr) {
-                    safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
+                    safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
                     debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
                     return
                 }
@@ -413,7 +465,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // Keep the identity and the URL in sync with what `gh` just returned.
             watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
 
-            safeSetStatus(latestCtx, STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
+            safeSetStatus(STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
 
             if (stopIfPrFinished(pr)) return
 
@@ -486,7 +538,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (prCheckTimer) clearInterval(prCheckTimer)
         prCheckTimer = null
         checkCounter = 0
-        safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
+        safeSetStatus(STATUS_KEY_PR, undefined)
         safeNotify(`Stop PR check.`, "info")
     }
 
@@ -512,7 +564,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             stopPrCheckPolling()
             stopStatusTimer()
             safeNotify("⚠️ PR polling paused after session switch. Run /feature N or /bugfix N to resume.", "warning")
-            safeSetStatus(ctx, STATUS_KEY_PR, undefined)
+            safeSetStatus(STATUS_KEY_PR, undefined)
         }
     })
 
@@ -574,13 +626,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             }
             const { type: pendingType, number: pendingNumber } = currentTask
             stopPrCheckPolling()
-            clearCurrentTask(ctx, "Forceed END of task.")
+            clearCurrentTask("Forceed END of task.")
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
         }
 
         // Cancel any currentTask activity before starting a new one
-        if (currentTask) clearCurrentTask(ctx, `Start new task (${type} ${number}).`)
+        if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
 
         await ensureTodoDir()
 
@@ -670,14 +722,18 @@ ${typeData.extra ?? ""}\n\
         if (note) agentMessage = agentMessage + `\n${note}`
 
         // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
-        const abortStart = (freshCtx: ExtensionContext | null): void => {
+        //const abortStart = (freshCtx: ExtensionContext | null): void => {
+        const abortStart = (): void => {
             try {
                 stopPrCheckPolling()
                 stopStatusTimer()
                 currentTask = null
-                resetSender()
-                safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
-                safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
+                resetSender()                
+                //safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
+                //safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
+                //latestCtx = freshCtx
+                safeSetStatus(STATUS_KEY_TASK, undefined)
+                safeSetStatus(STATUS_KEY_PR, undefined)
             } catch (err) {
                 safeNotify(`❌ Failed abortStart(). ${err}`, "error")
             }
@@ -705,16 +761,19 @@ ${typeData.extra ?? ""}\n\
                         // await newCtx.waitForIdle()
                         startPrCheckPolling(projectRoot)
                     } catch (err) {
-                        abortStart(newCtx)
+                        abortStart()
                         throw err
                     }
                 },
             })
             ownSessionReplacement = false
-            if (result.cancelled) abortStart(replacementCtx)
+            //if (result.cancelled) abortStart(replacementCtx)
+
+            if (result.cancelled) abortStart()
         } catch (err) {
             ownSessionReplacement = false
-            abortStart(replacementCtx)
+            //if (replacementCtx) latestCtx = replacementCtx
+            abortStart()
             safeNotify(`❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, "error")
         }
     }
@@ -919,55 +978,4 @@ ${typeData.extra ?? ""}\n\
         latestCtx = ctx
         if (currentTask?.completed) await finishActivity(ctx)
     })
-}
-
-async function finishActivity(ctx: ExtensionContext): Promise<void> {
-    if (!currentTask?.completed) return
-    latestCtx = ctx
-
-    const endTime = Date.now()
-    const elapsedMs = endTime - currentTask.startTime
-    const elapsedMinutes = (elapsedMs / 60_000).toFixed(1)
-
-    const fileName = currentTask.type === "feature" ? `feature_${currentTask.number}.txt` : `bug_${currentTask.number}.txt`
-    const filePath = path.join(TODO_FEATURES_DIR, fileName)
-
-    // Get model info
-    const modelName = await resolveModelName()
-    let tokens: number | null = null
-    try {
-        // ctx may have gone stale during the awaited calls above; token count is best-effort
-        tokens = ctx.getContextUsage()?.tokens ?? null
-    } catch (err) {
-        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")        
-    }
-
-    const label = currentTask.type === "feature" ? "Feature" : "Bug"
-    const report = `## AI agent execution report  
-
-_(first push only, without following reviews rework)_  
-🤖 Model: ${modelName}  
-⏲️ Time: ${elapsedMinutes} minutes  
-💰 Tokens: ${tokens ?? "n/a"}  `
-
-    // Append to the file
-    try {
-        const existing = await fs.readFile(filePath, "utf8")
-        await fs.writeFile(filePath, existing + report, "utf8")
-    } catch {
-        await fs.writeFile(filePath, report, "utf8")
-    }
-
-    // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
-    safeNotify(`✅ ${label} ${currentTask.number} completed in ${elapsedMinutes} minutes.`, "info")
-    stopStatusTimer()
-    safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
-
-    if (taskProjectRoot === null)
-        safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
-    else
-        appendReportToPr(taskProjectRoot, report)
-
-    resetSender()
-    currentTask = null
 }
