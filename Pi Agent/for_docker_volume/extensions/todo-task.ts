@@ -37,7 +37,7 @@
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * While a feature/bug session is active it also polls GitHub every ~20s (max 2h):
+ * While a feature/bug session is active it also polls GitHub every ~20s (max 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
@@ -109,7 +109,7 @@ let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 let checkCounter = 0
-let prCheckStartedAt = 0  // TOSO: can be set in the  WatchedPr
+let prCheckStartedAt = 0  // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
@@ -205,8 +205,7 @@ function stopStatusTimer(): void {
     taskStatusTimer = null
 }
 
-// TODO is the fff part really needed ?
-// timestamp -> YYYY-MM-DD HH:mm:ss.fff
+// timestamp -> YYYY-MM-DD HH:mm:ss.fff (milliseconds disambiguate report log entries)
 function formatTime(ts: number): string {
     const d = new Date(ts)
     const pad = (n: number) => String(n).padStart(2, "0")
