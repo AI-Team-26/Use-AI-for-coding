@@ -51,12 +51,13 @@
   If the review watcher is running it means the agent_settled was triggered and the feature was updated ?!
   That trigger also "ends" the timer and calculate the elapsed dime for hte feature/task. At least that is the desired logic, no?
 - Feature 13: Select the Pi container should show the Agent name and icon (ai-start script)
+- 
 - Feature 12 | Complete the documentation for GIT and GitHub setup
   Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
-  - Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
-  - Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
-  - Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
-  - Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
+- Feature 12.1 | Rewrite `GIT.md`: document the actual auth flow (`.env` + `github_pat` → per-owner PAT → `GITHUB_TOKEN` → `gh auth git-credential` → git identity); remove the obsolete `.git-credentials` / `useHttpPath` sections and close the `[TODO]`s. Blocked by Feature 56 and Feature 22.
+- Feature 12.2 | "Creating the PATs": fine-grained PAT permission checklist (Workflows Read vs Read & Write + secret exfiltration warning), org-level fine-grained toggle, the silent "Pending requests" approval, GitHub App / second-reviewer decision.
+- Feature 12.3 | Fill the empty `## Troubleshooting` section of `GitHub access for Agent.md` (symptom → cause → fix table already drafted in the plan doc).
+- Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
