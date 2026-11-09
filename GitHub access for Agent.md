@@ -1,9 +1,10 @@
 # GitHub access for Agent
 
 The goal is to use GIT and GitHub CLI to create branches, create PR, review PR, and check GitHub Action runs for repositories owned by a personal account or its GitHub organizations, from a machine where an AI Agent is operating.  
-I have created 2 shadow GitHub account for this purpose, one for write code and one for review PRs. These account are used by the AI Agent, 
-so, in this document we will refer to **Main [GH] Account** and **Agent [GH] Account (Dev/Reviewer)**.  
-The described solutions work for Free GitHub accounts subscriptions (pay subscriptions have more choices).  
+The agent operates a **shadow GitHub account** (Agent account) for code contributions, while PRs are reviewed by a **different account** (an account cannot review its own pull request, see [PR review account](#pr-review-account)).  
+In this document we refer to them as **Main [GH] Account** and **Agent [GH] Account**.  
+The described solutions work for Free GitHub accounts subscriptions (paid subscriptions have more choices).  
+The authentication flow implemented by the setup scripts is documented in [GIT.md](GIT.md); this document covers how the PATs are created and which account/repository combinations are supported.
 
 
 ## Classic vs fine-grained PAT
@@ -14,26 +15,66 @@ The fundamental difference isn't the checkboxes, it's the targeting model. Fine-
 Your `repo` checkbox is also a bundle you can't partially disable — and one piece of that bundle is worth flagging specifically. Notice `repo:status`, `repo_deployment`, `public_repo`, `repo:invite`, and `security_events` are all greyed out and auto-checked underneath `repo` — that's not optional, it's baked in the moment you check the parent box. `security_events` in particular means this token can read and write Dependabot, code-scanning, and secret-scanning alerts on every private repo it touches — including dismissing an alert. That's a meaningfully sensitive permission to have inherited invisibly, and there's no way to keep code read/write while stripping just that one out of a classic token. A fine-grained PAT would let you grant Contents + Pull requests and explicitly leave "Code scanning alerts" and "Secret scanning alerts" at No access.
 
 
-### GitHub fine-grained permission PAT
+## Creating the PATs
 
-Use the following permissions for the owned repositories:
-- Owner: ``<GitHub account name>``
-- Repositories: All  
-- Permissions:
-  + Contents: Read & Write
-  + Pull Requests: Read & Write
-  + Actions: Read (to check execution result, using gh or api) 
-  + Workflows:
-    - Read: this is enough for the agent to know (you cannot commit changes to .github/workflows files or the push fails)
-    - Read & Write (to push changes to the .github/workflows folder) **It exposes to secrets exfiltration if the agent is infected with malicious behaviour** 
-  + (Metadata: added automatically)
+Every account the agent uses needs its own fine-grained PAT. The PATs are created in the GitHub UI, stored in
+`Pi Agent/.env` (one `*_PAT` variable per account) and copied into `/scripts/github_pat` as `owner:PAT`
+lines — see [GIT.md](GIT.md) for the flow.
 
-**No permissions to read Repository secrets.**
+### Prerequisite for organization repositories
 
-## Workflows
+A fine-grained PAT targets either a user account **or** one organization; the two do not overlap.  
+For an organization PAT:
 
-**Do not allow the agent to write workflows, it can exfiltrate secrets.**
-Use AI chats to get suggestions/corrections about GitHub workflows.  
+1. The Agent account must be a **Member** of the organization (invited by the Main account).
+2. The organization must allow fine-grained tokens:  
+   `Org Settings → Personal access tokens → Settings → Allow access via fine-grained personal access tokens → Save`
+
+### Step-by-step
+
+1. Log in with the account that will own the PAT (the Agent account).
+2. `Profile → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token`
+3. Set a token name (e.g. `agent-<org>`) and the expiration (max 1 year; renew before it lapses).
+4. **Resource owner**: the account or the organization. For an organization, the prerequisites above must be in place.
+5. **Repository access**: *All repositories* or *Only select repositories*.  
+   "All" also covers repositories created later; in an organization, changes may still need a
+   [pending request approval](#approve-the-pending-requests-organization).
+6. **Permissions → Repository permissions**: apply the [permission checklist](#permission-checklist) below,
+   leave everything else at *No access*.
+7. Generate and copy the token (`github_pat_…`, shown only once) into the matching variable of `Pi Agent/.env`
+   (`GITHUB_AGENT_ACCOUNT_PAT` / `GITHUB_ORG_PAT` / `GITHUB_MAIN_ACCOUNT_PAT`), then re-run the setup step so
+   `/scripts/github_pat` is regenerated.
+
+### Permission checklist
+
+| Permission | Value | Notes |
+|---|---|---|
+| Contents | Read & Write | push branches |
+| Pull requests | Read & Write | create PRs, comment, reply to reviews |
+| Actions | Read | check workflow runs and results via `gh` or the API |
+| Workflows | Read | read `.github/workflows` files; pushes that touch them fail (see below) |
+| Metadata | Read (automatic) | added by GitHub as soon as any repository permission is selected |
+| Secrets | **No access** | never grant it |
+
+**Workflows: Read vs Read & Write**
+
+- *Read* is enough for the agent to inspect runs and workflow files. A push that touches `.github/workflows`
+  fails with *"refusing to allow a Personal Access Token … without workflow scope"*. When that happens, put the
+  file under `.github/` (not `workflows/`) and ask the user to move it into place from the GitHub UI.
+- *Read & Write* allows pushing workflow changes, **but it exposes to secrets exfiltration**: a workflow can
+  print or upload the repository secrets, so a compromised or prompt-injected agent could steal them.  
+  **Do not allow the agent to write workflows.** Use AI chats to get suggestions/corrections about workflows
+  and apply them yourself.
+
+### Approve the "Pending requests" (organization)
+
+**📌 Mandatory for organization tokens.**  
+Creating a PAT that targets the organization — or updating it, e.g. adding a new repository — generates an
+approval request. **This request is not notified, and not emailed!** Until an admin approves it, the token
+silently does nothing on the new repositories.
+
+To find and approve it:  
+`Org Settings → Personal access tokens → Pending requests`
 
 
 ## GIT authentication 
@@ -46,17 +87,16 @@ Set and maintain a record in .git-credentials for every repository is inpractica
 
 **Solution: use authentication of GitHub CLI**  
 
-This line in _.gitconfig_ allows the `git` command to authenticate using the GitHub CLI:
+This Git config allows the `git` command to authenticate using the GitHub CLI:
 ```text
 [credential "https://github.com"]
-helper = !/usr/bin/gh auth git-credential
-```
-[TODO: try this simple form:]
 helper = !gh auth git-credential
-
-
-``credential.https://github.com.helper = !/usr/bin/gh auth git-credential``
-Dockerfile: ``RUN git config --global credential.https://github.com.helper "!/usr/bin/gh auth git-credential"``
+```
+or, equivalently:
+```bash
+git config --global credential.https://github.com.helper "!gh auth git-credential"
+```
+The Docker image already sets it (`Pi Agent/Dockerfile`), so it survives container recreation.
 
 ### How GitHub authentication works
 
@@ -180,15 +220,8 @@ As a member it needs "Write" basic role/permission on the organization.
 It can access with a fine-grained PAT token pointing to the organization.  
 Agent account has access to the repository secrets in the UI. ** Is this a concerning thing ? **
 
-Fine-grained PAT needs to be enabled on the organization:
-``Org Settings → Personal access tokens → Settings → Allow access via fine-grained personal access tokens → Save``
-
-#### 📌 Remember to approve PAT changes
-
-When update the Agent PAT adding a new repository of the organization, it generates a request.  
-**This request is not notified, and not emailed!**  
-To find it:  
-``Org Settings → Personal access tokens → Pending requests``
+Fine-grained PATs must be enabled on the organization, and every token creation/update must be approved
+manually: see [Creating the PATs](#creating-the-pats) (organization toggle and 📌 Pending requests).
 
 #### 📌 Main account cannot push
 
@@ -224,6 +257,27 @@ The work will not be visible in your Account.
 Very easy to manage for the Agent... less for you, because you need to use the shadow GitHub account to operate.
 It can be a valid solution for specific requirements.
 
+
+## PR review account
+
+An account cannot review its own pull request, so the PR author and the reviewer must be two different
+identities. The options evaluated (open question also recorded in [GIT.md](GIT.md#pr-review-account)):
+
+| Option | Status | Notes |
+|---|---|---|
+| Second GitHub account as reviewer | ✅ **Adopted** | the `GITHUB_REVIEWER` account is added as reviewer by the agents; it can formally approve or request changes |
+| GitHub App as reviewer | ❌ Trialled, not adopted | never wired into the setup (see below) |
+
+**Decision**: reviews are done by a second GitHub account — in the current setup the Main account, configured
+via `GITHUB_REVIEWER`. When all agents create PRs from the same Agent account, the Main account is the only
+identity that can produce a formal APPROVE / CHANGES_REQUESTED review (GitHub rejects with 422 an account
+reviewing its own PR).
+
+The GitHub App trial is kept for reference: created at organization level
+(`Organization → Settings → Developer settings → GitHub Apps`), URL = the organization URL, webhooks disabled,
+repository permissions Metadata (default) + Contents: Read only + Pull requests: Read & Write, installed for
+the organization only. It was not adopted: the startup scripts and the agent instructions only support
+account + PAT authentication, so an App installation token would be a second, parallel auth mechanism.
 
 ## Troubleshooting
 
