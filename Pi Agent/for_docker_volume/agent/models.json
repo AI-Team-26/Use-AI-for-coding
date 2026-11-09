@@ -955,7 +955,7 @@
             }
         ]
     },
-    "AliBaba (Alex)": {
+    "AliBaba - Alex": {
         "_baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
         "baseUrl": "https://ws-ne77ev3gyh866avy.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
         "api": "openai-completions",
@@ -1019,7 +1019,7 @@
         ]
     },
     
-    "AliBaba (Alex) Token Plan": {
+    "AliBaba - Alex Token Plan": {
         "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
         "api": "openai-completions",
         "apiKey": "{{ALIBABA_API_KEY_PLAN}}",

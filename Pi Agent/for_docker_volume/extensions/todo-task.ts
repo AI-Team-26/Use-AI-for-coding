@@ -315,11 +315,11 @@ function appendReportToPr(cwd: string, report: string) {
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask= (reason: string): void => {
-        if (currentTask === null) return
-        safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
+        if (currentTask === null) return        
         stopStatusTimer()
         stopPrCheckPolling()
         resetSender()
+        safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
     }
@@ -327,7 +327,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // Swallow both sync throws and async rejections from a possibly-stale sender:
     // an uncaught error inside the setInterval callback would crash Pi.
     const onSendError = (what: string, err: unknown): void => {
-        safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, "error")
+        safeNotify(`❌ [${EXTENSION}] Failed to deliver message (${what}). ${err}`, "error")
     }
 
     // Flush queued messages using the current messageSender.
@@ -357,7 +357,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
         try {
-            ;(messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            (messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
         } catch (err) {
             onSendError("safeSendUserMessage", err)
         }
@@ -369,7 +369,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
         try {
-            ;(messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            (messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
         } catch (err) {
             onSendError("safeSendMessage", err)
         }
@@ -581,22 +581,19 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // return number as 0 when command it is called with "end" argument
     function parseCommandArgs(args: string): { number: number; note: string | undefined; error: string | null } {
         const trimmed = args.trim()
-        if (trimmed === "end" || trimmed === "clean") {
-            return { number: 0, note: undefined, error: null } // special case handled outside
-        }
+        if (trimmed === "end") return { number: 0, note: undefined, error: null } // special case handled outside
+        
         // Try to parse feature/bug number
         const numberMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/)
-        if (!numberMatch) {
-            return { number: 0, note: undefined, error: "❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR" }
-        }
+        if (!numberMatch)
+            return { number: -1, note: undefined, error: "❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR" }
 
         let number: number
         let note: string | undefined
 
         number = parseFloat(numberMatch[1])
-        if (isNaN(number) || number <= 0) {
-            return { number: 0, note: undefined, error: "❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR" }
-        }
+        if (isNaN(number) || number <= 0)
+            return { number: -1, note: undefined, error: "❌ Usage: /feature <number> [optional note]  —  e.g. /feature 10 or /feature 10 ignore existing PR" }
 
         // Group 2 may be absent depending on the regex engine — guard before accessing.
         const notePart = numberMatch.length > 2 ? (numberMatch[2] ?? "").trim() : ""
@@ -701,23 +698,10 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
-**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.\n`
+**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
-        /*
-    let agentMessage_old = type === 'feature'
-      ? `Implement feature ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.` +
-        (onMain ? `The code is already on main and up to date. ` : "") +
-        `The feature number is ${number}. ` +
-        `If the feature is too big or need to work on different areas, split in multiple tasks. Add them to the TODO. ` +
-        `After you publish or update the PR, resolve conflicts with main if there are any. ` + 
-        `**IMPORTANT**: after you publish or update the PR, include "[FEATURE ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-      : `Fix bug ${number}.\nIf the bug is not present in the TODO backlog or the task is not 100% clear, ask for clarification from the user.` +
-        (onMain ? `The code is already on main and up to date. ` : "") +
-        `The bug number is ${number}. ` +
-        `**IMPORTANT**: after you publish or update the PR, include "[BUGFIX ${number} COMPLETED]" in your reply to the user (not only in the PR description) so the timer can record the elapsed time.`
-*/
         // Optional note: simply append to the instruction message.
-        if (note == "repeat") note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch/PR from scratch."
+        if (note == "repeat") note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch and PR."
 
         if (note) agentMessage = agentMessage + `\n${note}`
 
@@ -758,7 +742,6 @@ ${typeData.extra ?? ""}\n\
                         safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, "info")
                         await newCtx.sendUserMessage(agentMessage, { deliverAs: "steer" })
 
-                        // await newCtx.waitForIdle()
                         startPrCheckPolling(projectRoot)
                     } catch (err) {
                         abortStart()
@@ -816,8 +799,7 @@ ${typeData.extra ?? ""}\n\
         return fromHash ? parseInt(fromHash[1], 10) : null
     }
 
-    // Single-PR lookup, used when the PR is missing from the open list so merged and
-    // closed can be reported distinctly from "does not exist".
+    // Single-PR lookup, used when the PR is missing from the open list so merged and closed can be reported distinctly from "does not exist".
     // Single-PR lookup shared by `/pr` and the poller. Returns null when `gh` fails or the
     // output cannot be parsed; callers that must not mistake a failure for "PR gone" retry it.
     const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, ref: number | string, fields = "number,state,title,headRefName,url"): T | null => {
@@ -826,6 +808,8 @@ ${typeData.extra ?? ""}\n\
         try {
             return JSON.parse(res.stdout) as T
         } catch {
+            console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
+            safeNotify(`❌ Failed to parse result of viewPr() call`, "error")
             return null
         }
     }
@@ -841,6 +825,7 @@ ${typeData.extra ?? ""}\n\
         if (prNumberArg !== undefined) {
             const pr = prs.find((p) => p.number === prNumberArg)
             if (pr) return pr
+
             const other = viewPr(cwd, prNumberArg)
             if (!other) {
                 safeNotify(`❌ PR #${prNumberArg} was not found in this repository.`, "error")
