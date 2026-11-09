@@ -67,6 +67,7 @@ export default function prExtension(pi: ExtensionAPI) {
 
             const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. \n
       Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info. \n
+      Report here a recap specifying if there are blocking points (changes request) or Pr can be merged as it is. \n
       ${note ?? ""}`
 
             try {
