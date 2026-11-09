@@ -112,6 +112,7 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{ALIBABA_API_KEY_PLAN}}/$ALIBABA_API_KEY_PLAN/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
 
     echo -e "✔️  Done copying for ${agent}"
