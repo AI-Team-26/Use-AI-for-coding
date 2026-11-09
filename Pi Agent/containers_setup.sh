@@ -20,7 +20,7 @@ source constants.sh
 required_vars GITHUB_AGENT_ACCOUNT GITHUB_ORG GITHUB_REVIEWER GITHUB_MAIN_ACCOUNT_EMAIL EXA_API_KEY
 required_vars GITHUB_AGENT_ACCOUNT_PAT GITHUB_ORG_PAT
 # API keys of AI providers
-required_vars NOVITAAI_API_KEY  OPENROUTER_API_KEY  OFOX_API_KEY  GEMINI_API_KEY_PI_AGENT  ALIBABA_API_KEY_PI_AGENT  ENTRIM_API_KEY_PI_AGENT
+required_vars NOVITAAI_API_KEY  OPENROUTER_API_KEY  OFOX_API_KEY  GEMINI_API_KEY_PI_AGENT  ALIBABA_API_KEY  ENTRIM_API_KEY_PI_AGENT
 required_vars CLOUDFLARE_API_KEY  CLOUDFLARE_ACCOUNT_ID  INFERX_API_KEY   TOKENHARBOR_API_KEY   XAI_API_KEY   SAMBANOVA_API_KEY  MISTRAL_API_KEY
 
 
@@ -111,7 +111,7 @@ for agent in "${!agents[@]}"; do
 
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
-    sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{ALIBABA_API_KEY}}/$ALIBABA_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{ENTRIM_API_KEY}}/$ENTRIM_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
 
     echo -e "✔️  Done copying for ${agent}"
