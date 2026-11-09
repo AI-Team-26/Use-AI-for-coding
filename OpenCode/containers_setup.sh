@@ -8,7 +8,7 @@ source ../scripts/utils.sh
 source constants.sh
 
 # check required environment variables are set
-required_vars "GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_MAIN_ACCOUNT_EMAIL"
+required_vars "GITHUB_AGENT_ACCOUNT" "GITHUB_ORG" "GITHUB_REVIEWER" "GITHUB_COMMIT_EMAIL"
 # PAT for GitHub accounts
 required_vars "GITHUB_AGENT_ACCOUNT_PAT" "GITHUB_ORG_PAT"
 
@@ -24,7 +24,7 @@ cp start.sh "$docker_volumes/scripts/start.sh"
 #cp .env "$docker_volumes/scripts/.env"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
-GITHUB_MAIN_ACCOUNT_EMAIL=$GITHUB_MAIN_ACCOUNT_EMAIL
+GITHUB_COMMIT_EMAIL=$GITHUB_COMMIT_EMAIL
 EXA_API_KEY=$EXA_API_KEY
 EOF
 
