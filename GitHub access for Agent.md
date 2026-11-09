@@ -281,5 +281,29 @@ account + PAT authentication, so an App installation token would be a second, pa
 
 ## Troubleshooting
 
+Quick reference for the errors you can hit with the GIT/GitHub setup described in this document.
+The scripts referenced here live in `scripts/git_common.sh` and `scripts/start_common.sh`; the
+authentication flow is documented in [GIT.md](GIT.md).
 
-## 
+| Symptom | Cause | Fix |
+|---|---|---|
+| `❌ The PAT for '<owner>' ends with 'github.com'` | the line in `/scripts/github_pat` was written as `owner:pat@github.com` or misses the `owner:` prefix | correct the line to `<owner>:<PAT>`; `set_github_auth_for_repo` validates it when the project is selected |
+| `git push` asks for username + PAT although a PAT exists | `GITHUB_TOKEN` is not exported in the current shell, or the `gh` credential helper is missing from the Git config | select the project again (it runs `set_github_auth_for_repo`); check the `[credential "https://github.com"] helper = !gh auth git-credential` entry (the Docker image already sets it) |
+| 403 pushing with the **Main** account although it is org admin | Windows Credential Manager keeps a stale OAuth token instead of the PAT | remove the `https://github.com` record from Windows Credentials and login again — see 📌 Main account cannot push in Solution B |
+| `GH007: Your push would publish a private email address` | the account has "Keep my email addresses private" enabled and `user.email` is the real email | use the no-reply address (`1234567+user@users.noreply.github.com`): set `GITHUB_COMMIT_EMAIL` to it, `setup_git_global` applies it — see [GIT.md](GIT.md#private-hidden-github-email) |
+| `refusing to allow a Personal Access Token ... without workflow scope` | the push touches a file under `.github/workflows` and the PAT has Workflows: *Read* | keep *Read* (Workflows: *Write* exposes the repository secrets to exfiltration): put the file under `.github/` and ask the user to move it into `workflows/` from the GitHub UI |
+| Org PAT silently does nothing on a new repository | the fine-grained PAT "Pending request" was never approved (not notified, not emailed) | `Org Settings → Personal access tokens → Pending requests` — see [Approve the "Pending requests"](#approve-the-pending-requests-organization) |
+| `gh` works but `git` does not (or the reverse) | the two authenticate separately (`gh` from `GITHUB_TOKEN`, `git` through the `gh` credential helper); the collaborator path also needs a pending invitation (and `repo:invite` with a Classic PAT) | accept the invitation first — `check_and_accept_invite` does it automatically during clone; see Solution A |
+| `⛔ You cannot access this repo. You need to set credentials or be a collaborator.` | the PAT resolved for the repository owner has no access to the repo and no invitation is pending | add the owner's PAT via **🔑 Manage GitHub credentials** (`owner:PAT` line in `/scripts/github_pat`) and retry, or invite the Agent account as collaborator. Feature 22 tracks improving this message |
+| `❌ Failed to clone!` + `GraphQL: Could not resolve to a Repository ...` | the selected PAT does not cover the repository: wrong owner record, or a fine-grained PAT on "Only select repositories" that misses it | match the repository owner against `/scripts/github_pat`; extend the PAT's repository list or approve the org pending request |
+| `❌ PR not found on branch '…'` (todo-task extension) | no open PR on the branch, or the token lacks Pull requests: Read / targets the wrong owner | verify with `gh pr list --head <branch>`; related: Bug 64 (execution report not attached when the PR is merged/closed) |
+| `Could not restore model …`, git errors overwriting the TUI footer | not an authentication problem | tracked separately: Bug 61 (pi-agent errors break the TUI) |
+
+Repository access is verified by `check_repo_access` before cloning. Its exit codes
+(`scripts/git_common.sh`):
+
+| Code | Value | Meaning |
+|---|---|---|
+| `REPO_ACCESS_OK` | 0 | owner or collaborator, the repo can be used |
+| `REPO_ACCESS_ERROR` | 1 | authentication/access failure |
+| `REPO_ACCESS_READ_ONLY` | 2 | no write access detected — the script then checks whether the repo is public or looks up and accepts a pending invitation |
