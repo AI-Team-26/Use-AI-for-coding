@@ -1,165 +1,232 @@
-# GIT
+# GIT & GitHub authentication
 
-The agent needs to access GIT repository for:
-- Read private repositories
-- Create PR
-- Comment PR
-- See Workflows run results
+The agent needs Git and the GitHub CLI to:
 
-To avoid giving it access to the user account stuff with risk to expose secrets and other private stuff, I use a shadow GitHub account (**Agent GH Account**).  
-In this way it is possible to have an approach of close-to-open permissions.  
-This is possible using a **fine-grained permissions PAT** for the account.  
+- read private repositories,
+- create and comment on pull requests,
+- check workflow runs.
 
+To avoid giving it access to a personal GitHub account, the agent uses a **shadow GitHub account** plus
+**fine-grained personal access tokens (PATs)**. Fine-grained permissions keep the agent's access bounded to
+specific repositories and permissions.
 
-## Repositories owner
+For the PAT permission checklist and the supported account/repository setups (agent account, organization,
+collaborator), see [`GitHub access for Agent.md`](GitHub%20access%20for%20Agent.md). This document describes
+the authentication flow implemented by the setup and startup scripts.
 
-Where to create repositories?  
-Repositories created under the Agent account
+## Authentication flow at a glance
 
+```text
+Pi Agent/.env
+      │  copied by Pi Agent/containers_setup.sh (setup step)
+      ├── /scripts/.env           GITHUB_AGENT_ACCOUNT, GITHUB_COMMIT_EMAIL, EXA_API_KEY
+      └── /scripts/github_pat     one "owner:PAT" line per owner, chmod 600
 
+/scripts/start.sh
+      │  setup_git_global   → git config --global user.name / user.email
+      └  select_project     → read the repo origin URL
+              └── set_github_auth_for_repo
+                      └── owner = first segment of "owner/repo"
+                      └── grep "^owner:" /scripts/github_pat
+                      └── export GITHUB_TOKEN=<PAT>
 
-## Credentials
-
-The generic GIT credentials to execute `git` can be set with these commands:
-```bash
-git config --global user.name "$git_username"
-git config --global user.email "$git_email"
+gh                  authenticates from GITHUB_TOKEN
+git                 authenticates through gh:
+                    git config --global credential.https://github.com.helper "!gh auth git-credential"
 ```
 
-[TODO]
-We need to 
-Initially I thought that 
-git config --global credential.helper store
-echo "https://$git_username:$git_pat@github.com" > ~/.git-credentials
+The key idea: **GitHub CLI owns authentication**. `gh` reads `GITHUB_TOKEN`, and `git` delegates to `gh`
+through its credential helper. The old `.git-credentials` store is not used (see
+[Why not `.git-credentials`?](#why-not-git-credentials)).
 
+## Environment variables
 
+`Pi Agent/.env` is the local (host-side) source of truth. `containers_setup.sh` reads it and generates the
+files mounted into the container at `/scripts`. `OpenCode/.env` uses the same variables.
 
+| Variable | Required | Purpose |
+|---|---|---|
+| `GITHUB_AGENT_ACCOUNT` | yes | Shadow GitHub account; also a key (owner) in `github_pat` and the fallback token for invite acceptance |
+| `GITHUB_ORG` | yes | GitHub organization; also a key (owner) in `github_pat` |
+| `GITHUB_COMMIT_EMAIL` | yes | GitHub email set as git `user.email` — the account credited for commits |
+| `GITHUB_AGENT_ACCOUNT_PAT` | yes | Fine-grained PAT for `GITHUB_AGENT_ACCOUNT` |
+| `GITHUB_ORG_PAT` | yes | Fine-grained PAT for `GITHUB_ORG` |
+| `GITHUB_MAIN_ACCOUNT` | no | Personal GitHub account, if its repositories must be reachable |
+| `GITHUB_MAIN_ACCOUNT_PAT` | no | Fine-grained PAT for `GITHUB_MAIN_ACCOUNT` |
+| `GITHUB_REVIEWER` | yes | GitHub account set as PR reviewer (used by the agent instructions, not by auth) |
+| `EXA_API_KEY` | yes | EXA web-search API key (not GitHub-related, but generated into `/scripts/.env`) |
 
-### GIT credentiaks using GH
+`.env.example` is the tracked template for `.env`. The generated `/scripts/.env` holds only the values that
+must be visible at container startup:
 
-I found that using the .git-credentials is not working for my scope:
-- 
+```text
+GITHUB_AGENT_ACCOUNT=<account>
+GITHUB_COMMIT_EMAIL=<commit email>
+EXA_API_KEY=<key>
+```
 
-### [OBSOLETE] GIT credentials store
+Set `GITHUB_COMMIT_EMAIL` to the account's private `…@users.noreply.github.com` address to avoid the
+[GH007 private-email error](#private-hidden-github-email).
 
-[OBSOLETE] I don't use this approach anymore because .git-credentials doesn't  allow multi-PAT without precisely defined repositories.
-Adding a PAT FOE EVERY REPOSITORY AND A NEW RECORD IN .git-credentials IS UNMANAGEABLE.  
+## The PAT file (`/scripts/github_pat`)
 
-Use ``git config --global credential.helper store``, it will ask for a PAT,  
-and it will store it in ~/git-credentials on a single line like this:  
-``https://<username>:<GITHUB_PAT>S@github.com``
+`containers_setup.sh` builds this file from the `*_PAT` environment variables, one line per repository owner:
 
-*Note*: When paste in bash shell with right click, **CLICK ONLY ONCE** (it will not show nothing so you tend to right-click again!)
+```text
+<GITHUB_AGENT_ACCOUNT>:<GITHUB_AGENT_ACCOUNT_PAT>
+<GITHUB_ORG>:<GITHUB_ORG_PAT>
+<GITHUB_MAIN_ACCOUNT>:<GITHUB_MAIN_ACCOUNT_PAT>   # only when GITHUB_MAIN_ACCOUNT is set
+```
 
-### GitHub CLI
+Rules:
 
-GitHub CLI is required for access to PR comemnts, reply to PR comments, and many other operations.    
-GitHub CLI requires its own authentication, it doesn't use .git-credentials.  
-One way it can authenticate is using the **GITHUB_TOKEN** environment variable; we use this way.
+- Each record is exactly `owner:PAT`. The PAT itself must contain no trailing `@github.com`.
+- `owner` must match the repository's GitHub account/org name exactly (`grep "^owner:"`), including case.
+- The file is `chmod 600` and is bind-mounted read/write at `/scripts/github_pat` in every agent container.
 
+## Per-owner PAT → `GITHUB_TOKEN`
 
+When a project is selected, `select_project` (`scripts/start_common.sh`) reads the repository's `origin` URL.
+If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_common.sh`):
 
-The start scripts automatically populate the variable with the right token on-the-fly when a project with a repository is selected.    
-See *start_common.sh* script.  
+1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
+2. Extract `<owner>/<repo>` and take the first segment as `owner`.
+3. Look up `grep "^<owner>:" /scripts/github_pat`.
+4. If not found: **abort** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
+5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
+   `owner:pat@github.com`.
+6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
 
-To check the GH CLI authentication:
+That single environment variable selects the correct PAT for the repository, so no per-repository credential
+file is needed. A project with no `origin` remote gets no token; a later `gh`/`git` operation would stay
+unauthenticated.
+
+## GitHub CLI authentication
+
+`gh` authenticates from the `GITHUB_TOKEN` environment variable — there is no `gh auth login` step.
+
 ```bash
 gh auth status 2>/dev/null || echo "gh not authenticated"
 ```
 
+Because the correct token is exported only after a project is selected, `gh` works against the current
+repository's owner. Network/API failures from GitHub CLI are reported by the caller (for example the
+clone menu).
 
+## Git authentication (credential helper)
 
-### Use Multiple GitHub PAT
-
-The fine-grained GitHub PAT is created for a the user or an organiztion they have access to; you have to choose it.       
-If you created a PAT attached to the user, it does not allow you to work with the organization repositories, and vice-versa.  
-
-There is a way to use a specific PAT in the github credentials ?
-
-To differentiate the PAT to use, based on the repository, you need to enable this property:
-```sh 
-#  Enable path-based matching
-git config --global credential.useHttpPath true
-``` 
-
-Then you can add multiple PAT, for specific repositories.  
-The PAT for-repo has to be set with the FULL REPOSITORY PATH, it can't be generic using part of the path (TO VERIFY) or wildcard.  
-
-
-### 📌 Edit credentials
+`git` does not read `GITHUB_TOKEN` directly. Instead the Docker image configures Git to delegate every
+GitHub credential request to the GitHub CLI:
 
 ```bash
-docker ps
-container=
-docker exec -it $container /bin//bash    ## double slash to prevent GitBash to correct the path
+git config --global credential.https://github.com.helper "!gh auth git-credential"
 ```
 
-To read the current credentials: 
-``cat ~/.git-credentials``
+This is the single bridge that makes `git clone` / `git push` / `git fetch` use the same per-owner PAT as
+`gh`. It is baked into the image (`Pi Agent/Dockerfile`) so it survives container recreation.
+
+### Why not `.git-credentials`?
+
+The `.git-credentials` + `credential.useHttpPath` approach was removed because it does not work
+for this multi-owner setup:
+
+- `credential.useHttpPath true` only distinguishes records written with the **full repository path**
+  (`github.com/<owner>/<repo>.git`), not a generic `github.com/<owner>` or org path.
+- Adding one record per repository is unmanageable and error-prone.
+
+Do not re-enable `credential.useHttpPath` or maintain `~/.git-credentials`; use the `github_pat` file and the
+`gh` credential helper instead.
+
+## Git identity
+
+`setup_git_global` (`scripts/git_common.sh`) runs on first startup and sets the global commit identity:
 
 ```bash
-# git config --global credential.useHttpPath true    # at this point should be already set
-
-# Clear the file (creates it if it doesn't exist)
-# Using ':' is a clean way to truncate a file to 0 bytes
-: > ~/.git-credentials
-
-# ...or delete specific lines:
-sed -i '1d' ~/.git-credentials
-
-## Get env variables with tokens
-env | grep GITHUB | sort
-
-# Add PAT for owned repositories of Account or Organization
-
-USER_TOKEN=
-USERNAME=
-GITHUB_AGENT_ACCOUNT=
-GITHUB_ORG=
-echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_AGENT_ACCOUNT" >> ~/.git-credentials
-echo "https://$USERNAME:$USER_TOKEN@github.com/$GITHUB_ORG" >> ~/.git-credentials
-
-# Add PAT for NOT-owned repo
-TOKEN_2=$GITHUB_PAT_FOR_COLLABORATOR
-USERNAME=...
-echo "https://$USER$:$TOKEN_2@github.com/<another_account_or_organization>/repository.git" >> ~/.git-credentials  ## OK
-echo "https://<username>:$TOKEN_2@github.com/<another_account_or_organization>/*" >> ~/.git-credentials           ## DOES NOT WORK (wildcard NOT accepted)
-# practically you need to use the full repo path
-
-# 5. Secure the file
-chmod 600 ~/.git-credentials
+git config --global user.name  "<agent name>"      # e.g. the AI_AGENT_NAME of the container
+git config --global user.email "<GITHUB_COMMIT_EMAIL>"
 ```
 
-### Recover GitHub credentials to migrate to a new container
+- `user.name` identifies the author in the commit message header.
+- `user.email` is the GitHub account that gets credited for the commit. It must match an email on that
+  account, usually its private no-reply address.
 
-``git config --global user.name``  
-``git config --global user.email``  
-``cat ~/.git-credentials``  ("github_pat_" is part of the key)
+Check the current values with:
 
+```bash
+git config --global user.name
+git config --global user.email
+```
 
+## Repository access on clone (owner / collaborator / invite)
 
-## PR Review account
+`clone_repo` (`scripts/start_common.sh`) does more than `set_github_auth_for_repo`:
 
-The Agent Account creates the PR.  
-Anothe ragent (or the same agent) cannot review the PR because an account cannot review its own PR.  
-To make the agent able to review:
-A. Different GitHub account 
-B. GitHub App
+1. It resolves the token for the repository owner, exporting `GITHUB_TOKEN`.
+2. `check_repo_access` calls the GitHub API as the token's account and classifies the result through the
+   `REPO_ACCESS_*` exit codes:
+   - `REPO_ACCESS_OK` — the token's account is the repo owner, an org admin, or a collaborator with push.
+   - `REPO_ACCESS_READ_ONLY` — no write access; the script then checks whether the repository is public.
+   - `REPO_ACCESS_ERROR` — the repository info could not be fetched or access is denied.
+3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it temporarily falls
+   back to the agent-account token (`set_default_github_token`), lists `/user/repository_invitations` and
+   accepts the matching pending invitation.
 
-I'm trying to use a GitHub App. 
-It was created for hte Organization (Organizatrion -> Settings -> Developer stuff -> GitHub App)  
-URL: same GitHub URL of the Organization. Disable webhook, so no need to set the callbaclk URL.
-Permissions:
+> Note: this not-owned-repository path is still being improved (see `Feature 22` in `TODO.md`). The current
+> fallback switches `GITHUB_TOKEN` to the agent account silently, and a missing owner PAT aborts with the
+> terse lookup error above. Until that is reworked, add the owner's PAT with
+> "🔑 Manage GitHub credentials" and retry.
+
+## Manage credentials
+
+Use the startup menu action **🔑 Manage GitHub credentials** (implemented by `manage_git_credentials` in
+`scripts/git_common.sh`). It writes the same `/scripts/github_pat` file and lists entries with obfuscated
+PATs.
+
+Manual checks:
+
+```bash
+cat /scripts/github_pat        # owner:PAT lines (PATs are visible)
+grep -n "^<owner>:" /scripts/github_pat
+```
+
+Each line must remain in the `owner:PAT` form. A malformed line breaks the lookup for that owner.
+
+## Recovering credentials on a new container
+
+The credentials live in files, not in an interactive `gh auth login` state:
+
+```bash
+git config --global user.name
+git config --global user.email
+cat /scripts/github_pat
+```
+
+That is enough to reproduce the container's Git/GitHub authentication.
+
+## Private (hidden) GitHub email
+
+Each GitHub account has a no-reply address in the form
+`1234567+<username>@users.noreply.github.com` where `1234567` is the account ID.
+
+Find it in **Settings → Emails**, under "Keep my email addresses private". With that option enabled, GitHub
+uses the no-reply address everywhere and — importantly — rejects pushes that would publish the real email
+with the `GH007` error. Set `GITHUB_COMMIT_EMAIL` to this no-reply address.
+
+## PR review account
+
+An account cannot review its own pull request, so when the same GitHub account creates a PR it must also be
+reviewed by a different identity. The two feasible options are:
+
+- **A second GitHub account**, or
+- **A GitHub App**.
+
+The setup is evaluating a GitHub App created at the organization level
+(**Organization → Settings → Developer settings → GitHub App**), with webhooks disabled and these
+repository permissions:
+
 - Metadata (default)
 - Contents: Read only
 - Pull requests: Read & Write
 
-Install for Organization only.  
-
-
-
-## Private (hidden) GitHub email
-
-Each GitHub account gets an address in this form: **1234567+yourusername@users.noreply.github.com**  
-where the number is your account ID.  
-You find yours in Settings → Emails, in the "Keep my email addresses private" section. If you enable that option, GitHub automatically uses this address for everything you do through the web UI (PRs, merges, edits), and — importantly — it will reject pushes that would expose your real email, with the well-known GH007: Your push would publish a private email address error.
+It is installed only for the organization. The final decision (GitHub App vs. second account) is part of the
+PAT/access documentation; see `GitHub access for Agent.md`.
