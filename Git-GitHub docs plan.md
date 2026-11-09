@@ -52,7 +52,7 @@ Topics with **no documentation at all** today: fine-grained PAT permission check
 
 12.1 and 12.3 quote variable names and messages that are about to change:
 
-- **Feature 56** renames `GITHUB_MAIN_ACCOUNT_EMAIL` → `GITHUB_ACCOUNT_COMMIT_EMAIL`.
+- **Feature 56** renames `GITHUB_MAIN_ACCOUNT_EMAIL` → `GITHUB_COMMIT_EMAIL`.
 - **Feature 22** changes the not-owned-repository path (`clone_repo` ignoring the `set_github_auth_for_repo` failure, the terse abort message, the implicit fallback to the agent account).
 
 Land 56 and 22 before 12.1; 12.2, 12.3 and 12.4 are independent enough to start any time.

@@ -17,7 +17,7 @@ source ../scripts/utils.sh
 source constants.sh
 
 # check required environment variables for THIS script are set
-required_vars GITHUB_AGENT_ACCOUNT GITHUB_ORG GITHUB_REVIEWER GITHUB_MAIN_ACCOUNT_EMAIL EXA_API_KEY
+required_vars GITHUB_AGENT_ACCOUNT GITHUB_ORG GITHUB_REVIEWER GITHUB_COMMIT_EMAIL EXA_API_KEY
 required_vars GITHUB_AGENT_ACCOUNT_PAT GITHUB_ORG_PAT
 # API keys of AI providers
 required_vars NOVITAAI_API_KEY  OPENROUTER_API_KEY  OFOX_API_KEY  GEMINI_API_KEY_PI_AGENT  ALIBABA_API_KEY  ENTRIM_API_KEY_PI_AGENT
@@ -37,7 +37,7 @@ cp for_docker_volume/start.sh "$docker_volumes/scripts/start.sh"
 #cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
-GITHUB_MAIN_ACCOUNT_EMAIL=$GITHUB_MAIN_ACCOUNT_EMAIL
+GITHUB_COMMIT_EMAIL=$GITHUB_COMMIT_EMAIL
 EXA_API_KEY=$EXA_API_KEY
 EOF
 

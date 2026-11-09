@@ -1,6 +1,6 @@
 source /scripts/utils.sh
 
-required_vars GITHUB_AGENT_ACCOUNT GITHUB_MAIN_ACCOUNT_EMAIL
+required_vars GITHUB_AGENT_ACCOUNT GITHUB_COMMIT_EMAIL
 
 github_pat_file="/scripts/github_pat"
 
@@ -327,12 +327,12 @@ setup_git_global() {
     if [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
         echo -e "GIT is not configured. Set up name and email:${NC}"
 
-        # The email is what set the "contributor" of the commit in GitHub
+        # GITHUB_COMMIT_EMAIL is the GitHub account that gets credited as the commit author
         read -p "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " git_username
-        read -p "GitHub user email (email used for commits contributor, leave blank for '${GITHUB_MAIN_ACCOUNT_EMAIL}'): " git_email
+        read -p "GitHub user email (account credited for commits, leave blank for '${GITHUB_COMMIT_EMAIL}'): " git_email
 
         git_username="${git_username:-$AGENT_NAME}"
-        git_email="${git_email:-$GITHUB_MAIN_ACCOUNT_EMAIL}"
+        git_email="${git_email:-$GITHUB_COMMIT_EMAIL}"
 
         git config --global user.name "$git_username"
         git config --global user.email "$git_email"
