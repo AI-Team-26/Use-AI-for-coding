@@ -50,7 +50,10 @@ import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
 import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as sharedSafeSetStatus, createDebug, pullLatestMain, type NotifyType } from "./_shared/common.ts"
 
+
 const EXTENSION = "TODO-TASK"
+const DEBUG = false
+const debug = createDebug(EXTENSION, DEBUG)
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? "", ".pi", "agent", "todo-tasks")
 const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
 const STATUS_KEY_PR = "alex-piccione-todo-task-pr"
@@ -110,8 +113,6 @@ let prCheckStartedAt = 0  // TOSO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
-const DEBUG = false
-const debug = createDebug(EXTENSION, DEBUG)
 
 // Ojects 
 // -------------------------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +440,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             let pr: PrView | null
             if (watchedPr) {
                 pr = viewPrForReview(cwd, watchedPr.number, watchedPr.url)
-                if (!pr) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
+                if (pr === null) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
             } else {
                 let branch = ""
                 try {
@@ -454,29 +455,30 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                         return onGhFailure(`Failed to fetch PR of branch "${branch}"`, err)
                     }
                 } else pr = null
-                if (!pr) {
-                    safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR )${RESET}`)
+
+                if (pr === null) {
+                    safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR)${RESET}`)
                     debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
                     return
                 }
                 debug(`PR "#${pr.number}" found on the branch "${branch}"`)
             }
+
             consecutiveGhFailures = 0
             // Keep the identity and the URL in sync with what `gh` just returned.
             watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
 
-            safeSetStatus(STATUS_KEY_PR, `👁️ ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
+            // 👀🔍📢👁️🏷️🔔📌📦🚩🎫
+            safeSetStatus(STATUS_KEY_PR, `🚩 ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
 
             if (stopIfPrFinished(pr)) return
 
             // Check PR-level reviewDecision first
             const decision = pr.reviewDecision ?? ""
-
             debug(`PR decision is '${decision}' (${checkCounter})`)
 
             // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
             const hasChangesRequested = pr.reviews?.some((r) => r.state === "CHANGES_REQUESTED") ?? false
-
             debug(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter})`)
 
             // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
@@ -487,7 +489,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             // Effective decision: prefer aggregate, fall back to individual reviews
             const effectiveDecision = decision || (hasApprovalInReviews ? "APPROVED" : "")
-
             debug(`effectiveDecision: '${effectiveDecision}' (${checkCounter})`)
 
             // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
@@ -651,7 +652,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        const matches = [...content.matchAll(/^[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/gm)].filter((m) => parseFloat(m[2]) === number)
+        const matches = [...content.matchAll(/^[ \t]*[-*]\s+(Feature|Bug)\s+(\d+(?:\.\d+)?)\b/gm)].filter((m) => parseFloat(m[2]) === number)
         if (matches.length === 0) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
