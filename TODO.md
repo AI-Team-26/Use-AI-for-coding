@@ -6,10 +6,19 @@
 - Feature 31 | todo-task extension
   Instead of asking the agent to save timing report, it should be executed directly using code, so that it is always the same format and the chat is not polluted!
   
-- Bug 16 (remaining sub-issue) | todo-task polling keeps running when PR is closed
-  Polling continues even when the PR is closed (debug says "PR was not found"); it should stop in that case,
-  and polling start should be launched AFTER the PR is created.
-
+- Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
+  Polling is armed by `/feature N` / `/bugfix N`, i.e. long before a PR exists; the watcher then has to
+  idle through a discovery phase (currently unbounded, bounded only by the 4 h `PR_CHECKING_MAX_MS`).
+  Arm it from the creation event instead and delete the discovery machinery:
+  - `pi.on("tool_execution_end")`: when `toolName === "bash"`, `!isError` and the command matches
+    `\bgh\s+pr\s+create\b`, parse the PR number from the printed PR URL and call
+    `startPrCheckPolling()` with `watchedPr` already set (checks by number from the first tick).
+  - Guard: only when a task is `pending`, never re-arm while `prCheckTimer` is already running.
+  - PRs created outside the bash tool (GH web UI, `gh api`, scripts) never raise the event: keep a slow
+    fallback poll (~2-5 min instead of 20 s) and keep `/pr <number>` as manual arming.
+  - Once landed, the `pr == null` wait branch and the whole default/detached-branch discovery path can go.
+  - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
+    open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
 
 - Bug 17 | todo-task fresh session crashes with stale ctx
   After starting a fresh session (Feature 32), Pi crashes:
@@ -125,6 +134,18 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
+- Bug 64 (remaining) | todo-task execution report is not attached when the PR is not open
+  `appendReportToPr()` and `finishActivity()` still look the branch PR up with `--state open`, so a
+  merged/closed PR yields an empty list and the report is dropped. Reported as:
+  ```
+  Start PR check...
+  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
+  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
+  ```
+  Only the poller half is fixed; this needs its own lookup plus a decision on whether a report should
+  be appended to a merged PR. The poller cannot be reused: it resolves a PR by number/URL that it
+  already knows, while `appendReportToPr()` starts from a branch name.
+
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
@@ -137,16 +158,6 @@
 - Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
-
-- Bug 64 | pi-agent /todo-task command  fails to find the PR
-   
-  TUI shows this:
-  ```
-  Start PR check...
-  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
-  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
-  Start PR check...
-  ```
 
 - Bug 73 | todo-task /pr must watch unresolved review threads (/pr + /review: use GitHub review threads (isResolved))
 
@@ -172,6 +183,30 @@
      Do not add custom review numbering, titles, checkbox parsing, or comment-body state tracking.
      Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
   """"
+
+- Feature 74 | todo-task: extract `_shared/github.ts` and `_shared/session-sender.ts` (from PR #129 review)
+  `todo-task.ts` is ~990 lines with ~7 responsibilities. Three blocks are not todo-task's business:
+  - GitHub layer: `getOpenPrList` / `viewPr` / `resolveOpenPr` / `switchToPrBranch` + `PrView`/`PrSummary`
+    → `_shared/github.ts` (Feature 37 and Bug 64 will add callers; `viewPr()` already serves `/pr` and the poller).
+  - session-sender machinery: `MessageSender`, `messageQueue`, `flushMessageQueue`, `safeSendUserMessage`,
+    `safeSendMessage`, `hasValidSender` / `ownSessionReplacement` / `resetSender` (~100 lines)
+    → `_shared/session-sender.ts` (generic "survive newSession/fork" plumbing; Bugs 43/44/48/50 fix it).
+  - `parseCommandArgs` (`todo-task.ts`) and `parseReviewArgs` (`pr-review.ts`) are the same ~25 lines.
+  ≈ −230 lines with zero behaviour change, so it must be a mechanical PR of its own.
+  Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
+  Also removes the 400-line forward reference to `viewPr()` in the poller.
+
+- Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
+  Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
+  by live container runs. Move `checkPrReview` / `startPrCheckPolling` / `stopPrCheckPolling` / `watchedPr`
+  into their own module and test it with a stubbed `gh`/`git`/`setInterval`: discovery with no PR yet,
+  discovery → merge, reused branch with only old closed PRs, transient failure → retry → recovery,
+  merge detected while on `main`/detached HEAD, closed without merge, and no per-tick toasts.
+  A throwaway harness proving these seven scenarios passed was used to validate PR #129.
+  Same PR can delete the ~45 zero-risk leftover lines in `todo-task.ts` (commented `agentMessage_old`
+  block, commented "Auto-detect" block, `//console.error` / `//safeNotify` leftovers, `checkCounter`
+  replaced by a `firstTick` boolean, and the empty `if` body next to the report attach where every
+  `appendReportToPr` failure is reported as "no open PR" — real fix is Bug 64).
 
 ### OpenCode
 
@@ -227,6 +262,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 16 (stop side, partial) [fix/69_todo_polling_stop]: todo-task PR polling stops as soon as it can see the watched PR is finished. The PR identity is kept across re-arms (`/pr <n>`, session replacement), a finished PR is resolved by URL/number so merged/closed is reported as fact, and an absent PR keeps waiting under the 4 h safenet instead of a guessed grace period. Transient gh failures are notified once and shown in the status line. Known gap, hence "partial": a PR merged/closed *before* discovery first observed it is never seen (discovery only lists open PRs) and the watcher idles to the safenet — arming at PR creation (Bug 16 backlog) closes it. Bug 64's report-attachment half stays in the Backlog
 - Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
 - Bug 46 [obsolete]: todo-task resolves the model from `ctx.model` (and `/models` for Llama.cpp), so it no longer parses footer text and cannot capture `34 tok/s`; removed from backlog
 - Bug 62 [fix/62_pr_on_main_branch]: `/pr` works from the default branch: it moves to the open PR branch (auto-pick when one, dialog when several, `/pr <number>` targets a specific one) and reports uncommitted changes, asking to stash before switching
