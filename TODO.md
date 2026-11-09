@@ -253,6 +253,8 @@
   - resolve `constants.sh` / CWD against the script location, not the caller's CWD
   - quote `$docker_image`
 
+- Feature 77 | Delete Feature 30, already implemented.
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
