@@ -79,20 +79,13 @@ type MessageSender = {
 let messageSender: MessageSender | null = null // fresh ctx from our own withSession
 let hasValidSender = false // true only while our own withSession runs
 let ownSessionReplacement = false // ctx.newSession() is in flight
-
-// Message queue for timer-driven sends (PR review polling).
-// Messages are queued when the sender is stale and flushed when we get a fresh
-// ReplacedSessionContext inside our own withSession callback.
-type QueuedMessage =
-    | { kind: "sendMessage"; message: Parameters<ExtensionAPI["sendMessage"]>[0]; options?: Parameters<ExtensionAPI["sendMessage"]>[1] }
-    | { kind: "sendUserMessage"; content: Parameters<ExtensionAPI["sendUserMessage"]>[0]; options?: Parameters<ExtensionAPI["sendUserMessage"]>[1] }
-const messageQueue: QueuedMessage[] = []
+// Throttles the "sender stale" warning to one per run (reset on re-arm / fresh sender).
+let staleSenderDrops = 0
 
 function resetSender(): void {
     hasValidSender = false
     ownSessionReplacement = false
     messageSender = null
-    messageQueue.length = 0
 }
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
@@ -277,7 +270,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearPending = (ctx: ExtensionContext): void => {
         if (!pending) return
         stopStatusTimer()
-        stopPrCheckPolling()
+        stopPrCheckPolling("task cleared")
         resetSender()
         safeSetStatus(ctx, STATUS_KEY_TASK, undefined)
         pending = null
@@ -289,48 +282,46 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         safeNotify(`❌ [${EXTENSION}] Failed to deliver message. ${err}`, "error")
     }
 
-    // Flush queued messages using the current messageSender.
-    // Called when we obtain a fresh sender (inside our withSession).
-    const flushMessageQueue = (): void => {
-        if (messageQueue.length === 0) return
-        const queue = [...messageQueue]
-        messageQueue.length = 0
-        const sender = messageSender ?? pi
-        for (const msg of queue) {
-            try {
-                if (msg.kind === "sendMessage") {
-                    sender.sendMessage(msg.message, msg.options)?.catch?.((e) => onSendError("flush:sendMessage", e))
-                } else {
-                    sender.sendUserMessage(msg.content, msg.options)?.catch?.((e) => onSendError("flush:sendUserMessage", e))
-                }
-            } catch (err) {
-                onSendError("flush", err)
-            }
-        }
+    // Timer-driven sends can fire while the sender is stale (after a session
+    // replacement); sending through a stale sender throws. The message is dropped:
+    // the poller is level-triggered, so the next tick re-derives the same conclusion
+    // and retries (a review is marked handled only after confirmed delivery).
+    // Returns the delivery promise, or undefined when dropped.
+    const staleSenderDrop = (what: string): void => {
+        if (staleSenderDrops++ === 0)
+            safeNotify(`⚠️ ${what}: sender stale after session replacement — delivery will be retried on the next check.`, "warning")
+        debug(`${what}: dropped (stale sender)`)
     }
 
-    const safeSendUserMessage = (content: Parameters<ExtensionAPI["sendUserMessage"]>[0], options?: Parameters<ExtensionAPI["sendUserMessage"]>[1]): void => {
+    const safeSendUserMessage = (content: Parameters<ExtensionAPI["sendUserMessage"]>[0], options?: Parameters<ExtensionAPI["sendUserMessage"]>[1]): Promise<void> | undefined => {
         if (!hasValidSender) {
-            // Sender is stale — queue for delivery when we get a fresh one in withSession
-            messageQueue.push({ kind: "sendUserMessage", content, options })
-            return
+            staleSenderDrop("safeSendUserMessage")
+            return undefined
         }
         try {
-            ;(messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            // Normalize void | Promise<void> to Promise<void> so callers can confirm delivery.
+            return (async () => {
+                await (messageSender ?? pi).sendUserMessage(content, options)
+            })()
         } catch (err) {
             onSendError("safeSendUserMessage", err)
+            return undefined
         }
     }
 
-    const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): void => {
+    const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): Promise<void> | undefined => {
         if (!hasValidSender) {
-            messageQueue.push({ kind: "sendMessage", message, options })
-            return
+            staleSenderDrop("safeSendMessage")
+            return undefined
         }
         try {
-            ;(messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            // Normalize void | Promise<void> to Promise<void> so callers can confirm delivery.
+            return (async () => {
+                await (messageSender ?? pi).sendMessage(message, options)
+            })()
         } catch (err) {
             onSendError("safeSendMessage", err)
+            return undefined
         }
     }
 
@@ -359,16 +350,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
-        stopPrCheckPolling()
+        // With a stale sender the follow-up cannot be delivered; keep watching so the
+        // next tick retries — the PR stays MERGED/CLOSED in GitHub, so re-detection works.
+        if (!hasValidSender) {
+            staleSenderDrop("stopIfPrFinished")
+            return false
+        }
+        stopPrCheckPolling("PR finished")
         // The outcome is delivered, so a re-arm (session_start) must not announce it a second time.
         // Deliberately not in stopPrCheckPolling(): the session-replacement re-arm needs the number.
         watchedPr = null
         if (pr.state === "MERGED") {
             safeNotify(`✅ PR MERGED ! ${link}`, "info")
-            safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
+            safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })?.catch?.((e) => onSendError("merge outcome delivery", e))
         } else {
             safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${link} was closed without merge.`, "info")
-            safeSendUserMessage(`PR #${pr.number} was closed without merge — confirm with the user before continuing.`, { deliverAs: "followUp" })
+            safeSendUserMessage(`PR #${pr.number} was closed without merge — confirm with the user before continuing.`, { deliverAs: "followUp" })?.catch?.((e) => onSendError("close outcome delivery", e))
         }
         return true
     }
@@ -381,14 +378,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
-            stopPrCheckPolling()
+            stopPrCheckPolling("time limit")
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
             safeSendMessage({
                 customType: `${EXTENSION}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
                 display: true,
                 details: {},
-            })
+            })?.catch?.((e) => onSendError("safenet delivery", e))
             return
         }
 
@@ -454,14 +451,19 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             const decisive = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
             const latestEventId = decisive.length ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
             const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
-            if ((effectiveDecision !== "APPROVED" && effectiveDecision !== "CHANGES_REQUESTED" && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+            if (effectiveDecision !== "APPROVED" && effectiveDecision !== "CHANGES_REQUESTED" && !hasChangesRequested) {
                 if (checkCounter == 1 && hasConflicts)
-                    safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                    safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })?.catch?.((e) => onSendError("conflict delivery", e))
 
                 return
             }
-            handledReviewDecisions.set(key, effectiveDecision)
+            if (handledReviewDecisions.has(key)) return
 
+            // Mark handled only after confirmed delivery: a dropped/failed send is
+            // retried on the next tick, while a delivered one is never resent.
+            const markHandled = (): void => {
+                handledReviewDecisions.set(key, effectiveDecision)
+            }
             if (effectiveDecision === "APPROVED") {
                 const note = hasApprovalInReviews && !decision ? " (checks may be blocking formal decision)" : ""
                 safeSendMessage({
@@ -469,12 +471,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     content: `✅ ${osc8Link(pr.url ?? "", `PR #${pr.number}`)} approved${note} — waiting for merge.`,
                     display: true,
                     details: {},
-                })
-            } else if (effectiveDecision === "CHANGES_REQUESTED" || hasChangesRequested) {
-                safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                })?.then(markHandled, (e) => onSendError("approval delivery", e))
+            } else {
+                safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })?.then(markHandled, (e) => onSendError("rejection delivery", e))
             }
 
-            if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+            if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })?.catch?.((e) => onSendError("conflict delivery", e))
         } catch (err) {
             onGhFailure("checkPrReview() failed", err)
         }
@@ -483,20 +485,26 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // A caller that already knows the PR hands it in, so the watch starts by number instead of
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
     const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
-        safeNotify(`Start PR check...`, "info")
+        // Clear any previous timer before announcing the new watch, so the "Start"
+        // toast is not visually overwritten by a "Stop" one.
         stopPrCheckPolling()
+        safeNotify(`Start PR check...`, "info")
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
+        staleSenderDrops = 0
         prCheckTimer = setInterval(() => {
             checkPrReview(cwd)
         }, PR_CHECK_INTERVAL_MS)
         // Initial polling status will be set on first checkPrReview run
     }
 
-    const stopPrCheckPolling = (): void => {
-        if (prCheckTimer) clearInterval(prCheckTimer)
+    const stopPrCheckPolling = (reason?: string): void => {
+        if (prCheckTimer) {
+            clearInterval(prCheckTimer)
+            safeNotify(`Stop PR check${reason ? ` (${reason})` : ""}.`, "info")
+        }
         prCheckTimer = null
         checkCounter = 0
         safeSetStatus(latestCtx, STATUS_KEY_PR, undefined)
@@ -521,7 +529,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             startPrCheckPolling(ctx.cwd ?? process.cwd(), watchedPr)
             startStatusTimer()
         } else {
-            stopPrCheckPolling()
+            stopPrCheckPolling("session switch")
             stopStatusTimer()
             safeNotify("⚠️ PR polling paused after session switch. Run /feature N or /bugfix N to resume.", "warning")
             safeSetStatus(ctx, STATUS_KEY_PR, undefined)
@@ -529,7 +537,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     })
 
     pi.on("session_shutdown", () => {
-        stopPrCheckPolling()
+        stopPrCheckPolling("session shutdown")
         stopStatusTimer()
         // Any session replacement invalidates the sender; our own withSession re-establishes it.
         // ownSessionReplacement is deliberately kept: its session_start fires before withSession.
@@ -585,7 +593,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return
             }
             const { type: pendingType, number: pendingNumber } = pending
-            stopPrCheckPolling()
+            stopPrCheckPolling("task ended")
             clearPending(ctx)
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
@@ -685,11 +693,12 @@ ${typeData.extra ?? ""}\n\
         // Start a fresh session so the agent begins the task on clean state, State (todo-task, timers, START file) survives the switch.
         const abortStart = (freshCtx: ExtensionContext | null): void => {
             try {
-                stopPrCheckPolling()
+                stopPrCheckPolling("task start aborted")
                 stopStatusTimer()
                 pending = null
                 completed = false
                 resetSender()
+                staleSenderDrops = 0
                 safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
                 safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
             } catch (err) {
@@ -707,7 +716,7 @@ ${typeData.extra ?? ""}\n\
                     messageSender = newCtx
                     hasValidSender = true
                     ownSessionReplacement = false
-                    flushMessageQueue()
+                    staleSenderDrops = 0
                     // session_shutdown stopped the ticker before the replacement; re-arm it here
                     // so it does not depend on whether session_start ran first.
                     startStatusTimer()
