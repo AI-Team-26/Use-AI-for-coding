@@ -52,7 +52,7 @@ import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as
 
 
 const EXTENSION = "TODO-TASK"
-const DEBUG = false
+const DEBUG = true
 const debug = createDebug(EXTENSION, DEBUG)
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? "", ".pi", "agent", "todo-tasks")
 const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
@@ -415,10 +415,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     }
 
     const checkPrReview = (cwd: string): void => {
-        debug("checkPrReview")
-        //safeNotify(`Checking PR review ...`, "info")
+        debug(`checkPrReview() ${checkCounter}`)
+        safeNotify(`Checking PR review ...`, "info")
         checkCounter++
-        safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(checking PR )${RESET}`)
+        safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(checking PR)${RESET}`)
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
@@ -498,7 +498,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             if ((effectiveDecision !== "APPROVED" && effectiveDecision !== "CHANGES_REQUESTED" && !hasChangesRequested) || handledReviewDecisions.has(key)) {
                 if (checkCounter == 1 && hasConflicts)
                     safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-
+                safeNotify("adios", "info")
+                debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
                 return
             }
             handledReviewDecisions.set(key, effectiveDecision)
@@ -512,10 +513,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     details: {},
                 })
             } else if (effectiveDecision === "CHANGES_REQUESTED" || hasChangesRequested) {
+                debug(`checkPrReview() ${checkCounter}  CHANGES_REQUESTED`)
                 safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
             }
 
             if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+
+            debug(`checkPrReview() END ${checkCounter-1}`)
         } catch (err) {
             onGhFailure("checkPrReview() failed", err)
         }
@@ -530,8 +534,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
-        prCheckTimer = setInterval(() => { checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
-        // Initial polling status will be set on first checkPrReview run
+        prCheckTimer = setInterval(() => checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
+        checkPrReview(cwd)
     }
 
     const stopPrCheckPolling = (): void => {
@@ -760,7 +764,7 @@ ${typeData.extra ?? ""}\n\
         }
     }
 
-    // ### register commands
+    // ### register commands -------------------------------------------------------------------------------------
 
     pi.registerCommand("feature", {
         description: "Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end",
@@ -784,6 +788,48 @@ ${typeData.extra ?? ""}\n\
                 return
             }
             await startTask(ctx, "bug", number, note)
+        },
+    })
+
+    
+    pi.registerCommand("pr", {
+        description: "Check PR reviews. Continue to work on a PR. Usage: /pr [number | PR URL]",
+        handler: async (args, ctx) => {
+            debug("/pr command")
+            latestCtx = ctx
+            const projectRoot = ctx.cwd ?? process.cwd()
+            taskProjectRoot = projectRoot
+
+            const trimmed = (args ?? "").trim()
+            const prNumberArg = trimmed ? parsePrArgument(trimmed) : null
+            if (trimmed && prNumberArg === null) {
+                safeNotify("❌ Usage: /pr [number | PR URL] — e.g. /pr, /pr 42 or /pr https://github.com/<owner>/<repo>/pull/42", "warning")
+                return
+            }
+
+            try {
+                //debug("/pr command  check branch")
+                const branch = execSync("git branch --show-current", { cwd: projectRoot, encoding: "utf-8" }).trim()
+                const onDefaultBranch = !branch || branch === "main" || branch === "master"
+
+                // On a working branch with no explicit target: watch the current branch's PR.
+                if (!onDefaultBranch && prNumberArg === null) {
+                    debug("/pr command  startPrCheckPolling")
+                    startPrCheckPolling(projectRoot)
+                    return
+                }
+
+                // On the default branch (or with an explicit number/URL): move to the PR branch first.
+                //debug("/pr command  resolveOpenPr")
+                const pr = await resolveOpenPr(ctx, projectRoot, prNumberArg ?? undefined)
+                //debug(`/pr command  resolveOpenPr ${pr}`)
+                if (pr === null) return
+                if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
+
+                startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
+            } catch (err) {
+                safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, "error")
+            }
         },
     })
 
@@ -813,9 +859,8 @@ ${typeData.extra ?? ""}\n\
         }
     }
 
-    // Resolve which PR to watch: one open PR is picked automatically, several are offered
-    // through a dialog, and an explicit number/URL always targets that specific PR — even
-    // when it is no longer open, in which case the user is told its state.
+    // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog, 
+    // and an explicit number/URL always targets that specific PR — even when it is no longer open, in which case the user is told its state.
     const resolveOpenPr = async (ctx: ExtensionCommandContext, cwd: string, prNumberArg?: number): Promise<PrSummary | null> => {
         const listRes = spawnSync("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title", "--limit", "100"], { cwd, encoding: "utf-8" })
         if (listRes.status !== 0) throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
@@ -891,42 +936,6 @@ ${typeData.extra ?? ""}\n\
         safeNotify(`Switched to branch '${pr.headRefName}' (PR #${pr.number}).`, "info")
         return true
     }
-
-    pi.registerCommand("pr", {
-        description: "Check PR reviews. Continue to work on a PR. Usage: /pr [number | PR URL]",
-        handler: async (args, ctx) => {
-            latestCtx = ctx
-            const projectRoot = ctx.cwd ?? process.cwd()
-            taskProjectRoot = projectRoot
-
-            const trimmed = (args ?? "").trim()
-            const prNumberArg = trimmed ? parsePrArgument(trimmed) : null
-            if (trimmed && prNumberArg === null) {
-                safeNotify("❌ Usage: /pr [number | PR URL] — e.g. /pr, /pr 42 or /pr https://github.com/<owner>/<repo>/pull/42", "warning")
-                return
-            }
-
-            try {
-                const branch = execSync("git branch --show-current", { cwd: projectRoot, encoding: "utf-8" }).trim()
-                const onDefaultBranch = !branch || branch === "main" || branch === "master"
-
-                // On a working branch with no explicit target: watch the current branch's PR.
-                if (!onDefaultBranch && prNumberArg === null) {
-                    startPrCheckPolling(projectRoot)
-                    return
-                }
-
-                // On the default branch (or with an explicit number/URL): move to the PR branch first.
-                const pr = await resolveOpenPr(ctx, projectRoot, prNumberArg ?? undefined)
-                if (!pr) return
-                if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
-
-                startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
-            } catch (err) {
-                safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, "error")
-            }
-        },
-    })
 
     // Detect the completion marker in assistant chat replies.
     // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
