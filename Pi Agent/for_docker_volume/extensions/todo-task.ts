@@ -456,7 +456,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 } else pr = null
 
                 if (pr === null) {
-                    safeSetStatus(STATUS_KEY_PR, `👁️ ${GRAY}(waiting for PR)${RESET}`)
+                    safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(waiting for PR)${RESET}`)
                     debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
                     return
                 }
