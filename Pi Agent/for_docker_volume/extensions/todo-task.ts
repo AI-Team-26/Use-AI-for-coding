@@ -70,7 +70,6 @@ const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs 
 let latestCtx: ExtensionContext | null = null
 let currentTask: CurrentTask | null = null
 let watchedPr: WatchedPr | null = null
-//let completed = false // is current task completed ? shoud it be a property of CurrentTask ?
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 const handledReviewDecisions = new Map<string, string>() // track reviews to not "resend" messages/action multiple time for the same
@@ -263,7 +262,7 @@ _(first push only, without following reviews rework)_
     stopStatusTimer()
     safeSetStatus(STATUS_KEY_TASK, undefined)
 
-    if (taskProjectRoot === null) safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
+    if (taskProjectRoot === null) safeNotify(`❌ finishActivity(). TaskProjectRoot is null.`, "error")
     else appendReportToPr(taskProjectRoot, report)
 
     currentTask = null
@@ -277,7 +276,7 @@ function appendReportToPr(cwd: string, report: string) {
         const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
         const pr = prs[0]
         if (pr === null) {
-            safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
+            safeNotify(`❌ PR not found on branch '${branch}'.`, "error")
             return
         }
 
@@ -289,7 +288,7 @@ function appendReportToPr(cwd: string, report: string) {
         const editRes = spawnSync("gh", ["pr", "edit", String(pr.number), "--body", `${body}\n\n${report}`], { cwd, encoding: "utf-8" })
         if (editRes.status !== 0) throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
     } catch (err) {
-        safeNotify(`${EXTENSION} ❌ Failed to attach report to PR. ${err}`, "error")
+        safeNotify(`❌ Failed to attach report to PR. ${err}`, "error")
     }
 }
 
@@ -316,7 +315,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // decide whether a review event counts as delivered (undelivered events retry next tick).
     const onSendError = (what: string, err: unknown): void => {
         consecutiveSendFailures++
-        if (consecutiveSendFailures === 1) safeNotify(`❌ [${EXTENSION}] Failed to deliver message (${what}). ${err}`, "error")
+        if (consecutiveSendFailures === 1) safeNotify(`❌ Failed to deliver message (${what}). ${err}`, "error")
         else debug(`Failed to deliver message (${what}) (${consecutiveSendFailures}x): ${err}`)
     }
 
@@ -325,7 +324,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         options?: Parameters<ExtensionAPI["sendUserMessage"]>[1],
     ): boolean => {
         try {
-            ;(messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            (messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
             consecutiveSendFailures = 0
             return true
         } catch (err) {
@@ -336,7 +335,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): boolean => {
         try {
-            ;(messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            (messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
             consecutiveSendFailures = 0
             return true
         } catch (err) {
@@ -501,8 +500,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 }
             }
 
-            // Marked handled only once the notification was actually handed off; an undelivered
-            // event is retried next tick since checkPrReview re-derives everything from GitHub.
+            // Marked handled only once the notification was actually handed off; 
+            // an undelivered event is retried next tick since checkPrReview re-derives everything from GitHub.
             if (prStatus !== "WAITING_REVIEW") {
                 if (delivered) handledReviewDecisions.set(key, prStatus)
                 else debug(`checkPrReview() ${checkCounter} notification not delivered — will retry next tick`)
