@@ -112,6 +112,8 @@ let checkCounter = 0
 let prCheckStartedAt = 0  // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
+// An unknown PR lifecycle state is announced once per watch, not every tick.
+let unmanagedPrStateNotified = false
 
 // Ojects 
 // -------------------------------------------------------------------------------------------------------------------------------------------
@@ -460,12 +462,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 }
                 debug(`PR "#${pr.number}" found on the branch "${branch}"`)
 
+                // Identity fixed here (or handed in at arm time); the URL never changes for a PR number.
                 watchedPr = { number: pr.number, url: pr.url }
             }
 
             consecutiveGhFailures = 0
-            // Keep the identity and the URL in sync with what `gh` just returned.
-            //watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
 
             // 👀🔍📢👁️🏷️🔔📌📦🚩🎫
             safeSetStatus(STATUS_KEY_PR, `🚩 ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
@@ -473,11 +474,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             if (stopIfPrFinished(pr)) return
 
             if (pr.state !== "OPEN") {
-                safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
+                if (!unmanagedPrStateNotified) {
+                    unmanagedPrStateNotified = true
+                    safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
+                }
                 return
             }
 
-            type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVEW"  // The PR general status
+            type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"  // The PR general status
             // TODO: resolve a state of the current PR
 
 
@@ -543,6 +547,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
+        unmanagedPrStateNotified = false
         prCheckTimer = setInterval(() => checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
         checkPrReview(cwd)
     }
@@ -553,8 +558,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         checkCounter = 0
         safeSetStatus(STATUS_KEY_PR, undefined)
         safeNotify(`Stop PR check.`, "info")
-
-        //watchedPr = null  // TODO: should be set here?
+        // Deliberately NOT clearing watchedPr here: this also runs on re-arm (session replacement),
+        // where the number must survive to keep following the same PR instead of re-discovering by branch.
     }
 
     // Track the latest ctx from every event that delivers one; command handlers also
