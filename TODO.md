@@ -17,11 +17,6 @@
   - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
     open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
 
-- Bug 17 | todo-task fresh session crashes with stale ctx
-  After starting a fresh session (Feature 32), Pi crashes:
-  "This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession."
-  The fresh-session code must run its post-replacement logic inside `withSession` using the ctx passed there, not the captured ctx.
-
 - Bug 70 | todo-task: PR polling never stops when the agent settles with no active task
   `agent_settled` returns early when `pending` is null — which is exactly the case when the poller itself injects a followUp message and the agent answers without touching the task state. `stopPrCheckPolling()` is then never reached and the timer runs on.
   Reproduced live on PR #125: `/feature end` → "Polling stopped", then `/pr 125` started it again and 4 poller-injected followUps settled with `pending: null` → "Polling stopped" never logged; the 🔍 PR indicator stayed until the `/feature end` of the next task.
@@ -31,11 +26,6 @@
 - Feature 71 | todo-task: single watcher loop replacing the two independent timers
   `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of Bug 70 and of the Feature 30 flicker.
   Refactor into one watcher holding `{ pending, pr, startedAt, phase }` with explicit phases (`working` → `awaiting_review` → `ended`); the two status keys of Feature 30 stay separate.
-
-- Bug 72 | todo-task + pr-review: two pollers can watch the same PR
-  `/pr` (todo-task.ts `startPrCheckPolling`, ~20 s) and `/todo-task` (pr-review.ts `ensurePolling`, ~120 s) are independent pollers that both send the APPROVED/REJECTED message to the agent; running them together makes the fast one clear the notification state of the slow one.
-  `watchedPr`, `handledReviewDecisions` and `checkCounter` are reset by `startPrCheckPolling()`, but the other poller's timer keeps running untouched.
-  Fix: one owner for the poller (the other command delegates to it) or shared state; related to Feature 30 (one status, one source of truth).
 
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
@@ -223,6 +213,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 17 [obsolete]: the fresh-session start already runs its post-replacement work inside `withSession` with the new ctx and every send goes through `messageSender ?? pi` guarded by try/catch (`0f79d0a`, 2026-11-10); the `fix/17_stale_ctx_after_newsession` branch only logged it, never fixed it
+- Bug 72 [obsolete]: `pr-review.ts` no longer polls (it is only the `/review N` command) and `todo-task.ts` owns the single `prCheckTimer`, which stops the previous one before arming — the two-pollers scenario cannot happen
 - Feature 12.3 [docs/12_3_troubleshooting]: filled the empty Troubleshooting section of 'GitHub access for Agent.md' with the symptom → cause → fix table (verified against scripts) + `REPO_ACCESS_*` exit codes
 - Bug 16 (stop side, partial) [fix/69_todo_polling_stop]: todo-task PR polling stops as soon as it can see the watched PR is finished. The PR identity is kept across re-arms (`/pr <n>`, session replacement), a finished PR is resolved by URL/number so merged/closed is reported as fact, and an absent PR keeps waiting under the 4 h safenet instead of a guessed grace period. Transient gh failures are notified once and shown in the status line. Known gap, hence "partial": a PR merged/closed *before* discovery first observed it is never seen (discovery only lists open PRs) and the watcher idles to the safenet — arming at PR creation (Bug 16 backlog) closes it. Bug 64's report-attachment half stays in the Backlog
 - Bug 47 [fix/47_git_info_isgit_repo_probe]: git-info probes `isGitRepo()` once on `session_start`, skips the refresh interval outside a Git repo, and removes the per-tick probe from `buildStatus()`
