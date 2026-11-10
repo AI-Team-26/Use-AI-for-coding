@@ -409,7 +409,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         const slug = pr.url?.match(/github\.com\/([^/]+\/[^/]+)\/pull/)?.[1]
         if (!slug) return false
         const latest = Date.parse(rejections.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).submittedAt)
-        const res = spawnSync("gh", ["api", `repos/${slug}/commits/${pr.headRefOid}`, "--jq", ".committed_date"], { cwd, encoding: "utf-8" })
+        const res = spawnSync("gh", ["api", `repos/${slug}/commits/${pr.headRefOid}`, "--jq", ".commit.committer.date"], { cwd, encoding: "utf-8" })
         if (res.status !== 0) return false // transient gh failure: fail toward notifying rather than swallowing the rejection
         const headDate = Date.parse(res.stdout.trim())
         return Number.isFinite(headDate) && Number.isFinite(latest) && headDate > latest
