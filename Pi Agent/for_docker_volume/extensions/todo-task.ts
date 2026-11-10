@@ -475,8 +475,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
 
             type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"  // The PR general status
-            // TODO: resolve a state of the current PR
-
+            // TODO: 
+            // 1. resolve a state of the current PR
+            // 2. if APPROVED propose the user to MERGE or do a PR REVIEW, using ctx.ui.select
+            //    if REJECTED prompt the agent to resolve the review comemnts
+            //    if WAITING_REVIEW continue polling
+            // 3. add the check for existing conflict (is doable by code?) and prompt to resolve them to the agent
 
             // Check PR-level reviewDecision first
             const decision = pr.reviewDecision ?? ""
