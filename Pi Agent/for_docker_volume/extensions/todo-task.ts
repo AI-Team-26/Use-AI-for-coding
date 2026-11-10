@@ -90,24 +90,8 @@ type MessageSender = {
 // Pi can re-instantiate the extension factory on session replacement without
 // shutting the previous instance down, so per-instance copies would disagree
 // about which context is still usable.
-let messageSender: MessageSender | null = null // fresh ctx from our own withSession
-let hasValidSender = false // true only while our own withSession runs
+let messageSender: MessageSender | null = null // fresh ctx from our own withSession; falls back to the plain pi API
 let ownSessionReplacement = false // ctx.newSession() is in flight
-
-// Message queue for timer-driven sends (PR review polling).
-// Messages are queued when the sender is stale and flushed when we get a fresh
-// ReplacedSessionContext inside our own withSession callback.
-type QueuedMessage =
-    | { kind: "sendMessage"; message: Parameters<ExtensionAPI["sendMessage"]>[0]; options?: Parameters<ExtensionAPI["sendMessage"]>[1] }
-    | { kind: "sendUserMessage"; content: Parameters<ExtensionAPI["sendUserMessage"]>[0]; options?: Parameters<ExtensionAPI["sendUserMessage"]>[1] }
-const messageQueue: QueuedMessage[] = []
-
-function resetSender(): void {
-    hasValidSender = false
-    ownSessionReplacement = false
-    messageSender = null
-    messageQueue.length = 0
-}
 
 // The timer lives at module scope because Pi never disposes the old extension instance on session swap,
 // so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
@@ -282,7 +266,6 @@ _(first push only, without following reviews rework)_
     if (taskProjectRoot === null) safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
     else appendReportToPr(taskProjectRoot, report)
 
-    resetSender()
     currentTask = null
 }
 
@@ -318,60 +301,47 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (currentTask === null) return
         stopStatusTimer()
         stopPrCheckPolling()
-        resetSender()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
     }
 
+    // Transient send failures are notified once per run (the first tick), then demoted to debug,
+    // mirroring onGhFailure: a single error must not spam the user every poll.
+    let consecutiveSendFailures = 0
+
     // Swallow both sync throws and async rejections from a possibly-stale sender:
     // an uncaught error inside the setInterval callback would crash Pi.
+    // Returns true only when the call was handed off without throwing; callers use that to
+    // decide whether a review event counts as delivered (undelivered events retry next tick).
     const onSendError = (what: string, err: unknown): void => {
-        safeNotify(`❌ [${EXTENSION}] Failed to deliver message (${what}). ${err}`, "error")
+        consecutiveSendFailures++
+        if (consecutiveSendFailures === 1) safeNotify(`❌ [${EXTENSION}] Failed to deliver message (${what}). ${err}`, "error")
+        else debug(`Failed to deliver message (${what}) (${consecutiveSendFailures}x): ${err}`)
     }
 
-    // Flush queued messages using the current messageSender.
-    // Called when we obtain a fresh sender (inside our withSession).
-    const flushMessageQueue = (): void => {
-        if (messageQueue.length === 0) return
-        const queue = [...messageQueue]
-        messageQueue.length = 0
-        const sender = messageSender ?? pi
-        for (const msg of queue) {
-            try {
-                if (msg.kind === "sendMessage") {
-                    sender.sendMessage(msg.message, msg.options)?.catch?.((e) => onSendError("flush:sendMessage", e))
-                } else {
-                    sender.sendUserMessage(msg.content, msg.options)?.catch?.((e) => onSendError("flush:sendUserMessage", e))
-                }
-            } catch (err) {
-                onSendError("flush", err)
-            }
-        }
-    }
-
-    const safeSendUserMessage = (content: Parameters<ExtensionAPI["sendUserMessage"]>[0], options?: Parameters<ExtensionAPI["sendUserMessage"]>[1]): void => {
-        if (!hasValidSender) {
-            // Sender is stale — queue for delivery when we get a fresh one in withSession
-            messageQueue.push({ kind: "sendUserMessage", content, options })
-            return
-        }
+    const safeSendUserMessage = (
+        content: Parameters<ExtensionAPI["sendUserMessage"]>[0],
+        options?: Parameters<ExtensionAPI["sendUserMessage"]>[1],
+    ): boolean => {
         try {
             ;(messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            consecutiveSendFailures = 0
+            return true
         } catch (err) {
             onSendError("safeSendUserMessage", err)
+            return false
         }
     }
 
-    const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): void => {
-        if (!hasValidSender) {
-            messageQueue.push({ kind: "sendMessage", message, options })
-            return
-        }
+    const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): boolean => {
         try {
             ;(messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            consecutiveSendFailures = 0
+            return true
         } catch (err) {
             onSendError("safeSendMessage", err)
+            return false
         }
     }
 
@@ -505,11 +475,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 debug(`checkPrReview() ${checkCounter} key already mapped: ${key}. Status:${prStatus}. NOTHING TO DO`)
                 return
             }
-            handledReviewDecisions.set(key, prStatus)
 
+            let delivered = false
             switch (prStatus) {
                 case "APPROVED": {
-                    safeSendMessage({
+                    delivered = safeSendMessage({
                         customType: `${EXTENSION}-approved`,
                         content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved — can be merged.`,
                         display: true,
@@ -519,7 +489,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     break
                 }
                 case "REJECTED": {
-                    safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                    delivered = safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
                     if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     break
                 }
@@ -529,6 +499,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
                     break
                 }
+            }
+
+            // Marked handled only once the notification was actually handed off; an undelivered
+            // event is retried next tick since checkPrReview re-derives everything from GitHub.
+            if (prStatus !== "WAITING_REVIEW") {
+                if (delivered) handledReviewDecisions.set(key, prStatus)
+                else debug(`checkPrReview() ${checkCounter} notification not delivered — will retry next tick`)
             }
 
             debug(`checkPrReview() END ${checkCounter}`)
@@ -570,10 +547,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // so the session_start of our own replacement must not be mistaken for an external
         // one: withSession re-arms the sender and the timers.
         if (ownSessionReplacement) return
-        // session_start delivers ExtensionContext (no send methods) and hasValidSender is
-        // true only after our withSession ran, so a false value here means an external
-        // replacement (/new, model switch, ...) invalidated the sender.
-        if (hasValidSender) {
+        // Any non-own session_start while a task runs is an external replacement (/new, model
+        // switch, ...): session_shutdown already cleared messageSender, so the plain pi API is
+        // stale too until we re-arm in our own withSession.
+        if (messageSender !== null) {
             // The number survives the replacement: re-discovery would look for an open PR that may
             // have been merged or closed while the session was switched.
             startPrCheckPolling(ctx.cwd ?? process.cwd(), watchedPr)
@@ -589,9 +566,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pi.on("session_shutdown", () => {
         stopPrCheckPolling()
         stopStatusTimer()
-        // Any session replacement invalidates the sender; our own withSession re-establishes it.
+        // Any session replacement invalidates the fresh ctx; our own withSession re-establishes it.
         // ownSessionReplacement is deliberately kept: its session_start fires before withSession.
-        hasValidSender = false
         messageSender = null
     })
 
@@ -729,7 +705,6 @@ ${typeData.extra ?? ""}\n\
                 stopPrCheckPolling()
                 stopStatusTimer()
                 currentTask = null
-                resetSender()
                 //safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
                 //safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
                 //latestCtx = freshCtx
@@ -748,9 +723,7 @@ ${typeData.extra ?? ""}\n\
                     replacementCtx = newCtx
                     latestCtx = newCtx
                     messageSender = newCtx
-                    hasValidSender = true
                     ownSessionReplacement = false
-                    flushMessageQueue()
                     // session_shutdown stopped the ticker before the replacement; re-arm it here
                     // so it does not depend on whether session_start ran first.
                     startStatusTimer()
