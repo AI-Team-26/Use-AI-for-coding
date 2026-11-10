@@ -17,15 +17,10 @@
   - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
     open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
 
-- Bug 70 | todo-task: PR polling never stops when the agent settles with no active task
-  `agent_settled` returns early when `pending` is null — which is exactly the case when the poller itself injects a followUp message and the agent answers without touching the task state. `stopPrCheckPolling()` is then never reached and the timer runs on.
-  Reproduced live on PR #125: `/feature end` → "Polling stopped", then `/pr 125` started it again and 4 poller-injected followUps settled with `pending: null` → "Polling stopped" never logged; the 🔍 PR indicator stayed until the `/feature end` of the next task.
-  Fix: on `agent_settled`, stop the PR polling whenever there is no active `pending` (a poller-driven settle ends the activity); passing `pending` into `checkPrReview()` instead of reading the module-level variable would also make the flow testable.
-  Note: PR #129 stops the poller when *no open PR exists on the branch*; this is the other leak — the PR is still open and the task has already ended. Re-check after #129 lands.
-
 - Feature 71 | todo-task: single watcher loop replacing the two independent timers
-  `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of Bug 70 and of the Feature 30 flicker.
+  `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of the Feature 30 flicker.
   Refactor into one watcher holding `{ pending, pr, startedAt, phase }` with explicit phases (`working` → `awaiting_review` → `ended`); the two status keys of Feature 30 stay separate.
+  Spell out when a task-less watch ends (PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`): an agent settle is deliberately **not** a stop condition, because `/pr <n>` arms the watch with no active task.
 
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
@@ -210,6 +205,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71
 - Bug 17 [obsolete]: the fresh-session start already runs its post-replacement work inside `withSession` with the new ctx and every send goes through `messageSender ?? pi` guarded by try/catch (`0f79d0a`, 2026-11-10); the `fix/17_stale_ctx_after_newsession` branch only logged it, never fixed it
 - Bug 72 [obsolete]: `pr-review.ts` no longer polls (it is only the `/review N` command) and `todo-task.ts` owns the single `prCheckTimer`, which stops the previous one before arming — the two-pollers scenario cannot happen
 - Feature 12.3 [docs/12_3_troubleshooting]: filled the empty Troubleshooting section of 'GitHub access for Agent.md' with the symptom → cause → fix table (verified against scripts) + `REPO_ACCESS_*` exit codes
