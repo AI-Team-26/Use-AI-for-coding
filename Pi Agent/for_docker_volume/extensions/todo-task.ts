@@ -90,7 +90,7 @@ type MessageSender = {
 // shutting the previous instance down, so per-instance copies would disagree
 // about which context is still usable.
 let messageSender: MessageSender | null = null // fresh ctx from our own withSession; falls back to the plain pi API
-let ownSessionReplacement = false // ctx.newSession() is in flight
+let newSessionForStartTask = false // ctx.newSession() is in flight for start a new task
 
 // The timer lives at module scope because Pi never disposes the old extension instance on session swap,
 // so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
@@ -515,7 +515,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                             `ℹ️ The rejection of ${osc8Link(pr.url, `PR #${pr.number}`)} was already reworked — new commits since the review, awaiting re-review. No action needed.`,
                             { deliverAs: "followUp" },
                         )
-                    else delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                    else
+                        delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, {
+                            deliverAs: "followUp",
+                        })
                     if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     break
                 }
@@ -527,7 +530,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 }
             }
 
-            // Marked handled only once the notification was actually handed off; 
+            // Marked handled only once the notification was actually handed off;
             // an undelivered event is retried next tick since checkPrReview re-derives everything from GitHub.
             if (prStatus !== "WAITING_REVIEW") {
                 if (delivered) handledReviewDecisions.set(key, prStatus)
@@ -549,9 +552,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
-        prCheckTimer = setInterval(() => {
-            void checkPrReview(cwd) // all errors are caught inside; a rejection cannot escape
-        }, PR_CHECK_INTERVAL_MS)
+        prCheckTimer = setInterval(() => void checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
         void checkPrReview(cwd)
     }
 
@@ -565,16 +566,31 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // where the number must survive to keep following the same PR instead of re-discovering by branch.
     }
 
-    // Track the latest ctx from every event that delivers one; command handlers also
-    // refresh it (see startTask). Timer callbacks never use a captured ctx directly.
     pi.on("session_start", (_event, ctx: ExtensionContext) => {
         latestCtx = ctx
+
+        // Our own /feature|/bugfix replacement → withSession re-arms sender + timers.
+        if (newSessionForStartTask) {
+            newSessionForStartTask = false
+            return
+        }
+
+        // External replacement (/new, /resume, /fork): session_shutdown already stopped the timers,
+        // pi already cleared the footer. Only a still-open task needs the user's attention.
+        if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
+    })
+
+    /*
+    pi.on("session_start", (_event, ctx: ExtensionContext) => {
+        latestCtx = ctx
+        if (newSessionForStartStart) { newSessionForStartStart= false; return;}
+        
         if (currentTask === null) return
         // ctx.newSession() emits session_shutdown and session_start BEFORE running the
         // withSession callback (see finishSessionReplacement in pi's agent-session-runtime),
         // so the session_start of our own replacement must not be mistaken for an external
         // one: withSession re-arms the sender and the timers.
-        if (ownSessionReplacement) return
+        
         // Any non-own session_start while a task runs is an external replacement (/new, model
         // switch, ...): session_shutdown already cleared messageSender, so the plain pi API is
         // stale too until we re-arm in our own withSession.
@@ -590,6 +606,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeSetStatus(STATUS_KEY_PR, undefined)
         }
     })
+        */
 
     pi.on("session_shutdown", () => {
         stopPrCheckPolling()
@@ -744,14 +761,13 @@ ${typeData.extra ?? ""}\n\
         }
 
         let replacementCtx: ExtensionContext | null = null
-        ownSessionReplacement = true
+        newSessionForStartTask = true
         try {
             const result = await ctx.newSession({
                 withSession: async (newCtx) => {
                     replacementCtx = newCtx
                     latestCtx = newCtx
                     messageSender = newCtx
-                    ownSessionReplacement = false
                     // session_shutdown stopped the ticker before the replacement; re-arm it here
                     // so it does not depend on whether session_start ran first.
                     startStatusTimer()
@@ -767,15 +783,13 @@ ${typeData.extra ?? ""}\n\
                     }
                 },
             })
-            ownSessionReplacement = false
-            //if (result.cancelled) abortStart(replacementCtx)
 
             if (result.cancelled) abortStart()
         } catch (err) {
-            ownSessionReplacement = false
-            //if (replacementCtx) latestCtx = replacementCtx
             abortStart()
             safeNotify(`❌ Failed to start fresh session for ${label} ${number}: ${err instanceof Error ? err.message : String(err)}`, "error")
+        } finally {
+            newSessionForStartTask = false
         }
     }
 
