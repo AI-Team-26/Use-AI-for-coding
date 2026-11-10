@@ -36,9 +36,6 @@
 - Feature 20: the /quit command exit Pi completely, ok.
   There is a simple way to switch project instead ? Investigate.
 
-- Feature 12 | Complete the documentation for GIT and GitHub setup
-  Audit + breakdown recorded in `Git-GitHub docs plan.md` (open PR). Sub-tasks:
-- Feature 12.4 | Document `scripts/create-ruleset.sh` and the `.github/workflows` push limits; cross-link from the Pi Agent README.
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:

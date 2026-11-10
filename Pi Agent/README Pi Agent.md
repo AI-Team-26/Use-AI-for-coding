@@ -10,6 +10,13 @@ TODO:
 - Add routing of API keys
 - Add STT capability
 
+## Repository protection
+
+The repositories the agent works on are protected by a "main branch" ruleset (no force-push,
+no deletion, 1 required approving review, merge/rebase only) and by the fine-grained PAT
+limiting pushes to `.github/workflows`. See
+[`Rulesets and branch protection.md`](../Rulesets%20and%20branch%20protection.md).
+
 ## Docker
 
 All the Docker job (build the image, provision the volumes, create the containers) is done by `containers.sh`.  

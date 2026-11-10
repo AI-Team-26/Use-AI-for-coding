@@ -92,7 +92,7 @@ process_repo() {
     echo -e "→  Creating ruleset on ${repo} ..."
 
     # GitHub redirects POST /repos/{owner}/{repo}/rulesets → /repositories/{id}/rulesets
-    # gh api doesn't follow redirects for POST, so use curl -L
+    # gh api follows it only for replayable bodies, so use curl -L
     local response
     response=$(echo "$RULESET_PAYLOAD" | curl -s -L -X POST \
         -H "Authorization: Bearer $GITHUB_TOKEN" \
