@@ -312,7 +312,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Swallow both sync throws and async rejections from a possibly-stale sender:
     // an uncaught error inside the setInterval callback would crash Pi.
-    // Returns true only when the call was handed off without throwing; callers use that to
+    // Resolves true only when the send actually completed; callers use that to
     // decide whether a review event counts as delivered (undelivered events retry next tick).
     const onSendError = (what: string, err: unknown): void => {
         consecutiveSendFailures++
@@ -334,9 +334,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
     }
 
-    const safeSendMessage = (message: Parameters<ExtensionAPI["sendMessage"]>[0], options?: Parameters<ExtensionAPI["sendMessage"]>[1]): boolean => {
+    const safeSendMessage = async (
+        message: Parameters<ExtensionAPI["sendMessage"]>[0],
+        options?: Parameters<ExtensionAPI["sendMessage"]>[1],
+    ): Promise<boolean> => {
         try {
-            (messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            await (messageSender ?? pi).sendMessage(message, options)
             consecutiveSendFailures = 0
             return true
         } catch (err) {
@@ -415,7 +418,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return Number.isFinite(headDate) && Number.isFinite(latest) && headDate > latest
     }
 
-    const checkPrReview = (cwd: string): void => {
+    const checkPrReview = async (cwd: string): Promise<void> => {
         debug(`checkPrReview() ${checkCounter}`)
         safeNotify(`Checking PR review ...`, "info")
         checkCounter++
@@ -425,7 +428,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
             stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
-            safeSendMessage({
+            await safeSendMessage({
                 customType: `${EXTENSION}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
                 display: true,
@@ -494,7 +497,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             let delivered = false
             switch (prStatus) {
                 case "APPROVED": {
-                    delivered = safeSendMessage({
+                    delivered = await safeSendMessage({
                         customType: `${EXTENSION}-approved`,
                         content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved — can be merged.`,
                         display: true,
@@ -543,8 +546,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
-        prCheckTimer = setInterval(() => checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
-        checkPrReview(cwd)
+        prCheckTimer = setInterval(() => {
+            void checkPrReview(cwd) // all errors are caught inside; a rejection cannot escape
+        }, PR_CHECK_INTERVAL_MS)
+        void checkPrReview(cwd)
     }
 
     const stopPrCheckPolling = (): void => {
