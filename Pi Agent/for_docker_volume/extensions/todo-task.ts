@@ -320,12 +320,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         else debug(`Failed to deliver message (${what}) (${consecutiveSendFailures}x): ${err}`)
     }
 
-    const safeSendUserMessage = (
+    const safeSendUserMessage = async (
         content: Parameters<ExtensionAPI["sendUserMessage"]>[0],
         options?: Parameters<ExtensionAPI["sendUserMessage"]>[1],
-    ): boolean => {
+    ): Promise<boolean> => {
         try {
-            (messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            await (messageSender ?? pi).sendUserMessage(content, options)
             consecutiveSendFailures = 0
             return true
         } catch (err) {
@@ -378,10 +378,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
             safeNotify(`✅ PR MERGED. ${link}`, "info")
-            safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
+            void safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" }) // terminal announcement; polling stops here anyway
         } else {
             safeNotify(`⏹️ PR CLOSED. ${link}`, "info")
-            safeSendUserMessage(`PR #${pr.number} was closed without merge.`, { deliverAs: "followUp" })
+            void safeSendUserMessage(`PR #${pr.number} was closed without merge.`, { deliverAs: "followUp" }) // terminal announcement; polling stops here anyway
         }
         return true
     }
@@ -503,22 +503,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                         display: true,
                         details: {},
                     })
-                    if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                    if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     break
                 }
                 case "REJECTED": {
                     if (isStaleRejection(cwd, pr))
-                        delivered = safeSendUserMessage(
+                        delivered = await safeSendUserMessage(
                             `ℹ️ The rejection of ${osc8Link(pr.url, `PR #${pr.number}`)} was already reworked — new commits since the review, awaiting re-review. No action needed.`,
                             { deliverAs: "followUp" },
                         )
-                    else delivered = safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
-                    if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                    else delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                    if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     break
                 }
                 case "WAITING_REVIEW": {
                     if (checkCounter == 1 && hasConflicts)
-                        safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                        void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
                     break
                 }
