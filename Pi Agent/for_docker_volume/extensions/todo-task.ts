@@ -502,7 +502,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             const latestEventId = decisiveReviews.length ? decisiveReviews.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
             const key = `${pr.number}:${prStatus}:${latestEventId}`
             if (handledReviewDecisions.has(key)) {
-                debug(`checkPrReview() ${checkCounter} same key ${prStatus} NOTHING TO DO`)
+                debug(`checkPrReview() ${checkCounter} key already mapped: ${key}. Status:${prStatus}. NOTHING TO DO`)
                 return
             }
             handledReviewDecisions.set(key, prStatus)
