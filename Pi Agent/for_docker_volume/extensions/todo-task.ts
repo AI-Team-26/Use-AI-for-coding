@@ -486,6 +486,19 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             const hasConflicts = pr.mergeable === "CONFLICTING"
 
+            // Conflicts are tracked separately from review events: a PR can turn CONFLICTING *after*
+            // its verdict was already announced, so this must run before the dedup early return below.
+            // Keyed by head commit: a rebase (new head) starts a fresh notice, the same conflicted
+            // head notifies only once, and a failed handoff releases the key so it retries next tick.
+            if (hasConflicts) {
+                const conflictKey = `${pr.number}:CONFLICTS:${pr.headRefOid ?? ""}`
+                if (!handledReviewDecisions.has(conflictKey)) {
+                    handledReviewDecisions.set(conflictKey, "CONFLICTING")
+                    const ok = await safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                    if (!ok) handledReviewDecisions.delete(conflictKey)
+                }
+            }
+
             // Keep track of already-notified events to avoid resending the same message on every poll.
             // Dedup per REVIEW EVENT, not per status value: two successive rejections share the same status but have distinct review ids.
             const decisiveReviews = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED") // ignore COMMENTED and DISMISSED
@@ -511,7 +524,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                             display: true,
                             details: {},
                         })
-                        if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                         break
                     }
                     case "REJECTED": {
@@ -524,12 +536,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                             delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, {
                                 deliverAs: "followUp",
                             })
-                        if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                         break
                     }
                     case "WAITING_REVIEW": {
-                        if (checkCounter == 1 && hasConflicts)
-                            void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                         debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
                         break
                     }
