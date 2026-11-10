@@ -377,10 +377,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
             safeNotify(`✅ PR MERGED. ${link}`, "info")
-            void safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" }) // terminal announcement; polling stops here anyway
+            void safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
         } else {
             safeNotify(`⏹️ PR CLOSED. ${link}`, "info")
-            void safeSendUserMessage(`PR #${pr.number} was closed without merge.`, { deliverAs: "followUp" }) // terminal announcement; polling stops here anyway
+            // no action to do
         }
         return true
     }
