@@ -92,27 +92,6 @@
      - Only one file changed (`todo.ts`)
      - Well under 500 lines delta
 
-- Bug 43 | Pi agent todo-task extension
-  "PR decision is 'CHANGES_REQUESTED' (87)" was printed but then this error:
-  Error: ❌ checkPrReview() failed. Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or
-   ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
-  
-  I think it is the pi (pi.sendMessage or pi.sendUserMessage) to be stale but... how to use a new one? and why was stale ?
-
-- Bug 44 | Pi agent todo-task extension crash
-  pi exiting due to uncaughtException:
-    Error: This extension ctx is stale after session replacement or reload. Do not use a captured pi or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().
-        at Object.assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:3578)
-        at assertActive (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:708:6218)
-        at Object.sendMessage (file:///usr/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/chunks/chunk-OIM2DMFI.js:707:8976)
-        at checkPrReview (/root/.pi/agent/extensions/todo-task.ts:316:10)
-        at Timeout.<anonymous> (/root/.pi/agent/extensions/todo-task.ts:428:44)
-            at listOnTimeout (node:internal/timers:683:17)
-            at process.processTimers (node:internal/timers:620:7)
-
-        That seems to be this line:
-            prCheckTimer = setInterval(() => { void checkPrReview(cwd) }, PR_CHECK_INTERVAL_MS)
-
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
@@ -236,13 +215,6 @@
   - strict step validation instead of substring matching (e.g. `create_containers` would run `create_image`)
   - resolve `constants.sh` / CWD against the script location, not the caller's CWD
   - quote `$docker_image`
-
-- Feature 76 | todo-task: drop the redundant `hasValidSender` flag
-  `hasValidSender` is always changed together with `messageSender` (set in `withSession`, cleared in
-  `resetSender()` and `session_shutdown`), so `messageSender !== null` is equivalent in every place.
-  Delete the flag and replace its usages (`safeSendMessage`, `safeSendUserMessage`, `session_start` handler)
-  with a `messageSender === null` / `!== null` check — removes a sync-risk pair of module-scope variables.
-  Likely folds into Feature 74 (`_shared/session-sender.ts` extraction).
 
 - Feature 77 | Delete Feature 30, already implemented.
 
