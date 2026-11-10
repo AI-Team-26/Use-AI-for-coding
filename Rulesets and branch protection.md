@@ -15,11 +15,14 @@ The script creates a ruleset named **main branch** on the default branch
 |---|---|
 | `deletion` | the default branch cannot be deleted |
 | `non_fast_forward` | force-push is rejected |
-| `pull_request` | 1 approving review is required; stale reviews are dismissed on push; merging is allowed only via **merge** or **rebase** (no squash) |
+| `pull_request` | 1 approving review is required; a Copilot-opened PR without a human collaborator needs one **additional** approval; stale reviews are dismissed on push; merging is allowed only via **merge** or **rebase** (no squash) |
 | `copilot_code_review` | Copilot reviews on push (draft PRs are not reviewed) |
 
-`required_review_thread_resolution` is currently `false`; setting it to `true`
-requires applying the ruleset again with an Administration token.
+`required_review_thread_resolution` is currently `false`. The script only creates the
+ruleset (a repo that already carries `main branch` is skipped), so turning that on means
+updating the existing ruleset with an Administration token
+(`PUT /repos/{owner}/{repo}/rulesets/{id}`), or deleting the ruleset and re-running the
+script.
 
 ### Usage
 
@@ -48,13 +51,17 @@ export GITHUB_TOKEN=<main-account PAT>
 bash scripts/create-ruleset.sh <org>/<repo>
 ```
 
+The script runs under `set -euo pipefail`, so forgetting the export aborts with
+`GITHUB_TOKEN: unbound variable` before its own "variable is not set" message is reached.
+
 ### Behaviour notes
 
 - **Idempotent**: if a ruleset named `main branch` already exists on the repository, the
   script prints `⛔ <repo> — ruleset already exists, skipping` and moves on.
-- **307 redirect**: GitHub redirects `POST /repos/{owner}/{repo}/rulesets` to
-  `/repositories/{id}/rulesets`. `gh api` does not follow redirects for POST, so the
-  script calls the REST API with `curl -L` directly.
+- **307 redirect**: GitHub answers `POST /repos/{owner}/{repo}/rulesets` with a 307 to
+  `/repositories/{id}/rulesets`. `gh api` follows that redirect only when it can replay
+  the request body (a `--input` file body cannot, so it stops with `gh: HTTP 307`), so
+  the script posts the payload with `curl -L` and JSON on stdin.
 - On failure it prints the API `errors[].message` lines, so a missing permission or a
   rejected payload is visible.
 
@@ -70,7 +77,7 @@ A fine-grained PAT with **Workflows: Read** (the value used in this setup) canno
 files under `.github/workflows`. The push fails with:
 
 ```text
-refusing to allow a Personal Access Token to modify workflows or its metadata without 'workflow' scope
+refusing to allow a Personal Access Token to create or update workflow `.github/workflows/<file>.yml` without `workflow` scope
 ```
 
 This is deliberate: **Workflows: Read & Write** would let a workflow read the repository
