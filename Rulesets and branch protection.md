@@ -18,8 +18,8 @@ The script creates a ruleset named **main branch** on the default branch
 | `pull_request` | 1 approving review is required; stale reviews are dismissed on push; merging is allowed only via **merge** or **rebase** (no squash) |
 | `copilot_code_review` | Copilot reviews on push (draft PRs are not reviewed) |
 
-`required_review_thread_resolution` is currently `false` — it must become `true`
-(see the Feature 73 follow-up in `TODO.md`).
+`required_review_thread_resolution` is currently `false`; setting it to `true`
+requires applying the ruleset again with an Administration token.
 
 ### Usage
 
