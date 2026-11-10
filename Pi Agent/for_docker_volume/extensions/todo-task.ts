@@ -210,8 +210,7 @@ const ensureTodoDir = (): Promise<void> =>
     fs
         .mkdir(TODO_FEATURES_DIR, { recursive: true })
         .catch((err) => {
-            safeNotify(`${EXTENSION} ❌ Failed to create features directory. ${err}`, "error")
-            //console.error('Failed to create features directory.', err)
+            safeNotify(`❌ Failed to create features directory. ${err}`, "error")
         })
         .then((_) => {})
 
@@ -239,7 +238,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
         // ctx may have gone stale during the awaited calls above; token count is best-effort
         tokens = ctx.getContextUsage()?.tokens ?? null
     } catch (err) {
-        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")
+        safeNotify(`❌ getContextUsage() failed. ${err}`, "error")
     }
 
     const label = currentTask.type === "feature" ? "Feature" : "Bug"
