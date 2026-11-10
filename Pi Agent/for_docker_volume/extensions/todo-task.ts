@@ -444,6 +444,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             if (watchedPr) {
                 pr = viewPrForReview(cwd, watchedPr.number, watchedPr.url)
                 if (pr === null) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
+                // /pr <number> arms with an empty URL; it is stable per PR number, so backfill it
+                // here — otherwise the status bar link and the time-limit message lose the reference.
+                if (pr.url && pr.url !== watchedPr.url) watchedPr.url = pr.url
             } else {
                 let branch = ""
                 try {
