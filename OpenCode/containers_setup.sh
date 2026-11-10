@@ -69,11 +69,18 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volume_opencode/commands"
     cp commands/*.md "$docker_volume_opencode/commands/" 2>/dev/null || true
 
-    # Copy plugins (one directory per plugin)
-    rm -rf "$docker_volume_opencode/plugins"
+    # Copy plugins (one directory per plugin). Only the directories owned by this
+    # repository are replaced, so plugins installed in the agent volume survive,
+    # and only real plugin directories are copied (never plugins/node_modules).
+    # The V1 single-file plugin is removed: it is rejected by OpenCode 2.x.
     mkdir -p "$docker_volume_opencode/plugins"
+    rm -f "$docker_volume_opencode/plugins/agent-terminal-title.ts"
     for plugin in plugins/*/; do
         [ -d "$plugin" ] || continue
+        name=$(basename "${plugin%/}")
+        [ "$name" = "node_modules" ] && continue
+        [ -f "${plugin}tui.ts" ] || [ -f "${plugin}index.ts" ] || continue
+        rm -rf "$docker_volume_opencode/plugins/$name"
         cp -R "${plugin%/}" "$docker_volume_opencode/plugins/"
     done
 

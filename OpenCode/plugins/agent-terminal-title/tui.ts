@@ -2,11 +2,16 @@ import { Plugin } from "@opencode/plugin/tui"
 
 const RUNNING_ICON = "⏳"
 const IDLE_ICON = "🖐️"
+const ROUTE_POLL_MS = 1_000
 
 /**
  * Terminal title showing whether the active session is working or idle.
  * The title must be written from the TUI part: the background server has no
  * controlling terminal. OpenCode's own title writer is disabled in cli.json.
+ *
+ * `session.viewed` is published only for unread sessions and the TUI publishes no
+ * event for a route change, so the active route is also polled: switching between
+ * two tabs emits nothing, which would otherwise leave the previous session's icon.
  */
 export default Plugin.define({
   id: "agent-terminal-title",
@@ -22,10 +27,12 @@ export default Plugin.define({
       context.renderer.setTerminalTitle(title)
     }
 
-    const activeSessionID = () => {
+    const activeRoute = () => {
       const route = context.ui.router.current()
-      return route.type === "session" ? route.sessionID : undefined
+      return route.type === "session" ? { key: `session:${route.sessionID}`, sessionID: route.sessionID } : { key: route.type, sessionID: undefined }
     }
+
+    const activeSessionID = () => activeRoute().sessionID
 
     const refresh = () => {
       const sessionID = activeSessionID()
@@ -44,7 +51,16 @@ export default Plugin.define({
       write(false)
     })
 
+    let lastRouteKey = activeRoute().key
+    const routePollTimer = setInterval(() => {
+      const { key } = activeRoute()
+      if (key === lastRouteKey) return
+      lastRouteKey = key
+      refresh()
+    }, ROUTE_POLL_MS)
+
     return () => {
+      clearInterval(routePollTimer)
       stopStatus()
       stopViewed()
       stopIdle()
