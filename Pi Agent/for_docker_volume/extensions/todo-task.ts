@@ -471,10 +471,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             if (stopIfPrFinished(pr)) return
 
-            if (pr.state !== "OPEN") {
-                safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
-                return
-            }
+            if (pr.state !== "OPEN")
+                return safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
 
             type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"  // The PR general status
             // TODO: resolve a state of the current PR
