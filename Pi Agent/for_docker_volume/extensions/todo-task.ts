@@ -113,7 +113,6 @@ let prCheckStartedAt = 0  // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
-
 // Ojects 
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -145,7 +144,7 @@ interface PrView {
     //statusCheckRollup: Array<{ status: 'IN_PROGRESS' | 'QUEUED' | 'COMPLETED', conclusion: string }>  // 'FAILURE' | 'CANCELLED'  ### NOTE: requires specific PAT permission that I can't find at teh moment.
     reviewDecision: string | null
     reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
-    url?: string
+    url: string
 }
 
 // Helper functions 
@@ -391,25 +390,24 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const onGhFailure = (context: string, err: unknown): void => {
         consecutiveGhFailures++
         safeSetStatus(STATUS_KEY_PR, `⚠️ ${GRAY}PR check failing (${consecutiveGhFailures}x)${RESET}`)
-        if (consecutiveGhFailures === 1) safeNotify(`${EXTENSION} ❌ ${context} (will retry).`, "error")
+        if (consecutiveGhFailures === 1) safeNotify(`❌ ${context} (will retry).`, "error")
         debug(`${context} failed (${consecutiveGhFailures}x): ${err}`)
     }
 
-    // Announce a finished PR and stop the watch. The agent is told too: it may be sitting in a
-    // long session waiting for a review that will never arrive.
+    // Announce a finished PR and stop the watch.
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
-        const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
+
         stopPrCheckPolling()
-        // The outcome is delivered, so a re-arm (session_start) must not announce it a second time.
-        // Deliberately not in stopPrCheckPolling(): the session-replacement re-arm needs the number.
         watchedPr = null
+
+        const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
-            safeNotify(`✅ PR MERGED ! ${link}`, "info")
+            safeNotify(`✅ PR MERGED. ${link}`, "info")
             safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
         } else {
-            safeNotify(`${EXTENSION} ⏹️ Stopped PR check: ${link} was closed without merge.`, "info")
-            safeSendUserMessage(`PR #${pr.number} was closed without merge — confirm with the user before continuing.`, { deliverAs: "followUp" })
+            safeNotify(`⏹️ PR CLOSED. ${link}`, "info")
+            safeSendUserMessage(`PR #${pr.number} was closed without merge.`, { deliverAs: "followUp" })
         }
         return true
     }
@@ -461,16 +459,27 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     return
                 }
                 debug(`PR "#${pr.number}" found on the branch "${branch}"`)
+
+                watchedPr = { number: pr.number, url: pr.url }
             }
 
             consecutiveGhFailures = 0
             // Keep the identity and the URL in sync with what `gh` just returned.
-            watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
+            //watchedPr = { number: pr.number, url: pr.url ?? watchedPr?.url ?? "" }
 
             // 👀🔍📢👁️🏷️🔔📌📦🚩🎫
             safeSetStatus(STATUS_KEY_PR, `🚩 ${osc8Link(watchedPr.url, `PR #${watchedPr.number} (${pr.state})`)}`)
 
             if (stopIfPrFinished(pr)) return
+
+            if (pr.state !== "OPEN") {
+                safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
+                return
+            }
+
+            type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVEW"  // The PR general status
+            // TODO: resolve a state of the current PR
+
 
             // Check PR-level reviewDecision first
             const decision = pr.reviewDecision ?? ""
@@ -544,6 +553,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         checkCounter = 0
         safeSetStatus(STATUS_KEY_PR, undefined)
         safeNotify(`Stop PR check.`, "info")
+
+        //watchedPr = null  // TODO: should be set here?
     }
 
     // Track the latest ctx from every event that delivers one; command handlers also
