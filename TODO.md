@@ -3,20 +3,6 @@
 ## Backlog
 
 
-- Bug 16 (remaining sub-issue) | todo-task polling should start AFTER the PR is created
-  Polling is armed by `/feature N` / `/bugfix N`, i.e. long before a PR exists; the watcher then has to
-  idle through a discovery phase (currently unbounded, bounded only by the 4 h `PR_CHECKING_MAX_MS`).
-  Arm it from the creation event instead and delete the discovery machinery:
-  - `pi.on("tool_execution_end")`: when `toolName === "bash"`, `!isError` and the command matches
-    `\bgh\s+pr\s+create\b`, parse the PR number from the printed PR URL and call
-    `startPrCheckPolling()` with `watchedPr` already set (checks by number from the first tick).
-  - Guard: only when a task is `pending`, never re-arm while `prCheckTimer` is already running.
-  - PRs created outside the bash tool (GH web UI, `gh api`, scripts) never raise the event: keep a slow
-    fallback poll (~2-5 min instead of 20 s) and keep `/pr <number>` as manual arming.
-  - Once landed, the `pr == null` wait branch and the whole default/detached-branch discovery path can go.
-  - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
-    open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
-    
 - Bug 16.1 | todo-task: widen PR-creation detection beyond the `gh pr create` command regex
      Follow-up to #145 (fix/78_bug16_arm_polling_on_pr_create), which arms the watch only when the bash
      command matches `\bgh\s+pr\s+create\b`; every other creation route is found only by the ~2 min slow
@@ -224,6 +210,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 16 (arm side) [fix/78_bug16_arm_polling_on_pr_create]: todo-task arms its PR watch from the `gh pr create` bash-tool result (PR number parsed from the printed URL), checking by number every ~20 s from the first tick; branch discovery survives only as a ~2 min fallback for PRs created outside the bash tool and `/pr <number>` still arms manually
 - Feature 79 [feat/79_pr_created_turn_end_marker]: todo-task PR watch is armed by the agent's "[PR N CREATED]" turn_end marker (verified via gh pr view) instead of eagerly at task start; /pr stays as manual arming
 - Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71
 - Bug 17 [obsolete]: the fresh-session start already runs its post-replacement work inside `withSession` with the new ctx and every send goes through `messageSender ?? pi` guarded by try/catch (`0f79d0a`, 2026-11-10); the `fix/17_stale_ctx_after_newsession` branch only logged it, never fixed it

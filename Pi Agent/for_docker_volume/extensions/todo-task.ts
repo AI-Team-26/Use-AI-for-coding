@@ -39,15 +39,25 @@
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * Once started (by the "[PR N CREATED]" marker, or manually with /pr) the watch polls GitHub every ~20s (max 4h):
+ * Once started (from the `gh pr create` bash-tool result, by the "[PR N CREATED]" marker, or manually
+ * with /pr) the watch polls GitHub every ~20s (max 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
- * If the agent never emits the marker, start the watch manually with /pr [N].
+ * Until a PR is known the watch runs a slow (~2 min) branch lookup covering PRs created outside
+ * the bash tool; if no PR is ever detected, start the watch manually with /pr [N].
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
-import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from "@earendil-works/pi-coding-agent"
+import type {
+    ExtensionAPI,
+    ExtensionContext,
+    ExtensionCommandContext,
+    TurnEndEvent,
+    AgentSettledEvent,
+    ToolExecutionStartEvent,
+    ToolExecutionEndEvent,
+} from "@earendil-works/pi-coding-agent"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
@@ -84,7 +94,8 @@ const STATUS_UPDATE_MS = 15_000
 // The timer lives at module scope because Pi never disposes the old extension instance on session swap,
 // so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
-const PR_CHECK_INTERVAL_MS = 20_000
+const PR_CHECK_INTERVAL_MS = 20_000 // fast cadence once a specific PR is being watched
+const PR_FALLBACK_POLL_MS = 120_000 // slow cadence while waiting for a PR to appear (created outside the bash tool)
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 
 let watchGeneration = 0
@@ -444,8 +455,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
 
         try {
-            // Two modes: discover the branch's open PR until one is found, then follow that PR by
-            // number — so a merge or close is detected from any branch, including main/detached.
+            // Fast path: always watch the known PR by number/URL, whatever branch is checked out,
+            // so a merge or close is detected from any branch, including main/detached. The identity
+            // is set at arm time (the gh-pr-create tool event, /pr, or the fallback upgrade below).
             let pr: PrView | null
             if (watchedPr) {
                 pr = viewPrForReview(cwd, watchedPr.number, watchedPr.url)
@@ -454,29 +466,33 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 // here — otherwise the status bar link and the time-limit message lose the reference.
                 if (pr.url && pr.url !== watchedPr.url) watchedPr.url = pr.url
             } else {
+                // Fallback path (no PR known yet): this tick runs at the slow PR_FALLBACK_POLL_MS
+                // cadence and looks up the working branch's open PR once per tick, covering PRs
+                // created outside the bash tool (web UI, gh api, scripts). On the default/detached
+                // branch there is nothing to discover — /pr <number> arms those manually.
                 let branch = ""
                 try {
                     branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
                 } catch (err) {
                     return onGhFailure("Failed to read the current branch", err)
                 }
-                if (branch && branch !== "main" && branch !== "master") {
-                    try {
-                        pr = getBranchOpenPr(cwd, branch)
-                    } catch (err) {
-                        return onGhFailure(`Failed to fetch PR of branch "${branch}"`, err)
-                    }
-                } else pr = null
-
-                if (pr === null) {
-                    safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(NO PR)${RESET}`)
-                    debug(`No open PR on branch '${branch || "(detached)"}' yet (${checkCounter})`)
+                if (!branch || branch === "main" || branch === "master") {
+                    debug(`Fallback poll: nothing to discover on '${branch || "(detached)"}' (${checkCounter})`)
                     return
                 }
-                debug(`PR "#${pr.number}" found on the branch "${branch}"`)
-
-                // Identity fixed here (or handed in at arm time); the URL never changes for a PR number.
-                watchedPr = { number: pr.number, url: pr.url }
+                try {
+                    pr = getBranchOpenPr(cwd, branch)
+                } catch (err) {
+                    return onGhFailure(`Failed to fetch PR of branch "${branch}"`, err)
+                }
+                if (pr === null) {
+                    safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(NO PR)${RESET}`)
+                    debug(`No open PR on branch '${branch}' yet (${checkCounter})`)
+                    return
+                }
+                // Discovered: re-arm by number/URL so every following tick uses the fast cadence.
+                startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
+                return
             }
 
             consecutiveGhFailures = 0
@@ -578,7 +594,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         watchGeneration++
         consecutiveGhFailures = 0
         consecutiveSendFailures = 0
-        prCheckTimer = setInterval(() => void checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
+        const interval = pr ? PR_CHECK_INTERVAL_MS : PR_FALLBACK_POLL_MS
+        prCheckTimer = setInterval(() => void checkPrReview(cwd), interval)
         void checkPrReview(cwd)
     }
 
@@ -836,9 +853,17 @@ ${typeData.extra ?? ""}\n\
                 const onDefaultBranch = !branch || branch === "main" || branch === "master"
 
                 // On a working branch with no explicit target: watch the current branch's PR.
+                // Resolve it right away so the watch starts by number at the fast cadence;
+                // only when no PR exists yet does it degrade to the slow fallback lookup.
                 if (!onDefaultBranch && prNumberArg === null) {
-                    debug("/pr command  startPrCheckPolling")
-                    startPrCheckPolling(projectRoot)
+                    let pr: PrView | null = null
+                    try {
+                        pr = getBranchOpenPr(projectRoot, branch)
+                    } catch (err) {
+                        safeNotify(`❌ Failed to fetch PR of branch "${branch}". ${err}`, "error")
+                        return
+                    }
+                    startPrCheckPolling(projectRoot, pr ? { number: pr.number, url: pr.url } : null)
                     return
                 }
 
@@ -965,6 +990,43 @@ ${typeData.extra ?? ""}\n\
         }
         safeNotify(`Switched to branch '${pr.headRefName}' (PR #${pr.number}).`, "info")
         return true
+    }
+
+    // Arm the PR watch as soon as the agent creates the PR through the bash tool: the printed
+    // output carries the PR URL, so the very first tick already checks by number instead of
+    // idling through branch discovery. The command is captured on tool_execution_start because
+    // the end event carries the result but not the args.
+    const pendingBashCommands = new Map<string, string>()
+
+    pi.on("tool_execution_start", (event: ToolExecutionStartEvent) => {
+        if (event.toolName !== "bash") return
+        const command = (event.args as { command?: unknown } | undefined)?.command
+        if (typeof command === "string") pendingBashCommands.set(event.toolCallId, command)
+    })
+
+    pi.on("tool_execution_end", (event: ToolExecutionEndEvent) => {
+        if (event.toolName !== "bash" || event.isError) return
+        const command = pendingBashCommands.get(event.toolCallId)
+        pendingBashCommands.delete(event.toolCallId)
+        if (!command || !/\bgh\s+pr\s+create\b/.test(command)) return
+
+        const resultText = JSON.stringify(event.result ?? "")
+        const numberMatch = /\/pull\/(\d+)/.exec(resultText)
+        if (!numberMatch) {
+            debug(`gh pr create succeeded but no PR URL found in its output — relying on the fallback poll`)
+            return
+        }
+        const number = parseInt(numberMatch[1], 10)
+        const urlMatch = /(https:\/\/github\.com\/[^/\s"\\]+\/[^/\s"\\]+\/pull\/\d+)/.exec(resultText)
+        armWatchFromCreation(number, urlMatch?.[1] ?? "")
+    })
+
+    // No-op when there is no pending task or a specific PR is already watched; a still-running
+    // fallback watch (no PR known yet) is upgraded to the fast cadence with this PR's identity.
+    const armWatchFromCreation = (number: number, url: string): void => {
+        if (currentTask === null) return
+        if (watchedPr !== null) return
+        startPrCheckPolling(taskProjectRoot ?? process.cwd(), { number, url })
     }
 
     // Detect the task completion marker in agent chat reply.
