@@ -48,8 +48,16 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
-import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as sharedSafeSetStatus, createDebug, pullLatestMain, type NotifyType } from "./_shared/common.ts"
-
+import {
+    GRAY,
+    RESET,
+    osc8Link,
+    safeNotify as sharedSafeNotify,
+    safeSetStatus as sharedSafeSetStatus,
+    createDebug,
+    pullLatestMain,
+    type NotifyType,
+} from "./_shared/common.ts"
 
 const EXTENSION = "TODO-TASK"
 const DEBUG = true
@@ -70,7 +78,6 @@ const handledReviewDecisions = new Map<string, string>() // track reviews to not
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
 let taskStatusTimer: ReturnType<typeof setInterval> | null = null
 const STATUS_UPDATE_MS = 15_000
-
 
 // A context capable of injecting messages into the agent stream: either the `pi` API
 // (stale after any session replacement) or a fresh ReplacedSessionContext.
@@ -102,18 +109,17 @@ function resetSender(): void {
     messageQueue.length = 0
 }
 
-
-// The timer lives at module scope because Pi never disposes the old extension instance on session swap, 
+// The timer lives at module scope because Pi never disposes the old extension instance on session swap,
 // so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 let checkCounter = 0
-let prCheckStartedAt = 0  // TODO: can be set in the  WatchedPr
+let prCheckStartedAt = 0 // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
 
-// Ojects 
+// Ojects
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 interface CurrentTask {
@@ -126,7 +132,7 @@ interface CurrentTask {
 
 interface WatchedPr {
     number: number
-    url: string 
+    url: string
     // watchStartAt: number   // last watch start   // ms Epoch?
 }
 
@@ -147,7 +153,7 @@ interface PrView {
     url: string
 }
 
-// Helper functions 
+// Helper functions
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -171,7 +177,6 @@ async function resolveModelName(): Promise<string> {
     }
     return `${m.provider}/${m.name ?? "unknown"}`
 }
-
 
 function safeNotify(message: string, type: NotifyType = "info"): void {
     sharedSafeNotify(() => latestCtx, message, type, EXTENSION)
@@ -232,7 +237,6 @@ function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
     return JSON.parse(res.stdout) as T[]
 }
 
-
 async function finishActivity(ctx: ExtensionContext): Promise<void> {
     if (!currentTask?.completed) return
     latestCtx = ctx
@@ -251,7 +255,7 @@ async function finishActivity(ctx: ExtensionContext): Promise<void> {
         // ctx may have gone stale during the awaited calls above; token count is best-effort
         tokens = ctx.getContextUsage()?.tokens ?? null
     } catch (err) {
-        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")        
+        safeNotify(`${EXTENSION} ❌ getContextUsage() failed. ${err}`, "error")
     }
 
     const label = currentTask.type === "feature" ? "Feature" : "Bug"
@@ -275,10 +279,8 @@ _(first push only, without following reviews rework)_
     stopStatusTimer()
     safeSetStatus(STATUS_KEY_TASK, undefined)
 
-    if (taskProjectRoot === null)
-        safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
-    else
-        appendReportToPr(taskProjectRoot, report)
+    if (taskProjectRoot === null) safeNotify(`${EXTENSION} ❌ finishActivity(). TaskProjectRoot is null.`, "error")
+    else appendReportToPr(taskProjectRoot, report)
 
     resetSender()
     currentTask = null
@@ -290,10 +292,10 @@ function appendReportToPr(cwd: string, report: string) {
         if (!branch || branch === "main" || branch === "master") return false
 
         const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
-        const pr = prs[0]        
+        const pr = prs[0]
         if (pr === null) {
             safeNotify(`${EXTENSION} ❌ PR not found on branch '${branch}'.`, "error")
-            return;
+            return
         }
 
         const body = (pr.body ?? "").trimEnd()
@@ -308,13 +310,12 @@ function appendReportToPr(cwd: string, report: string) {
     }
 }
 
-
-// Extension 
+// Extension
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
-    const clearCurrentTask= (reason: string): void => {
-        if (currentTask === null) return        
+    const clearCurrentTask = (reason: string): void => {
+        if (currentTask === null) return
         stopStatusTimer()
         stopPrCheckPolling()
         resetSender()
@@ -356,7 +357,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
         try {
-            (messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
+            ;(messageSender ?? pi).sendUserMessage(content, options)?.catch?.((e) => onSendError("safeSendUserMessage", e))
         } catch (err) {
             onSendError("safeSendUserMessage", err)
         }
@@ -368,7 +369,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
         try {
-            (messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
+            ;(messageSender ?? pi).sendMessage(message, options)?.catch?.((e) => onSendError("safeSendMessage", e))
         } catch (err) {
             onSendError("safeSendMessage", err)
         }
@@ -414,9 +415,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"
 
-    // Resolve which state the PR is currently in. A non-null aggregate reviewDecision is
-    // authoritative; GitHub returns null while required checks fail, so fall back to the newest
-    // decisive individual review then (an older round is superseded by any newer one).
+    // Resolve which state the PR is currently in. A non-null aggregate reviewDecision is authoritative; 
+    // GitHub returns null while required checks fail, so fall back to the newest decisive individual review then (an older round is superseded by any newer one).
     const resolvePrStatus = (pr: PrView): PR_STATUS => {
         const decision = pr.reviewDecision ?? ""
         if (decision === "APPROVED") return "APPROVED"
@@ -487,14 +487,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             if (stopIfPrFinished(pr)) return
 
-            if (pr.state !== "OPEN")
-                return safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
+            if (pr.state !== "OPEN") return safeNotify(`⚠️ Unmanaged PR state: ${pr.state}`, "warning")
 
             const prStatus = resolvePrStatus(pr)
             debug(`PR status: '${prStatus}' (${checkCounter})`)
 
             const hasConflicts = pr.mergeable === "CONFLICTING"
 
+            // OLD implementation
             // Dedup per REVIEW EVENT, not per status value: two successive rejections share the
             // same status but have distinct review ids.
             const decisive = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
@@ -532,7 +532,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
     const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
         stopPrCheckPolling()
-        safeNotify(`Start PR check...`, "info")  // after stopPrCheckPolling so we see the notification        
+        safeNotify(`Start PR check...`, "info") // after stopPrCheckPolling so we see the notification
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
@@ -591,7 +591,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     function parseCommandArgs(args: string): { number: number; note: string | undefined; error: string | null } {
         const trimmed = args.trim()
         if (trimmed === "end") return { number: 0, note: undefined, error: null } // special case handled outside
-        
+
         // Try to parse feature/bug number
         const numberMatch = trimmed.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/)
         if (!numberMatch)
@@ -649,7 +649,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         await fs.writeFile(filePath, startContent, "utf8")
 
         // Run git checkout main && git pull before sending the prompt
-        if (pullLatestMain(() => latestCtx, projectRoot) == false) return;
+        if (pullLatestMain(() => latestCtx, projectRoot) == false) return
 
         // Check the number refers to an exising Feature or Bug entry in TODO.md
         let content: string
@@ -674,7 +674,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         }
         */
 
-        currentTask = { type, number, startTime, completed:false }
+        currentTask = { type, number, startTime, completed: false }
 
         const label = type === "feature" ? "Feature" : "Bug"
         const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
@@ -720,7 +720,7 @@ ${typeData.extra ?? ""}\n\
                 stopPrCheckPolling()
                 stopStatusTimer()
                 currentTask = null
-                resetSender()                
+                resetSender()
                 //safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
                 //safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
                 //latestCtx = freshCtx
@@ -796,7 +796,6 @@ ${typeData.extra ?? ""}\n\
         },
     })
 
-    
     pi.registerCommand("pr", {
         description: "Check PR reviews. Continue to work on a PR. Usage: /pr [number | PR URL]",
         handler: async (args, ctx) => {
@@ -852,7 +851,11 @@ ${typeData.extra ?? ""}\n\
     // Single-PR lookup, used when the PR is missing from the open list so merged and closed can be reported distinctly from "does not exist".
     // Single-PR lookup shared by `/pr` and the poller. Returns null when `gh` fails or the
     // output cannot be parsed; callers that must not mistake a failure for "PR gone" retry it.
-    const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, ref: number | string, fields = "number,state,title,headRefName,url"): T | null => {
+    const viewPr = <T = PrSummary & { state: string; url?: string }>(
+        cwd: string,
+        ref: number | string,
+        fields = "number,state,title,headRefName,url",
+    ): T | null => {
         const res = spawnSync("gh", ["pr", "view", String(ref), "--json", fields], { cwd, encoding: "utf-8" })
         if (res.status !== 0) return null
         try {
@@ -864,7 +867,7 @@ ${typeData.extra ?? ""}\n\
         }
     }
 
-    // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog, 
+    // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog,
     // and an explicit number/URL always targets that specific PR — even when it is no longer open, in which case the user is told its state.
     const resolveOpenPr = async (ctx: ExtensionCommandContext, cwd: string, prNumberArg?: number): Promise<PrSummary | null> => {
         const listRes = spawnSync("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title", "--limit", "100"], { cwd, encoding: "utf-8" })
@@ -920,7 +923,10 @@ ${typeData.extra ?? ""}\n\
                 safeNotify("Commit or stash your changes first, then run /pr again.", "warning")
                 return false
             }
-            const stash = await ctx.ui.confirm("Switch to PR branch", `PR #${pr.number} (${pr.headRefName}) needs a branch switch. Stash your uncommitted changes and continue? (run "git stash pop" to restore them later)`)
+            const stash = await ctx.ui.confirm(
+                "Switch to PR branch",
+                `PR #${pr.number} (${pr.headRefName}) needs a branch switch. Stash your uncommitted changes and continue? (run "git stash pop" to restore them later)`,
+            )
             if (!stash) {
                 safeNotify("Aborted — nothing was stashed.", "info")
                 return false
