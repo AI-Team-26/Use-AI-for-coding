@@ -60,7 +60,7 @@ import {
 } from "./_shared/common.ts"
 
 const EXTENSION = "TODO-TASK"
-const DEBUG = true
+const DEBUG = false
 const debug = createDebug(EXTENSION, DEBUG)
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? "", ".pi", "agent", "todo-tasks")
 const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
