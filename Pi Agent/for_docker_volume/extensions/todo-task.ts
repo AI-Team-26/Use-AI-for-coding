@@ -496,44 +496,49 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return
             }
 
-            let delivered = false
-            switch (prStatus) {
-                case "APPROVED": {
-                    delivered = await safeSendMessage({
-                        customType: `${EXTENSION}-approved`,
-                        content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved — can be merged.`,
-                        display: true,
-                        details: {},
-                    })
-                    if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-                    break
-                }
-                case "REJECTED": {
-                    if (isStaleRejection(cwd, pr))
-                        delivered = await safeSendUserMessage(
-                            `ℹ️ The rejection of ${osc8Link(pr.url, `PR #${pr.number}`)} was already reworked — new commits since the review, awaiting re-review. No action needed.`,
-                            { deliverAs: "followUp" },
-                        )
-                    else
-                        delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, {
-                            deliverAs: "followUp",
-                        })
-                    if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-                    break
-                }
-                case "WAITING_REVIEW": {
-                    if (checkCounter == 1 && hasConflicts)
-                        void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-                    debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
-                    break
-                }
-            }
+            // An overlapping tick must not announce the same event twice: reserve before awaiting.
+            // Released only when the handoff failed, so an undelivered event is retried next tick.
+            const reserve = prStatus !== "WAITING_REVIEW"
+            if (reserve) handledReviewDecisions.set(key, prStatus)
 
-            // Marked handled only once the notification was actually handed off;
-            // an undelivered event is retried next tick since checkPrReview re-derives everything from GitHub.
-            if (prStatus !== "WAITING_REVIEW") {
-                if (delivered) handledReviewDecisions.set(key, prStatus)
-                else debug(`checkPrReview() ${checkCounter} notification not delivered — will retry next tick`)
+            let delivered = false
+            try {
+                switch (prStatus) {
+                    case "APPROVED": {
+                        delivered = await safeSendMessage({
+                            customType: `${EXTENSION}-approved`,
+                            content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved — can be merged.`,
+                            display: true,
+                            details: {},
+                        })
+                        if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                        break
+                    }
+                    case "REJECTED": {
+                        if (isStaleRejection(cwd, pr))
+                            delivered = await safeSendUserMessage(
+                                `ℹ️ The rejection of ${osc8Link(pr.url, `PR #${pr.number}`)} was already reworked — new commits since the review, awaiting re-review. No action needed.`,
+                                { deliverAs: "followUp" },
+                            )
+                        else
+                            delivered = await safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, {
+                                deliverAs: "followUp",
+                            })
+                        if (hasConflicts) void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                        break
+                    }
+                    case "WAITING_REVIEW": {
+                        if (checkCounter == 1 && hasConflicts)
+                            void safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                        debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
+                        break
+                    }
+                }
+            } finally {
+                if (reserve && !delivered) {
+                    handledReviewDecisions.delete(key)
+                    debug(`checkPrReview() ${checkCounter} notification not delivered — will retry next tick`)
+                }
             }
 
             debug(`checkPrReview() END ${checkCounter}`)
