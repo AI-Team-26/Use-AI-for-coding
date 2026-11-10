@@ -97,7 +97,8 @@ let newSessionForStartTask = false // ctx.newSession() is in flight for start a 
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
-let checkCounter = 0
+//let checkCounter = 0
+let watchGeneration = 0
 let prCheckStartedAt = 0 // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
@@ -420,6 +421,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return Number.isFinite(headDate) && Number.isFinite(latest) && headDate > latest
     }
 
+    let checkCounter = 0
     const checkPrReview = async (cwd: string): Promise<void> => {
         checkCounter++
         debug(`checkPrReview() ${checkCounter}`)
@@ -483,6 +485,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             if (pr.state !== "OPEN") return safeNotify(`⚠️ Unmanaged PR state: ${pr.state}`, "warning")
 
+            const myGeneration = watchGeneration // to distinguish proper value and avoid use wrong values in case of colliding concurrent runs 
+
             const prStatus = resolvePrStatus(pr)
             debug(`PR status: '${prStatus}' (${checkCounter})`)
 
@@ -497,7 +501,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 if (!handledReviewDecisions.has(conflictKey)) {
                     handledReviewDecisions.set(conflictKey, "CONFLICTING")
                     const ok = await safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-                    if (!ok) handledReviewDecisions.delete(conflictKey)
+                    if (!ok && myGeneration === watchGeneration) handledReviewDecisions.delete(conflictKey)
                 }
             }
 
@@ -514,9 +518,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             // An overlapping tick must not announce the same event twice: reserve before awaiting.
             // Released only when the handoff failed, so an undelivered event is retried next tick.
             const reserve = prStatus !== "WAITING_REVIEW"
+            
             if (reserve) handledReviewDecisions.set(key, prStatus)
 
             let delivered = false
+            
             try {
                 switch (prStatus) {
                     case "APPROVED": {
@@ -546,7 +552,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     }
                 }
             } finally {
-                if (reserve && !delivered) {
+                if (reserve && !delivered && myGeneration === watchGeneration) {
                     handledReviewDecisions.delete(key)
                     debug(`checkPrReview() ${checkCounter} notification not delivered — will retry next tick`)
                 }
@@ -566,6 +572,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
+        watchGeneration++
         consecutiveGhFailures = 0
         consecutiveSendFailures = 0
         prCheckTimer = setInterval(() => void checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
@@ -736,9 +743,6 @@ ${typeData.extra ?? ""}\n\
                 stopPrCheckPolling()
                 stopStatusTimer()
                 currentTask = null
-                //safeSetStatus(freshCtx, STATUS_KEY_TASK, undefined)
-                //safeSetStatus(freshCtx, STATUS_KEY_PR, undefined)
-                //latestCtx = freshCtx
                 safeSetStatus(STATUS_KEY_TASK, undefined)
                 safeSetStatus(STATUS_KEY_PR, undefined)
             } catch (err) {
