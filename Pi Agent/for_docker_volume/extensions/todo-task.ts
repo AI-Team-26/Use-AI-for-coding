@@ -380,7 +380,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             void safeSendUserMessage(`PR #${pr.number} was merged (delete the branch if it wasn't).`, { deliverAs: "followUp" })
         } else {
             safeNotify(`⏹️ PR CLOSED. ${link}`, "info")
-            // no action to do
+            void safeSendUserMessage(`PR #${pr.number} was merged. Do not push further commits to that branch; ask the user whether the branch should be deleted.`, { deliverAs: "followUp" })
         }
         return true
     }
