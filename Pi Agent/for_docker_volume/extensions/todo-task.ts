@@ -563,7 +563,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
     const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
         stopPrCheckPolling()
-        safeNotify(`Start PR check...`, "info") // after stopPrCheckPolling so we see the notification
+        safeNotify(`Start PR check...`, "info") // after stopPrCheckPolling so not overridden
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
@@ -747,12 +747,10 @@ ${typeData.extra ?? ""}\n\
             }
         }
 
-        let replacementCtx: ExtensionContext | null = null
         newSessionForStartTask = true
         try {
             const result = await ctx.newSession({
                 withSession: async (newCtx) => {
-                    replacementCtx = newCtx
                     latestCtx = newCtx
                     messageSender = newCtx
                     // session_shutdown stopped the ticker before the replacement; re-arm it here
