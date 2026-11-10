@@ -97,7 +97,7 @@ let newSessionForStartTask = false // ctx.newSession() is in flight for start a 
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
-//let checkCounter = 0
+
 let watchGeneration = 0
 let prCheckStartedAt = 0 // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
