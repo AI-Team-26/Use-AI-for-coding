@@ -274,9 +274,9 @@ function appendReportToPr(cwd: string, report: string) {
         if (!branch || branch === "main" || branch === "master") return false
 
         const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
-        const pr = prs[0]
+        const pr = prs[0] ?? null
         if (pr === null) {
-            safeNotify(`❌ PR not found on branch '${branch}'.`, "error")
+            safeNotify(`❌ Not open PR found on branch '${branch}'.`, "error")
             return
         }
 
