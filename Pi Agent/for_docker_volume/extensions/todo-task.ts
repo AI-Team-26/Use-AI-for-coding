@@ -134,6 +134,7 @@ interface PrView {
     reviewDecision: string | null
     reviews: Array<{ id: string; submittedAt: string; state: string; body?: string }>
     url: string
+    headRefOid: string
 }
 
 // Helper functions
@@ -346,14 +347,14 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Discovery: the open PR of a branch, used only until a PR has been watched once.
     const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url")
+        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")
         return prs[0] ?? null
     }
 
     // Watching: always the watched PR by number, whatever branch is checked out. The URL is
     // preferred so a re-arm from another repository cannot resolve a same-numbered PR.
     const viewPrForReview = (cwd: string, prNumber: number, url?: string): PrView | null =>
-        viewPr<PrView>(cwd, url || prNumber, "number,state,mergeable,reviewDecision,reviews,url")
+        viewPr<PrView>(cwd, url || prNumber, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")
 
     // Transient gh failures are notified once per run, then demoted to debug: a single network,
     // auth or rate-limit error must not end the watch (PR_CHECKING_MAX_MS bounds it instead).
@@ -397,6 +398,21 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (!decisive.length) return "WAITING_REVIEW"
         const latest = decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a))
         return latest.state === "APPROVED" ? "APPROVED" : "REJECTED"
+    }
+
+    // A rejection older than the newest head commit means fixes were already pushed: GitHub keeps
+    // showing CHANGES_REQUESTED until a fresh Approve, but we're merely waiting for re-review now.
+    // Derived from GitHub each poll, so this survives extension restarts (the handled map resets per session).
+    const isStaleRejection = (cwd: string, pr: PrView): boolean => {
+        const rejections = (pr.reviews ?? []).filter((r) => r.state === "CHANGES_REQUESTED")
+        if (!rejections.length || !pr.headRefOid) return false
+        const slug = pr.url?.match(/github\.com\/([^/]+\/[^/]+)\/pull/)?.[1]
+        if (!slug) return false
+        const latest = Date.parse(rejections.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).submittedAt)
+        const res = spawnSync("gh", ["api", `repos/${slug}/commits/${pr.headRefOid}`, "--jq", ".committed_date"], { cwd, encoding: "utf-8" })
+        if (res.status !== 0) return false // transient gh failure: fail toward notifying rather than swallowing the rejection
+        const headDate = Date.parse(res.stdout.trim())
+        return Number.isFinite(headDate) && Number.isFinite(latest) && headDate > latest
     }
 
     const checkPrReview = (cwd: string): void => {
@@ -488,7 +504,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     break
                 }
                 case "REJECTED": {
-                    delivered = safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                    if (isStaleRejection(cwd, pr))
+                        delivered = safeSendUserMessage(
+                            `ℹ️ The rejection of ${osc8Link(pr.url, `PR #${pr.number}`)} was already reworked — new commits since the review, awaiting re-review. No action needed.`,
+                            { deliverAs: "followUp" },
+                        )
+                    else delivered = safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
                     if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     break
                 }
