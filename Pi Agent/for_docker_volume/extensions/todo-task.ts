@@ -518,14 +518,17 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                         display: true,
                         details: {},
                     })
+                    break
                 }
                 case "REJECTED" : {
                     safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                    break
                 }
                 case "WAITING_REVIEW": {
                     if (checkCounter == 1 && hasConflicts)
                         safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
                     debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
+                    break
                 }
             }
 
