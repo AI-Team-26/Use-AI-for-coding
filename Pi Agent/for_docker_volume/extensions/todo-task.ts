@@ -580,39 +580,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
     })
 
-    /*
-    pi.on("session_start", (_event, ctx: ExtensionContext) => {
-        latestCtx = ctx
-        if (newSessionForStartStart) { newSessionForStartStart= false; return;}
-        
-        if (currentTask === null) return
-        // ctx.newSession() emits session_shutdown and session_start BEFORE running the
-        // withSession callback (see finishSessionReplacement in pi's agent-session-runtime),
-        // so the session_start of our own replacement must not be mistaken for an external
-        // one: withSession re-arms the sender and the timers.
-        
-        // Any non-own session_start while a task runs is an external replacement (/new, model
-        // switch, ...): session_shutdown already cleared messageSender, so the plain pi API is
-        // stale too until we re-arm in our own withSession.
-        if (messageSender !== null) {
-            // The number survives the replacement: re-discovery would look for an open PR that may
-            // have been merged or closed while the session was switched.
-            startPrCheckPolling(ctx.cwd ?? process.cwd(), watchedPr)
-            startStatusTimer()
-        } else {
-            stopPrCheckPolling()
-            stopStatusTimer()
-            safeNotify("⚠️ PR polling paused after session switch. Run /feature N or /bugfix N to resume.", "warning")
-            safeSetStatus(STATUS_KEY_PR, undefined)
-        }
-    })
-        */
-
     pi.on("session_shutdown", () => {
         stopPrCheckPolling()
         stopStatusTimer()
-        // Any session replacement invalidates the fresh ctx; our own withSession re-establishes it.
-        // ownSessionReplacement is deliberately kept: its session_start fires before withSession.
         messageSender = null
     })
 
