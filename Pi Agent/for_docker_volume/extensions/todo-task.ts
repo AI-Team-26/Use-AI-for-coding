@@ -52,7 +52,7 @@ import { GRAY, RESET, osc8Link, safeNotify as sharedSafeNotify, safeSetStatus as
 
 
 const EXTENSION = "TODO-TASK"
-const DEBUG = true
+const DEBUG = false
 const debug = createDebug(EXTENSION, DEBUG)
 const TODO_FEATURES_DIR = path.join(process.env.HOME ?? "", ".pi", "agent", "todo-tasks")
 const STATUS_KEY_TASK = "alex-piccione-todo-task-task"
