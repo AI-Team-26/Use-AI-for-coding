@@ -412,6 +412,22 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         return true
     }
 
+    type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"
+
+    // Resolve which state the PR is currently in. A non-null aggregate reviewDecision is
+    // authoritative; GitHub returns null while required checks fail, so fall back to the newest
+    // decisive individual review then (an older round is superseded by any newer one).
+    const resolvePrStatus = (pr: PrView): PR_STATUS => {
+        const decision = pr.reviewDecision ?? ""
+        if (decision === "APPROVED") return "APPROVED"
+        if (decision === "CHANGES_REQUESTED") return "REJECTED"
+        if (decision !== "") return "WAITING_REVIEW" // PENDING / DISMISSED / REVIEW_REQUIRED ...
+        const decisive = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
+        if (!decisive.length) return "WAITING_REVIEW"
+        const latest = decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a))
+        return latest.state === "APPROVED" ? "APPROVED" : "REJECTED"
+    }
+
     const checkPrReview = (cwd: string): void => {
         debug(`checkPrReview() ${checkCounter}`)
         safeNotify(`Checking PR review ...`, "info")
@@ -474,62 +490,39 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             if (pr.state !== "OPEN")
                 return safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
 
-            type PR_STATUS = "APPROVED" | "REJECTED" | "WAITING_REVIEW"  // The PR general status
-            // TODO: 
-            // 1. resolve a state of the current PR
-            // 2. if APPROVED propose the user to MERGE or do a PR REVIEW, using ctx.ui.select
-            //    if REJECTED prompt the agent to resolve the review comemnts
-            //    if WAITING_REVIEW continue polling
-            // 3. add the check for existing conflict (is doable by code?) and prompt to resolve them to the agent
-
-            // Check PR-level reviewDecision first
-            const decision = pr.reviewDecision ?? ""
-            debug(`PR decision is '${decision}' (${checkCounter})`)
-
-            // Also check individual reviews for CHANGES_REQUESTED (covers cases where reviewDecision is not yet updated)
-            const hasChangesRequested = pr.reviews?.some((r) => r.state === "CHANGES_REQUESTED") ?? false
-            debug(`hasChangesRequested: '${hasChangesRequested}' (${checkCounter})`)
-
-            // When required status checks fail, GitHub returns null for reviewDecision — even if you clicked Approve!
-            // Fall back to individual reviews to detect the approval.
-            const hasApprovalInReviews = !decision && !hasChangesRequested && (pr.reviews?.some((r) => r.state === "APPROVED") ?? false)
+            const prStatus = resolvePrStatus(pr)
+            debug(`PR status: '${prStatus}' (${checkCounter})`)
 
             const hasConflicts = pr.mergeable === "CONFLICTING"
 
-            // Effective decision: prefer aggregate, fall back to individual reviews
-            const effectiveDecision = decision || (hasApprovalInReviews ? "APPROVED" : "")
-            debug(`effectiveDecision: '${effectiveDecision}' (${checkCounter})`)
-
-            // Dedup per REVIEW EVENT, not per decision value: two successive rejections share the
-            // same aggregate value but have distinct review ids.
+            // Dedup per REVIEW EVENT, not per status value: two successive rejections share the
+            // same status but have distinct review ids.
             const decisive = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
-            const latestEventId = decisive.length ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
-            const key = `${pr.number}:${effectiveDecision}:${latestEventId}`
-            if ((effectiveDecision !== "APPROVED" && effectiveDecision !== "CHANGES_REQUESTED" && !hasChangesRequested) || handledReviewDecisions.has(key)) {
+            const eventId = decisive.length ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
+            const key = `${pr.number}:${prStatus}:${eventId}`
+            if (prStatus === "WAITING_REVIEW" || handledReviewDecisions.has(key)) {
                 if (checkCounter == 1 && hasConflicts)
                     safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-                safeNotify("adios", "info")
                 debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
                 return
             }
-            handledReviewDecisions.set(key, effectiveDecision)
+            handledReviewDecisions.set(key, prStatus)
 
-            if (effectiveDecision === "APPROVED") {
-                const note = hasApprovalInReviews && !decision ? " (checks may be blocking formal decision)" : ""
+            if (prStatus === "APPROVED") {
+                const note = pr.reviewDecision === null ? " (checks may be blocking formal decision)" : ""
                 safeSendMessage({
                     customType: `${EXTENSION}-approved`,
-                    content: `✅ ${osc8Link(pr.url ?? "", `PR #${pr.number}`)} approved${note} — waiting for merge.`,
+                    content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved${note} — can be merged.`,
                     display: true,
                     details: {},
                 })
-            } else if (effectiveDecision === "CHANGES_REQUESTED" || hasChangesRequested) {
-                debug(`checkPrReview() ${checkCounter}  CHANGES_REQUESTED`)
+            } else {
                 safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
             }
 
             if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
 
-            debug(`checkPrReview() END ${checkCounter-1}`)
+            debug(`checkPrReview() END ${checkCounter}`)
         } catch (err) {
             onGhFailure("checkPrReview() failed", err)
         }
