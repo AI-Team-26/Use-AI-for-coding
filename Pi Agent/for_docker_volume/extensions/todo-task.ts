@@ -423,7 +423,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const checkPrReview = async (cwd: string): Promise<void> => {
         checkCounter++
         debug(`checkPrReview() ${checkCounter}`)
-        safeNotify(`Checking PR review ...`, "info")        
         safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(checking PR)${RESET}`)
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
