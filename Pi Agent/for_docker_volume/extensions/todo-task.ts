@@ -112,8 +112,6 @@ let checkCounter = 0
 let prCheckStartedAt = 0  // TODO: can be set in the  WatchedPr
 // Transient gh failures are notified once per run (the first tick), then demoted to debug.
 let consecutiveGhFailures = 0
-// An unknown PR lifecycle state is announced once per watch, not every tick.
-let unmanagedPrStateNotified = false
 
 // Ojects 
 // -------------------------------------------------------------------------------------------------------------------------------------------
@@ -474,10 +472,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             if (stopIfPrFinished(pr)) return
 
             if (pr.state !== "OPEN") {
-                if (!unmanagedPrStateNotified) {
-                    unmanagedPrStateNotified = true
-                    safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
-                }
+                safeNotify(`❌ Unmanaged PR state: ${pr.state}`, "error")
                 return
             }
 
@@ -547,7 +542,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         handledReviewDecisions.clear()
         watchedPr = pr
         consecutiveGhFailures = 0
-        unmanagedPrStateNotified = false
         prCheckTimer = setInterval(() => checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
         checkPrReview(cwd)
     }
