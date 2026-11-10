@@ -494,12 +494,54 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
             const hasConflicts = pr.mergeable === "CONFLICTING"
 
-            // OLD implementation
-            // Dedup per REVIEW EVENT, not per status value: two successive rejections share the
-            // same status but have distinct review ids.
-            const decisive = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
-            const eventId = decisive.length ? decisive.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
-            const key = `${pr.number}:${prStatus}:${eventId}`
+            // We need to keep track of notified STATUS to not spamming the same info/comamnds at every poll.
+            // Dedup per REVIEW EVENT, not per status value: two successive rejections share the same status but have distinct review ids.
+            const decisiveReviews = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")  // ignore COMMENTED and DISMISSED
+            const latestEventId = decisiveReviews.length ? decisiveReviews.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
+            const key = `${pr.number}:${prStatus}:${latestEventId}`
+            // NEW
+            if (handledReviewDecisions.has(key)) {
+                debug(`checkPrReview() ${checkCounter} same key ${prStatus} NOTHING TO DO`)
+                return
+            }
+            else handledReviewDecisions.set(key, prStatus)
+
+            switch (prStatus) {
+                case "APPROVED": {
+                    // TODO: to be checked
+                    //const note = pr.reviewDecision === null ? " (checks may be blocking formal decision)" : ""
+                    const note = ""
+                    // TODO: why not safeSendUserMessage ??
+                    safeSendMessage({
+                        customType: `${EXTENSION}-approved`,
+                        content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved${note} — can be merged.`,
+                        display: true,
+                        details: {},
+                    })
+                }
+                case "REJECTED" : {
+                    safeSendUserMessage(`❌ PR was reviewed and Rejected. Follow the instructions in AGENTS.md`, { deliverAs: "followUp" })
+                }
+                case "WAITING_REVIEW": {
+                    if (checkCounter == 1 && hasConflicts)
+                        safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                    debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
+                }
+            }
+
+            return;
+/*
+            if (pr === null) return;
+
+            if (prStatus === "WAITING_REVIEW") {
+                if (checkCounter == 1 && hasConflicts)
+                    safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
+                debug(`checkPrReview() ${checkCounter}  NOTHING TO DO`)
+                return
+            }
+
+
+            // OLD
             if (prStatus === "WAITING_REVIEW" || handledReviewDecisions.has(key)) {
                 if (checkCounter == 1 && hasConflicts)
                     safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
@@ -521,7 +563,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             }
 
             if (hasConflicts) safeSendUserMessage(`PR #${pr.number} has conflicts with base — rebase and push`, { deliverAs: "followUp" })
-
+*/
             debug(`checkPrReview() END ${checkCounter}`)
         } catch (err) {
             onGhFailure("checkPrReview() failed", err)
