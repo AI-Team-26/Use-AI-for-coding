@@ -962,17 +962,8 @@ ${typeData.extra ?? ""}\n\
         return true
     }
 
-    // Both agent markers are read from the single assistant reply of the finished turn, without
-    // rewriting the text first: the patterns tolerate the whitespace/newlines a model may insert
-    // and match inside decorations such as backticks or bold.
-    //
-    // 1. "[FEATURE N COMPLETED]" / "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2) completes the
-    //    active task; if a number is given it must refer to it.
-    // 2. "[PR N CREATED]" arms the PR watch. The signal is trusted only once `gh pr view` confirms
-    //    the PR, and the watch then follows it by number from the first tick instead of discovering
-    //    the branch PR (which misses an already merged/closed PR).
     pi.on("turn_end", (event: TurnEndEvent) => {
-        if (currentTask === null) return
+        if (currentTask === null && watchedPr !== null) return
         const msg = event.message
         if (msg?.role !== "assistant") return
         const text = msg.content
@@ -980,18 +971,24 @@ ${typeData.extra ?? ""}\n\
             .map((b) => b.text)
             .join("")
 
-        const { type, number: pendingNumber } = currentTask
-        const completion =
-            type === "feature" ? /\[FEATURE(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i : /\[BUGFIX(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i
-        const completed = completion.exec(text)
-        if (completed && (completed[1] === undefined || parseFloat(completed[1]) === pendingNumber)) currentTask.completed = true
+        if (currentTask !== null) {
+            const { type, number: pendingNumber } = currentTask
+            // "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N can be a float, e.g. 7.2)
+            const completionRegex =
+                type === "feature" ? /\[FEATURE(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i : /\[BUGFIX(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i
+            const completedMatch = completionRegex.exec(text)
+            if (completedMatch && (completedMatch[1] === undefined || parseFloat(completedMatch[1]) === pendingNumber)) currentTask.completed = true
+        }
 
-        // The marker is repeated on later PR updates: only the first one arms the watch.
+        // Accepted without an active task: the PR is often published one reply after the completion
+        // marker, when currentTask has already been finalized. Repeated markers on later PR updates
+        // must not re-arm the watch.
         if (watchedPr !== null) return
-        const match = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
-        if (!match) return
+        // "[PR N CREATED]"
+        const prMatch = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
+        if (!prMatch) return
 
-        const prNumber = parseInt(match[1], 10)
+        const prNumber = parseInt(prMatch[1], 10)
         const cwd = taskProjectRoot ?? latestCtx?.cwd ?? process.cwd()
         const pr = viewPr<{ number: number; url: string }>(cwd, prNumber, "number,url")
         if (pr === null) {
