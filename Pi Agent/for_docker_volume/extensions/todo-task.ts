@@ -39,8 +39,7 @@
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * Once started (by the "[PR N CREATED]" marker, or manually with /pr) the watch polls GitHub
- * every ~20s (max 4h):
+ * Once started (by the "[PR N CREATED]" marker, or manually with /pr) the watch polls GitHub every ~20s (max 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
@@ -972,11 +971,13 @@ ${typeData.extra ?? ""}\n\
     pi.on("turn_end", (event: TurnEndEvent, ctx: ExtensionContext) => {
         const msg = event.message
         if (msg?.role !== "assistant") return
+
         const text = msg.content
             .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
             .map((b) => b.text)
             .join("")
 
+        // "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]"
         if (currentTask !== null) {
             const { type, number: pendingNumber } = currentTask
             // N may be a float (e.g. 7.2); a number must match the active pending item
@@ -986,10 +987,7 @@ ${typeData.extra ?? ""}\n\
             if (match && (match[1] === undefined || parseFloat(match[1]) === pendingNumber)) currentTask.completed = true
         }
 
-        // "[PR N CREATED]": verify the PR exists, then watch it by number/URL from the first tick.
-        // Accepted without an active task too: the PR is often published one reply after the
-        // completion marker, when the task is already finalized. An already running watch
-        // ignores repeated markers (the agent may repeat it on PR updates).
+        // "[PR N CREATED]"
         if (watchedPr === null) {
             const created = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
             if (created) {
