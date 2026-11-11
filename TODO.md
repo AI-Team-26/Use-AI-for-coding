@@ -49,8 +49,6 @@
   Also the branch is useless since it is printed in another extension.
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
-- Feature 20: the /quit command exit Pi completely, ok.
-  There is a simple way to switch project instead ? Investigate.
 
 - Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,

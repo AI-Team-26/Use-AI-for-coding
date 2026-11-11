@@ -81,6 +81,10 @@ start_project() {
     export PI_STATUS_AGENT_ICON=$agent_icon
     export PI_STATUS_DONE_ICON="🎉"
 
+    # Using exec because:
+    # 1. `docker stop` signals PID 1 only; bash doesn't forward SIGTERM to children, so as PID 1
+    #    pi shuts down cleanly (as a child it is SIGKILLed when bash dies).
+    # 2. pi's exit code becomes the container's, so `docker run` reports failures.
     exec pi --continue
 
     echo -e "Pi Agent session closed. Bye!"
