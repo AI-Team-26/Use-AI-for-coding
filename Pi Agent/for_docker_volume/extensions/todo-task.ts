@@ -37,11 +37,19 @@
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * While a feature/bug session is active it also polls GitHub every ~20s (max 4h):
+ * The PR watch is armed by the agent's "[PR N CREATED]" signal — the same prompt-emitted pattern as
+ * the completion marker, detected on turn_end and verified with `gh pr view` — never eagerly at task
+ * start: the number is unknown then, so the watch would have to discover the branch PR first and
+ * could not see a PR that was merged before its first tick. `/pr [N]` arms it manually.
+ *
+ * While a PR is watched it is polled every ~20s (max 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
+ *
+ * TODO: a task whose agent never emits "[PR N CREATED]" is not watched until `/pr` is run. A slow
+ * fallback poll (branch discovery) is the second half of Bug 16 in TODO.md.
  */
 
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from "@earendil-works/pi-coding-agent"
@@ -205,6 +213,20 @@ function formatElapsed(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000)
     const pad = (n: number) => String(n).padStart(2, "0")
     return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
+}
+
+/**
+ * Assistant text of a finished turn, with model decorations (backticks/bold/newlines) collapsed to
+ * single spaces so marker detection is not broken by formatting. Null when the turn is not an assistant reply.
+ */
+function assistantText(event: TurnEndEvent): string | null {
+    const msg = event.message
+    if (msg?.role !== "assistant") return null
+    const text = msg.content
+        .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
+        .map((b) => b.text)
+        .join("")
+    return text.replace(/[\s`*_]+/g, " ")
 }
 
 const ensureTodoDir = (): Promise<void> =>
@@ -663,6 +685,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // Cancel any currentTask activity before starting a new one
         if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
 
+        // A new task must not inherit the previous task's PR: the watch is now armed by the agent's
+        // "[PR N CREATED]" marker, which stays ignored while a PR is already being watched.
+        watchedPr = null
+        handledReviewDecisions.clear()
+
         await ensureTodoDir()
 
         const startTime = Date.now()
@@ -729,7 +756,8 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
-**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
+**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n\
+**IMPORTANT**: after you publish the PR, also include "[PR N CREATED]" (N = the PR number, e.g. "[PR 145 CREATED]") in your reply. That precise message is used as a signal by a Pi extension to start watching the PR reviews. Emit it only once the PR really exists; repeating it on later updates is harmless.\n`
 
         // Optional note: simply append to the instruction message.
         if (note == "repeat") note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch and PR."
@@ -764,7 +792,8 @@ ${typeData.extra ?? ""}\n\
                         safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, "info")
                         await newCtx.sendUserMessage(agentMessage, { deliverAs: "steer" })
 
-                        startPrCheckPolling(projectRoot)
+                        // The PR watch is NOT armed here: no PR exists yet. It starts on the agent's
+                        // "[PR N CREATED]" marker (see the turn_end handler) or on `/pr`.
                     } catch (err) {
                         abortStart()
                         throw err
@@ -966,14 +995,8 @@ ${typeData.extra ?? ""}\n\
     pi.on("turn_end", (event: TurnEndEvent) => {
         if (currentTask === null) return
         const { type, number: pendingNumber } = currentTask
-        const msg = event.message
-        if (msg?.role !== "assistant") return
-        const text = msg.content
-            .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
-            .map((b) => b.text)
-            .join("")
-        // strip common model decorations (backticks/bold/whitespace) around the marker
-        const cleaned = text.replace(/[\s`*_]+/g, " ")
+        const cleaned = assistantText(event)
+        if (cleaned === null) return
         let match: RegExpExecArray | null
         if (type === "feature") {
             match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
@@ -984,6 +1007,27 @@ ${typeData.extra ?? ""}\n\
         // if a number was given it must refer to the active pending item
         if (match[1] !== undefined && parseFloat(match[1]) !== pendingNumber) return
         currentTask.completed = true
+    })
+
+    // Arm the PR watch on the agent's own "[PR N CREATED]" marker. The signal is trusted only
+    // once `gh pr view` confirms the PR, and the watch then follows it by number from the first
+    // tick instead of discovering the branch PR (which misses an already merged/closed PR).
+    pi.on("turn_end", (event: TurnEndEvent) => {
+        // The marker is repeated on later PR updates: only the first one arms the watch.
+        if (currentTask === null || watchedPr !== null) return
+        const cleaned = assistantText(event)
+        if (cleaned === null) return
+        const match = /\[PR (\d+) CREATED\]/i.exec(cleaned)
+        if (!match) return
+
+        const prNumber = parseInt(match[1], 10)
+        const cwd = taskProjectRoot ?? latestCtx?.cwd ?? process.cwd()
+        const pr = viewPr<{ number: number; url: string }>(cwd, prNumber, "number,url")
+        if (pr === null) {
+            safeNotify(`⚠️ "[PR ${prNumber} CREATED]" not confirmed by gh — run /pr ${prNumber} to start the watch.`, "warning")
+            return
+        }
+        startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
     })
 
     // Finalize once the run has fully settled (no retries/compactions/queued continuations

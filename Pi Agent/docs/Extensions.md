@@ -55,6 +55,7 @@ pnpm add -D @earendil-works/pi-coding-agent@<specific-version> typescript
   Also tracks model name and token usage.
   Injects follow-up message to write timing into the PR.
   Completion marker: `[FEATURE N COMPLETED]`/`[BUGFIX N COMPLETED]`
+  PR watch marker: `[PR N CREATED]` — after the PR is published the agent emits it, the extension confirms the PR with `gh pr view N` and starts the ~20s PR review polling for that PR. Nothing is polled before the marker (or a manual `/pr [N]`).
 
 - pr-review
   Add the `/review` command to start a fresh session for reviewing a GitHub PR.

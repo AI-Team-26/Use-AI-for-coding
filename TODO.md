@@ -217,17 +217,6 @@
 
 - Feature 77 | Delete Feature 30, already implemented.
 
-- Feature 79 | todo-task: replace eager PR-watch arming with a "[PR N CREATED]" turn_end marker
-     `/feature` currently arms `startPrCheckPolling()` immediately (no PR known yet).
-     Replace with one prompt-emitted signal, same pattern as `[FEATURE N COMPLETED]`:
-    - add to `agentMessage`: after you publish the PR, include "[PR N CREATED]" (N = PR number)
-       in your reply — precise text used as a signal by the extension
-    - `turn_end` handler detects `/\[PR (\d+) CREATED\]/i` → verify with `gh pr view <n>` →
-       `startPrCheckPolling(cwd, {number, url})` 
-    - guards: only when `currentTask !== null` and `watchedPr === null` (marker may repeat on updates)
-    - remove the eager `startPrCheckPolling(projectRoot)` from `withSession`;
-    - update the header comment block (~lines 33–46) and the PR description
-
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
@@ -235,6 +224,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 79 [feat/79_pr_created_signal]: `todo-task` arms the PR watch on the agent's `[PR N CREATED]` marker (verified with `gh pr view`, then followed by number) instead of eagerly at task start; `watchedPr` is reset on every new task and `/pr [N]` arms it manually
 - Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71
 - Bug 17 [obsolete]: the fresh-session start already runs its post-replacement work inside `withSession` with the new ctx and every send goes through `messageSender ?? pi` guarded by try/catch (`0f79d0a`, 2026-11-10); the `fix/17_stale_ctx_after_newsession` branch only logged it, never fixed it
 - Bug 72 [obsolete]: `pr-review.ts` no longer polls (it is only the `/review N` command) and `todo-task.ts` owns the single `prCheckTimer`, which stops the previous one before arming — the two-pollers scenario cannot happen
