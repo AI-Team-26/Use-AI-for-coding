@@ -219,6 +219,22 @@
 
 - Feature 77 | Delete Feature 30, already implemented.
 
+- Feature 79 | todo-task: replace eager PR-watch arming with a "[PR N CREATED]" turn_end marker
+     `/feature` currently arms `startPrCheckPolling()` immediately (no PR known yet → slow
+     PR_CHECK_INTERVAL_FOR_FALLBACK_MS cadence), plus a second path that parses the `gh pr create`
+     bash-tool output (`pendingBashCommands` + `tool_execution_start/end` handlers +
+     `armWatchFromCreation`) to upgrade to the fast cadence. Replace both with one prompt-emitted
+     signal, same pattern as `[FEATURE N COMPLETED]`:
+    - add to `agentMessage`: after you publish the PR, include "[PR N CREATED]" (N = PR number)
+       in your reply — precise text used as a signal by the extension
+    - `turn_end` handler detects `/\[PR (\d+) CREATED\]/i` → verify with `gh pr view <n>` →
+       `startPrCheckPolling(cwd, {number, url})` at the fast cadence; unresolvable number →
+       warning + degrade to the slow fallback branch discovery
+    - guards: only when `currentTask !== null` and `watchedPr === null` (marker may repeat on updates)
+    - remove the eager `startPrCheckPolling(projectRoot)` from `withSession`; delete the whole
+       bash-tool capture machinery
+    - update the header comment block (~lines 33–46) and the PR description
+
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
   Write an empty file.    
