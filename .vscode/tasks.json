@@ -7,6 +7,12 @@
             "command": "git fetch --prune origin",
             "group": "none"
         },
+        {
+            "label": "🧹 GIT Clean",
+            "type": "shell",
+            "command": "git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads | awk '$2==\"[gone]\" {print $1}' | xargs -r git branch -d",
+            "group": "none"
+        },
         // use rebase to replay local commit ON TOP of origin main to avoid -force to discard changes of merged PRs
         // "command_that_SILENTLY_REVERT": "git add TODO.md && git commit -m 'todo: add task' && git push --force",
         {
