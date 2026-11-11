@@ -92,9 +92,7 @@ start_project() {
 
 
 # --- Main ---
-echo -e "\n${BOLD_PURPLE}================${NC}"
-echo -e "${BOLD_PURPLE}=== Pi Agent ===${NC}"
-echo -e "${BOLD_PURPLE}================${NC}"
+echo -e "${BOLD_PURPLE}=== ${AI_AGENT_NAME} ===${NC}"
 
 setup_git_global "$AI_AGENT_NAME"
 

@@ -58,6 +58,7 @@ chmod 600 "$docker_volumes/scripts/github_pat"
 for agent in "${!agents[@]}"; do
 
     AI_AGENT_NAME=${agents[$agent]}
+    AI_AGENT_COLOR=${agent_colors[$agent]}
 
     echo ""
     echo "=== Processing agent ${agent} ==="
@@ -87,6 +88,7 @@ for agent in "${!agents[@]}"; do
     # Set PI agent name
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_pi_agent/SYSTEM.md"
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_pi_agent/AGENTS.md"
+    sed -i "s/{{AI_AGENT_COLOR}}/$AI_AGENT_COLOR/g" "$docker_volume_pi_agent/AGENTS.md"
 
     # Copy skills and extensions recursively
     cp -r for_docker_volume/skills/* "$docker_volume_pi_agent/skills/" || true

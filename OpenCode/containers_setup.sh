@@ -91,6 +91,7 @@ for agent in "${!agents[@]}"; do
     # Set AI Agent name
     #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/SYSTEM.md" 
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/AGENTS.md"
+    sed -i "s/{{AI_AGENT_COLOR}}/$AI_AGENT_COLOR/g" "$docker_volume_opencode/AGENTS.md"
 
     echo -e "✔️  Done copying for ${agent}"
 done

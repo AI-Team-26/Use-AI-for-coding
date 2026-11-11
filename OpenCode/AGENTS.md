@@ -82,8 +82,8 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 1. Create branch: `git checkout -b feat/01_task_name`
 2. Push branch: `git push -u origin feat/01_task_name`
 3. Open Draft PR immediately
-4. **Create label if it doesn't exist:** `gh label create "agent: {{AI_AGENT_NAME}}" --description "Identity label for {{AI_AGENT_NAME}}"`
-5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "agent: {{AI_AGENT_NAME}}"` (use an appropriate color: Blu-AI: #0052cc, Purple-AI: #870bd9)
+4. Create label if it doesn't exist: `gh label create "{{AI_AGENT_NAME}}" -f --color "{{AI_AGENT_COLOR}}" --description "Identity label for {{AI_AGENT_NAME}}"`
+5. Apply your identity label: `gh pr edit <PR_NUMBER> --add-label "{{AI_AGENT_NAME}}"`
 6. This signals to other agents: "I'm working on this"
 7. The PR changes should have the cleaning (remove) of the task from the `Backlog`.
 
