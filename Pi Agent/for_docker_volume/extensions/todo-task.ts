@@ -78,6 +78,17 @@ const handledReviewDecisions = new Map<string, string>() // track reviews to not
 let taskStatusTimer: ReturnType<typeof setInterval> | null = null
 const STATUS_UPDATE_MS = 15_000
 
+// The timer lives at module scope because Pi never disposes the old extension instance on session swap,
+// so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
+let prCheckTimer: ReturnType<typeof setInterval> | null = null
+const PR_CHECK_INTERVAL_MS = 20_000
+const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
+
+let watchGeneration = 0
+let prCheckStartedAt = 0 // TODO: can be set in the  WatchedPr
+// Transient gh failures are notified once per run (the first tick), then demoted to debug.
+let consecutiveGhFailures = 0
+
 // A context capable of injecting messages into the agent stream: either the `pi` API
 // (stale after any session replacement) or a fresh ReplacedSessionContext.
 type MessageSender = {
@@ -91,17 +102,6 @@ type MessageSender = {
 // about which context is still usable.
 let messageSender: MessageSender | null = null // fresh ctx from our own withSession; falls back to the plain pi API
 let newSessionForStartTask = false // ctx.newSession() is in flight for start a new task
-
-// The timer lives at module scope because Pi never disposes the old extension instance on session swap,
-// so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
-let prCheckTimer: ReturnType<typeof setInterval> | null = null
-const PR_CHECK_INTERVAL_MS = 20_000
-const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
-
-let watchGeneration = 0
-let prCheckStartedAt = 0 // TODO: can be set in the  WatchedPr
-// Transient gh failures are notified once per run (the first tick), then demoted to debug.
-let consecutiveGhFailures = 0
 
 // Ojects
 // -------------------------------------------------------------------------------------------------------------------------------------------
