@@ -970,7 +970,6 @@ ${typeData.extra ?? ""}\n\
 
     // Detect the task completion marker in agent chat reply.
     pi.on("turn_end", (event: TurnEndEvent, ctx: ExtensionContext) => {
-        if (currentTask === null && watchedPr !== null) return
         const msg = event.message
         if (msg?.role !== "assistant") return
         const text = msg.content
@@ -991,14 +990,16 @@ ${typeData.extra ?? ""}\n\
         // Accepted without an active task too: the PR is often published one reply after the
         // completion marker, when the task is already finalized. An already running watch
         // ignores repeated markers (the agent may repeat it on PR updates).
-        if (watchedPr !== null) return
-        const created = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
-        if (!created) return
-        const prNumber = parseInt(created[1], 10)
-        const cwd = taskProjectRoot ?? ctx.cwd
-        const pr = viewPr<{ number: number; state: string; url: string }>(cwd, prNumber, "number,state,url")
-        if (pr) startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
-        else safeNotify(`⚠️ "[PR ${prNumber} CREATED]" seen but the PR could not be verified — run /pr ${prNumber} to start the watch.`, "warning")
+        if (watchedPr === null) {
+            const created = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
+            if (created) {
+                const prNumber = parseInt(created[1], 10)
+                const cwd = taskProjectRoot ?? ctx.cwd
+                const pr = viewPr<{ number: number; state: string; url: string }>(cwd, prNumber, "number,state,url")
+                if (pr) startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
+                else safeNotify(`⚠️ "[PR ${prNumber} CREATED]" seen but the PR could not be verified — run /pr ${prNumber} to start the watch.`, "warning")
+            }
+        }
     })
 
     // Finalize once the run has fully settled (no retries/compactions/queued continuations
