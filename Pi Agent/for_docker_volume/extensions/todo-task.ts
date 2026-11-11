@@ -776,16 +776,11 @@ ${typeData.extra ?? ""}\n\
                 withSession: async (newCtx) => {
                     latestCtx = newCtx
                     messageSender = newCtx
-                    // session_shutdown stopped the ticker before the replacement; re-arm it here
-                    // so it does not depend on whether session_start ran first.
                     startStatusTimer()
                     try {
                         await newCtx.waitForIdle()
                         safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, "info")
                         await newCtx.sendUserMessage(agentMessage, { deliverAs: "steer" })
-
-                        // The PR watch is NOT armed here: no PR exists yet. It starts on the agent's
-                        // "[PR N CREATED]" marker (see the turn_end handler) or on `/pr`.
                     } catch (err) {
                         abortStart()
                         throw err
