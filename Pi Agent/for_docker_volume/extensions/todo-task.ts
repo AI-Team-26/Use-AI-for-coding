@@ -41,6 +41,8 @@
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
+ * Polling is armed by the "[PR N CREATED]" turn_end marker emitted by the agent after
+ * publishing the PR, then verified with `gh pr view <N>` before starting the watch.
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
@@ -729,7 +731,8 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
-**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
+**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n\
+**IMPORTANT**: immediately after you create the PR (first time only), include "[PR <number> CREATED]" in your reply where <number> is the actual PR number. This exact text arms the PR review watcher.\n`
 
         // Optional note: simply append to the instruction message.
         if (note == "repeat") note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch and PR."
@@ -763,8 +766,6 @@ ${typeData.extra ?? ""}\n\
                         await newCtx.waitForIdle()
                         safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, "info")
                         await newCtx.sendUserMessage(agentMessage, { deliverAs: "steer" })
-
-                        startPrCheckPolling(projectRoot)
                     } catch (err) {
                         abortStart()
                         throw err
@@ -960,9 +961,9 @@ ${typeData.extra ?? ""}\n\
         return true
     }
 
-    // Detect the completion marker in assistant chat replies.
-    // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
-    // a number must match the active pending item.
+    // Detect markers in assistant chat replies:
+    // - "[PR N CREATED]" — arms the PR watch after verifying with gh pr view.
+    // - "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2).
     pi.on("turn_end", (event: TurnEndEvent) => {
         if (currentTask === null) return
         const { type, number: pendingNumber } = currentTask
@@ -974,6 +975,22 @@ ${typeData.extra ?? ""}\n\
             .join("")
         // strip common model decorations (backticks/bold/whitespace) around the marker
         const cleaned = text.replace(/[\s`*_]+/g, " ")
+
+        // [PR N CREATED] → arm polling with known PR identity (only once per task)
+        const prCreatedMatch = /\[PR (\d+) CREATED\]/i.exec(cleaned)
+        if (prCreatedMatch && watchedPr === null) {
+            const prNum = parseInt(prCreatedMatch[1], 10)
+            const cwd = taskProjectRoot ?? process.cwd()
+            const pr = viewPr(cwd, prNum, "number,state,url")
+            if (pr) {
+                debug(`[PR ${prNum} CREATED] detected — arming poller for PR #${pr.number}`)
+                startPrCheckPolling(cwd, { number: pr.number, url: pr.url ?? "" })
+            } else {
+                safeNotify(`⚠️ [PR ${prNum} CREATED] received but gh pr view ${prNum} failed — will not arm polling.`, "warning")
+            }
+        }
+
+        // Completion marker
         let match: RegExpExecArray | null
         if (type === "feature") {
             match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
