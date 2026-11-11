@@ -30,17 +30,21 @@
  *   1. Move to updated main branch to look at up-to-date TODO
  *   2. Writes START:<timestamp> to ~/.pi/agent/todo-tasks/task_<N>.txt or bug_<N>.txt
  *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
- *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
+ *   4. When the agent signals "[PR N CREATED]" on turn_end, verifies the PR with `gh pr view`
+ *      and starts the PR review watch pinned to that PR number/URL
+ *   5. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
  *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
- *   5. Appends the unified execution report directly to the open PR description (via gh)
- *   6. Clears the status bar entry for the completed activity.
+ *   6. Appends the unified execution report directly to the open PR description (via gh)
+ *   7. Clears the status bar entry for the completed activity.
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * While a feature/bug session is active it also polls GitHub every ~20s (max 4h):
+ * Once armed (by the "[PR N CREATED]" marker, or manually with /pr) the watch polls GitHub
+ * every ~20s (max 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
+ * If the agent never emits the marker, arm the watch manually with /pr [N].
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  */
 
@@ -729,6 +733,7 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
+**IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in your reply to the user. That precise message is used as a signal by a Pi extension to start watching the PR.\n\
 **IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
         // Optional note: simply append to the instruction message.
@@ -763,8 +768,7 @@ ${typeData.extra ?? ""}\n\
                         await newCtx.waitForIdle()
                         safeNotify(`${emoji} ${label} ${number} started. Elapsed time will be recorded.`, "info")
                         await newCtx.sendUserMessage(agentMessage, { deliverAs: "steer" })
-
-                        startPrCheckPolling(projectRoot)
+                        // No eager PR watch here: it is armed by the "[PR N CREATED]" turn_end marker (or /pr manually).
                     } catch (err) {
                         abortStart()
                         throw err
@@ -960,10 +964,10 @@ ${typeData.extra ?? ""}\n\
         return true
     }
 
-    // Detect the completion marker in assistant chat replies.
-    // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
-    // a number must match the active pending item.
-    pi.on("turn_end", (event: TurnEndEvent) => {
+    // Detect the task markers in assistant chat replies.
+    // "[PR N CREATED]" arms the PR review watch; "[FEATURE N COMPLETED]" / "[BUGFIX N COMPLETED]"
+    // (N may be a float, e.g. 7.2) complete the task — a number must match the active pending item.
+    pi.on("turn_end", (event: TurnEndEvent, ctx: ExtensionContext) => {
         if (currentTask === null) return
         const { type, number: pendingNumber } = currentTask
         const msg = event.message
@@ -974,6 +978,20 @@ ${typeData.extra ?? ""}\n\
             .join("")
         // strip common model decorations (backticks/bold/whitespace) around the marker
         const cleaned = text.replace(/[\s`*_]+/g, " ")
+
+        // "[PR N CREATED]": verify the PR exists, then watch it by number/URL from the first tick.
+        // watchedPr === null guards against re-arming: the marker may repeat on PR updates.
+        if (watchedPr === null) {
+            const created = /\[PR (\d+) CREATED\]/i.exec(cleaned)
+            if (created) {
+                const prNumber = parseInt(created[1], 10)
+                const cwd = taskProjectRoot ?? ctx.cwd
+                const pr = viewPr<{ number: number; state: string; url: string }>(cwd, prNumber, "number,state,url")
+                if (pr) startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
+                else safeNotify(`⚠️ "[PR ${prNumber} CREATED]" seen but the PR could not be verified — run /pr ${prNumber} to arm the watch.`, "warning")
+            }
+        }
+
         let match: RegExpExecArray | null
         if (type === "feature") {
             match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
