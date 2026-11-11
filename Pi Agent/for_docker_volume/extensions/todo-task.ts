@@ -566,9 +566,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // A caller that already knows the PR hands it in, so the watch starts by number instead of
     // falling back to branch discovery (which cannot see a PR that is already merged or closed).
-    const startPrCheckPolling = (cwd: string, pr: { number: number; url: string } | null = null): void => {
+    function startPrCheckPolling (cwd: string, pr: { number: number; url: string } | null = null): void {
         stopPrCheckPolling()
-        safeNotify(`Start PR check...`, "info") // after stopPrCheckPolling so not overridden
+        safeNotify(`Start PR check...`, "info") // after stopPrCheckPolling, so not overridden
         prCheckStartedAt = Date.now()
         handledReviewDecisions.clear()
         watchedPr = pr
@@ -579,7 +579,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         void checkPrReview(cwd)
     }
 
-    const stopPrCheckPolling = (): void => {
+    function stopPrCheckPolling (): void {
         if (prCheckTimer) clearInterval(prCheckTimer)
         prCheckTimer = null
         checkCounter = 0
