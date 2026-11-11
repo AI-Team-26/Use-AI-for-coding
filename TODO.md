@@ -16,6 +16,27 @@
   - Once landed, the `pr == null` wait branch and the whole default/detached-branch discovery path can go.
   - Known gap it closes: a PR merged/closed *before* discovery observed it is invisible (discovery lists
     open PRs only), so the watcher idles until the 4 h safenet without announcing the outcome.
+    
+- Bug 16.1 | todo-task: widen PR-creation detection beyond the `gh pr create` command regex
+     Follow-up to #145 (fix/78_bug16_arm_polling_on_pr_create), which arms the watch only when the bash
+     command matches `\bgh\s+pr\s+create\b`; every other creation route is found only by the ~2 min slow
+     fallback. Widen the gate, but always take the PR identity from the URL in the output — never arm from
+     output alone: `gh pr view/list/diff` also print PR URLs and would pin `watchedPr` to an unrelated PR,
+     disabling the branch fallback. Verified on Pi 1.5.0: `tool_execution_start.args`,
+     `tool_execution_end.result/isError`, `tool_call` with `{ block: true }`, `pi.registerTool()` all exist.
+     - Pre-filter (bash-only, still one gate):
+       `\bgh\b[^\n;&|]*\bpr\s+create\b` (global flags: `gh -R owner/repo pr create`)
+       `| \bgh\b[^\n;&|]*\bapi\b[^\n;&|]*(-X\s*POST|--method[= ]POST)[^\n;&|]*\/pulls\b` (REST create)
+       `| \bcreatePullRequest\b` (GraphQL)
+     - `pi.on("user_bash")`: a human-typed `! gh pr create` emits no `tool_execution_start/end`, so the same
+       handler is needed there.
+     - Optional: after a successful `git push` (same handler) run one out-of-band branch lookup instead of
+       waiting for the fallback tick — removes the latency for wrappers/scripts/aliases (`hub`, repo
+       scripts, `gh` aliases) without widening the gate.
+     - Accepted gap, not chased: PRs created outside the process (web UI, another pi instance,
+       `gh pr create --web`) stay fallback-only — ~2 min latency, not a correctness hole. A custom
+       `create_pr` tool was rejected: a script or `gh api` bypasses it, so it buys no guarantee.
+     - Land only after #145 is merged (it currently owns these handlers).
 
 - Feature 71 | todo-task: single watcher loop replacing the two independent timers
   `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of the Feature 30 flicker.
