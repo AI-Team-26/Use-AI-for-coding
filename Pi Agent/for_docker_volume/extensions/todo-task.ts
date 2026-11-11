@@ -207,20 +207,6 @@ function formatElapsed(ms: number): string {
     return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`
 }
 
-/**
- * Assistant text of a finished turn, with model decorations (backticks/bold/newlines) collapsed to
- * single spaces so marker detection is not broken by formatting. Null when the turn is not an assistant reply.
- */
-function assistantText(event: TurnEndEvent): string | null {
-    const msg = event.message
-    if (msg?.role !== "assistant") return null
-    const text = msg.content
-        .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
-        .map((b) => b.text)
-        .join("")
-    return text.replace(/[\s`*_]+/g, " ")
-}
-
 const ensureTodoDir = (): Promise<void> =>
     fs
         .mkdir(TODO_FEATURES_DIR, { recursive: true })
@@ -976,35 +962,33 @@ ${typeData.extra ?? ""}\n\
         return true
     }
 
-    // Detect the completion marker in assistant chat replies.
-    // Accepts "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2);
-    // a number must match the active pending item.
+    // Both agent markers are read from the single assistant reply of the finished turn, without
+    // rewriting the text first: the patterns tolerate the whitespace/newlines a model may insert
+    // and match inside decorations such as backticks or bold.
+    //
+    // 1. "[FEATURE N COMPLETED]" / "[BUGFIX N COMPLETED]" (N may be a float, e.g. 7.2) completes the
+    //    active task; if a number is given it must refer to it.
+    // 2. "[PR N CREATED]" arms the PR watch. The signal is trusted only once `gh pr view` confirms
+    //    the PR, and the watch then follows it by number from the first tick instead of discovering
+    //    the branch PR (which misses an already merged/closed PR).
     pi.on("turn_end", (event: TurnEndEvent) => {
         if (currentTask === null) return
-        const { type, number: pendingNumber } = currentTask
-        const cleaned = assistantText(event)
-        if (cleaned === null) return
-        let match: RegExpExecArray | null
-        if (type === "feature") {
-            match = /\[FEATURE( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
-        } else {
-            match = /\[BUGFIX( \d+(?:\.\d+)?)? COMPLETED\]/i.exec(cleaned)
-        }
-        if (!match) return
-        // if a number was given it must refer to the active pending item
-        if (match[1] !== undefined && parseFloat(match[1]) !== pendingNumber) return
-        currentTask.completed = true
-    })
+        const msg = event.message
+        if (msg?.role !== "assistant") return
+        const text = msg.content
+            .filter((b: any): b is { type: "text"; text: string } => b.type === "text")
+            .map((b) => b.text)
+            .join("")
 
-    // Arm the PR watch on the agent's own "[PR N CREATED]" marker. The signal is trusted only
-    // once `gh pr view` confirms the PR, and the watch then follows it by number from the first
-    // tick instead of discovering the branch PR (which misses an already merged/closed PR).
-    pi.on("turn_end", (event: TurnEndEvent) => {
+        const { type, number: pendingNumber } = currentTask
+        const completion =
+            type === "feature" ? /\[FEATURE(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i : /\[BUGFIX(?:\s+(\d+(?:\.\d+)?))?\s+COMPLETED\]/i
+        const completed = completion.exec(text)
+        if (completed && (completed[1] === undefined || parseFloat(completed[1]) === pendingNumber)) currentTask.completed = true
+
         // The marker is repeated on later PR updates: only the first one arms the watch.
-        if (currentTask === null || watchedPr !== null) return
-        const cleaned = assistantText(event)
-        if (cleaned === null) return
-        const match = /\[PR (\d+) CREATED\]/i.exec(cleaned)
+        if (watchedPr !== null) return
+        const match = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
         if (!match) return
 
         const prNumber = parseInt(match[1], 10)
