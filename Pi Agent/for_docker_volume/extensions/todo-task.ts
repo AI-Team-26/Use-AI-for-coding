@@ -27,29 +27,24 @@
  *   /bugfix end                      — End the current bug without saving timing data.
  *
  * The extension:
- *   1. Move to updated main branch to look at up-to-date TODO
- *   2. Writes START:<timestamp> to ~/.pi/agent/todo-tasks/task_<N>.txt or bug_<N>.txt
- *   3. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
- *   4. When the agent signals "[FEATURE N COMPLETED]" or "[BUGFIX N COMPLETED]" on turn_end,
- *      on agent_settled writes END:<timestamp> and ELAPSED MINUTES to the file
- *   5. Appends the unified execution report directly to the open PR description (via gh)
- *   6. Clears the status bar entry for the completed activity.
+ *   1. Force agent to look at up-to-date TODO and sugegst next task to do or PR to complete.
+     2. Injects a message to the agent: "Implement feature N..." or "Fix bug N..."
+ *   3. Appends a execution report directly to the open PR description (via gh)
+     4. REact to PR Merge, Closure and Changes Request inkjecting proper prompt to the agent.
+ *   5. Show the PR "watch-in-progress" status in the footer bar.
  *
  * While a feature/bug runs the status bar shows the live elapsed time (MM:SS), refreshed every 15s.
  *
- * The PR watch is armed by the agent's "[PR N CREATED]" signal — the same prompt-emitted pattern as
- * the completion marker, detected on turn_end and verified with `gh pr view` — never eagerly at task
- * start: the number is unknown then, so the watch would have to discover the branch PR first and
- * could not see a PR that was merged before its first tick. `/pr [N]` arms it manually.
+ * The PR watch is armed by the agent's "[PR N CREATED]" signal, detected on turn_end and verified with `gh pr view`.
+ * `/pr [N]` arms it manually.
  *
- * While a PR is watched it is polled every ~20s (max 4h):
+ * While a PR is watched it is polled every ~20s (poll stops after 4h):
  * if the reviewer APPROVED the PR a notification is shown (the user usually merges);
  * if CHANGES_REQUESTED the agent is told to follow the AGENTS.md review workflow;
  * when the PR is MERGED the watcher stops.
  * Polling is forced to ends on `/feature end` or `/bugfix end` (useful for stale polling).
  *
- * TODO: a task whose agent never emits "[PR N CREATED]" is not watched until `/pr` is run. A slow
- * fallback poll (branch discovery) is the second half of Bug 16 in TODO.md.
+ * A task whose agent never emits "[PR N CREATED]" is not watched until `/pr` is run.
  */
 
 import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEvent, AgentSettledEvent } from "@earendil-works/pi-coding-agent"
@@ -78,8 +73,7 @@ const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs 
 let latestCtx: ExtensionContext | null = null
 let currentTask: CurrentTask | null = null
 let watchedPr: WatchedPr | null = null
-// Project root of the running task — needed by finishActivity to locate the branch's PR.
-let taskProjectRoot: string | null = null
+let taskProjectRoot: string | null = null  // Project root of the running task — needed by finishActivity to locate the branch's PR.
 const handledReviewDecisions = new Map<string, string>() // track reviews to not "resend" messages/action multiple time for the same
 
 // Status-bar elapsed-time ticker — refreshes the status while a feature/bug runs.
@@ -119,13 +113,11 @@ interface CurrentTask {
     number: number
     startTime: number
     completed: boolean
-    //name: () => `${type} ${number}`
 }
 
 interface WatchedPr {
     number: number
     url: string
-    // watchStartAt: number   // last watch start   // ms Epoch?
 }
 
 // Minimal PR info needed to pick and switch to a branch.
