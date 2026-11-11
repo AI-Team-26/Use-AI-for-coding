@@ -1012,6 +1012,12 @@
         },
         "models": [
             {
+                "id": "qwen4-max-preview",
+                "name": "qwen4-max-preview",
+                "maxTokens": 8192,
+                "reasoning": true
+            },
+            {
                 "id": "qwen3.8-flash",
                 "name": "qwen3.8-flash",
                 "maxTokens": 8192,
