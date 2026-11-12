@@ -381,6 +381,71 @@
         ]
     },
 
+    
+    "Aelder [Alisca]": {
+        "baseUrl": "https://api.aelder.dev/v1",
+        "api": "openai-completions",
+        "apiKey": "{{AELDER_API_KEY}}",
+        "models_list_url": "https://app.aelder.dev/catalog",
+        "models to set": ["gpt-6-luna", "kimi-k3.1-pro", "qwen3.8-max", ""],
+        "models":[
+
+            {
+                "id": "glm-5.3-flash",
+                "name": "91% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-12",
+                    "input": 0.0135,
+                    "output": 0.002179,
+                    "cacheRead": 0.007,
+                    "cacheWrite": 0.002179
+                }
+            },
+            {
+                "id": "gpt-5.6-luna",
+                "name": "65% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-12",
+                    "input": 0.07,
+                    "output": 0.42,
+                    "cacheRead": 0.007,
+                    "cacheWrite": 0.42
+                }
+            },
+            {
+                "id": "claude-haiku-5.5",
+                "name": "70% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-12",
+                    "input": 0.03,
+                    "output": 0.15,
+                    "cacheRead": 0.003,
+                    "cacheWrite": 0.15
+                }
+            },
+            {
+                "id": "deepseek-v4.1-flash-1017",
+                "name": "86% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-12",
+                    "input": 0.021,
+                    "output": 0.084,
+                    "cacheRead": 0.0021,
+                    "cacheWrite": 0.084
+                }
+            }
+        ]
+    },
+
+
     "X.ai FREE": {
         "baseUrl": "https://api.x.ai/v1",
         "api": "openai-completions",
