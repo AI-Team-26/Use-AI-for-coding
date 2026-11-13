@@ -311,6 +311,10 @@ function appendReportToPr(cwd: string, report: string) {
 // -------------------------------------------------------------------------------------------------------------------------------------------
 
 export default function todoFeatureExtension(pi: ExtensionAPI) {
+    // bash toolCallId → command, captured at tool_execution_start because the end event carries
+    // the result but not the args; cleared on session shutdown so aborted calls never leak.
+    const pendingBashCommands = new Map<string, string>()
+
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
@@ -477,6 +481,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     return onGhFailure("Failed to read the current branch", err)
                 }
                 if (!branch || branch === "main" || branch === "master") {
+                    safeSetStatus(STATUS_KEY_PR, `👀 ${GRAY}(NO PR)${RESET}`)
                     debug(`Fallback poll: nothing to discover on '${branch || "(detached)"}' (${checkCounter})`)
                     return
                 }
@@ -490,8 +495,9 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                     debug(`No open PR on branch '${branch}' yet (${checkCounter})`)
                     return
                 }
-                // Discovered: re-arm by number/URL so every following tick uses the fast cadence.
-                startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
+                // Discovered: upgrade this watch in place to the fast cadence (no stop/start
+                // ceremony, no safenet reset).
+                upgradeWatchToFast(cwd, { number: pr.number, url: pr.url })
                 return
             }
 
@@ -599,7 +605,16 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         void checkPrReview(cwd)
     }
 
-    function stopPrCheckPolling (): void {
+    // Upgrade a running slow-fallback watch to the fast cadence once the PR identity is known:
+    // swaps identity + interval only, keeping the original arm time (4 h safenet) and silent.
+    const upgradeWatchToFast = (cwd: string, pr: { number: number; url: string }): void => {
+        watchedPr = pr
+        watchGeneration++
+        if (prCheckTimer !== null) clearInterval(prCheckTimer)
+        prCheckTimer = setInterval(() => void checkPrReview(cwd), PR_CHECK_INTERVAL_MS)
+    }
+
+    const stopPrCheckPolling = (): void => {
         if (prCheckTimer) clearInterval(prCheckTimer)
         prCheckTimer = null
         checkCounter = 0
@@ -626,6 +641,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     pi.on("session_shutdown", () => {
         stopPrCheckPolling()
         stopStatusTimer()
+        pendingBashCommands.clear()
         messageSender = null
     })
 
@@ -860,7 +876,10 @@ ${typeData.extra ?? ""}\n\
                     try {
                         pr = getBranchOpenPr(projectRoot, branch)
                     } catch (err) {
-                        safeNotify(`❌ Failed to fetch PR of branch "${branch}". ${err}`, "error")
+                        // One-off gh/network error must not leave the user without a watch:
+                        // degrade to the slow fallback, which retries discovery next tick.
+                        safeNotify(`⚠️ Failed to fetch PR of branch "${branch}" (${err}). Arming the slow fallback poll...`, "warning")
+                        startPrCheckPolling(projectRoot, null)
                         return
                     }
                     startPrCheckPolling(projectRoot, pr ? { number: pr.number, url: pr.url } : null)
@@ -996,7 +1015,15 @@ ${typeData.extra ?? ""}\n\
     // output carries the PR URL, so the very first tick already checks by number instead of
     // idling through branch discovery. The command is captured on tool_execution_start because
     // the end event carries the result but not the args.
-    const pendingBashCommands = new Map<string, string>()
+    // No-op when there is no pending task or a specific PR is already watched; a still-running
+    // fallback watch (no PR known yet) is upgraded to the fast cadence with this PR's identity.
+    const armWatchFromCreation = (number: number, url: string): void => {
+        if (currentTask === null) return
+        if (watchedPr !== null) return
+        const cwd = taskProjectRoot ?? process.cwd()
+        if (prCheckTimer !== null) upgradeWatchToFast(cwd, { number, url })
+        else startPrCheckPolling(cwd, { number, url })
+    }
 
     pi.on("tool_execution_start", (event: ToolExecutionStartEvent) => {
         if (event.toolName !== "bash") return
@@ -1005,29 +1032,22 @@ ${typeData.extra ?? ""}\n\
     })
 
     pi.on("tool_execution_end", (event: ToolExecutionEndEvent) => {
-        if (event.toolName !== "bash" || event.isError) return
+        if (event.toolName !== "bash") return
+        // Delete unconditionally (also for errored calls) so an aborted bash tool never leaks an entry.
         const command = pendingBashCommands.get(event.toolCallId)
         pendingBashCommands.delete(event.toolCallId)
-        if (!command || !/\bgh\s+pr\s+create\b/.test(command)) return
+        if (event.isError || !command || !/\bgh\s+pr\s+create\b/.test(command)) return
 
         const resultText = JSON.stringify(event.result ?? "")
-        const numberMatch = /\/pull\/(\d+)/.exec(resultText)
-        if (!numberMatch) {
+        // Anchor on the full github.com PR URL so a compound command that prints another PR first
+        // cannot skew the number; deriving both from one match keeps them consistent.
+        const urlMatch = /(https:\/\/github\.com\/[^/\s"\\]+\/[^/\s"\\]+\/pull\/(\d+))/.exec(resultText)
+        if (!urlMatch) {
             debug(`gh pr create succeeded but no PR URL found in its output — relying on the fallback poll`)
             return
         }
-        const number = parseInt(numberMatch[1], 10)
-        const urlMatch = /(https:\/\/github\.com\/[^/\s"\\]+\/[^/\s"\\]+\/pull\/\d+)/.exec(resultText)
-        armWatchFromCreation(number, urlMatch?.[1] ?? "")
+        armWatchFromCreation(parseInt(urlMatch[2], 10), urlMatch[1])
     })
-
-    // No-op when there is no pending task or a specific PR is already watched; a still-running
-    // fallback watch (no PR known yet) is upgraded to the fast cadence with this PR's identity.
-    const armWatchFromCreation = (number: number, url: string): void => {
-        if (currentTask === null) return
-        if (watchedPr !== null) return
-        startPrCheckPolling(taskProjectRoot ?? process.cwd(), { number, url })
-    }
 
     // Detect the task completion marker in agent chat reply.
     pi.on("turn_end", (event: TurnEndEvent, ctx: ExtensionContext) => {
