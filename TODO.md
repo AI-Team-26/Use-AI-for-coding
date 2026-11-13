@@ -14,7 +14,7 @@
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
 
-- Feature 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
+- Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
   1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
@@ -22,6 +22,17 @@
      and not communicated to the user).
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
+
+- Feature 22: Clear guidance when the agent cannot access a private repository
+
+  When cloning a private repository, if the agent account has no access and no pending invitation:
+
+  - Show a clear error explaining that the agent account needs access. Recommend asking an admin to invite GITHUB_AGENT_ACCOUNT as a collaborator with write access, or moving the repository into an
+   organization the agent belongs to.
+  - Print a notice when switching to the agent account’s token to check for a pending invitation.
+
+  Fork-based workflows are not part of this feature; users handle forks themselves.
+     
 - Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 35 | "Select a project/action:" prompt should accept ESC
