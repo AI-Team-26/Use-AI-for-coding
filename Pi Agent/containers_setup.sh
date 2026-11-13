@@ -110,6 +110,7 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{GROQ_API_KEY}}/${GROQ_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{MISTRAL_API_KEY}}/$MISTRAL_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{DEEPSEEK_API_KEY}}/${DEEPSEEK_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
+    sed -i "s/{{AELDER_API_KEY}}/${AELDER_API_KEY:-}/g" "$docker_volume_pi_agent/models.json"
 
     sed -i "s/{{OFOX_API_KEY}}/$OFOX_API_KEY/g" "$docker_volume_pi_agent/models.json"
     sed -i "s/{{GEMINI_API_KEY}}/$GEMINI_API_KEY_PI_AGENT/g" "$docker_volume_pi_agent/models.json"
