@@ -43,5 +43,24 @@ COPY opencode.json /root/.config/opencode/opencode.json
 #RUN mkdir -p /root/.opencode \
 #    && tar -cf /root/.opencode_backup.tar -C /root/.opencode . || true
 
+#--- Set User
+
+# Switch to the developer user
+#USER developer
+#ENV HOME=/home/developer
+
+# Set working directory
+#WORKDIR /workspace
+
+# Create a non-root user
+#RUN useradd -m -s /bin/bash developer && echo "developer:developer" | chpasswd && adduser developer sudo
+#RUN useradd -m -s /bin/bash developer
+
+# Give permission on workspace dir
+#RUN chown developer:developer /workspace && chmod 755 /workspace
+#RUN chmod -R 777 .
+#RUN chown -R developer:developer /workspace
+
+
 EXPOSE 8080
 ENTRYPOINT ["/scripts/start.sh"]
