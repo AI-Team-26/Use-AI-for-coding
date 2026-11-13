@@ -15,6 +15,7 @@ required_vars "AI_AGENT_NAME" "EXA_API_KEY"
 # set API KEYS and other secrets
 export AI_AGENT_NAME="${AI_AGENT_NAME:-AI Agent}" ## passed by docker run
 export EXA_API_KEY=$EXA_API_KEY
+export AELDER_API_KEY=$AELDER_API_KEY
 
 
 # First run only

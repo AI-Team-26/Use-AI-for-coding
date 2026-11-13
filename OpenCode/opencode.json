@@ -5,7 +5,78 @@
         "build": {
             "prompt": "You are an expert C# and F# developer and an autonomous coding agent. Your goal is to write clean, working code. Additionally, you are proficient in Rust and Vue.js development. If the user asks a question, answer first. Do not create or modify code unless the user explicitly asks for implementation or approves a plan. **IMPORTANT** You follow the instructions in `AGENTS.md`."
         }
+    },
+    "providers": {
+        "LOCAL": {
+            "name": "LOCAL llama.cpp",
+             "package": "@opencode/ai/providers/openai-compatible",
+            "settings": {
+                "baseURL": "http://host.docker.internal:8001/v1"
+            },
+            "models": {
+                "52K": {
+                    "name": "52K context",
+                    "capabilities": {
+                        "tools": true,
+                        "input": ["text"],
+                        "output": ["text"]
+                    },
+                    "limit": {
+                        "context": 53248,
+                        "output": 8192
+                    }
+                },
+                "64K": {
+                    "name": "64K context",
+                    "capabilities": {
+                        "tools": true,
+                        "input": ["text"],
+                        "output": ["text"]
+                    },
+                    "limit": {
+                        "context": 65536,
+                        "output": 8192
+                    }
+                },
+                "80K": {
+                    "name": "80K context",
+                    "capabilities": {
+                        "tools": true,
+                        "input": ["text"],
+                        "output": ["text"]
+                    },
+                    "limit": {
+                        "context": 81920,
+                        "output": 8192
+                    }
+                }
+            }
+        },
+        "aelder": {
+            "name": "Aelder [Alisca]",
+            "env": ["AELDER_API_KEY"],
+            "package": "@opencode/ai/providers/openai-compatible",
+            "settings": {
+                "baseURL": "https://api.aelder.dev/v1"
+            },
+            "models": {
+                "glm-5.3-flash": {
+                    "name": "GLM 5.3 Flash",
+                    "limit": { "output": 8192 }
+                },
+                "gpt-5.6-luna": {
+                    "name": "GPT 5.6 Luna",
+                    "limit": { "output": 8192 }
+                },
+                "claude-haiku-5.5": {
+                    "name": "Claude Haiku 5.5",
+                    "limit": { "output": 8192 }
+                },
+                "deepseek-v4.1-flash-1017": {
+                    "name": "DeepSeek V4.1 Flash 1017",
+                    "limit": { "output": 8192 }
+                }
+            }
+        }
     }
 }
-
-

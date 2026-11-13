@@ -26,6 +26,7 @@ cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
 GITHUB_COMMIT_EMAIL=$GITHUB_COMMIT_EMAIL
 EXA_API_KEY=$EXA_API_KEY
+AELDER_API_KEY=$AELDER_API_KEY
 EOF
 
 
@@ -50,6 +51,7 @@ chmod 600 "$docker_volumes/scripts/github_pat"
 for agent in "${!agents[@]}"; do
 
     AI_AGENT_NAME=${agents[$agent]}
+    AI_AGENT_COLOR=${agent_colors[$agent]}
 
     echo ""
     echo "=== Processing agent ${agent} ==="
@@ -65,6 +67,17 @@ for agent in "${!agents[@]}"; do
     cp opencode.json "$docker_volume_opencode/opencode.json"
     cp tui.json "$docker_volume_opencode/tui.json"
     #cp opencode.json "$docker_volume_opencode/cli.json"
+
+# I checked your config files — and found the likely problem: neither of your opencode.json files contains a providers block at all:
+#- /root/.config/opencode/opencode.json — no providers
+#- /projects/Use-AI-for-coding/OpenCode/opencode.json — no providers
+#So the file you edited isn't the one OpenCode is loading (or the change wasn't saved). Check where you made the edit.
+#Checklist for a custom provider to show in /models
+#1. Right file + location. OpenCode only loads:
+#- ~/.config/opencode/opencode.json(c) (global)
+#- opencode.json(c) or .opencode/opencode.json(c) in the directory you launch OpenCode from, or any of its ancestors (project)
+#Your file at /projects/Use-AI-for-coding/OpenCode/opencode.json only applies if you start OpenCode from /projects/Use-AI-for-coding/OpenCode or a subdirectory of it.
+
 
     # Copy commands
     mkdir -p "$docker_volume_opencode/commands"
@@ -92,6 +105,10 @@ for agent in "${!agents[@]}"; do
     #sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/SYSTEM.md" 
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_opencode/AGENTS.md"
     sed -i "s/{{AI_AGENT_COLOR}}/$AI_AGENT_COLOR/g" "$docker_volume_opencode/AGENTS.md"
+
+    # Set Proviuder API keys
+    sed -i "s/{{ALIBABA_API_KEY_PLAN}}/$ALIBABA_API_KEY_PLAN/g" "$docker_volume_opencode/opencode.json"
+    sed -i "s/{{AELDER_API_KEY}}/${AELDER_API_KEY:-}/g" "$docker_volume_opencode/opencode.json"
 
     echo -e "✔️  Done copying for ${agent}"
 done
