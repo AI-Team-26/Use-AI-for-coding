@@ -95,7 +95,7 @@ const STATUS_UPDATE_MS = 15_000
 // so only the new instance — sharing the same variables — can clear the leaked interval and keep a single watcher.
 let prCheckTimer: ReturnType<typeof setInterval> | null = null
 const PR_CHECK_INTERVAL_MS = 20_000 // fast cadence once a specific PR is being watched
-const PR_FALLBACK_POLL_MS = 120_000 // slow cadence while waiting for a PR to appear (created outside the bash tool)
+const PR_CHECK_INTERVAL_FOR_FALLBACK_MS = 120_000 // slow cadence while waiting for a PR to appear (created outside the bash tool)
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 
 let watchGeneration = 0
@@ -470,7 +470,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 // here — otherwise the status bar link and the time-limit message lose the reference.
                 if (pr.url && pr.url !== watchedPr.url) watchedPr.url = pr.url
             } else {
-                // Fallback path (no PR known yet): this tick runs at the slow PR_FALLBACK_POLL_MS
+                // Fallback path (no PR known yet): this tick runs at the slow PR_CHECK_INTERVAL_FOR_FALLBACK_MS
                 // cadence and looks up the working branch's open PR once per tick, covering PRs
                 // created outside the bash tool (web UI, gh api, scripts). On the default/detached
                 // branch there is nothing to discover — /pr <number> arms those manually.
@@ -600,7 +600,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         watchGeneration++
         consecutiveGhFailures = 0
         consecutiveSendFailures = 0
-        const interval = pr ? PR_CHECK_INTERVAL_MS : PR_FALLBACK_POLL_MS
+        const interval = pr ? PR_CHECK_INTERVAL_MS : PR_CHECK_INTERVAL_FOR_FALLBACK_MS
         prCheckTimer = setInterval(() => void checkPrReview(cwd), interval)
         void checkPrReview(cwd)
     }
