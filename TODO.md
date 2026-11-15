@@ -145,11 +145,14 @@
 
 ### OpenCode
 
-- Feature 52 | Create a /feature command for OpenCode (take inspiration from Pi Agent todo-task.ts extension).
-  Make the really easy and base job,ask the agent to implement the feature, and report time and tokens.
-  Obviously it has to create a branch and a PR. 
-  Maybe also print the "[FEATUE N COMPLETED]" message but no management of PR completion or other complicated stuff for now. REally minimal.
-  Add TODO comments and new tasks in the TODO.md if needed.
+- Feature 52 | OpenCode: minimal `/feature N` and `/bugfix N` commands
+  Add `commands/feature.md` (and `bugfix.md`) that does exactly two operations:
+  1. Clean/fresh session if possible (no history carry-over).
+  2. Read the task (Feature N or Bug N, including sub-numbers) from the latest TODO.md and ask the agent to implement it.
+
+  The injected prompt tells the agent to follow AGENTS.md: create branch + PR.                                                                                                                                    Nothing else. No timing, no status/elapsed time, no reports, no `[FEATURE N COMPLETED]` markers, no PR polling, no completion handling.
+
+  Update `commands/todo.md` suggestion if needed.
 
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
@@ -191,6 +194,9 @@
   - quote `$docker_image`
 
 - Feature 77 | Delete Feature 30, already implemented.
+
+- Feature 78 | OpenCode /feature command
+  Replicate the the simple 
 
 - Feature 999 | Test
   This is a fake feature, just to test the todo-task extension.
