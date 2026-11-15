@@ -19,3 +19,4 @@ Steps:
 2. Find the `Bug $1` entry in the Backlog above and read its full description. Match the number exactly as a token followed by `|`, `:` or `.` (sub-numbers allowed, e.g. `27.1`) — never match `Bug-old N`, and never prefix-match (`5` must not hit `Bug 52`).
    If the entry does not exist, or is marked SUSPENDED/BLOCKED/DONE, stop and report it instead of guessing.
 3. Invoking this command counts as approval to start; follow AGENTS.md and implement the fix: create a new branch (`fix/<N>_<short_name>`), make the changes, open a PR with a short description, remove the task from the Backlog and add a Done line in TODO.md. Sign any comments you post with your own agent name.
+4. **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in the response.

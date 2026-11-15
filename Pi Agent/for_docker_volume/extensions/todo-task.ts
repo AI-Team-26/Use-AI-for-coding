@@ -788,7 +788,8 @@ ${typeData.extra ?? ""}\n\
         }
     }
 
-    // ### register commands -------------------------------------------------------------------------------------
+
+// ### Register commands -------------------------------------------------------------------------------------
 
     pi.registerCommand("feature", {
         description: "Implement a feature from the TODO backlog. Usage: /feature <number> [note] or /feature end",
