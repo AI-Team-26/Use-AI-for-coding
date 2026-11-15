@@ -143,6 +143,16 @@
   replaced by a `firstTick` boolean, and the empty `if` body next to the report attach where every
   `appendReportToPr` failure is reported as "no open PR" — real fix is Bug 64).
 
+- Feature 78 | Pi Agent: /feature  command returns this error:
+  Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
+    OpenCode/plugins/tsconfig.json                                                                                                                              Please commit your changes or stash them before you switch branches.                                                                                                                                             Aborting. Error: Command failed: git checkout main && git pull --rebase --autostash
+ error: Your local changes to the following files would be overwritten by checkout:
+    OpenCode/plugins/tsconfig.json
+  Please commit your changes or stash them before you switch branches.                                                                                                                                Aborting 
+
+  The agent should ask the user if stash or just loose local changes. ui.select is a possible comamnd 
+
+
 ### OpenCode
 
 - Feature 52 | OpenCode: minimal `/feature N` and `/bugfix N` commands
