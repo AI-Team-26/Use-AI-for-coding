@@ -155,15 +155,6 @@
 
 ### OpenCode
 
-- Feature 52 | OpenCode: minimal `/feature N` and `/bugfix N` commands
-  Add `commands/feature.md` (and `bugfix.md`) that does exactly two operations:
-  1. Clean/fresh session if possible (no history carry-over).
-  2. Read the task (Feature N or Bug N, including sub-numbers) from the latest TODO.md and ask the agent to implement it.
-
-  The injected prompt tells the agent to follow AGENTS.md: create branch + PR.                                                                                                                                    Nothing else. No timing, no status/elapsed time, no reports, no `[FEATURE N COMPLETED]` markers, no PR polling, no completion handling.
-
-  Update `commands/todo.md` suggestion if needed.
-
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
 
@@ -215,6 +206,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 52 [feat/52_opencode_minimal_feature_and_bugfix_commands]: OpenCode: minimal `/feature N` and `/bugfix N` commands
 - Feature 79 [feat/79_pr_created_turn_end_marker]: todo-task PR watch is armed by the agent's "[PR N CREATED]" turn_end marker (verified via gh pr view) instead of eagerly at task start; /pr stays as manual arming
 - Feature 58 [fix/61_terminal_title_v2]: terminal title ported to the OpenCode v2 TUI plugin API — shows ⏳ while the active session runs and 🖐️ when idle; built-in title disabled in `cli.json`
 - Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71

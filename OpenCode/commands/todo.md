@@ -15,7 +15,7 @@ Use these icons to identify the tasks:
 
 Show the Feature and Bug number clearly (`Feature N`, `Bug N`).
 Show only relevant data, don't show info that are not useful (like done things).
-Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task.
+Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task (these use a clean subagent session with no history carry-over from the current chat).
 
 TODO.md content (latest from main, falls back to local):
 
