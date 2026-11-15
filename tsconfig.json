@@ -1,0 +1,7 @@
+{
+    "files": [],
+    "references": [
+        { "path": "Pi Agent/for_docker_volume/extensions/tsconfig.json" },
+        { "path": "OpenCode/plugins/tsconfig.json" }
+    ]
+}

@@ -1,0 +1,5 @@
+{
+    "js/ts.tsdk.path": "OpenCode/plugins/node_modules/typescript/lib",
+    "js/ts.tsdk.use": "workspace",
+    "js/ts.workspaceSymbols.scope": "allOpenProjects"
+}
