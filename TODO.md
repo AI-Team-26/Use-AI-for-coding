@@ -152,6 +152,53 @@
 
   The agent should ask the user if stash or just loose local changes. ui.select is a possible comamnd 
 
+- Feature 80 | pr-review.ts: A/B switch between single-comment and multi-comment reviews (`PR_REVIEW_MODE`)
+
+     `/review N` only injects a prompt ("Leave a PR review comment, signed with your name"), so every agent posts
+     one big comment. That breaks down on multi-point reviews:
+    - you cannot see which *single* point was solved (one blob, no per-point state),
+    - you cannot see whether the author processed the *whole* review,
+    - replies interleave: one thread, N answers, unreadable,
+    - there is no CHANGE_REQUEST / ACCEPTED state — with all agents on one account GitHub returns 422 for both
+       APPROVE and REQUEST_CHANGES on a PR the same account authored,
+    - the "last" review means "last comment posted", with no author and a lot of scrolling to find it.
+
+     Add a flag next to `const DEBUG = false` (`pr-review.ts:15`), same style as `process.env.AI_AGENT_NAME` in
+     `agent-name.ts:13`:
+         type ReviewMode = "single" | "multi"
+         const REVIEW_MODE: ReviewMode = (process.env.PR_REVIEW_MODE as ReviewMode) ?? "single"
+
+     Today's prompt moves verbatim into `PROMPTS.single`; the arm is chosen when `/review` runs. Default `single`
+     means no behaviour change when the flag is unset, so the PR can merge and the two arms are compared live.
+
+     `PROMPTS.multi` (the A/B arm) instructs the agent to post ONE review with N inline threads:
+    - `gh api repos/$OWNER/$REPO/pulls/N/reviews --input -` with a JSON heredoc (never `-f "body=..."`: a backtick or
+       `$` inside a finding is replaced by the shell before `gh` sees it), `event: COMMENT` — the only review state a
+       same-account reviewer may submit.
+    - `body` = decision line + index, reusing the current conventions: decision first (✅ Approved / ☑️ Approved
+       (can be improved) / ⛔ Rejected), numbered points with 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.
+    - `comments[]` = one entry per finding (`path`, `line` on the new-file side, `side: RIGHT`); each thread body
+       repeats its number (`🟧 **#2** — …`) so a reply can say "re: #2".
+    - Identity and round stay in visible text: header `**🍊 Pi Orange** — review round 2`, where the round is the
+       highest round the agent finds in the PR's existing reviews for that signature, plus one; and the closing
+       signature `— 🍊 Pi Orange` on the review body and on every thread.
+    - Findings with no diff anchor (no test added, PR-body *Files changed* table stale, Backlog entry not removed)
+       cannot be inline comments: collect them and post one `gh pr comment N` summary instead. On HTTP 422 do not
+       retry the same line.
+    - Dedupe against existing `reviewThreads` (`isResolved`, `path`, `line`) so a re-run does not re-post findings.
+
+     Both arms keep the recap and `[REVIEW N DONE]` so runs stay comparable, and the agent must write the arm used
+     (`mode: single|multi`) in the PR's "AI agent execution report" — that is the A/B measurement: rounds to merge,
+     unresolved threads at merge time, and time from review to human decision.
+
+     Review threads stay the single source of state (Bug 73); the numbering above is for human reference only and is
+     not parsed by any extension.
+
+     Scope: `pr-review.ts` + this Backlog entry. No `todo-task.ts` changes, no PR-poller changes, no ruleset changes,
+     no APPROVE/REQUEST_CHANGES, no labels in this round.
+     Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
+     taking the review JSON on stdin, to remove prompt-following from the equation.
+
 
 ### OpenCode
 
