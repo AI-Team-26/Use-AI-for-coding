@@ -158,6 +158,19 @@
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
 
+- Feature 52.2 | OpenCode: `/review N [note]` sub-agent command
+  Add `OpenCode/commands/review.md` mirroring the `feature.md` conventions
+   (`subagent: true`, usage guard when no number, sign comments with your own agent name):
+  - Read PR $1 via `gh` (title, body, changed files, diff) and stop if it doesn't exist or is closed.
+  - Run the AGENTS.md "PR Review Workflow": GraphQL `reviewThreads` with `isResolved` to collect
+       existing findings, then review the diff yourself and post each new finding as an inline
+       comment on file:line (threads are the only viable protocol — all agents share one GitHub
+       account, so formal APPROVE/REQUEST_CHANGES returns 422; never attempt them).
+  - Optional note `$2`: extra focus area for the review.
+  - Final message = short report (verdict + findings summary), ending with the line
+       `[REVIEW <N> DONE]` as the very last line (parsed programmatically).
+  - Report only: nothing merges, no re-review requests, human merge gate stays with the user.
+
 - Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
      ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
 
