@@ -37,10 +37,6 @@
 
 - Feature 35 | "Select a project/action:" prompt should accept ESC
 
-- Bug 36 | "Select a project/action:" prompt on crash and restart of the shell does not show the options
-
-- Feature 37 | todo-task: add "/pr N" command. It should start the PR check polling of that PR
-
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
@@ -145,8 +141,8 @@
 
 - Feature 78 | Pi Agent: /feature  command returns this error:
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
-    OpenCode/plugins/tsconfig.json                                                                                                                              Please commit your changes or stash them before you switch branches.                                                                                                                                             Aborting. Error: Command failed: git checkout main && git pull --rebase --autostash
- error: Your local changes to the following files would be overwritten by checkout:
+    OpenCode/plugins/tsconfig.json                                                                                                                              Please commit your changes or stash them before you switch branches.                                                                                                                            Aborting. Error: Command failed: git checkout main && git pull --rebase --autostash
+  error: Your local changes to the following files would be overwritten by checkout:
     OpenCode/plugins/tsconfig.json
   Please commit your changes or stash them before you switch branches.                                                                                                                                Aborting 
 
