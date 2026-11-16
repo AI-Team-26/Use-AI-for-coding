@@ -738,7 +738,7 @@ While you do the code changes, **consider side effects** and required rework or 
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
 **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in your reply to the user. That precise message is used as a signal by a Pi extension to start watching the PR.\n\
-**IMPORTANT**: after you publish or update the PR, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
+**IMPORTANT**: after you complete the work, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
         // Optional note: simply append to the instruction message.
         if (note == "repeat") note = "Do not read, reuse, or modify any existing PR/branch for this task. Create a brand-new branch and PR."

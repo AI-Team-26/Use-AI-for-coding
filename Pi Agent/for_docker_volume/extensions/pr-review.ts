@@ -66,10 +66,11 @@ export default function prExtension(pi: ExtensionAPI) {
             if (error) return safeNotify(error, "error")
 
             const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. \n
-      Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info. \n
-      Also number the points to make easy a reference. \n
+      Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info. \n
+      Also number the points to have a clear reference. \n
       Add a decision at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected. \n
       Report here a recap specifying if there are blocking points (changes request) or PR can be merged as it is. \n
+      **IMPORTANT**: The very last line of your response MUST be exactly this: "[REVIEW $1 DONE]". \n
       ${note ?? ""}`
 
             try {
