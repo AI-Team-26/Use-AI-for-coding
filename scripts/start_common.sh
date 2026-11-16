@@ -30,6 +30,49 @@ if models:
 }
 
 
+# Prints a numbered menu, one item per line (same look as `select` with COLUMNS=1).
+print_menu() {
+    local i=1 item
+    for item in "$@"; do
+        printf '%2d) %s\n' "$i" "$item"
+        i=$((i + 1))
+    done
+}
+
+# Reads a menu answer like `select` did, but a lone ESC cancels.
+# The raw answer is put in MENU_REPLY. Returns: 0 = answer read (may be empty),
+# 1 = stdin closed (EOF), 2 = ESC pressed.
+# Only the first char is read raw (to catch ESC); the rest of the line keeps
+# normal terminal editing. Arrow/function keys also start with ESC, so their
+# sequence is drained and ignored instead of cancelling.
+# TODO: the free-text `read -p` prompts (clone URL, new project name) do not
+# accept ESC yet; they would need the same first-char trick.
+read_menu_input() {
+    local prompt=$1 first rest seq
+    MENU_REPLY=""
+    while true; do
+        printf '%s' "$prompt"
+        IFS= read -rsn1 first || return 1
+        if [[ "$first" == $'\e' ]]; then
+            seq=""
+            IFS= read -rsn5 -t 0.05 seq 2>/dev/null || :
+            printf '\n'
+            if [[ -z "$seq" ]]; then
+                return 2
+            fi
+            continue
+        fi
+        if [[ -z "$first" ]]; then
+            printf '\n'
+            return 0
+        fi
+        printf '%s' "$first"
+        IFS= read -r rest || return 1
+        MENU_REPLY="$first$rest"
+        return 0
+    done
+}
+
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
@@ -40,10 +83,10 @@ select_project() {
         mkdir "$project_folder"
     fi
 
-    local projects proj action_done=0
+    local projects proj action_done=0 rc=0
 
     # Loop instead of recursing: an unguarded tail-recursion spins forever
-    # when stdin hits EOF (terminal closed at the prompt), because `select`
+    # when stdin hits EOF (terminal closed at the prompt), because the read
     # aborts without running its body and would re-enter the function endlessly.
     while true; do
         #mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d ! -name ".pnpm-store" -printf "%f\n")
@@ -53,7 +96,6 @@ select_project() {
 
         #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
         PS3=$'\e[34mSelect a project/action: \e[0m'
-        COLUMNS=1  # ← force one item per line
 
         # ≫ ══ • ⬩➤ ⇢╰┈➤ ➝🏝️💥➕➔🌟✨
         # 🗑️
@@ -70,7 +112,21 @@ select_project() {
         )
 
         action_done=0
-        select proj in "${projects[@]}" ; do
+        print_menu "${projects[@]}"
+        while true; do
+            rc=0
+            read_menu_input "$PS3" || rc=$?
+            if [[ $rc -eq 1 ]]; then
+                break      # stdin closed: handled after the loop
+            elif [[ $rc -eq 2 ]]; then
+                return 0   # ESC acts like "❌ Exit"
+            elif [[ -z "$MENU_REPLY" ]]; then
+                continue 2 # empty line: redraw the menu, like `select` did
+            fi
+            proj=""
+            if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#projects[@]} )); then
+                proj=${projects[10#$MENU_REPLY - 1]}
+            fi
             if [[ "$proj" == "🧩 Clone a repository" ]]; then
                 # clone_repo returns 1 on failure; keep the menu alive under errexit
                 clone_repo || :
@@ -81,7 +137,8 @@ select_project() {
                 action_done=1
                 break
             elif [[ "$proj" == "🗑️ Delete a project" ]]; then
-                delete_proj
+                # delete_proj returns 1 on EOF; keep the menu alive under errexit
+                delete_proj || :
                 action_done=1
                 break
             elif [[ "$proj" == ">_ Shell" ]]; then 
@@ -119,7 +176,7 @@ select_project() {
             fi
         done
 
-        # `select` exited without any handled action = stdin closed (EOF) or Ctrl-C:
+        # The prompt loop exited without any handled action = stdin closed (EOF):
         # stop cleanly instead of redrawing the menu forever.
         if [[ $action_done -eq 0 ]]; then
             echo -e "\n${WARNING_EMOJI} Input interrupted or terminal closed. Exiting."
@@ -214,15 +271,32 @@ create_new_proj() {
 
 # --- Delete the project ---
 delete_proj() {
+    local projects
     mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
     echo $'\n\e[34m------------------------------------------------\e[0m'
 
     PS3=$'\e[34mSelect the project to delete: \e[0m'
-    COLUMNS=1  # ← force one item per line
 
-    local action_done=0
-    select proj in "${projects[@]}" "❌ Exit" ; do
+    local items=("${projects[@]}" "❌ Exit")
+    print_menu "${items[@]}"
+
+    local action_done=0 rc=0 proj
+    while true; do
+        rc=0
+        read_menu_input "$PS3" || rc=$?
+        if [[ $rc -eq 1 ]]; then
+            break
+        elif [[ $rc -eq 2 ]]; then
+            return 0   # ESC acts like "❌ Exit": back to the main menu
+        elif [[ -z "$MENU_REPLY" ]]; then
+            print_menu "${items[@]}"
+            continue
+        fi
+        proj=""
+        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
+            proj=${items[10#$MENU_REPLY - 1]}
+        fi
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
         elif [[ -n "$proj" ]]; then
@@ -235,7 +309,7 @@ delete_proj() {
         fi
     done
 
-    # stdin closed (EOF) / Ctrl-C at this prompt: bail out, caller re-shows main menu
+    # stdin closed (EOF) at this prompt: bail out, caller re-shows main menu
     if [[ $action_done -eq 0 ]]; then
         echo -e "${WARNING_EMOJI} Input interrupted or terminal closed."
         return 1
