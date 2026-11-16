@@ -201,19 +201,6 @@
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
 
-- Feature 52.2 | OpenCode: `/review N [note]` sub-agent command
-  Add `OpenCode/commands/review.md` mirroring the `feature.md` conventions
-   (`subagent: true`, usage guard when no number, sign comments with your own agent name):
-  - Read PR $1 via `gh` (title, body, changed files, diff) and stop if it doesn't exist or is closed.
-  - Run the AGENTS.md "PR Review Workflow": GraphQL `reviewThreads` with `isResolved` to collect
-       existing findings, then review the diff yourself and post each new finding as an inline
-       comment on file:line (threads are the only viable protocol — all agents share one GitHub
-       account, so formal APPROVE/REQUEST_CHANGES returns 422; never attempt them).
-  - Optional note `$2`: extra focus area for the review.
-  - Final message = short report (verdict + findings summary), ending with the line
-       `[REVIEW <N> DONE]` as the very last line (parsed programmatically).
-  - Report only: nothing merges, no re-review requests, human merge gate stays with the user.
-
 - Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
      ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
 
@@ -257,7 +244,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N — subagent prompts implementing a Backlog task (branch + PR)
+- Feature 52.2 [feat/52_2_opencode_review_command]: OpenCode /review N command implemented
+- Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N commands implemented
 - Feature 79 [feat/79_pr_created_turn_end_marker]: todo-task PR watch is armed by the agent's "[PR N CREATED]" turn_end marker (verified via gh pr view) instead of eagerly at task start; /pr stays as manual arming
 - Feature 58 [fix/61_terminal_title_v2]: terminal title ported to the OpenCode v2 TUI plugin API — shows ⏳ while the active session runs and 🖐️ when idle; built-in title disabled in `cli.json`
 - Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71
