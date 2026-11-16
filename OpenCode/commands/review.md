@@ -11,9 +11,10 @@ Otherwise, review **PR $1** of this repository.
 If PR is not "open" highlight it in the response.  
 
 Leave a PR review comment, signed with your name.  
-Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.  
-Also number the points to make easy a reference.  
+Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.  
+Also number the points to have a clear reference.  
 Add a verdict at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
+
 
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
 **IMPORTANT** The very last line of your response MUST be exactly this: `[REVIEW $1 DONE]` .
