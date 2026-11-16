@@ -3,12 +3,12 @@ description: Review PR N — Review a PR and leave a comment. Return a summary a
 subagent: true
 ---
 
-If no number or wrong value was provided, reply with the usage `/review <N> [note]` and do nothing else.
-
+If no number was provided, reply with the usage `/review <N> [note]` and do nothing else.
 Otherwise, review **PR $1** of this repository.
-
 - Number: `$1`
 - Optional user note: `$2`
+
+If PR is not "open" highlight it in the response.  
 
 Leave a PR review comment, signed with your name.  
 Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.  
