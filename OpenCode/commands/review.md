@@ -1,5 +1,5 @@
 ---
-description: Review PR N — read diff, check existing threads, post inline findings
+description: Review PR N — Review a PR and leave a comment. Return a summary and a marker.
 subagent: true
 ---
 
@@ -13,7 +13,7 @@ Otherwise, review **PR $1** of this repository.
 Leave a PR review comment, signed with your name.  
 Use this icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.  
 Also number the points to make easy a reference.  
-Add a decision at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
+Add a verdict at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
 
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
 **IMPORTANT** The very last line of your response MUST be exactly this: `[REVIEW $1 DONE]` .
