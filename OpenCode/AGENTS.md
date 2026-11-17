@@ -118,8 +118,9 @@ After applying changes, run the test suite if available:
 
 ## Comments in the code
 - Write only really useful comments - Avoid comemnts like "Person first name"
-- Do not refer to backlog Feature or Bug in hte comments
+- Do not refer to backlog Feature or Bug in the comments
 - Explain **WHAT**, not **HOW**, unless the code/solution is not obvious
+- **No history** — a comment never explains what was removed, replaced, or *why* the change was made. It must make sense to a reader who never saw the old code.
 
 ## .NET Projects
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`
