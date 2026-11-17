@@ -223,17 +223,8 @@ clone_repo() {
                 # Repository is public
                 echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"
             else
-                local invite_rc=0
-                check_and_accept_invite "$repo_path" || invite_rc=$?
-                case $invite_rc in
-                    0)
-                    # invite accepted. Continue.
-                    ;;
-                    *)
-                        echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
-                        return 1
-                    ;;
-                esac
+                echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+                return 1
             fi
         ;;
         *)

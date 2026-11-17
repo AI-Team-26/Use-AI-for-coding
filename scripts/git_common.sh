@@ -135,43 +135,55 @@ check_repo_access() {
 
 
 check_and_accept_invite() {
-    #echo "check_and_accept_invite()"
+    local repo_path=$1
+    local previous_token=${GITHUB_TOKEN:-}
+
+    _lookup_and_accept_invite "$repo_path"
+    local rc=$?
+
+    # A successful accept must keep the agent PAT: it is the account that gained access, 
+    # so the clone and later pushes run as it. 
+    # Any other result means the agent token was borrowed for nothing and the previous one goes back.
+    if [[ $rc -ne 0 && -n "$previous_token" ]]; then
+        export GITHUB_TOKEN=$previous_token
+    fi
+    return $rc
+}
+
+_lookup_and_accept_invite() {
     local repo_path=$1   # "owner/repo"
 
-    #local invitation_id
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --template '{{range .}}{{.id}}|{{.repository.full_name}}
-#{{end}}' \
-#        | awk -F'|' -v repo="$repo_path" '$2 == repo {print $1}')
-
-    #local invitation_id
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --jq --arg repo "$repo_path" '.[] | select(.repository.full_name == $repo) | .id')
-
-    # Invitations are addressed to the shared agent account, so this check must run
-    # under its PAT instead of the owner's. Announce the swap explicitly and bail out
-    # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
-    # until something re-sets it.
-    echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (if the swap succeeds, the token stays switched).${NC}"
+    # Invitations are addressed to the shared agent account, not to the repository
+    # owner, so the lookup runs under the agent PAT.
+    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE}: GITHUB_TOKEN is set to its PAT (restored when possible).${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
-    local response=$(gh api /user/repository_invitations)
-    local http_status=$(echo "$response" | jq .status)
-    if [[ "$http_status" != "200" ]]; then
+
+    # gh api exits non-zero on HTTP 4xx/5xx. stderr goes to its own file: a warning
+    # on a successful call would otherwise corrupt the JSON and hide the invitation.
+    # The assignment stays on its own line: `local x=$(cmd)` hides the status.
+    local response err_file
+    err_file=$(mktemp)
+    if ! response=$(gh api /user/repository_invitations 2>"$err_file"); then
         echo -e "${RED}❌ Failed to get invitations ${NC}"
+        echo -e "Response:\n $response"
+        echo -e "Error:\n $(cat "$err_file")"
+        rm -f "$err_file"
+        return 1
+    fi
+    rm -f "$err_file"
+
+    local invitation_id
+    if ! invitation_id=$(echo "$response" | jq -r --arg repo "$repo_path" \
+        'first(.[] | select((.repository.full_name | ascii_downcase) == ($repo | ascii_downcase)) | .id)'); then
+        echo -e "${RED}❌ Could not read the invitation list${NC}"
         echo -e "Response:\n $response"
         return 1
     fi
 
-    local invitation_id=$(echo "$response" | jq -r ".[] | select(.repository.full_name == \"$repo_path\") | .id")
-    #local invitation_id=$(echo "$response" | jq -r "...")
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --jq ".[] | select(.repository.full_name == \"$repo_path\") | .id")
-
     if [[ -n "$invitation_id" ]]; then
-        echo "DEBUG invitation_id=[$invitation_id]"
         echo -e "${YELLOW}Pending invitation found for $repo_path — accepting...${NC}"
 
         if error_output=$(gh api -X PATCH "/user/repository_invitations/$invitation_id" 2>&1); then

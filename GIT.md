@@ -167,14 +167,16 @@ git config --global user.email
    - `REPO_ACCESS_OK` — the token's account is the repo owner, an org admin, or a collaborator with push.
    - `REPO_ACCESS_READ_ONLY` — no write access; the script then checks whether the repository is public.
    - `REPO_ACCESS_ERROR` — the repository info could not be fetched or access is denied.
-3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it temporarily falls
-   back to the agent-account token (`set_default_github_token`), lists `/user/repository_invitations` and
-   accepts the matching pending invitation.
+3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it falls back to
+   the agent-account token (`set_default_github_token`), lists `/user/repository_invitations`, matches the
+   repository name case-insensitively and accepts the first pending invitation. `check_repo_access` runs
+   this lookup, so `clone_repo` does not repeat it: `REPO_ACCESS_READ_ONLY` already means "no pending
+   invitation". The agent token is kept when an invitation is accepted (the clone then runs as that
+   account) and the previous token is put back otherwise.
 
-> Note: this not-owned-repository path is still being improved (see `Feature 22` in `TODO.md`). The current
-> fallback switches `GITHUB_TOKEN` to the agent account silently, and a missing owner PAT aborts with the
-> terse lookup error above. Until that is reworked, add the owner's PAT with
-> "🔑 Manage GitHub credentials" and retry.
+> Note: this not-owned-repository path is still being improved (see Bug 82, Bug 86 and Feature 84 in
+> `TODO.md`). A missing owner PAT still aborts with the terse lookup error above. Until that is reworked,
+> add the owner's PAT with "🔑 Manage GitHub credentials" and retry.
 
 ## Manage credentials
 
