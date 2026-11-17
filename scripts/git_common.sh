@@ -10,6 +10,11 @@ if [[ ! -r "$github_pat_file" ]]; then
    #return 1
 fi
 
+# Exit codes returned by set_github_auth_for_repo()
+GIT_AUTH_OK=0
+GIT_AUTH_ERROR=1
+GIT_AUTH_NO_OWNER_PAT=2
+
 # Since GIT uses GITHUB CLI authentication, we set the GITHUB_TOKEN that will be used by GitHub CLI 
 # <repo_url> argument must be in format "https://github.com/account/repo.git"
 set_github_auth_for_repo() {
@@ -18,7 +23,7 @@ set_github_auth_for_repo() {
     # Check that repository URL us in HTTP format
     if [[ ! "$repo_url" =~ ^https://github.com ]]; then
         echo -e "${RED}❌ Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
-        return 1
+        return "$GIT_AUTH_ERROR"
     fi
 
     # "https://github.com/account/repo.git" -> "account/repo"
@@ -26,7 +31,7 @@ set_github_auth_for_repo() {
 
     if [[ -z "$repo_path" ]]; then
         echo -e "${RED}❌ Failed to extract <account/repo> from \"${repo_url}\" ${NC}"
-        return 1
+        return "$GIT_AUTH_ERROR"
     fi
 
     local owner=$(echo "$repo_path" | awk -F'/' '{print $1}' )
@@ -35,12 +40,12 @@ set_github_auth_for_repo() {
     local pat=$(grep "^${owner}:" "$github_pat_file" | cut -d':' -f2 | sed 's|[[:space:]]*$||' || true)
     if [[ -z "$pat" ]]; then
         echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for owner '${owner}' ${NC}"
-        return 1
+        return "$GIT_AUTH_NO_OWNER_PAT"
     fi
 
     if [[ "$pat" == *github.com ]]; then
         echo -e "${RED}❌ The PAT for '${owner}' ends with 'github.com', check '${github_pat_file}'.${NC}"
-        return 1
+        return "$GIT_AUTH_ERROR"
     fi
 
     local obfuscated_pat="$(obfuscate_pat $pat)"
@@ -49,6 +54,31 @@ set_github_auth_for_repo() {
 
     # TODO: is it worth to do this check?
     #check_repo_access "$repo_path"
+}
+
+# Sets GITHUB_TOKEN for a repository that can be owned by an account without a PAT record.
+# Invitations are addressed to the agent account, so its PAT replaces a missing owner PAT;
+# the switch is announced because every later gh/git command then runs as that account.
+# A bad URL or a malformed PAT stays a hard error.
+set_github_auth_for_repo_or_agent() {
+    local repo_url=${1:?The repository URL must be specified}
+    local rc=0
+
+    set_github_auth_for_repo "$repo_url" || rc=$?
+
+    case $rc in
+        "$GIT_AUTH_OK")
+            return "$GIT_AUTH_OK"
+        ;;
+        "$GIT_AUTH_NO_OWNER_PAT")
+            echo -e "${YELLOW}⚠️ No PAT for owner of ${repo_url}: continuing as the agent account '${GITHUB_AGENT_ACCOUNT}' (invitations are addressed to it).${NC}"
+            set_default_github_token
+            return $?
+        ;;
+        *)
+            return "$rc"
+        ;;
+    esac
 }
 
 set_default_github_token() {
@@ -83,7 +113,25 @@ check_repo_access() {
         2>/dev/null || true)
 
     if [[ -z "$resp" ]]; then
-        echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
+        # A pending invitation is the usual reason a private repository is still invisible,
+        # so the invitation lookup runs before the access check gives up.
+        local invite_rc=0
+        check_and_accept_invite "$repo_path" || invite_rc=$?
+
+        case $invite_rc in
+            0)
+                # TODO(Feature 84): the role granted by the invitation is not verified here,
+                # so an org invitation that is read-only still fails on the first push.
+                echo -e "✔️ Access to $repo_path granted by the invitation, as the agent account '${GITHUB_AGENT_ACCOUNT}'"
+                return "$REPO_ACCESS_OK"
+            ;;
+            2)
+                echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
+            ;;
+            *)
+                return "$REPO_ACCESS_ERROR"
+            ;;
+        esac
         return "$REPO_ACCESS_ERROR"
     fi
 
