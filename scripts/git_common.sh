@@ -141,9 +141,9 @@ check_and_accept_invite() {
     _lookup_and_accept_invite "$repo_path"
     local rc=$?
 
-    # A successful accept must keep the agent PAT: it is the account that gained
-    # access, so the clone and later pushes run as it. Any other result means the
-    # agent token was borrowed for nothing and the previous one goes back.
+    # A successful accept must keep the agent PAT: it is the account that gained access, 
+    # so the clone and later pushes run as it. 
+    # Any other result means the agent token was borrowed for nothing and the previous one goes back.
     if [[ $rc -ne 0 && -n "$previous_token" ]]; then
         export GITHUB_TOKEN=$previous_token
     fi
