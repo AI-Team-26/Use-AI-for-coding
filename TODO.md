@@ -45,8 +45,8 @@
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
 - Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
-- Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope
-- Bug 85 | Invitation lookup: `gh api /user/repository_invitations` returns 30 items per page (needs `--paginate`) and `2>&1` merges stderr into the JSON body
+- Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope. Also: an accepted invitation is not re-checked for permission, and an org invitation can be read-only, so the first push may still fail
+- Bug 85 | Invitation lookup: `gh api /user/repository_invitations` returns 30 items per page (needs `--paginate`); inviters should keep the shared agent account's invitation list short (invites expire after 7 days)
 - Bug 86 | Cloning a not-owned repo aborts on the missing owner PAT (`set_github_auth_for_repo || return 1` in `clone_repo`) before the invitation is looked up, so an invited repo can only be cloned when its owner already has a PAT
 - Feature 85 | Commit the fake-`gh` harness for `check_repo_access` / `check_and_accept_invite` under `scripts/tests/` so the invitation cases are repeatable
 
