@@ -223,9 +223,6 @@ clone_repo() {
                 # Repository is public
                 echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"
             else
-                # check_repo_access already looked for a pending invitation and
-                # reported it as not found (that is the READ_ONLY code), so a second
-                # lookup here would only repeat the same API call.
                 echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
                 return 1
             fi
