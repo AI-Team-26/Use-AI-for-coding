@@ -134,6 +134,14 @@ If you get the error `refusing to allow a Personal Access Token ... without work
 1. Put the file in `.github` folder instead.
 2. Ask the user to manually move the files into `.github/workflows` (can be done editing hte name in GitHub UI).
  
+## Avoid rebase on PR
+
+To catch up with main, merge — don't rebase:
+
+```bash
+   git fetch origin
+   git merge origin/main        # on your feature branch
+```
 
 # PR Review Workflow
 
