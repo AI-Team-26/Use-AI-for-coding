@@ -46,6 +46,9 @@
 
 - Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
 - Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope
+- Bug 85 | Invitation lookup: `gh api /user/repository_invitations` returns 30 items per page (needs `--paginate`) and `2>&1` merges stderr into the JSON body
+- Bug 86 | Cloning a not-owned repo aborts on the missing owner PAT (`set_github_auth_for_repo || return 1` in `clone_repo`) before the invitation is looked up, so an invited repo can only be cloned when its owner already has a PAT
+- Feature 85 | Commit the fake-`gh` harness for `check_repo_access` / `check_and_accept_invite` under `scripts/tests/` so the invitation cases are repeatable
 
 - Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
@@ -258,8 +261,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), the invite id is matched with `jq --arg`, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did
-- Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite now explicitly notices when GITHUB_TOKEN switches to the agent account (reason + persistence) and on the no-invite fallback; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
+- Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), invitations match `full_name` case-insensitively, the first matching id is accepted, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did; the agent token is kept after a successful accept and the previous one is put back otherwise
+- Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite announces the agent-account token it uses for the invitation lookup and reports the no-invite case; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
 - Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop
 - Feature 52.2 [feat/52_2_opencode_review_command]: OpenCode /review N command implemented
 - Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N commands implemented
