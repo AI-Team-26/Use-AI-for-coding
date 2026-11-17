@@ -14,25 +14,38 @@
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
 
-- Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
-  The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
-  but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
-  1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
-     GITHUB_TOKEN to the default agent account (the old "works if you are a collaborator" fallback, now implicit
-     and not communicated to the user).
-  2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
-     suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
+- Bug 81 | invitation acceptance never works: `check_and_accept_invite` (scripts/git_common.sh) runs
+  `gh api /user/repository_invitations`, which returns a JSON **array**, then checks `jq .status`.
+  Indexing an array with `.status` always fails, so `http_status` is never "200" → it always prints
+  "❌ Failed to get invitations" and returns 1; a pending invite can never be accepted.
+  Fix the status handling (rely on the `gh api` exit code, or use `gh api -i`), and remove the redundant
+  second `check_and_accept_invite` call in the `REPO_ACCESS_READ_ONLY` branch of `clone_repo`
+  (scripts/start_common.sh) — `check_repo_access` already ran it.
+  (Split from Feature 22 / Feature-old 22.)
 
-- Feature 22: Handle access and authentication failures for repositories not owned by the agent
+- Bug 82 | opening an existing project without a PAT record for its owner terminates the whole start script.
+  In `select_project` (scripts/start_common.sh) a failed `set_github_auth_for_repo` does `return 1`, and
+  `Pi Agent/for_docker_volume/start.sh` + `OpenCode/start.sh` call `select_project` bare under `set -euo pipefail`
+  → the script exits instead of returning to the project/action menu. Guard the failure, stay in the menu,
+  and make the error suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
+  Note: the *clone* path was already guarded by the fix/60_errexit_check_repo_access work — do not redo it.
+  (Split from Feature 22 / Feature-old 22.)
 
-  When cloning a private repository that the agent cannot access:
+- Feature 83 | explicit notice when GITHUB_TOKEN is switched to the agent account.
+  `check_and_accept_invite` calls `set_default_github_token`, which prints a generic "GITHUB_TOKEN (…) set for
+  <agent>" line without saying why. Print the reason (checking/accepting a repository invitation), and also
+  notify when no invite is found but the token stays on the agent account — today that is an implicit
+  "works if you are a collaborator" fallback that is not communicated to the user.
+  Depends on Bug 81 (the invitation path must work first).
+  (Split from Feature 22 / Feature-old 22.)
 
-  - Check for a pending invitation using the agent account’s GitHub token, and print a notice when switching to that token.
-  - If there is no pending invitation, show clear guidance: ask an admin to invite GITHUB_AGENT_ACCOUNT as a collaborator with write access, or move the repository into an organization the agent belongs to.
-  - Handle authentication failures cleanly: show a clear error and return to the project/action menu instead of terminating the script because of set -e.
-
-  Fork-based workflows are not part of this feature; users handle forks themselves.
-     
+- Feature 84 | actionable guidance when a repo is not accessible and there is no pending invitation.
+  Replace the terse "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+  (both occurrences: `check_repo_access` and `clone_repo`) with concrete remedies:
+  ask an admin to invite GITHUB_AGENT_ACCOUNT as a collaborator with **write** access, or move the repository
+  into an organization the agent belongs to, or add the owner's PAT via "🔑 Manage GitHub credentials".
+  Fork-based workflows are out of scope; users handle forks themselves.
+  (Split from Feature 22 / Feature-old 22.)
 - Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
