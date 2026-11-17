@@ -15,10 +15,19 @@ GIT_AUTH_OK=0
 GIT_AUTH_ERROR=1
 GIT_AUTH_NO_OWNER_PAT=2
 
+# Exit codes returned by check_and_accept_invite()
+INVITE_ACCEPTED=0
+INVITE_ERROR=1
+INVITE_NOT_FOUND=2
+
 # Since GIT uses GITHUB CLI authentication, we set the GITHUB_TOKEN that will be used by GitHub CLI 
 # <repo_url> argument must be in format "https://github.com/account/repo.git"
+# <missing_pat_tone> is "error" (default) when the missing owner PAT ends the operation, or "info"
+# when the caller can continue with another account: an error line followed by "continuing" reads
+# like a failure that was ignored.
 set_github_auth_for_repo() {
     local repo_url=${1:?The repository URL must be specified}
+    local missing_pat_tone=${2:-error}
 
     # Check that repository URL us in HTTP format
     if [[ ! "$repo_url" =~ ^https://github.com ]]; then
@@ -39,7 +48,11 @@ set_github_auth_for_repo() {
 
     local pat=$(grep "^${owner}:" "$github_pat_file" | cut -d':' -f2 | sed 's|[[:space:]]*$||' || true)
     if [[ -z "$pat" ]]; then
-        echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for owner '${owner}' ${NC}"
+        if [[ "$missing_pat_tone" == "info" ]]; then
+            echo -e "${BLUE}ℹ️ No PAT record for owner '${owner}' in '${github_pat_file}'.${NC}"
+        else
+            echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for owner '${owner}' ${NC}"
+        fi
         return "$GIT_AUTH_NO_OWNER_PAT"
     fi
 
@@ -64,14 +77,14 @@ set_github_auth_for_repo_or_agent() {
     local repo_url=${1:?The repository URL must be specified}
     local rc=0
 
-    set_github_auth_for_repo "$repo_url" || rc=$?
+    set_github_auth_for_repo "$repo_url" info || rc=$?
 
     case $rc in
         "$GIT_AUTH_OK")
             return "$GIT_AUTH_OK"
         ;;
         "$GIT_AUTH_NO_OWNER_PAT")
-            echo -e "${YELLOW}⚠️ No PAT for owner of ${repo_url}: continuing as the agent account '${GITHUB_AGENT_ACCOUNT}' (invitations are addressed to it).${NC}"
+            echo -e "${YELLOW}⚠️ Continuing as the agent account '${GITHUB_AGENT_ACCOUNT}' (invitations are addressed to it).${NC}"
             set_default_github_token
             return $?
         ;;
@@ -87,6 +100,12 @@ set_default_github_token() {
     if [ -z "$pat" ]; then
         echo -e "❌ ${RED}Failed to get PAT from file '${github_pat_file}' for '${GITHUB_AGENT_ACCOUNT}' ${NC}"
         return 1
+    fi
+
+    # Already the agent's PAT: the callers switch it for their own reasons and say so,
+    # so repeating the announcement would only add noise.
+    if [[ "${GITHUB_TOKEN:-}" == "$pat" ]]; then
+        return 0
     fi
 
     local obfuscated_pat="$(obfuscate_pat $pat)"
@@ -119,13 +138,13 @@ check_repo_access() {
         check_and_accept_invite "$repo_path" || invite_rc=$?
 
         case $invite_rc in
-            0)
+            "$INVITE_ACCEPTED")
                 # TODO(Feature 84): the role granted by the invitation is not verified here,
                 # so an org invitation that is read-only still fails on the first push.
                 echo -e "✔️ Access to $repo_path granted by the invitation, as the agent account '${GITHUB_AGENT_ACCOUNT}'"
                 return "$REPO_ACCESS_OK"
             ;;
-            2)
+            "$INVITE_NOT_FOUND")
                 echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
             ;;
             *)
@@ -163,12 +182,10 @@ check_repo_access() {
     check_and_accept_invite "$repo_path"
 
     case $? in
-        0)
-            # invite accepted. Continue.
+        "$INVITE_ACCEPTED")
             return "$REPO_ACCESS_OK"
         ;;
-        2)
-            # invite not found... continue
+        "$INVITE_NOT_FOUND")
             echo "Invite not found"
         ;;
         *)
@@ -206,7 +223,7 @@ _lookup_and_accept_invite() {
     echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE}: GITHUB_TOKEN is set to its PAT (restored when possible).${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
-        return 1
+        return "$INVITE_ERROR"
     fi
 
     # gh api exits non-zero on HTTP 4xx/5xx. stderr goes to its own file: a warning
@@ -219,7 +236,7 @@ _lookup_and_accept_invite() {
         echo -e "Response:\n $response"
         echo -e "Error:\n $(cat "$err_file")"
         rm -f "$err_file"
-        return 1
+        return "$INVITE_ERROR"
     fi
     rm -f "$err_file"
 
@@ -228,7 +245,7 @@ _lookup_and_accept_invite() {
         'first(.[] | select((.repository.full_name | ascii_downcase) == ($repo | ascii_downcase)) | .id)'); then
         echo -e "${RED}❌ Could not read the invitation list${NC}"
         echo -e "Response:\n $response"
-        return 1
+        return "$INVITE_ERROR"
     fi
 
     if [[ -n "$invitation_id" ]]; then
@@ -236,15 +253,15 @@ _lookup_and_accept_invite() {
 
         if error_output=$(gh api -X PATCH "/user/repository_invitations/$invitation_id" 2>&1); then
             echo -e "✔️ Invitation accepted for $repo_path"
-            return 0
+            return "$INVITE_ACCEPTED"
         else
             echo -e "${RED}❌ Failed to accept invitation for $repo_path${NC}"
             echo -e "${RED}   → $error_output${NC}"
-            return 1
+            return "$INVITE_ERROR"
         fi
     else
         echo -e "${YELLOW}⚠️ No pending invitation for $repo_path under agent account '${GITHUB_AGENT_ACCOUNT}'. Nothing to accept.${NC}"
-        return 2
+        return "$INVITE_NOT_FOUND"
     fi
 }
 

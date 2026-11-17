@@ -316,3 +316,11 @@ Repository access is verified by `check_repo_access` before cloning. Its exit co
 | `GIT_AUTH_OK` | 0 | `GITHUB_TOKEN` is the owner's PAT |
 | `GIT_AUTH_ERROR` | 1 | URL is not `https://github.com`, or the owner's PAT is malformed |
 | `GIT_AUTH_NO_OWNER_PAT` | 2 | `/scripts/github_pat` has no record for the owner — `clone_repo` falls back to the Agent PAT, `select_project` aborts |
+
+`check_and_accept_invite` (which invitation lookup result) uses these codes, also in `scripts/git_common.sh`:
+
+| Code | Value | Meaning |
+|---|---|---|
+| `INVITE_ACCEPTED` | 0 | a pending invitation was found and accepted |
+| `INVITE_ERROR` | 1 | the lookup or the accept call failed |
+| `INVITE_NOT_FOUND` | 2 | no pending invitation for that repository |
