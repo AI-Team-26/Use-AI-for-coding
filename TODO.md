@@ -44,7 +44,6 @@
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
-- Bug 81 | Invitation acceptance never works (jq .status on a JSON array always fails) + remove the duplicate invite call in clone_repo
 - Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
 - Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope
 
@@ -259,7 +258,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite now explicitly notices when GITHUB_TOKEN switches to the agent account (reason + persistence) and on the no-invite fallback; guards token-switch failure. Full effect needs Bug 81 merged.
+- Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), the invite id is matched with `jq --arg`, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did
+- Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite now explicitly notices when GITHUB_TOKEN switches to the agent account (reason + persistence) and on the no-invite fallback; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
 - Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop
 - Feature 52.2 [feat/52_2_opencode_review_command]: OpenCode /review N command implemented
 - Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N commands implemented

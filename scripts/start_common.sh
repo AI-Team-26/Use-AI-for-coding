@@ -223,17 +223,11 @@ clone_repo() {
                 # Repository is public
                 echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"
             else
-                local invite_rc=0
-                check_and_accept_invite "$repo_path" || invite_rc=$?
-                case $invite_rc in
-                    0)
-                    # invite accepted. Continue.
-                    ;;
-                    *)
-                        echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
-                        return 1
-                    ;;
-                esac
+                # check_repo_access already looked for a pending invitation and
+                # reported it as not found (that is the READ_ONLY code), so a second
+                # lookup here would only repeat the same API call.
+                echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+                return 1
             fi
         ;;
         *)

@@ -138,16 +138,6 @@ check_and_accept_invite() {
     #echo "check_and_accept_invite()"
     local repo_path=$1   # "owner/repo"
 
-    #local invitation_id
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --template '{{range .}}{{.id}}|{{.repository.full_name}}
-#{{end}}' \
-#        | awk -F'|' -v repo="$repo_path" '$2 == repo {print $1}')
-
-    #local invitation_id
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --jq --arg repo "$repo_path" '.[] | select(.repository.full_name == $repo) | .id')
-
     # Invitations are addressed to the shared agent account, so this check must run
     # under its PAT instead of the owner's. Announce the swap explicitly and bail out
     # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
@@ -157,21 +147,21 @@ check_and_accept_invite() {
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
-    local response=$(gh api /user/repository_invitations)
-    local http_status=$(echo "$response" | jq .status)
-    if [[ "$http_status" != "200" ]]; then
+
+    # The endpoint answers with a JSON array of invitations, not a status object,
+    # so the HTTP outcome is read from the exit status of `gh api` (it fails on
+    # 4xx/5xx). `local` is declared first: `local x=$(cmd)` would hide the status.
+    local response
+    if ! response=$(gh api /user/repository_invitations 2>&1); then
         echo -e "${RED}❌ Failed to get invitations ${NC}"
         echo -e "Response:\n $response"
         return 1
     fi
 
-    local invitation_id=$(echo "$response" | jq -r ".[] | select(.repository.full_name == \"$repo_path\") | .id")
-    #local invitation_id=$(echo "$response" | jq -r "...")
-    #invitation_id=$(gh api /user/repository_invitations \
-    #    --jq ".[] | select(.repository.full_name == \"$repo_path\") | .id")
+    local invitation_id
+    invitation_id=$(echo "$response" | jq -r --arg repo "$repo_path" '.[] | select(.repository.full_name == $repo) | .id')
 
     if [[ -n "$invitation_id" ]]; then
-        echo "DEBUG invitation_id=[$invitation_id]"
         echo -e "${YELLOW}Pending invitation found for $repo_path — accepting...${NC}"
 
         if error_output=$(gh api -X PATCH "/user/repository_invitations/$invitation_id" 2>&1); then
@@ -184,6 +174,8 @@ check_and_accept_invite() {
         fi
     else
         echo -e "${YELLOW}⚠️ No pending invitation for $repo_path under agent account '${GITHUB_AGENT_ACCOUNT}'. Nothing to accept.${NC}"
+        # TODO: GITHUB_TOKEN now points at the agent account even though nothing was
+        # accepted; restore the previous token (or warn) when this path runs.
         return 2
     fi
 }

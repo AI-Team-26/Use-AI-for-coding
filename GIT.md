@@ -169,9 +169,10 @@ git config --global user.email
    - `REPO_ACCESS_ERROR` — the repository info could not be fetched or access is denied.
 3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it temporarily falls
    back to the agent-account token (`set_default_github_token`), lists `/user/repository_invitations` and
-   accepts the matching pending invitation.
+   accepts the matching pending invitation. `check_repo_access` runs this lookup, so `clone_repo` does not
+   repeat it: `REPO_ACCESS_READ_ONLY` already means "no pending invitation".
 
-> Note: this not-owned-repository path is still being improved (see `Feature 22` in `TODO.md`). The current
+> Note: this not-owned-repository path is still being improved (see Bug 82 and Features 83/84 in `TODO.md`). The current
 > fallback switches `GITHUB_TOKEN` to the agent account silently, and a missing owner PAT aborts with the
 > terse lookup error above. Until that is reworked, add the owner's PAT with
 > "🔑 Manage GitHub credentials" and retry.
