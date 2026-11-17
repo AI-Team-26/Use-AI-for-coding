@@ -208,7 +208,6 @@ clone_repo() {
     local rc=0
     check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
-
     case $rc in
         "$REPO_ACCESS_OK")
             # OK, Owner or collaborator, can use it

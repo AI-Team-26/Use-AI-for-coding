@@ -138,42 +138,45 @@ check_and_accept_invite() {
     local repo_path=$1
     local previous_token=${GITHUB_TOKEN:-}
 
-    _lookup_and_accept_invite "$repo_path"   # current body, unchanged
+    _lookup_and_accept_invite "$repo_path"
     local rc=$?
 
-    # Only restore what this call replaced: with no previous token, the agent PAT
-    # is the only one that can clone the repo.
-    if [[ -n "$previous_token" ]]; then
+    # A successful accept must keep the agent PAT: it is the account that gained
+    # access, so the clone and later pushes run as it. Any other result means the
+    # agent token was borrowed for nothing and the previous one goes back.
+    if [[ $rc -ne 0 && -n "$previous_token" ]]; then
         export GITHUB_TOKEN=$previous_token
     fi
     return $rc
 }
 
 _lookup_and_accept_invite() {
-    #echo "check_and_accept_invite()"
     local repo_path=$1   # "owner/repo"
 
-    # Invitations are addressed to the shared agent account, so this check must run under its PAT. 
-    # Announce the swap explicitly and bail out
-    # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
-    # until something re-sets it.
-    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}; GITHUB_TOKEN is set with its PAT and then restored.${NC}"
+    # Invitations are addressed to the shared agent account, not to the repository
+    # owner, so the lookup runs under the agent PAT.
+    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE}: GITHUB_TOKEN is set to its PAT (restored afterwards unless the invitation is accepted).${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
 
-    # "if ! cmd " checks the exit status of cmd, not the output.
+    # gh api exits non-zero on HTTP 4xx/5xx and both streams carry the reason.
+    # The assignment stays on its own line: `local x=$(cmd)` hides the status.
     local response
     if ! response=$(gh api /user/repository_invitations 2>&1); then
         echo -e "${RED}❌ Failed to get invitations ${NC}"
         echo -e "Response:\n $response"
-        # TODO: switch back 
         return 1
     fi
 
     local invitation_id
-    invitation_id=$(echo "$response" | jq -r --arg repo "$repo_path" '.[] | select(.repository.full_name == $repo) | .id')
+    if ! invitation_id=$(echo "$response" | jq -r --arg repo "$repo_path" \
+        'first(.[] | select((.repository.full_name | ascii_downcase) == ($repo | ascii_downcase)) | .id)'); then
+        echo -e "${RED}❌ Could not read the invitation list${NC}"
+        echo -e "Response:\n $response"
+        return 1
+    fi
 
     if [[ -n "$invitation_id" ]]; then
         echo -e "${YELLOW}Pending invitation found for $repo_path — accepting...${NC}"
@@ -188,8 +191,6 @@ _lookup_and_accept_invite() {
         fi
     else
         echo -e "${YELLOW}⚠️ No pending invitation for $repo_path under agent account '${GITHUB_AGENT_ACCOUNT}'. Nothing to accept.${NC}"
-        # TODO: GITHUB_TOKEN now points at the agent account even though nothing was
-        # accepted; restore the previous token (or warn) when this path runs.
         return 2
     fi
 }
