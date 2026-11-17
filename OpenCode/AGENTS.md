@@ -147,6 +147,9 @@ After applying changes, run the test suite if available:
   }
   ```
 
+## Bash
+- Wrap code comments at 160 columns
+
 ---
 
 # GIT & GitHub
