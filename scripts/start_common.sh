@@ -40,13 +40,13 @@ print_menu() {
 }
 
 # Reads a menu answer like `select` did, but a lone ESC cancels.
-# The raw answer is put in MENU_REPLY. Returns: 0 = answer read (may be empty),
-# 1 = stdin closed (EOF), 2 = ESC pressed.
+# The raw answer is put in MENU_REPLY. Return codes tell the caller how to end:
+#   0 = answer read (may be empty)
+#   1 = stdin closed (EOF): terminal gone, caller reports interruption and exits
+#   2 = ESC pressed: deliberate cancel, caller treats it as the "❌ Exit" item
 # Only the first char is read raw (to catch ESC); the rest of the line keeps
 # normal terminal editing. Arrow/function keys also start with ESC, so their
 # sequence is drained and ignored instead of cancelling.
-# TODO: the free-text `read -p` prompts (clone URL, new project name) do not
-# accept ESC yet; they would need the same first-char trick.
 read_menu_input() {
     local prompt=$1 first rest seq
     MENU_REPLY=""

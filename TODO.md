@@ -35,6 +35,8 @@
      
 - Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
+- Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
+
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
@@ -242,7 +244,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop, pty tests added
+- Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop
 - Feature 52.2 [feat/52_2_opencode_review_command]: OpenCode /review N command implemented
 - Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N commands implemented
 - Feature 79 [feat/79_pr_created_turn_end_marker]: todo-task PR watch is armed by the agent's "[PR N CREATED]" turn_end marker (verified via gh pr view) instead of eagerly at task start; /pr stays as manual arming
