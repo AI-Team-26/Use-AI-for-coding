@@ -148,7 +148,15 @@ check_and_accept_invite() {
     #invitation_id=$(gh api /user/repository_invitations \
     #    --jq --arg repo "$repo_path" '.[] | select(.repository.full_name == $repo) | .id')
 
-    set_default_github_token  # required to get the invitation for GitHub agent account
+    # Invitations are addressed to the shared agent account, so this check must run
+    # under its PAT instead of the owner's. Announce the swap explicitly and bail out
+    # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
+    # until something re-sets it.
+    echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (if the swap succeeds, the token stays switched).${NC}"
+    if ! set_default_github_token; then
+        echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
+        return 1
+    fi
     local response=$(gh api /user/repository_invitations)
     local http_status=$(echo "$response" | jq .status)
     if [[ "$http_status" != "200" ]]; then
@@ -175,7 +183,7 @@ check_and_accept_invite() {
             return 1
         fi
     else
-        # no invite found
+        echo -e "${YELLOW}⚠️ No pending invitation for $repo_path under agent account '${GITHUB_AGENT_ACCOUNT}'. Nothing to accept.${NC}"
         return 2
     fi
 }
