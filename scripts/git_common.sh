@@ -152,7 +152,7 @@ check_and_accept_invite() {
     # under its PAT instead of the owner's. Announce the swap explicitly and bail out
     # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
     # until something re-sets it.
-    echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (the token stays switched).${NC}"
+    echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (if the swap succeeds, the token stays switched).${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations without the '${GITHUB_AGENT_ACCOUNT}' PAT.${NC}"
         return 1
