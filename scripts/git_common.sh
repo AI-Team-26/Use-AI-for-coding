@@ -155,20 +155,25 @@ _lookup_and_accept_invite() {
 
     # Invitations are addressed to the shared agent account, not to the repository
     # owner, so the lookup runs under the agent PAT.
-    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE}: GITHUB_TOKEN is set to its PAT (restored afterwards unless the invitation is accepted).${NC}"
+    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE}: GITHUB_TOKEN is set to its PAT (restored when possible).${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
 
-    # gh api exits non-zero on HTTP 4xx/5xx and both streams carry the reason.
+    # gh api exits non-zero on HTTP 4xx/5xx. stderr goes to its own file: a warning
+    # on a successful call would otherwise corrupt the JSON and hide the invitation.
     # The assignment stays on its own line: `local x=$(cmd)` hides the status.
-    local response
-    if ! response=$(gh api /user/repository_invitations 2>&1); then
+    local response err_file
+    err_file=$(mktemp)
+    if ! response=$(gh api /user/repository_invitations 2>"$err_file"); then
         echo -e "${RED}❌ Failed to get invitations ${NC}"
         echo -e "Response:\n $response"
+        echo -e "Error:\n $(cat "$err_file")"
+        rm -f "$err_file"
         return 1
     fi
+    rm -f "$err_file"
 
     local invitation_id
     if ! invitation_id=$(echo "$response" | jq -r --arg repo "$repo_path" \
