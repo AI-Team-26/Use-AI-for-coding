@@ -154,7 +154,7 @@ check_and_accept_invite() {
     # until something re-sets it.
     echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (if the swap succeeds, the token stays switched).${NC}"
     if ! set_default_github_token; then
-        echo -e "${RED}❌ Cannot check invitations without the '${GITHUB_AGENT_ACCOUNT}' PAT.${NC}"
+        echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
     local response=$(gh api /user/repository_invitations)
@@ -183,8 +183,6 @@ check_and_accept_invite() {
             return 1
         fi
     else
-        # No invite found: nothing to accept. Say so explicitly rather than falling
-        # through silently — note the token has already been switched above.
         echo -e "${YELLOW}⚠️ No pending invitation for $repo_path under agent account '${GITHUB_AGENT_ACCOUNT}'. Nothing to accept.${NC}"
         return 2
     fi
