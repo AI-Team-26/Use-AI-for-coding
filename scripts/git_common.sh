@@ -135,26 +135,40 @@ check_repo_access() {
 
 
 check_and_accept_invite() {
+    local repo_path=$1
+    local previous_token=${GITHUB_TOKEN:-}
+
+    _lookup_and_accept_invite "$repo_path"   # current body, unchanged
+    local rc=$?
+
+    # Only restore what this call replaced: with no previous token, the agent PAT
+    # is the only one that can clone the repo.
+    if [[ -n "$previous_token" ]]; then
+        export GITHUB_TOKEN=$previous_token
+    fi
+    return $rc
+}
+
+_lookup_and_accept_invite() {
     #echo "check_and_accept_invite()"
     local repo_path=$1   # "owner/repo"
 
-    # Invitations are addressed to the shared agent account, so this check must run
-    # under its PAT instead of the owner's. Announce the swap explicitly and bail out
+    # Invitations are addressed to the shared agent account, so this check must run under its PAT. 
+    # Announce the swap explicitly and bail out
     # early if it fails: GITHUB_TOKEN now points at the agent account and stays there
     # until something re-sets it.
-    echo -e "${BLUE}ℹ️ Looking for a pending invitation on ${YELLOW}$repo_path${NC}${BLUE}: switching GITHUB_TOKEN to agent account ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}${BLUE} (if the swap succeeds, the token stays switched).${NC}"
+    echo -e "${BLUE}ℹ️ Checking pending invitation on ${YELLOW}$repo_path${NC}${BLUE} as ${YELLOW}'${GITHUB_AGENT_ACCOUNT}'${NC}; GITHUB_TOKEN is set with its PAT and then restored.${NC}"
     if ! set_default_github_token; then
         echo -e "${RED}❌ Cannot check invitations: switching GITHUB_TOKEN to '${GITHUB_AGENT_ACCOUNT}' failed.${NC}"
         return 1
     fi
 
-    # The endpoint answers with a JSON array of invitations, not a status object,
-    # so the HTTP outcome is read from the exit status of `gh api` (it fails on
-    # 4xx/5xx). `local` is declared first: `local x=$(cmd)` would hide the status.
+    # "if ! cmd " checks the exit status of cmd, not the output.
     local response
     if ! response=$(gh api /user/repository_invitations 2>&1); then
         echo -e "${RED}❌ Failed to get invitations ${NC}"
         echo -e "Response:\n $response"
+        # TODO: switch back 
         return 1
     fi
 
