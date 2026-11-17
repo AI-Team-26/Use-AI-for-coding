@@ -2,10 +2,31 @@
 
 ## Backlog
 
-- Feature 71 | todo-task: single watcher loop replacing the two independent timers
-  `statusTimer` (elapsed time) and `prCheckTimer` (PR polling) are two module-level timers with duplicated stop/clear logic in `abortStart`, `session_shutdown`, `finishActivity`, `/feature end` and `clearPending` — the root cause of the Feature 30 flicker.
-  Refactor into one watcher holding `{ pending, pr, startedAt, phase }` with explicit phases (`working` → `awaiting_review` → `ended`); the two status keys of Feature 30 stay separate.
-  Spell out when a task-less watch ends (PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`): an agent settle is deliberately **not** a stop condition, because `/pr <n>` arms the watch with no active task.
+- Feature 71 | todo-task: one state owner + one idempotent teardown (keep both timers)
+     Not the two timers — Feature 30 fixed its flicker by splitting one shared status key into `STATUS_KEY_TASK` and
+     `STATUS_KEY_PR` (commit 883cfa8), so that split must be preserved, not undone. `taskStatusTimer` (15 s, string only)
+     and `prCheckTimer` (20 s, `gh` subprocess) also have different lifetimes: `/pr <n>` arms the PR watch with no task.
+     The real defect is the number of *owners*: `stopStatusTimer` / `stopPrCheckPolling` / `clearCurrentTask` / `abortStart` /
+     `session_shutdown` / `finishActivity` each decide what "stop" means and disagree — `abortStart` clears both keys,
+     `finishActivity` only the task key, `clearCurrentTask` stops both timers.
+
+     Refactor, one file (`Pi Agent/for_docker_volume/extensions/todo-task.ts`):
+  - one module-scope state object owning `currentTask`, `watchedPr`, `phase` (`working` → `awaiting_review` → `ended`),
+       `startedAt`, `prCheckStartedAt`, `watchGeneration`, `handledReviewDecisions`, `consecutiveGhFailures`,
+       `consecutiveSendFailures`, `taskProjectRoot`;
+  - one `stopAll(reason)` — idempotent, clears both status keys — called by session shutdown, `abortStart`,
+       `finishActivity` and `/feature end`; the low-level `stopStatusTimer` / `stopPrCheckPolling` stay internal;
+  - one `renderStatus()` that writes both keys from the state, so no site writes a key from a stale local belief;
+  - keep the 15 s / 20 s cadences and both timers. Do NOT merge them into one interval.
+     The state must stay at module scope (Pi never disposes the old instance on session swap, hence `watchGeneration`).
+
+     Watch ends only on: PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`, session shutdown.
+     An `agent_settled` is deliberately NOT a stop condition, because `/pr <n>` arms the watch with no active task.
+
+     Order: after Feature 75 (tested poller module) — otherwise 75 rewrites the same code twice. Excludes Bug 73
+     (`reviewThreads` switch): do not change what `checkPrReview` reads.
+     Done when: behaviour identical (no change to what is shown, only fewer code paths writing it), no new files,
+     `todo-task.ts` only.
 
 - Feature 27.1: investigate a new pi extension to replace this built-in footer:
   ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
@@ -23,16 +44,11 @@
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
-- Feature 22: Handle access and authentication failures for repositories not owned by the agent
+- Bug 81 | Invitation acceptance never works (jq .status on a JSON array always fails) + remove the duplicate invite call in clone_repo
+- Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
+- Feature 83 | Explicit notice when the token switches to the agent account (to accept the invite), including the silent no-invite fallback. Depends on Bug 81
+- Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope
 
-  When cloning a private repository that the agent cannot access:
-
-  - Check for a pending invitation using the agent account’s GitHub token, and print a notice when switching to that token.
-  - If there is no pending invitation, show clear guidance: ask an admin to invite GITHUB_AGENT_ACCOUNT as a collaborator with write access, or move the repository into an organization the agent belongs to.
-  - Handle authentication failures cleanly: show a clear error and return to the project/action menu instead of terminating the script because of set -e.
-
-  Fork-based workflows are not part of this feature; users handle forks themselves.
-     
 - Feature 26 [SUSPENDED] | https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
