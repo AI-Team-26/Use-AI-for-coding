@@ -70,6 +70,7 @@ export default function prExtension(pi: ExtensionAPI) {
       Also number the points to have a clear reference. \n
       Add a decision at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected. \n
       Report here a recap specifying if there are blocking points (changes request) or PR can be merged as it is. \n
+      Do not consider the fact that the branch is behind main. \n
       **IMPORTANT**: The very last line of your response MUST be exactly this: "[REVIEW $1 DONE]". \n
       ${note ?? ""}`
 
