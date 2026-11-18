@@ -81,10 +81,9 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
 
     const currentBranch = (cwd: string): string => execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
 
-    // Head commit date in ms, so a rejection older than the newest commit is read as already reworked.
-    const headCommitDateMs = (cwd: string, slug: string, oid: string): number | null => {
+    const getHeadCommitDateInMs = (cwd: string, slug: string, oid: string): number | null => {
         const res = spawnSync("gh", ["api", `repos/${slug}/commits/${oid}`, "--jq", ".commit.committer.date"], { cwd, encoding: "utf-8" })
-        if (res.status !== 0) return null // transient gh failure: fail toward notifying rather than swallowing the rejection
+        if (res.status !== 0) return null
         const ms = Date.parse(res.stdout.trim())
         return Number.isFinite(ms) ? ms : null
     }
@@ -177,7 +176,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
         const slug = pr.url?.match(/github\.com\/([^/]+\/[^/]+)\/pull/)?.[1]
         if (!slug) return false
         const latest = Date.parse(rejections.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).submittedAt)
-        const headMs = headCommitDateMs(cwd, slug, pr.headRefOid)
+        const headMs = getHeadCommitDateInMs(cwd, slug, pr.headRefOid)
         // null (transient gh failure or unparseable date) fails toward notifying rather than swallowing the rejection
         return headMs !== null && Number.isFinite(latest) && headMs > latest
     }
