@@ -17,4 +17,4 @@ Add a verdict at the beginning of the review: ✅ Approved ☑️ Approved (can 
 Do not consider the fact that the branch is behind main.  
   
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
-**IMPORTANT** The very last line of your response MUST be exactly this: "[REVIEW $1 DONE]".
+**IMPORTANT** The very last line of your response MUST be exactly this: "[REVIEW FOR `$1` DONE]".
