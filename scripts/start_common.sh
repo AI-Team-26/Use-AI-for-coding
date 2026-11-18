@@ -165,7 +165,7 @@ select_project() {
                     # An owner without a PAT record falls back to the agent account, as clone_repo does.
                     # A failure must not end the script: the user fixes the credentials and picks the project again.
                     if ! set_github_auth_for_repo_or_agent "$repo_url"; then
-                        print_github_credentials_hint
+                        echo -e "${YELLOW}→ Fix the reason above, then retry. '🔑 Manage GitHub credentials' in the menu adds or updates a PAT record.${NC}"
                         action_done=1
                         break
                     fi

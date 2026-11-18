@@ -305,12 +305,6 @@ add_github_pat() {
 }
 
 
-# Remedy for a credential setup that failed before a clone or a project open.
-# Only prints: the caller keeps its menu alive, so the user can add the PAT and retry.
-print_github_credentials_hint() {
-    echo -e "${YELLOW}→ Fix the reason above, then retry. '🔑 Manage GitHub credentials' in the menu adds or updates a PAT record.${NC}"
-}
-
 obfuscate_pat() {
     local pat=${1:?PAT is not provided}
     echo "${pat:0:10}...${pat: -5}"
