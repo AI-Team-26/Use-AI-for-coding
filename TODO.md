@@ -144,18 +144,6 @@
   Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
   Also removes the 400-line forward reference to `viewPr()` in the poller.
 
-- Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
-  Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
-  by live container runs. Move `checkPrReview` / `startPrCheckPolling` / `stopPrCheckPolling` / `watchedPr`
-  into their own module and test it with a stubbed `gh`/`git`/`setInterval`: discovery with no PR yet,
-  discovery → merge, reused branch with only old closed PRs, transient failure → retry → recovery,
-  merge detected while on `main`/detached HEAD, closed without merge, and no per-tick toasts.
-  A throwaway harness proving these seven scenarios passed was used to validate PR #129.
-  Same PR can delete the ~45 zero-risk leftover lines in `todo-task.ts` (commented `agentMessage_old`
-  block, commented "Auto-detect" block, `//console.error` / `//safeNotify` leftovers, `checkCounter`
-  replaced by a `firstTick` boolean, and the empty `if` body next to the report attach where every
-  `appendReportToPr` failure is reported as "no open PR" — real fix is Bug 64).
-
 - Feature 78 | Pi Agent: /feature  command returns this error:
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     OpenCode/plugins/tsconfig.json                                                                                                                              Please commit your changes or stash them before you switch branches.                                                                                                                            Aborting. Error: Command failed: git checkout main && git pull --rebase --autostash
@@ -261,6 +249,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 75 [feat/75_pr_poller_module]: PR-review polling extracted out of `todo-task.ts` into its own `todo-task/pr-poller.ts` module (behind injected deps); automated tests follow in a second PR
 - Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), invitations match `full_name` case-insensitively, the first matching id is accepted, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did; the agent token is kept after a successful accept and the previous one is put back otherwise
 - Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite announces the agent-account token it uses for the invitation lookup and reports the no-invite case; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
 - Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop
