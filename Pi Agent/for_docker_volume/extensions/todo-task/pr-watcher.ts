@@ -1,10 +1,10 @@
-// ~/.pi/agent/extensions/todo-task/pr-poller.ts
+// ~/.pi/agent/extensions/todo-task/pr-watcher.ts
 /**
- * PR review polling extracted from todo-task.ts: follows one PR until it is merged/closed or the
- * watch is stopped, announcing reviewer decisions along the way.
+ * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer
+ * decisions along the way.
  *
  * All side effects (notifications, status bar, message delivery, gh/git calls) arrive through
- * injected deps so the polling logic can be exercised without a real GitHub. State lives inside
+ * injected deps so the watch logic can be exercised without a real GitHub. State lives inside
  * the created instance; todo-task.ts builds exactly one at module load, because Pi never disposes
  * an old extension instance on session swap and this state must outlive any single instance.
  */
@@ -35,19 +35,21 @@ interface CustomMessage {
     details: Record<string, unknown>
 }
 
-export interface PrPollerDeps {
+export interface PrWatcherDeps {
     notify(message: string, type?: NotifyType): void
     setPrStatus(text: string | undefined): void
     sendUserMessage(content: string, options?: { deliverAs?: "steer" | "followUp" }): Promise<void>
     sendMessage(message: CustomMessage): Promise<void>
     debug(message: string): void
+    /** The branch's open PR, used only until a PR has been watched once. */
     listBranchOpenPr(cwd: string, branch: string): PrView | null
-    viewPrByRef(cwd: string, ref: number | string): PrView | null
+    /** The watched PR by number or URL, so a merge is seen from any branch (main, detached HEAD). */
+    viewPr(cwd: string, ref: number | string): PrView | null
     currentBranch(cwd: string): string
     headCommitDateMs(cwd: string, slug: string, oid: string): number | null
 }
 
-export interface PrPollerApi {
+export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
     stopPrCheckPolling(): void
     /** Drop the watched identity and dedup state without touching timers: a new task must not inherit the previous task's PR. */
@@ -59,7 +61,7 @@ const EXTENSION = "TODO-TASK"
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 
-export function createPrPoller(deps: PrPollerDeps): PrPollerApi {
+export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     let prCheckTimer: ReturnType<typeof setInterval> | null = null
     let watchGeneration = 0
     let prCheckStartedAt = 0
@@ -187,7 +189,7 @@ export function createPrPoller(deps: PrPollerDeps): PrPollerApi {
             // number — so a merge or close is detected from any branch, including main/detached.
             let pr: PrView | null
             if (watchedPr) {
-                pr = deps.viewPrByRef(cwd, watchedPr.url || watchedPr.number)
+                pr = deps.viewPr(cwd, watchedPr.url || watchedPr.number)
                 if (pr === null) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
                 // /pr <number> arms with an empty URL; it is stable per PR number, so backfill it
                 // here — otherwise the status bar link and the time-limit message lose the reference.

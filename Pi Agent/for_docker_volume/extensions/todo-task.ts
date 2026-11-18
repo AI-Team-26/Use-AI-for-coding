@@ -51,6 +51,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
+import { getOpenPrList, getOpenPrListOfBranch, viewPr as githubViewPr, editPrBody, type PrSummary } from "./_shared/github.ts"
 import {
     osc8Link,
     safeNotify as sharedSafeNotify,
@@ -59,7 +60,7 @@ import {
     pullLatestMain,
     type NotifyType,
 } from "./_shared/common.ts"
-import { createPrPoller, type PrView } from "./todo-task/pr-poller.ts"
+import { createPrWatcher, type PrView } from "./todo-task/pr-watcher.ts"
 
 const EXTENSION = "TODO-TASK"
 const DEBUG = false
@@ -106,12 +107,6 @@ interface CurrentTask {
     //name: () => `${type} ${number}`
 }
 
-// Minimal PR info needed to pick and switch to a branch.
-interface PrSummary {
-    number: number
-    headRefName: string
-    title: string
-}
 
 // Helper functions
 // -------------------------------------------------------------------------------------------------------------------------------------------
@@ -190,31 +185,10 @@ const ensureTodoDir = (): Promise<void> =>
         })
         .then((_) => {})
 
-function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
-    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
-    if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
-    return JSON.parse(res.stdout) as T[]
-}
-
-// Single-PR lookup, used when the PR is missing from the open list so merged and closed can be reported distinctly from "does not exist".
-// Shared by `/pr` and the poller. Returns null when `gh` fails or the output cannot be parsed;
-// callers that must not mistake a failure for "PR gone" retry it.
-const viewPr = <T = PrSummary & { state: string; url?: string }>(cwd: string, ref: number | string, fields = "number,state,title,headRefName,url"): T | null => {
-    const res = spawnSync("gh", ["pr", "view", String(ref), "--json", fields], { cwd, encoding: "utf-8" })
-    if (res.status !== 0) return null
-    try {
-        return JSON.parse(res.stdout) as T
-    } catch {
-        console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
-        safeNotify(`❌ Failed to parse result of viewPr() call`, "error")
-        return null
-    }
-}
-
 // Built once at module load — Pi never disposes an old extension instance on session swap, so per-instance
 // copies would disagree about which watch is live (same reason as messageSender above). The closures read
 // latestCtx/messageSender lazily, so they always reach the newest usable context.
-const prPoller = createPrPoller({
+const prWatcher = createPrWatcher({
     notify: (message, type) => safeNotify(message, type),
     setPrStatus: (text) => safeSetStatus(STATUS_KEY_PR, text),
     sendUserMessage: async (content, options) => {
@@ -228,8 +202,8 @@ const prPoller = createPrPoller({
         await sender.sendMessage(message)
     },
     debug: (m) => debug(m),
-    listBranchOpenPr: (cwd, branch) => getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")[0] ?? null,
-    viewPrByRef: (cwd, ref) => viewPr<PrView>(cwd, ref, "number,state,mergeable,reviewDecision,reviews,url,headRefOid"),
+    listBranchOpenPr: (cwd, branch) => getOpenPrListOfBranch<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")[0] ?? null,
+    viewPr: (cwd, ref) => githubViewPr<PrView>(cwd, ref, "number,state,mergeable,reviewDecision,reviews,url,headRefOid"),
     currentBranch: (cwd) => execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim(),
     headCommitDateMs: (cwd, slug, oid) => {
         const res = spawnSync("gh", ["api", `repos/${slug}/commits/${oid}`, "--jq", ".commit.committer.date"], { cwd, encoding: "utf-8" })
@@ -292,7 +266,7 @@ function appendReportToPr(cwd: string, report: string) {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
         if (!branch || branch === "main" || branch === "master") return false
 
-        const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
+        const prs = getOpenPrListOfBranch<{ number: number; body?: string }>(cwd, branch, "number,body")
         const pr = prs[0] ?? null
         if (pr === null) {
             safeNotify(`❌ No open PR found on branch '${branch}'.`, "error")
@@ -304,8 +278,7 @@ function appendReportToPr(cwd: string, report: string) {
         // First push only — do not duplicate the report after review rework
         if (/^### (Feature|Bug) agent work report$/m.test(body)) return true
 
-        const editRes = spawnSync("gh", ["pr", "edit", String(pr.number), "--body", `${body}\n\n${report}`], { cwd, encoding: "utf-8" })
-        if (editRes.status !== 0) throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
+        editPrBody(cwd, pr.number, `${body}\n\n${report}`)
     } catch (err) {
         safeNotify(`❌ Failed to attach report to PR. ${err}`, "error")
     }
@@ -320,7 +293,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prPoller.stopPrCheckPolling()
+        prWatcher.stopPrCheckPolling()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
@@ -341,7 +314,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     })
 
     pi.on("session_shutdown", () => {
-        prPoller.stopPrCheckPolling()
+        prWatcher.stopPrCheckPolling()
         stopStatusTimer()
         messageSender = null
     })
@@ -391,7 +364,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return
             }
             const { type: pendingType, number: pendingNumber } = currentTask
-            prPoller.stopPrCheckPolling()
+            prWatcher.stopPrCheckPolling()
             clearCurrentTask("Forceed END of task.")
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
@@ -402,7 +375,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
         // A new task must not inherit the previous task's PR: the marker is ignored while a PR
         // is already watched, so a stale watchedPr would silently drop the new task's signal.
-        prPoller.clearWatch()
+        prWatcher.clearWatch()
 
         await ensureTodoDir()
 
@@ -474,7 +447,7 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prPoller.stopPrCheckPolling()
+                prWatcher.stopPrCheckPolling()
                 stopStatusTimer()
                 currentTask = null
                 safeSetStatus(STATUS_KEY_TASK, undefined)
@@ -564,7 +537,7 @@ ${typeData.extra ?? ""}\n\
                 // On a working branch with no explicit target: watch the current branch's PR.
                 if (!onDefaultBranch && prNumberArg === null) {
                     debug("/pr command  startPrCheckPolling")
-                    prPoller.startPrCheckPolling(projectRoot)
+                    prWatcher.startPrCheckPolling(projectRoot)
                     return
                 }
 
@@ -575,7 +548,7 @@ ${typeData.extra ?? ""}\n\
                 if (pr === null) return
                 if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
 
-                prPoller.startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
+                prWatcher.startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
             } catch (err) {
                 safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, "error")
             }
@@ -593,12 +566,19 @@ ${typeData.extra ?? ""}\n\
         return fromHash ? parseInt(fromHash[1], 10) : null
     }
 
+    const viewPr = <T = PrSummary & { state: string; url?: string }>(
+        cwd: string,
+        ref: number | string,
+        fields = "number,state,title,headRefName,url",
+    ): T | null => githubViewPr<T>(cwd, ref, fields, () => {
+        console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
+        safeNotify(`❌ Failed to parse result of viewPr() call`, "error")
+    })
+
     // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog,
     // and an explicit number/URL always targets that specific PR — even when it is no longer open, in which case the user is told its state.
     const resolveOpenPr = async (ctx: ExtensionCommandContext, cwd: string, prNumberArg?: number): Promise<PrSummary | null> => {
-        const listRes = spawnSync("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title", "--limit", "100"], { cwd, encoding: "utf-8" })
-        if (listRes.status !== 0) throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
-        const prs = JSON.parse(listRes.stdout) as PrSummary[]
+        const prs = getOpenPrList<PrSummary>(cwd, "number,headRefName,title")
 
         if (prNumberArg !== undefined) {
             const pr = prs.find((p) => p.number === prNumberArg)
@@ -695,13 +675,13 @@ ${typeData.extra ?? ""}\n\
         }
 
         // "[PR N CREATED]"
-        if (prPoller.getWatchedPr() === null) {
+        if (prWatcher.getWatchedPr() === null) {
             const created = /\[PR\s+(\d+)\s+CREATED\]/i.exec(text)
             if (created) {
                 const prNumber = parseInt(created[1], 10)
                 const cwd = taskProjectRoot ?? ctx.cwd
                 const pr = viewPr<{ number: number; state: string; url: string }>(cwd, prNumber, "number,state,url")
-                if (pr) prPoller.startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
+                if (pr) prWatcher.startPrCheckPolling(cwd, { number: pr.number, url: pr.url })
                 else safeNotify(`⚠️ "[PR ${prNumber} CREATED]" seen but the PR could not be verified — run /pr ${prNumber} to start the watch.`, "warning")
             }
         }

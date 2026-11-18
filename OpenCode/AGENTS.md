@@ -5,12 +5,25 @@
 
 ## Answer Style
 - Prefer short, concise answers.
-- When code changes are required, split them into small, focused commits unless the user asks for a single large change.
+- Write plain English: short sentences, common words. Do not use clever, fancy or idiomatic English to sound smart — clarity beats style.
+
+---
 
 # Rules
 - Report issues to the user as soon as you discover them.
 - DO NOT work on the `main` GIT branch, unless explicitly requested by the user.
 - Use `gh` (GitHub CLI) since GITHUB_TOKEN environment variable is set. (if not report this error to the user)
+- When code changes are required, split them into small, focused commits unless the user asks for a single large change.
+- KEEP code simple
+
+## Plan before Act
+Unless the user's request is 100% unambiguous that they want immediate implementation:
+1. Describe the plan or approach to the user.
+2. Wait for explicit approval before writing code or executing actions.
+3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
+4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
+
+---
 
 # Workflow & Investigation
 
@@ -114,10 +127,16 @@ After applying changes, run the test suite if available:
 
 ---
 
+# Keep Work Proportional
+
+- Make the smallest correct change for the task. Avoid speculative checks and unrelated fixes, especially in internal tools.
+- Keep documentation brief and focused on the general workflow, not details easily found in code.
+- Review for task requirements, regressions and important risks. Do not repeatedly expand scope for optional polish or pre-existing issues; leave a code TODO or mention a follow-up in the PR when useful.
+
 # Project Conventions
 
 ## Comments in the code
-- Write only really useful comments - Avoid comemnts like "Person first name"
+- Write only really useful comments - Avoid comments like "Person first name"
 - Do not refer to backlog Feature or Bug in the comments
 - Explain **WHAT**, not **HOW**, unless the code/solution is not obvious
 - **No history** — a comment never explains what was removed, replaced, or *why* the change was made. It must make sense to a reader who never saw the old code.
