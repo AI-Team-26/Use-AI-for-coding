@@ -181,7 +181,8 @@ select_project() {
                 if [[ -z "$origin_url" ]]; then
                     echo -e "${YELLOW}${GIT_EMOJI} No 'origin' remote: GITHUB_TOKEN is left unchanged.${NC}"
                 elif is_github_https_url "$origin_url"; then
-                    set_github_auth_for_repo "$origin_url" || auth_rc=$?
+                    # "info" tone: a missing PAT is reported once, by report_project_auth_failure.
+                    set_github_auth_for_repo "$origin_url" info || auth_rc=$?
                 elif [[ "$origin_url" =~ ^(git@|ssh://) ]]; then
                     echo -e "${YELLOW}${GIT_EMOJI} SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
                 else
@@ -194,7 +195,7 @@ select_project() {
                 fi
 
                 if ! cd "$project_dir"; then
-                    echo -e "${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry."
+                    echo -e "${YELLOW}${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry.${NC}"
                     continue 2
                 fi
 
