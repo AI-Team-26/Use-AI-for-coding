@@ -1,6 +1,6 @@
 ---
 description: Review PR N — Review a PR and leave a comment. Return a summary and a marker.
-subagent: true
+subagent: false
 ---
 
 If no number was provided, reply with the usage `/review <N> [note]` and do nothing else.
