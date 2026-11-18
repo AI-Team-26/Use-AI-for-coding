@@ -87,11 +87,9 @@ Rules:
 ## Per-owner PAT → `GITHUB_TOKEN`
 
 When a project is selected, `select_project` (`scripts/start_common.sh`) reads the repository's `origin` URL
-with `git -C <project> remote get-url origin`. The shared check `is_github_https_url` (`scripts/git_common.sh`)
-accepts only `https://github.com/` URLs, so a host such as `github.com.example.org` is not mistaken for GitHub.
-An SSH remote or another host gets no PAT: the script says so under the project title, leaves `GITHUB_TOKEN`
-unchanged and opens the project. For an `https://github.com/` remote it calls `set_github_auth_for_repo`
-(`scripts/git_common.sh`):
+and sets `GITHUB_TOKEN` for its owner. Only an `https://github.com/` remote is served: any other remote (SSH,
+another host) or no remote at all opens the project with the token unchanged. For a served remote it calls
+`set_github_auth_for_repo` (`scripts/git_common.sh`):
 
 1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
 2. Extract `<owner>/<repo>` and take the first segment as `owner`.

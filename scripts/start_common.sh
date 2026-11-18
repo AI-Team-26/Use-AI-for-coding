@@ -173,20 +173,17 @@ select_project() {
 
                 echo ""
                 echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-                # Everything below prints under the title, so a notice or a remedy stays readable.
-                # No step here may end the script (errexit) nor the session: every failure
-                # reports the reason and redraws the menu.
-
+                # Everything below prints under the title, so a remedy stays readable, and no step may
+                # end the script (errexit) or the session: a failure redraws the menu.
                 origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
-                if [[ -z "$origin_url" ]]; then
-                    echo -e "${YELLOW}${GIT_EMOJI} No 'origin' remote: GITHUB_TOKEN is left unchanged.${NC}"
-                elif is_github_https_url "$origin_url"; then
+                # A project can be local-only or on another host: it opens with the token unchanged.
+                if [[ -n "$origin_url" ]] && ! is_github_https_url "$origin_url"; then
+                    echo -e "${YELLOW}${GIT_EMOJI} Only HTTPS GitHub URLs are accepted ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
+                    origin_url=""
+                fi
+                if [[ -n "$origin_url" ]]; then
                     # "info" tone: a missing PAT is reported once, by report_project_auth_failure.
                     set_github_auth_for_repo "$origin_url" info || auth_rc=$?
-                elif [[ "$origin_url" =~ ^(git@|ssh://) ]]; then
-                    echo -e "${YELLOW}${GIT_EMOJI} SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
-                else
-                    echo -e "${YELLOW}${GIT_EMOJI} Only HTTPS GitHub URLs are supported ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
                 fi
 
                 if [[ $auth_rc -ne 0 ]]; then
