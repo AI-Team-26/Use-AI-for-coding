@@ -75,16 +75,12 @@ read_menu_input() {
 
 # Explains how to fix the token lookup of an already-cloned project.
 # The menu stays usable: the user adds the record and opens the project again.
+# The reason is already on screen (set_github_auth_for_repo): this only shows the way out.
 report_project_auth_failure() {
-    local proj=$1 rc=$2
+    local proj=$1
 
     echo ""
-    if [[ "$rc" -eq "$GIT_AUTH_NO_OWNER_PAT" ]]; then
-        echo -e "${YELLOW}${GIT_EMOJI} No PAT record for the owner of '${proj}'.${NC}"
-    else
-        echo -e "${YELLOW}${GIT_EMOJI} Cannot set the GitHub token for '${proj}'.${NC}"
-    fi
-    echo -e "${YELLOW}   → Use \"🔑 Manage GitHub credentials\" in the menu to add or fix the record, then open '${proj}' again.${NC}"
+    echo -e "${YELLOW}${GIT_EMOJI}   → Use \"🔑 Manage GitHub credentials\" in the menu to add or fix the record, then open '${proj}' again.${NC}"
 }
 
 # --- Select or Clone a Project ---
@@ -167,7 +163,7 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
-                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 prev_token=${GITHUB_TOKEN:-}
 
                 clear
 
@@ -178,7 +174,7 @@ select_project() {
                 origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
                 # A project can be local-only or on another host: it opens with the token unchanged.
                 if [[ -n "$origin_url" ]] && ! is_github_https_url "$origin_url"; then
-                    echo -e "${YELLOW}${GIT_EMOJI} Only HTTPS GitHub URLs are accepted ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
+                    echo -e "${YELLOW}${GIT_EMOJI} PAT lookup: only https://github.com/ remotes are supported, so GITHUB_TOKEN is left unchanged ('${origin_url}').${NC}"
                     origin_url=""
                 fi
                 if [[ -n "$origin_url" ]]; then
@@ -187,11 +183,13 @@ select_project() {
                 fi
 
                 if [[ $auth_rc -ne 0 ]]; then
-                    report_project_auth_failure "$proj" "$auth_rc"
+                    report_project_auth_failure "$proj"
                     continue 2
                 fi
 
                 if ! cd "$project_dir"; then
+                    # The project never opens: do not keep the token switched to its owner.
+                    if [[ -n "$prev_token" ]]; then export GITHUB_TOKEN="$prev_token"; else unset GITHUB_TOKEN; fi
                     echo -e "${YELLOW}${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry.${NC}"
                     continue 2
                 fi
