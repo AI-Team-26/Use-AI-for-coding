@@ -28,13 +28,6 @@
      Done when: behaviour identical (no change to what is shown, only fewer code paths writing it), no new files,
      `todo-task.ts` only.
 
-- Feature 27.1: investigate a new pi extension to replace this built-in footer:
-  ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
-  ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
-  Also the branch is useless since it is printed in another extension.
-  Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
-- Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
-
 - Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
   The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
   but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
@@ -211,6 +204,12 @@
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
+- Feature 27.1 [SUSPENDED]: investigate a new pi extension to replace this built-in footer:
+  ``/projects/Use-AI-for-coding (main)`` that is <folder>/<GIT branch> all printed in dark gray with this:
+  ``Use-AI-for-coding`` in bright yellow removing the default prefix "/projects/"
+  Also the branch is useless since it is printed in another extension.
+  Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
+- Feature 27.2 [SUSPENDED]: new pi extension to replace built-in footer described in Feature 27: implementation
 
 - Feature 49 [SUSPENDED] | New Pi extension: API key rotation (pi-keyrouter alternative)
   Goal: rotate multiple API keys of the same provider automatically (e.g. several GEMINI keys under one "Google" provider), no manual model switching.
