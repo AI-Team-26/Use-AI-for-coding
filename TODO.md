@@ -35,7 +35,6 @@
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
 
-
 - Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope. Also: an accepted invitation is not re-checked for permission, and an org invitation can be read-only, so the first push may still fail
 - Bug 85 | Invitation lookup: `gh api /user/repository_invitations` returns 30 items per page (needs `--paginate`); inviters should keep the shared agent account's invitation list short (invites expire after 7 days)
 - Feature 85 | Commit the fake-`gh` harness for `check_repo_access` / `check_and_accept_invite` under `scripts/tests/` so the invitation cases are repeatable

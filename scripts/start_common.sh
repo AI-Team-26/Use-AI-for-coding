@@ -167,17 +167,26 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
-                cd "$project_folder/$proj" || exit 1
+                # Nothing in this branch may end the script (errexit) nor the session:
+                # every failure reports the reason and redraws the menu.
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0
 
-                # A failed token lookup must not end the script (errexit) nor the session:
-                # the menu is redrawn so the user can add the missing PAT.
-                local repo_url auth_rc=0
-                repo_url=$(git remote get-url origin 2>/dev/null) || repo_url=""
-                if [[ -n "$repo_url" ]]; then
-                    set_github_auth_for_repo "$repo_url" || auth_rc=$?
+                origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
+                if [[ -n "$origin_url" ]]; then
+                    if [[ "$origin_url" =~ ^https://github\.com ]]; then
+                        set_github_auth_for_repo "$origin_url" || auth_rc=$?
+                    else
+                        # An SSH remote or another host needs no PAT from the file.
+                        echo -e "${YELLOW}${GIT_EMOJI} Remote '${origin_url}' is not an HTTPS GitHub URL: GITHUB_TOKEN is left unchanged.${NC}"
+                    fi
                 fi
                 if [[ $auth_rc -ne 0 ]]; then
                     report_project_auth_failure "$proj" "$auth_rc"
+                    continue 2
+                fi
+
+                if ! cd "$project_dir"; then
+                    echo -e "${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry."
                     continue 2
                 fi
 
