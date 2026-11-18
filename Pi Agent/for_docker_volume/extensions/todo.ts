@@ -59,15 +59,11 @@ export default function todoExtension(pi: ExtensionAPI) {
                 return
             }
 
-            // Check for an empty TODO.md BEFORE the session swap: after newSession the
-            // old command ctx is stale and its ui getter would throw.
             if (showTodo && !(loaded.content ?? "").trim()) {
                 ctx.ui.notify("📄 TODO.md exists but is empty.", "warning")
                 return
             }
 
-            // Run in a fresh session: without it the agent carries the whole conversation history,
-            // which costs tokens and risks triggering compaction on a long session.
             let result: Awaited<ReturnType<typeof ctx.newSession>>
             try {
                 result = await ctx.newSession({
@@ -75,7 +71,6 @@ export default function todoExtension(pi: ExtensionAPI) {
                         if (showTodo) {
                             const displayContent = loaded.content ?? ""
 
-                            // Truncate very large files
                             const truncated =
                                 displayContent.length > MAX_CHARS ? `${displayContent.slice(0, MAX_CHARS)}\n\n... [truncated]` : displayContent
 
@@ -111,11 +106,9 @@ Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task, `/
                     },
                 })
             } catch (err) {
-                // If the failure happened after the session swap, ctx is stale and its ui getter throws.
                 try {
                     ctx.ui.notify(`❌ Failed to start fresh session: ${err instanceof Error ? err.message : String(err)}`, "error")
                 } catch {
-                    // original error already surfaced to the user by the TUI
                 }
                 return
             }
