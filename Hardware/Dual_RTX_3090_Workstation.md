@@ -64,6 +64,13 @@ Focus on boards that support **x8/x8** bifurcation to ensure both GPUs have adeq
 
 Asrock X670E TAICHI AMD X670 on esseshop.it: https://www.esseshop.it/asrock-x670e-taichi-amd-x670-presa-di-corrente-am5-atx-esteso-confezione-aperta-p-316833.html?utm_source=Bing&utm_medium=Bing&utm_campaign=products&msclkid=874848960d891cff07f6224515d10199
 
+
+## ASUS ROG Strix B550-E Gaming 
+
+In this post, https://www.reddit.com/r/LocalAIServers/comments/1xzha5m/thoughts_on_my_ai_build, the poster says that they are using PCIe 4.0 x8/x8.  
+Why this motherboard in son in the list ? DDR4 ??
+
+
 #### ASUS ROG Strix TRX40-XE Gaming
 
 340 EUR on ebay
