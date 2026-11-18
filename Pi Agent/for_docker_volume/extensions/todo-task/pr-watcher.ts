@@ -3,13 +3,15 @@
  * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer
  * decisions along the way.
  *
- * All side effects (notifications, status bar, message delivery, gh/git calls) arrive through
- * injected deps so the watch logic can be exercised without a real GitHub. State lives inside
- * the created instance; todo-task.ts builds exactly one at module load, because Pi never disposes
- * an old extension instance on session swap and this state must outlive any single instance.
+ * GitHub and git are called directly; only the Pi-facing side effects (notifications, status
+ * bar, message delivery) arrive through injected deps. State lives inside the created instance;
+ * todo-task.ts builds exactly one at module load, because Pi never disposes an old extension
+ * instance on session swap and this state must outlive any single instance.
  */
 
+import { execSync, spawnSync } from "node:child_process"
 import { GRAY, RESET, osc8Link, type NotifyType } from "../_shared/common.ts"
+import { getOpenPrListOfBranch, viewPr as githubViewPr } from "../_shared/github.ts"
 
 export interface PrView {
     number: number
@@ -43,12 +45,6 @@ export interface PrWatcherDeps {
     sendUserMessage(content: string, options?: { deliverAs?: "steer" | "followUp" }): Promise<void>
     sendMessage(message: CustomMessage): Promise<void>
     debug(message: string): void
-    /** The branch's open PR, used only until a PR has been watched once. */
-    listBranchOpenPr(cwd: string, branch: string): PrView | null
-    /** The watched PR by number or URL, so a merge is seen from any branch (main, detached HEAD). */
-    viewPr(cwd: string, ref: number | string): PrView | null
-    currentBranch(cwd: string): string
-    headCommitDateMs(cwd: string, slug: string, oid: string): number | null
 }
 
 export interface PrWatcherApi {
@@ -61,6 +57,7 @@ export interface PrWatcherApi {
 
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
+const PR_FIELDS = "number,state,mergeable,reviewDecision,reviews,url,headRefOid"
 
 export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     let prCheckTimer: ReturnType<typeof setInterval> | null = null
@@ -71,6 +68,26 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     let consecutiveGhFailures = 0
     let consecutiveSendFailures = 0
     const handledReviewDecisions = new Map<string, string>() // track reviews to not "resend" messages/action multiple time for the same
+
+    // A watch arms with a number (or a URL); both resolve to the same PR from any branch, which
+    // branch discovery cannot do once the PR is merged or the checkout moved to main.
+    const viewPr = (cwd: string, ref: number | string): PrView | null =>
+        githubViewPr<PrView>(cwd, ref, PR_FIELDS, () => {
+            console.error(`❌ [${deps.extension}] Failed to parse result of viewPr() call.`)
+            deps.notify("❌ Failed to parse result of viewPr() call", "error")
+        })
+
+    const listBranchOpenPr = (cwd: string, branch: string): PrView | null => getOpenPrListOfBranch<PrView>(cwd, branch, PR_FIELDS)[0] ?? null
+
+    const currentBranch = (cwd: string): string => execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
+
+    // Head commit date in ms, so a rejection older than the newest commit is read as already reworked.
+    const headCommitDateMs = (cwd: string, slug: string, oid: string): number | null => {
+        const res = spawnSync("gh", ["api", `repos/${slug}/commits/${oid}`, "--jq", ".commit.committer.date"], { cwd, encoding: "utf-8" })
+        if (res.status !== 0) return null // transient gh failure: fail toward notifying rather than swallowing the rejection
+        const ms = Date.parse(res.stdout.trim())
+        return Number.isFinite(ms) ? ms : null
+    }
 
     // Transient send failures are notified once per run (the first tick), then demoted to debug,
     // mirroring onGhFailure: a single error must not spam the user every poll.
@@ -160,7 +177,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
         const slug = pr.url?.match(/github\.com\/([^/]+\/[^/]+)\/pull/)?.[1]
         if (!slug) return false
         const latest = Date.parse(rejections.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).submittedAt)
-        const headMs = deps.headCommitDateMs(cwd, slug, pr.headRefOid)
+        const headMs = headCommitDateMs(cwd, slug, pr.headRefOid)
         // null (transient gh failure or unparseable date) fails toward notifying rather than swallowing the rejection
         return headMs !== null && Number.isFinite(latest) && headMs > latest
     }
@@ -190,7 +207,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
             // number — so a merge or close is detected from any branch, including main/detached.
             let pr: PrView | null
             if (watchedPr) {
-                pr = deps.viewPr(cwd, watchedPr.url || watchedPr.number)
+                pr = viewPr(cwd, watchedPr.url || watchedPr.number)
                 if (pr === null) return onGhFailure(`Failed to fetch PR #${watchedPr.number}`, "gh pr view returned no data")
                 // /pr <number> arms with an empty URL; it is stable per PR number, so backfill it
                 // here — otherwise the status bar link and the time-limit message lose the reference.
@@ -198,13 +215,13 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
             } else {
                 let branch = ""
                 try {
-                    branch = deps.currentBranch(cwd)
+                    branch = currentBranch(cwd)
                 } catch (err) {
                     return onGhFailure("Failed to read the current branch", err)
                 }
                 if (branch && branch !== "main" && branch !== "master") {
                     try {
-                        pr = deps.listBranchOpenPr(cwd, branch)
+                        pr = listBranchOpenPr(cwd, branch)
                     } catch (err) {
                         return onGhFailure(`Failed to fetch PR of branch "${branch}"`, err)
                     }
