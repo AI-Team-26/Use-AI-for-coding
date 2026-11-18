@@ -197,7 +197,9 @@ clone_repo() {
         return 1
     fi
 
-    set_github_auth_for_repo "$repo_url" || return 1
+    # A repository owned by an account without a PAT record (an invitation from a not-owned
+    # repository) continues as the agent account; check_repo_access then accepts the invitation.
+    set_github_auth_for_repo_or_agent "$repo_url" || return 1
 
     # "https://github.com/account/repo.git" -> "account/repo"
     local repo_path; repo_path=$(echo "$repo_url" | sed 's|.*github.com[/:]||' | sed 's|\.git$||')
@@ -228,6 +230,8 @@ clone_repo() {
             fi
         ;;
         *)
+            # TODO(Bug 82, Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
+            # account) is not named here, and select_project still aborts instead of staying in the menu.
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
