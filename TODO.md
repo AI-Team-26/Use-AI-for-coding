@@ -130,6 +130,15 @@
   - Extract the remaining PR workflow (`resolveOpenPr`, `switchToPrBranch`, and `PrView`); consider a PR-specific utility module.
   - Remove the forward reference from the poller to `viewPr` if Feature 75 has not already done so.
 
+- Feature 75.2 | todo-task: automated tests for `todo-task/pr-watcher.ts` (part 2 of Feature 75)
+  Part 1 extracted PR-review watching into `todo-task/pr-watcher.ts` behind injected deps, but it still has no
+  automated coverage: every bug in that logic was found by live container runs.
+  Add a mocked-`gh`/`git`/`setInterval` suite covering the seven scenarios:
+  discovery with no PR yet, discovery → merge, reused branch with only old closed PRs, transient failure →
+  retry → recovery, merge detected while on `main`/detached HEAD, closed without merge, and no per-tick toasts.
+  Host the suite under `tests/todo-task/` and run it with `node --test` (Node ≥ 23 strips the types, no build step).
+  Scope: tests only — no behaviour change in `pr-watcher.ts` unless a test exposes a real bug.
+
 - Feature 78 | Pi Agent: /feature  command returns this error:
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     OpenCode/plugins/tsconfig.json                                                                                                                              Please commit your changes or stash them before you switch branches.                                                                                                                            Aborting. Error: Command failed: git checkout main && git pull --rebase --autostash
