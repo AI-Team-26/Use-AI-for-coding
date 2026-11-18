@@ -23,6 +23,12 @@ Write plain English: short sentences, common words. Do not use clever, fancy or 
 4. **Plan before Act:** Always propose a plan and get user approval before implementing code or taking actions. See the `Plan before Act` rule in `AGENTS.md`.
 5. **Project workflow:** Follow the rules in AGENTS.md when you are working on a GitHub repository.
 
+# Keep Work Proportional
+
+- Solve the requested problem with the simplest change that works. Avoid speculative checks, abstractions and unrelated fixes, especially in internal tools.
+- Keep documentation to a short overview; do not repeat details that are easy to find in the code.
+- In reviews, focus on the task, real regressions and important risks. Do not turn optional polish or pre-existing issues into repeated scope expansion; use a code TODO or mention a follow-up in the PR when useful.
+
 # Small Steps Protocol
 
 - Create or Edit max 10 files per commit/PR, unless the operation is a folder name change or some massive moving of files.
