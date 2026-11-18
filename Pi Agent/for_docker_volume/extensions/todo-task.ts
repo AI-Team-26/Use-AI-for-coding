@@ -51,6 +51,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
+import { getOpenPrList, viewPr as githubViewPr, editPrBody, type PrSummary } from "./_shared/github.ts"
 import {
     GRAY,
     RESET,
@@ -121,13 +122,6 @@ interface WatchedPr {
     number: number
     url: string
     // watchStartAt: number   // last watch start   // ms Epoch?
-}
-
-// Minimal PR info needed to pick and switch to a branch.
-interface PrSummary {
-    number: number
-    headRefName: string
-    title: string
 }
 
 interface PrView {
@@ -218,12 +212,6 @@ const ensureTodoDir = (): Promise<void> =>
         })
         .then((_) => {})
 
-function getOpenPrList<T>(cwd: string, branch: string, fields: string): T[] {
-    const res = spawnSync("gh", ["pr", "list", "--head", branch, "--state", "open", "--json", fields], { cwd, encoding: "utf-8" })
-    if (res.status !== 0) throw new Error(`gh pr list failed (${res.status}): ${res.stderr}`)
-    return JSON.parse(res.stdout) as T[]
-}
-
 async function finishActivity(ctx: ExtensionContext): Promise<void> {
     if (!currentTask?.completed) return
     latestCtx = ctx
@@ -289,8 +277,7 @@ function appendReportToPr(cwd: string, report: string) {
         // First push only — do not duplicate the report after review rework
         if (/^### (Feature|Bug) agent work report$/m.test(body)) return true
 
-        const editRes = spawnSync("gh", ["pr", "edit", String(pr.number), "--body", `${body}\n\n${report}`], { cwd, encoding: "utf-8" })
-        if (editRes.status !== 0) throw new Error(`gh pr edit failed (${editRes.status}): ${editRes.stderr}`)
+        editPrBody(cwd, pr.number, `${body}\n\n${report}`)
     } catch (err) {
         safeNotify(`❌ Failed to attach report to PR. ${err}`, "error")
     }
@@ -868,24 +855,14 @@ ${typeData.extra ?? ""}\n\
         return fromHash ? parseInt(fromHash[1], 10) : null
     }
 
-    // Single-PR lookup, used when the PR is missing from the open list so merged and closed can be reported distinctly from "does not exist".
-    // Single-PR lookup shared by `/pr` and the poller. Returns null when `gh` fails or the
-    // output cannot be parsed; callers that must not mistake a failure for "PR gone" retry it.
     const viewPr = <T = PrSummary & { state: string; url?: string }>(
         cwd: string,
         ref: number | string,
         fields = "number,state,title,headRefName,url",
-    ): T | null => {
-        const res = spawnSync("gh", ["pr", "view", String(ref), "--json", fields], { cwd, encoding: "utf-8" })
-        if (res.status !== 0) return null
-        try {
-            return JSON.parse(res.stdout) as T
-        } catch {
-            console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
-            safeNotify(`❌ Failed to parse result of viewPr() call`, "error")
-            return null
-        }
-    }
+    ): T | null => githubViewPr<T>(cwd, ref, fields, () => {
+        console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
+        safeNotify(`❌ Failed to parse result of viewPr() call`, "error")
+    })
 
     // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog,
     // and an explicit number/URL always targets that specific PR — even when it is no longer open, in which case the user is told its state.
