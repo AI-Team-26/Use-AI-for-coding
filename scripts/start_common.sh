@@ -160,10 +160,14 @@ select_project() {
                 cd "$project_folder/$proj" || exit 1
 
                 #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
-                local repo_url=$(git remote get-url origin 2>/dev/null)   
+                local repo_url=$(git remote get-url origin 2>/dev/null)
                 if [[ -n "$repo_url" ]]; then
-                    if ! set_github_auth_for_repo "$repo_url" ; then
-                        return 1
+                    # An owner without a PAT record falls back to the agent account, as clone_repo does.
+                    # A failure must not end the script: the user fixes the credentials and picks the project again.
+                    if ! set_github_auth_for_repo_or_agent "$repo_url"; then
+                        print_github_credentials_hint
+                        action_done=1
+                        break
                     fi
                 fi
 
@@ -230,8 +234,8 @@ clone_repo() {
             fi
         ;;
         *)
-            # TODO(Bug 82, Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
-            # account) is not named here, and select_project still aborts instead of staying in the menu.
+            # TODO(Feature 84): the no-access remedy (invite the agent account, move the repo to an org)
+            # is not named here.
             return "$REPO_ACCESS_ERROR"
         ;;
     esac

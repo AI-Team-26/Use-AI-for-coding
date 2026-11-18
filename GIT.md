@@ -92,9 +92,10 @@ If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_c
 1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
 2. Extract `<owner>/<repo>` and take the first segment as `owner`.
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
-4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
-   `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
-   while `select_project` still **aborts** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
+4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`, and
+   both `clone_repo` and `select_project` continue with the agent PAT
+   (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)). If that fails too,
+   the reason is printed with the remedy and `select_project` goes back to the main menu instead of ending.
 5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
@@ -161,7 +162,8 @@ git config --global user.email
 
 ## Repository access on clone (owner / collaborator / invite)
 
-`clone_repo` (`scripts/start_common.sh`) does more than `set_github_auth_for_repo`:
+`clone_repo` (`scripts/start_common.sh`) does more than `set_github_auth_for_repo`. The same token setup also runs
+when an existing project is opened from the menu (`select_project`):
 
 1. It resolves the token for the repository owner, exporting `GITHUB_TOKEN`. When the owner has no record in
    `/scripts/github_pat`, `set_github_auth_for_repo_or_agent` falls back to the agent-account PAT
@@ -184,10 +186,9 @@ git config --global user.email
    A successful accept returns `REPO_ACCESS_OK`. The agent token is kept when an invitation is accepted (the
    clone then runs as that account) and the previous token is put back otherwise.
 
-> Note: this not-owned-repository path is still being improved (see Bug 82 and Feature 84 in
-> `TODO.md`). An accepted invitation is not re-checked for the granted role, so an org invitation that is
-> read-only still fails on the first push. Opening such a project again also still aborts, because
-> `select_project` uses `set_github_auth_for_repo` alone and the owner has no PAT record.
+> Note: this not-owned-repository path is still being improved (see Feature 84 in `TODO.md`). An accepted
+> invitation is not re-checked for the granted role, so an org invitation that is read-only still fails on the
+> first push.
 
 ## Manage credentials
 
