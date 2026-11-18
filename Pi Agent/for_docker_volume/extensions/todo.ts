@@ -111,7 +111,12 @@ Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task, `/
                     },
                 })
             } catch (err) {
-                ctx.ui.notify(`❌ Failed to start fresh session: ${err instanceof Error ? err.message : String(err)}`, "error")
+                // If the failure happened after the session swap, ctx is stale and its ui getter throws.
+                try {
+                    ctx.ui.notify(`❌ Failed to start fresh session: ${err instanceof Error ? err.message : String(err)}`, "error")
+                } catch {
+                    // original error already surfaced to the user by the TUI
+                }
                 return
             }
 
