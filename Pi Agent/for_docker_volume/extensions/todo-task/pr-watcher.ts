@@ -36,6 +36,8 @@ interface CustomMessage {
 }
 
 export interface PrWatcherDeps {
+    /** Extension name, shared with its owner so customType prefixes cannot drift apart. */
+    extension: string
     notify(message: string, type?: NotifyType): void
     setPrStatus(text: string | undefined): void
     sendUserMessage(content: string, options?: { deliverAs?: "steer" | "followUp" }): Promise<void>
@@ -57,7 +59,6 @@ export interface PrWatcherApi {
     getWatchedPr(): WatchedPr | null
 }
 
-const EXTENSION = "TODO-TASK"
 const PR_CHECK_INTERVAL_MS = 20_000
 const PR_CHECKING_MAX_MS = 4 * 60 * 60 * 1000 // 4 hours | Safenet: stop polling after this long even if no decision was made (can be increased later).
 
@@ -176,7 +177,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
             stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
             await safeSendMessage({
-                customType: `${EXTENSION}-stop-pr-check-polling`,
+                customType: `${deps.extension}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
                 display: true,
                 details: {},
@@ -271,7 +272,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
                 switch (prStatus) {
                     case "APPROVED": {
                         delivered = await safeSendMessage({
-                            customType: `${EXTENSION}-approved`,
+                            customType: `${deps.extension}-approved`,
                             content: `✅ ${osc8Link(pr.url, `PR #${pr.number}`)} approved — can be merged.`,
                             display: true,
                             details: {},

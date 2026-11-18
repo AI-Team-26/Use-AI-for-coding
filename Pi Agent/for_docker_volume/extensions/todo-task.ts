@@ -189,6 +189,7 @@ const ensureTodoDir = (): Promise<void> =>
 // copies would disagree about which watch is live (same reason as messageSender above). The closures read
 // latestCtx/messageSender lazily, so they always reach the newest usable context.
 const prWatcher = createPrWatcher({
+    extension: EXTENSION,
     notify: (message, type) => safeNotify(message, type),
     setPrStatus: (text) => safeSetStatus(STATUS_KEY_PR, text),
     sendUserMessage: async (content, options) => {
