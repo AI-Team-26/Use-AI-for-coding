@@ -162,8 +162,16 @@ select_project() {
                 #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
                 local repo_url=$(git remote get-url origin 2>/dev/null)   
                 if [[ -n "$repo_url" ]]; then
-                    if ! set_github_auth_for_repo "$repo_url" ; then
-                        return 1
+                    # A missing owner PAT must not kill the script under errexit:
+                    # stay in the menu so the user can add the PAT and retry.
+                    local auth_rc=0
+                    set_github_auth_for_repo "$repo_url" || auth_rc=$?
+                    if [[ $auth_rc -ne $GIT_AUTH_OK ]]; then
+                        echo -e "${RED}${WARNING_EMOJI} Cannot start '$proj' without its GitHub credentials.${NC}"
+                        echo -e "${YELLOW}👉 Add the owner's PAT with '🔑 Manage GitHub credentials', then select the project again.${NC}"
+                        cd "$project_folder" || true
+                        action_done=1
+                        break
                     fi
                 fi
 
@@ -230,8 +238,8 @@ clone_repo() {
             fi
         ;;
         *)
-            # TODO(Bug 82, Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
-            # account) is not named here, and select_project still aborts instead of staying in the menu.
+            # TODO(Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
+            # account) is not named here.
             return "$REPO_ACCESS_ERROR"
         ;;
     esac

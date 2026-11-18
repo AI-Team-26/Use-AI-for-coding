@@ -8,5 +8,5 @@
         "skipLibCheck": true,
         "types": ["node", "@earendil-works/pi-coding-agent"]
     },
-    "include": ["*.ts", "_shared/**/*.ts"]
+    "include": ["*.ts", "_shared/**/*.ts", "todo-task/**/*.ts"]
 }
