@@ -130,7 +130,7 @@ After applying changes, run the test suite if available:
 # Project Conventions
 
 ## Comments in the code
-- Write only really useful comments - Avoid comemnts like "Person first name"
+- Write only really useful comments - Avoid comments like "Person first name"
 - Do not refer to backlog Feature or Bug in the comments
 - Explain **WHAT**, not **HOW**, unless the code/solution is not obvious
 - **No history** — a comment never explains what was removed, replaced, or *why* the change was made. It must make sense to a reader who never saw the old code.

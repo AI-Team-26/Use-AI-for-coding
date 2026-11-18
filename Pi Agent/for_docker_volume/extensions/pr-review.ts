@@ -5,8 +5,7 @@
  * Usage:
  *   /review 42                  — Review PR #42.
  *   /review 42 quick look       — Review PR #42 with note "quick look".
- *   /review 42 "quick look"     — Same, with quoted note.
- *   /review 42 'quick look'     — Same, with single-quoted note.
+ *   /review 42 "quick look"     — Same, with quoted note (also single quote works). 
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
