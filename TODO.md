@@ -223,6 +223,13 @@
   Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
   Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
  
+- Feature 90 | pi-agent: Move GitHub related functions out of todo-task.ts
+  Create  _shared/github.ts file (for Pi Agent extensions) and move there the GitHub functions from todo-task.ts
+  - getOpenPrList
+  - viewPr
+  - appendReportToPr (partly)
+
+  Don't pick this list as fixed... use your jusgment.  
 
 ### OpenCode
 
