@@ -20,10 +20,8 @@ INVITE_ACCEPTED=0
 INVITE_ERROR=1
 INVITE_NOT_FOUND=2
 
-# A repository URL the PAT file can serve: HTTPS on github.com, not SSH and not another host.
-# The trailing slash keeps hosts such as github.com.example.org out. Only the plain form that git
-# writes for an HTTPS clone is accepted: an explicit port, an uppercase scheme or userinfo
-# (https://<user>@github.com/...) is not supported.
+# PAT lookup serves only plain HTTPS GitHub URLs: the trailing slash keeps lookalike hosts
+# (github.com.example.org) out; ports, uppercase schemes and userinfo are not supported.
 is_github_https_url() {
     [[ "${1:-}" =~ ^https://github\.com/ ]]
 }

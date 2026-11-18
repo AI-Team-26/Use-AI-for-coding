@@ -73,16 +73,6 @@ read_menu_input() {
     done
 }
 
-# Explains how to fix the token lookup of an already-cloned project.
-# The menu stays usable: the user adds the record and opens the project again.
-# The reason is already on screen (set_github_auth_for_repo): this only shows the way out.
-report_project_auth_failure() {
-    local proj=$1
-
-    echo ""
-    echo -e "${YELLOW}${GIT_EMOJI}   → Use \"🔑 Manage GitHub credentials\" in the menu to add or fix the record, then open '${proj}' again.${NC}"
-}
-
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
@@ -163,40 +153,32 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
-                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 prev_token=${GITHUB_TOKEN:-} rev_out
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 prev_token=${GITHUB_TOKEN:-}
 
                 clear
 
                 echo ""
                 echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-                # Everything below prints under the title, so a remedy stays readable, and no step may
-                # end the script (errexit) or the session: a failure redraws the menu.
-                # `git -C` walks up to a parent repository: `--show-prefix` is empty only when the project
-                # folder is itself the repository root, so a plain folder never inherits a parent remote.
-                if rev_out=$(git -C "$project_dir" rev-parse --show-prefix 2>&1); then
-                    if [[ -z "$rev_out" ]]; then
-                        origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
-                    fi
-                elif [[ "$rev_out" != *"not a git repository"* ]]; then
-                    echo -e "${YELLOW}${GIT_EMOJI} Cannot read the git repository of '${project_dir}': ${rev_out%%$'\n'*}${NC}"
-                fi
-                # A project can be local-only or on another host: it opens with the token unchanged.
-                if [[ -n "$origin_url" ]] && ! is_github_https_url "$origin_url"; then
-                    echo -e "${YELLOW}${GIT_EMOJI} PAT lookup: only https://github.com/ remotes are supported, so GITHUB_TOKEN is left unchanged ('${origin_url}').${NC}"
-                    origin_url=""
+                # Only the folder's own repository counts: a plain folder never inherits a parent repo's remote.
+                if [[ -e "$project_dir/.git" ]]; then
+                    origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
                 fi
                 if [[ -n "$origin_url" ]]; then
-                    # "info" tone: a missing PAT is reported once, by report_project_auth_failure.
-                    set_github_auth_for_repo "$origin_url" info || auth_rc=$?
+                    if is_github_https_url "$origin_url"; then
+                        set_github_auth_for_repo "$origin_url" info || auth_rc=$?
+                    else
+                        echo -e "${YELLOW}${GIT_EMOJI} PAT lookup: only https://github.com/ remotes are supported, so GITHUB_TOKEN is left unchanged ('${origin_url}').${NC}"
+                    fi
                 fi
 
                 if [[ $auth_rc -ne 0 ]]; then
-                    report_project_auth_failure "$proj"
+                    echo ""
+                    echo -e "${YELLOW}${GIT_EMOJI}   → Use \"🔑 Manage GitHub credentials\" in the menu to add or fix the record, then open '${proj}' again.${NC}"
                     continue 2
                 fi
 
                 if ! cd "$project_dir"; then
-                    # The project never opens: do not keep the token switched to its owner.
+                    # The project never opened: put back the previous token.
                     if [[ -n "$prev_token" ]]; then export GITHUB_TOKEN="$prev_token"; else unset GITHUB_TOKEN; fi
                     echo -e "${YELLOW}${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry.${NC}"
                     continue 2
