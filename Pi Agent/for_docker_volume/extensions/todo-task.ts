@@ -204,7 +204,11 @@ const prWatcher = createPrWatcher({
     },
     debug: (m) => debug(m),
     listBranchOpenPr: (cwd, branch) => getOpenPrListOfBranch<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")[0] ?? null,
-    viewPr: (cwd, ref) => githubViewPr<PrView>(cwd, ref, "number,state,mergeable,reviewDecision,reviews,url,headRefOid"),
+    viewPr: (cwd, ref) =>
+        githubViewPr<PrView>(cwd, ref, "number,state,mergeable,reviewDecision,reviews,url,headRefOid", () => {
+            console.error(`❌ [${EXTENSION}] Failed to parse result of viewPr() call.`)
+            safeNotify("❌ Failed to parse result of viewPr() call", "error")
+        }),
     currentBranch: (cwd) => execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim(),
     headCommitDateMs: (cwd, slug, oid) => {
         const res = spawnSync("gh", ["api", `repos/${slug}/commits/${oid}`, "--jq", ".commit.committer.date"], { cwd, encoding: "utf-8" })
