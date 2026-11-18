@@ -12,13 +12,15 @@ export function getOpenPrList<T>(cwd: string, branch: string, fields: string): T
     return JSON.parse(res.stdout) as T[]
 }
 
-export function viewPr<T>(cwd: string, ref: number | string, fields: string, onParseError: () => void): T | null {
+// Returns null on gh failure or invalid JSON; callers that need certainty should retry.
+export function viewPr<T>(cwd: string, ref: number | string, fields: string, onParseError?: () => void): T | null {
     const res = spawnSync("gh", ["pr", "view", String(ref), "--json", fields], { cwd, encoding: "utf-8" })
     if (res.status !== 0) return null
     try {
         return JSON.parse(res.stdout) as T
     } catch {
-        onParseError()
+        if (onParseError) onParseError()
+        else console.error("Failed to parse gh pr view output.")
         return null
     }
 }

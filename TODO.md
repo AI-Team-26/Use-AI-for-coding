@@ -127,6 +127,8 @@
   - `parseCommandArgs` (`todo-task.ts`) and `parseReviewArgs` (`pr-review.ts`) are the same ~25 lines.
   Keep this a mechanical PR with zero behaviour change.
   Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
+  - Extract the remaining PR workflow (`resolveOpenPr`, `switchToPrBranch`, and `PrView`); consider a PR-specific utility module.
+  - Remove the forward reference from the poller to `viewPr` if Feature 75 has not already done so.
 
 - Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
   Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
