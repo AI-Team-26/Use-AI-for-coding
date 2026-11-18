@@ -92,7 +92,9 @@ If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_c
 1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
 2. Extract `<owner>/<repo>` and take the first segment as `owner`.
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
-4. If not found: **abort** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
+4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
+   `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
+   while `select_project` still **aborts** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
 5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
@@ -161,7 +163,11 @@ git config --global user.email
 
 `clone_repo` (`scripts/start_common.sh`) does more than `set_github_auth_for_repo`:
 
-1. It resolves the token for the repository owner, exporting `GITHUB_TOKEN`.
+1. It resolves the token for the repository owner, exporting `GITHUB_TOKEN`. When the owner has no record in
+   `/scripts/github_pat`, `set_github_auth_for_repo_or_agent` falls back to the agent-account PAT
+   (`set_default_github_token`) and says so: invitations are addressed to that account, so it is the only
+   token that can accept them. A URL that is not `https://github.com` or a malformed PAT is still a hard
+   error — the fallback never hides a broken record.
 2. `check_repo_access` calls the GitHub API as the token's account and classifies the result through the
    `REPO_ACCESS_*` exit codes:
    - `REPO_ACCESS_OK` — the token's account is the repo owner, an org admin, or a collaborator with push.
@@ -169,14 +175,19 @@ git config --global user.email
    - `REPO_ACCESS_ERROR` — the repository info could not be fetched or access is denied.
 3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it falls back to
    the agent-account token (`set_default_github_token`), lists `/user/repository_invitations`, matches the
-   repository name case-insensitively and accepts the first pending invitation. `check_repo_access` runs
-   this lookup, so `clone_repo` does not repeat it: `REPO_ACCESS_READ_ONLY` already means "no pending
-   invitation". The agent token is kept when an invitation is accepted (the clone then runs as that
-   account) and the previous token is put back otherwise.
+   repository name case-insensitively and accepts the first pending invitation. It runs in two places:
+   - before reporting `REPO_ACCESS_READ_ONLY`, for a repository the token can see but cannot write to;
+   - before reporting `REPO_ACCESS_ERROR`, because a private repository with a pending invitation answers
+     404 until the invitation is accepted — without this second call an invited repository could never be
+     cloned while its owner has no PAT.
 
-> Note: this not-owned-repository path is still being improved (see Bug 82, Bug 86 and Feature 84 in
-> `TODO.md`). A missing owner PAT still aborts with the terse lookup error above. Until that is reworked,
-> add the owner's PAT with "🔑 Manage GitHub credentials" and retry.
+   A successful accept returns `REPO_ACCESS_OK`. The agent token is kept when an invitation is accepted (the
+   clone then runs as that account) and the previous token is put back otherwise.
+
+> Note: this not-owned-repository path is still being improved (see Bug 82 and Feature 84 in
+> `TODO.md`). An accepted invitation is not re-checked for the granted role, so an org invitation that is
+> read-only still fails on the first push. Opening such a project again also still aborts, because
+> `select_project` uses `set_github_auth_for_repo` alone and the owner has no PAT record.
 
 ## Manage credentials
 
