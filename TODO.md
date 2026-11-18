@@ -23,7 +23,7 @@
      Watch ends only on: PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`, session shutdown.
      An `agent_settled` is deliberately NOT a stop condition, because `/pr <n>` arms the watch with no active task.
 
-     Order: after Feature 75 (tested poller module) — otherwise 75 rewrites the same code twice. Excludes Bug 73
+     Order: after Feature 75 (poller module) — otherwise 75 rewrites the same code twice. Excludes Bug 73
      (`reviewThreads` switch): do not change what `checkPrReview` reads.
      Done when: behaviour identical (no change to what is shown, only fewer code paths writing it), no new files,
      `todo-task.ts` only.
@@ -129,18 +129,6 @@
   Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
   - Extract the remaining PR workflow (`resolveOpenPr`, `switchToPrBranch`, and `PrView`); consider a PR-specific utility module.
   - Remove the forward reference from the poller to `viewPr` if Feature 75 has not already done so.
-
-- Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
-  Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
-  by live container runs. Move `checkPrReview` / `startPrCheckPolling` / `stopPrCheckPolling` / `watchedPr`
-  into their own module and test it with a stubbed `gh`/`git`/`setInterval`: discovery with no PR yet,
-  discovery → merge, reused branch with only old closed PRs, transient failure → retry → recovery,
-  merge detected while on `main`/detached HEAD, closed without merge, and no per-tick toasts.
-  A throwaway harness proving these seven scenarios passed was used to validate PR #129.
-  Same PR can delete the ~45 zero-risk leftover lines in `todo-task.ts` (commented `agentMessage_old`
-  block, commented "Auto-detect" block, `//console.error` / `//safeNotify` leftovers, `checkCounter`
-  replaced by a `firstTick` boolean, and the empty `if` body next to the report attach where every
-  `appendReportToPr` failure is reported as "no open PR" — real fix is Bug 64).
 
 - Feature 78 | Pi Agent: /feature  command returns this error:
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
@@ -263,6 +251,7 @@
 ## DONE (latest tasks completed)
 - Bug 82 [fix/82_stay_in_menu_when_no_pat]: opening a project without a PAT record stays in the menu — the auth failure is guarded in select_project, the script no longer exits under set -e, and the message suggests "🔑 Manage GitHub credentials"
 - Bug 86 [fix/86_clone_without_owner_pat]: an invited repo clones without an owner PAT — `clone_repo` falls back to the agent PAT (named `GIT_AUTH_*` codes, announced switch, bad URL/malformed PAT still fatal), and `check_repo_access` runs the invitation lookup on the `REPO_ACCESS_ERROR` path too, because a private repo with a pending invitation answers 404 until it is accepted
+- Feature 75 [feat/75_pr_poller_module]: PR-review watching moved out of `todo-task.ts` into `todo-task/pr-watcher.ts` (injected deps, module-scope watch); no automated test suite is planned for it
 - Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), invitations match `full_name` case-insensitively, the first matching id is accepted, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did; the agent token is kept after a successful accept and the previous one is put back otherwise
 - Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite announces the agent-account token it uses for the invitation lookup and reports the no-invite case; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
 - Feature 35 [feat/35_menu_accept_esc]: "Select a project/action:" (and delete-project) prompt accepts ESC = Exit; `select` replaced by a raw-first-char read loop
@@ -270,7 +259,7 @@
 - Feature 52 [feat/52_opencode_feature_bugfix_commands]: OpenCode /feature N and /bugfix N commands implemented
 - Feature 79 [feat/79_pr_created_turn_end_marker]: todo-task PR watch is armed by the agent's "[PR N CREATED]" turn_end marker (verified via gh pr view) instead of eagerly at task start; /pr stays as manual arming
 - Feature 58 [fix/61_terminal_title_v2]: terminal title ported to the OpenCode v2 TUI plugin API — shows ⏳ while the active session runs and 🖐️ when idle; built-in title disabled in `cli.json`
-- Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). Coverage gap stays in Feature 75, ending rules noted on Feature 71
+- Bug 70 [obsolete]: "polling never stops" is the designed `/pr` watch — the timer ends on a merged/closed PR (#129), the 4 h `PR_CHECKING_MAX_MS` safenet or `/feature end`, and `stopPrCheckPolling()` clears the 🔍 status; stopping on `agent_settled` would kill `/pr <n>` (armed with no task). The lack of automated coverage is an accepted gap (no test suite is planned), ending rules noted on Feature 71
 - Bug 17 [obsolete]: the fresh-session start already runs its post-replacement work inside `withSession` with the new ctx and every send goes through `messageSender ?? pi` guarded by try/catch (`0f79d0a`, 2026-11-10); the `fix/17_stale_ctx_after_newsession` branch only logged it, never fixed it
 - Bug 72 [obsolete]: `pr-review.ts` no longer polls (it is only the `/review N` command) and `todo-task.ts` owns the single `prCheckTimer`, which stops the previous one before arming — the two-pollers scenario cannot happen
 - Feature 12.3 [docs/12_3_troubleshooting]: filled the empty Troubleshooting section of 'GitHub access for Agent.md' with the symptom → cause → fix table (verified against scripts) + `REPO_ACCESS_*` exit codes

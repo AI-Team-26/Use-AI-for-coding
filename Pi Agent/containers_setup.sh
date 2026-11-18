@@ -97,6 +97,7 @@ for agent in "${!agents[@]}"; do
     # Only top-level *.ts are shipped; WIP/ is intentionally excluded (keep it that way)
     cp for_docker_volume/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
     cp -r for_docker_volume/extensions/_shared "$docker_volume_pi_agent/extensions/" || true
+    cp -r for_docker_volume/extensions/todo-task "$docker_volume_pi_agent/extensions/" || true
 
     # Set secret keys
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
