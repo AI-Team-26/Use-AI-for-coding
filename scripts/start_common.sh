@@ -169,15 +169,17 @@ select_project() {
 
                 # Nothing in this branch may end the script (errexit) nor the session:
                 # every failure reports the reason and redraws the menu.
-                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 remote_notice=""
 
                 origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
                 if [[ -n "$origin_url" ]]; then
-                    if [[ "$origin_url" =~ ^https://github\.com ]]; then
+                    if is_github_https_url "$origin_url"; then
                         set_github_auth_for_repo "$origin_url" || auth_rc=$?
+                    elif [[ "$origin_url" =~ ^(git@|ssh://) ]]; then
+                        # Shown after `clear`, next to the project title.
+                        remote_notice="SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged."
                     else
-                        # SSH and other hosts authenticate through git itself, not through a PAT.
-                        echo -e "${YELLOW}${GIT_EMOJI} SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
+                        remote_notice="Only HTTPS GitHub URLs are supported ('${origin_url}'): GITHUB_TOKEN is left unchanged."
                     fi
                 fi
                 if [[ $auth_rc -ne 0 ]]; then
@@ -194,6 +196,9 @@ select_project() {
 
                 echo ""
                 echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
+                if [[ -n "$remote_notice" ]]; then
+                    echo -e "${YELLOW}${GIT_EMOJI} ${remote_notice}${NC}"
+                fi
 
                 # custom tool function
                 start_project "$proj"

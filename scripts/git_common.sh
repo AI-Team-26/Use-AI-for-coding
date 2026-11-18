@@ -20,6 +20,12 @@ INVITE_ACCEPTED=0
 INVITE_ERROR=1
 INVITE_NOT_FOUND=2
 
+# A repository URL the PAT file can serve: HTTPS on github.com, not SSH and not another host.
+# The trailing slash keeps hosts such as github.com.example.org out.
+is_github_https_url() {
+    [[ "${1:-}" =~ ^https://github\.com/ ]]
+}
+
 # Since GIT uses GITHUB CLI authentication, we set the GITHUB_TOKEN that will be used by GitHub CLI 
 # <repo_url> argument must be in format "https://github.com/account/repo.git"
 # <missing_pat_tone> is "error" (default) when the missing owner PAT ends the operation, or "info"
@@ -29,9 +35,8 @@ set_github_auth_for_repo() {
     local repo_url=${1:?The repository URL must be specified}
     local missing_pat_tone=${2:-error}
 
-    # Check that repository URL us in HTTP format
-    if [[ ! "$repo_url" =~ ^https://github.com ]]; then
-        echo -e "${RED}❌ Repository URL must start with https://github.com (it was '$repo_url') ${NC}"
+    if ! is_github_https_url "$repo_url"; then
+        echo -e "${RED}❌ Repository URL must start with https://github.com/ (it was '$repo_url') ${NC}"
         return "$GIT_AUTH_ERROR"
     fi
 

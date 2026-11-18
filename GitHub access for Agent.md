@@ -314,7 +314,7 @@ Repository access is verified by `check_repo_access` before cloning. Its exit co
 | Code | Value | Meaning |
 |---|---|---|
 | `GIT_AUTH_OK` | 0 | `GITHUB_TOKEN` is the owner's PAT |
-| `GIT_AUTH_ERROR` | 1 | URL is not `https://github.com`, or the owner's PAT is malformed |
+| `GIT_AUTH_ERROR` | 1 | URL is not an `https://github.com/` URL (SSH, another host, lookalike host), or the owner's PAT is malformed |
 | `GIT_AUTH_NO_OWNER_PAT` | 2 | `/scripts/github_pat` has no record for the owner — `clone_repo` falls back to the Agent PAT; `select_project` prints the remedy (**🔑 Manage GitHub credentials**) and returns to the menu |
 
 `check_and_accept_invite` (which invitation lookup result) uses these codes, also in `scripts/git_common.sh`:
