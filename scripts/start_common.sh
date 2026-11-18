@@ -176,8 +176,8 @@ select_project() {
                     if [[ "$origin_url" =~ ^https://github\.com ]]; then
                         set_github_auth_for_repo "$origin_url" || auth_rc=$?
                     else
-                        # An SSH remote or another host needs no PAT from the file.
-                        echo -e "${YELLOW}${GIT_EMOJI} Remote '${origin_url}' is not an HTTPS GitHub URL: GITHUB_TOKEN is left unchanged.${NC}"
+                        # SSH and other hosts authenticate through git itself, not through a PAT.
+                        echo -e "${YELLOW}${GIT_EMOJI} SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
                     fi
                 fi
                 if [[ $auth_rc -ne 0 ]]; then
@@ -258,8 +258,8 @@ clone_repo() {
             fi
         ;;
         *)
-            # TODO(Feature 84): name the remedy here too (invite the agent account with write
-            # access, move the repo to an org, add the owner PAT).
+            # TODO: name the remedy here too (invite the agent account with write access,
+            # move the repo to an org, add the owner PAT).
             return "$REPO_ACCESS_ERROR"
         ;;
     esac

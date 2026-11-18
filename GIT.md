@@ -87,10 +87,9 @@ Rules:
 ## Per-owner PAT → `GITHUB_TOKEN`
 
 When a project is selected, `select_project` (`scripts/start_common.sh`) reads the repository's `origin` URL
-with `git -C <project> remote get-url origin`. A remote that is **not** an `https://github.com` URL (SSH, or
-another host such as GitLab) gets no PAT from the file: the script warns that `GITHUB_TOKEN` is left unchanged
-and opens the project. For an `https://github.com` remote it calls `set_github_auth_for_repo`
-(`scripts/git_common.sh`):
+with `git -C <project> remote get-url origin`. An SSH remote or another host is not supported for the PAT lookup
+(only HTTPS GitHub URLs are): the script says so, leaves `GITHUB_TOKEN` unchanged and opens the project.
+For an `https://github.com` remote it calls `set_github_auth_for_repo` (`scripts/git_common.sh`):
 
 1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
 2. Extract `<owner>/<repo>` and take the first segment as `owner`.
@@ -190,9 +189,8 @@ git config --global user.email
 
 > Note: this not-owned-repository path is still being improved (see Feature 84 in `TODO.md`). An accepted
 > invitation is not re-checked for the granted role, so an org invitation that is read-only still fails on
-> the first push. Opening such a project again is handled by Bug 82's fix: `select_project` reports the
-> missing PAT record, points at **🔑 Manage GitHub credentials** and returns to the menu instead of ending
-> the script.
+> the first push. Opening such a project again is safe: `select_project` reports the missing PAT record,
+> points at **🔑 Manage GitHub credentials** and returns to the menu instead of ending the script.
 
 ## Manage credentials
 
