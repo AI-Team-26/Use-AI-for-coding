@@ -536,16 +536,43 @@
                 }
             },
             {
-                "id": "gpt-5.6-luna",
+                "id": "gpt-6.1-terra",
                 "name": "65% discount",
                 "maxTokens": 8192,
                 "reasoning": true,
                  "cost": {
+                    "_date": "2026-11-16",
+                    "input": 0.35,
+                    "output": 1.75,
+                    "cacheRead": 0.035,
+                    "cacheWrite": 51.75
+                }
+            },
+            
+            {
+                "id": "claude-opus-4.6",
+                "name": "80% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
+                    "_date": "2026-11-16",
+                    "input": 1.0,
+                    "output": 5.0,
+                    "cacheRead": 0.1,
+                    "cacheWrite": 5.0
+                }
+            },
+            {
+                "id": "gpt-6-luna",
+                "name": "71% discount",
+                "maxTokens": 8192,
+                "reasoning": true,
+                 "cost": {
                     "_date": "2026-11-12",
-                    "input": 0.07,
-                    "output": 0.42,
-                    "cacheRead": 0.007,
-                    "cacheWrite": 0.42
+                    "input": 0.029,
+                    "output": 0.145,
+                    "cacheRead": 0.0029,
+                    "cacheWrite": 0.145
                 }
             },
             {
