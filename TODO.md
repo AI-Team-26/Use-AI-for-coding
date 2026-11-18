@@ -44,7 +44,6 @@
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
-- Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
 - Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope. Also: an accepted invitation is not re-checked for permission, and an org invitation can be read-only, so the first push may still fail
 
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
@@ -265,6 +264,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 82 [fix/82_stay_in_menu_when_no_pat]: opening a project without a PAT record stays in the menu — the auth failure is guarded in select_project, the script no longer exits under set -e, and the message suggests "🔑 Manage GitHub credentials"
 - Bug 86 [fix/86_clone_without_owner_pat]: an invited repo clones without an owner PAT — `clone_repo` falls back to the agent PAT (named `GIT_AUTH_*` codes, announced switch, bad URL/malformed PAT still fatal), and `check_repo_access` runs the invitation lookup on the `REPO_ACCESS_ERROR` path too, because a private repo with a pending invitation answers 404 until it is accepted
 - Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), invitations match `full_name` case-insensitively, the first matching id is accepted, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did; the agent token is kept after a successful accept and the previous one is put back otherwise
 - Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite announces the agent-account token it uses for the invitation lookup and reports the no-invite case; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)
