@@ -2,6 +2,28 @@
 
 ## Backlog
 
+
+- Bug 1 | Agent coding is too overenginnered
+  Git branch: fix/agent_coding_KISS
+
+  References:
+    - Task: Feature 82 from the TODO.md
+    - PR: https://github.com/AI-Team-26/Use-AI-for-coding/pull/167
+
+    The goal of this brabnch is identify a solution for having agents to do a simple job, instead of too many changes and unnecessary complications.
+    For a soo simple task I expected 1 to 5 lines changes in one file, not dozens of lines in multople files.
+    Documentation become a book that a developer can't read, and is full of details that has to be "discovered" reading ht ecode, not detailed in a simple overview doc.
+
+    Especially for internal tools, super-fine checks (GitHub repo URL correctness) are just a waste of time and makes simple things too complicated.
+    Another point is the fact the user has to review all the changes... so they should be minimal.
+    If a small issue not covered by the task agent is allowed to add a TODO: in the code. Or ask it in the PR, not decide that it has to be implemented.
+    Here the fault was because the PR reviews of agents continuosly added small things that required extra work and added extra issues that has to solved with more extra work.
+    This hapepns ALWAYS.
+
+    We need to find a solution, like adding intructions in SYSTEM.md/AGENTS.md for Pi agent and in AGENTS.md for OpenCode.
+    Also the pr-review.ts and revew.md extensions has to be revised with this solution.
+
+
 - Feature 71 | todo-task: one state owner + one idempotent teardown (keep both timers)
      Not the two timers — Feature 30 fixed its flicker by splitting one shared status key into `STATUS_KEY_TASK` and
      `STATUS_KEY_PR` (commit 883cfa8), so that split must be preserved, not undone. `taskStatusTimer` (15 s, string only)
