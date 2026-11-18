@@ -59,33 +59,38 @@ export default function todoExtension(pi: ExtensionAPI) {
                 return
             }
 
+            // Check for an empty TODO.md BEFORE the session swap: after newSession the
+            // old command ctx is stale and its ui getter would throw.
+            if (showTodo && !(loaded.content ?? "").trim()) {
+                ctx.ui.notify("📄 TODO.md exists but is empty.", "warning")
+                return
+            }
+
             // Run in a fresh session: without it the agent carries the whole conversation history,
             // which costs tokens and risks triggering compaction on a long session.
-            const result = await ctx.newSession({
-                withSession: async (newCtx) => {
-                    if (showTodo) {
-                        const displayContent = loaded.content ?? ""
+            let result: Awaited<ReturnType<typeof ctx.newSession>>
+            try {
+                result = await ctx.newSession({
+                    withSession: async (newCtx) => {
+                        if (showTodo) {
+                            const displayContent = loaded.content ?? ""
 
-                        if (!displayContent.trim()) {
-                            ctx.ui.notify("📄 TODO.md exists but is empty.", "warning")
-                            return
+                            // Truncate very large files
+                            const truncated =
+                                displayContent.length > MAX_CHARS ? `${displayContent.slice(0, MAX_CHARS)}\n\n... [truncated]` : displayContent
+
+                            await newCtx.sendMessage({
+                                customType: "markdown-block",
+                                content: `${truncated}`,
+                                display: true,
+                                details: {},
+                            })
                         }
 
-                        // Truncate very large files
-                        const truncated = displayContent.length > MAX_CHARS ? `${displayContent.slice(0, MAX_CHARS)}\n\n... [truncated]` : displayContent
-
-                        newCtx.sendMessage({
-                            customType: "markdown-block",
-                            content: `${truncated}`,
-                            display: true,
-                            details: {},
-                        })
-                    }
-
-                    newCtx.sendMessage({
-                        customType: `${EXTENSION}`,
-                        content:
-                            "Show all the Features and Bugs of the TODO backlog in a simple table.\n Use these icons to identify the tasks:\n \
+                        await newCtx.sendMessage({
+                            customType: `${EXTENSION}`,
+                            content:
+                                "Show all the Features and Bugs of the TODO backlog in a simple table.\n Use these icons to identify the tasks:\n \
 🟢 Feature (backlog, available), \
 🐞 Bug (backlog), \
 ⏳ In progress (open PR),\
@@ -96,15 +101,19 @@ export default function todoExtension(pi: ExtensionAPI) {
 Show the Feature and Bug number clearly (`Feature N`, `Bug N`).\n \
 Show only relevant data, don't show info that are not useful (like done things).\n \
 Suggest to use `/feature <N> [note]` or `/bugfix <N> [note]` to start a task, `/pr <PR>` to review a PR and `/continue <N>` to continue the work of a task.",
-                        display: false,
-                    })
+                            display: false,
+                        })
 
-                    // Initial prompt: steer the fresh session's first turn
-                    await newCtx.sendUserMessage("Do a summary of the TODO and propose the next step. (Shows the link of open PRs, if there are)", {
-                        deliverAs: "steer",
-                    })
-                },
-            })
+                        // Initial prompt: steer the fresh session's first turn
+                        await newCtx.sendUserMessage("Do a summary of the TODO and propose the next step. (Shows the link of open PRs, if there are)", {
+                            deliverAs: "steer",
+                        })
+                    },
+                })
+            } catch (err) {
+                ctx.ui.notify(`❌ Failed to start fresh session: ${err instanceof Error ? err.message : String(err)}`, "error")
+                return
+            }
 
             if (result.cancelled) ctx.ui.notify("ℹ️ Fresh session for /todo was cancelled.", "info")
         },
