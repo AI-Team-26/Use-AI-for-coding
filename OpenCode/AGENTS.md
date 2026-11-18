@@ -5,12 +5,25 @@
 
 ## Answer Style
 - Prefer short, concise answers.
-- When code changes are required, split them into small, focused commits unless the user asks for a single large change.
+- Write plain English: short sentences, common words. Do not use clever, fancy or idiomatic English to sound smart — clarity beats style.
+
+---
 
 # Rules
 - Report issues to the user as soon as you discover them.
 - DO NOT work on the `main` GIT branch, unless explicitly requested by the user.
 - Use `gh` (GitHub CLI) since GITHUB_TOKEN environment variable is set. (if not report this error to the user)
+- When code changes are required, split them into small, focused commits unless the user asks for a single large change.
+- KEEP code simple
+
+## Plan before Act
+Unless the user's request is 100% unambiguous that they want immediate implementation:
+1. Describe the plan or approach to the user.
+2. Wait for explicit approval before writing code or executing actions.
+3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
+4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
+
+---
 
 # Workflow & Investigation
 

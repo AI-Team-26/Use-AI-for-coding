@@ -11,7 +11,7 @@ Otherwise, review **PR $1** of this repository.
 If PR is not "open" highlight it in the response.  
 
 Leave a PR review comment, signed with your name.  
-Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 trivial 🟦 info.  
+Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 suggestion.  
 Also number the points to have a clear reference.  
 Add a verdict at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
 Do not consider the fact that the branch is behind main.  
