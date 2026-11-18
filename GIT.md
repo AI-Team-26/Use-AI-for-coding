@@ -95,10 +95,11 @@ another host) or no remote at all opens the project with the token unchanged. Fo
 1. Take the HTTPS URL (`https://github.com/<owner>/<repo>.git`).
 2. Extract `<owner>/<repo>` and take the first segment as `owner`.
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
-4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
-   `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
-   while `select_project` prints *"No PAT record for the owner of '<project>'"* plus the remedy
-   (**🔑 Manage GitHub credentials**) and redraws the menu, so the session is not lost.
+4. If not found: the owner has no PAT record (`ℹ️ No PAT record for owner '<owner>' …`).
+   `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`; `clone_repo` then continues with the agent PAT
+   (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)), while
+   `select_project` prints the remedy (**🔑 Manage GitHub credentials**) and redraws the menu, so the session
+   is not lost.
 5. If the resolved PAT ends with `github.com`: the same remedy is printed — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.

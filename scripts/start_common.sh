@@ -163,7 +163,7 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
-                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 prev_token=${GITHUB_TOKEN:-}
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 prev_token=${GITHUB_TOKEN:-} rev_out
 
                 clear
 
@@ -173,8 +173,12 @@ select_project() {
                 # end the script (errexit) or the session: a failure redraws the menu.
                 # `git -C` walks up to a parent repository: `--show-prefix` is empty only when the project
                 # folder is itself the repository root, so a plain folder never inherits a parent remote.
-                if [[ -z "$(git -C "$project_dir" rev-parse --show-prefix 2>/dev/null)" ]]; then
-                    origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
+                if rev_out=$(git -C "$project_dir" rev-parse --show-prefix 2>&1); then
+                    if [[ -z "$rev_out" ]]; then
+                        origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
+                    fi
+                elif [[ "$rev_out" != *"not a git repository"* ]]; then
+                    echo -e "${YELLOW}${GIT_EMOJI} Cannot read the git repository of '${project_dir}': ${rev_out%%$'\n'*}${NC}"
                 fi
                 # A project can be local-only or on another host: it opens with the token unchanged.
                 if [[ -n "$origin_url" ]] && ! is_github_https_url "$origin_url"; then
