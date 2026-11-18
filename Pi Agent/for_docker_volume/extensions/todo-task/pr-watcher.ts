@@ -1,12 +1,8 @@
 // ~/.pi/agent/extensions/todo-task/pr-watcher.ts
 /**
- * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer
- * decisions along the way.
+ * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer decisions.
  *
- * GitHub and git are called directly; only the Pi-facing side effects (notifications, status
- * bar, message delivery) arrive through injected deps. State lives inside the created instance;
- * todo-task.ts builds exactly one at module load, because Pi never disposes an old extension
- * instance on session swap and this state must outlive any single instance.
+ * Pi-facing side effects arrive through injected deps; GitHub and git are called directly.
  */
 
 import { execSync, spawnSync } from "node:child_process"
@@ -88,8 +84,8 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
         return Number.isFinite(ms) ? ms : null
     }
 
-    // Transient send failures are notified once per run (the first tick), then demoted to debug,
-    // mirroring onGhFailure: a single error must not spam the user every poll.
+    // Transient send failures are notified once per run (the first tick), then demoted to debug:
+    // a single error must not spam the user every poll.
     const onSendError = (what: string, err: unknown): void => {
         consecutiveSendFailures++
         if (consecutiveSendFailures === 1) deps.notify(`❌ Failed to deliver message (${what}). ${err}`, "error")
@@ -267,8 +263,10 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
             }
 
             // Keep track of already-notified events to avoid resending the same message on every poll.
-            // Dedup per REVIEW EVENT, not per status value: two successive rejections share the same status but have distinct review ids.
-            const decisiveReviews = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED") // ignore COMMENTED and DISMISSED
+            // Dedup per REVIEW EVENT, not per status value: two successive rejections share the
+            // same status but have distinct review ids.
+            // ignore COMMENTED and DISMISSED
+            const decisiveReviews = (pr.reviews ?? []).filter((r) => r.state === "APPROVED" || r.state === "CHANGES_REQUESTED")
             const latestEventId = decisiveReviews.length ? decisiveReviews.reduce((a, b) => (b.submittedAt > a.submittedAt ? b : a)).id : ""
             const key = `${pr.number}:${prStatus}:${latestEventId}`
             if (handledReviewDecisions.has(key)) {
