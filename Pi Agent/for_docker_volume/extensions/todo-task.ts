@@ -51,7 +51,7 @@ import type { ExtensionAPI, ExtensionContext, ExtensionCommandContext, TurnEndEv
 import fs from "node:fs/promises"
 import path from "node:path"
 import { execSync, spawnSync } from "node:child_process"
-import { getOpenPrList, viewPr as githubViewPr, editPrBody, type PrSummary } from "./_shared/github.ts"
+import { getOpenPrList, getOpenPrListOfBranch, viewPr as githubViewPr, editPrBody, type PrSummary } from "./_shared/github.ts"
 import {
     GRAY,
     RESET,
@@ -265,7 +265,7 @@ function appendReportToPr(cwd: string, report: string) {
         const branch = execSync("git branch --show-current", { cwd, encoding: "utf-8" }).trim()
         if (!branch || branch === "main" || branch === "master") return false
 
-        const prs = getOpenPrList<{ number: number; body?: string }>(cwd, branch, "number,body")
+        const prs = getOpenPrListOfBranch<{ number: number; body?: string }>(cwd, branch, "number,body")
         const pr = prs[0] ?? null
         if (pr === null) {
             safeNotify(`❌ No open PR found on branch '${branch}'.`, "error")
@@ -340,7 +340,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
     // Discovery: the open PR of a branch, used only until a PR has been watched once.
     const getBranchOpenPr = (cwd: string, branch: string): PrView | null => {
-        const prs = getOpenPrList<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")
+        const prs = getOpenPrListOfBranch<PrView>(cwd, branch, "number,state,mergeable,reviewDecision,reviews,url,headRefOid")
         return prs[0] ?? null
     }
 
@@ -867,9 +867,7 @@ ${typeData.extra ?? ""}\n\
     // Resolve which PR to watch: one open PR is picked automatically, several are offered through a dialog,
     // and an explicit number/URL always targets that specific PR — even when it is no longer open, in which case the user is told its state.
     const resolveOpenPr = async (ctx: ExtensionCommandContext, cwd: string, prNumberArg?: number): Promise<PrSummary | null> => {
-        const listRes = spawnSync("gh", ["pr", "list", "--state", "open", "--json", "number,headRefName,title", "--limit", "100"], { cwd, encoding: "utf-8" })
-        if (listRes.status !== 0) throw new Error(`gh pr list failed (${listRes.status}): ${listRes.stderr}`)
-        const prs = JSON.parse(listRes.stdout) as PrSummary[]
+        const prs = getOpenPrList<PrSummary>(cwd, "number,headRefName,title")
 
         if (prNumberArg !== undefined) {
             const pr = prs.find((p) => p.number === prNumberArg)
