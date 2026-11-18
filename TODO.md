@@ -119,17 +119,16 @@
      Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
   """"
 
-- Feature 74 | todo-task: extract `_shared/github.ts` and `_shared/session-sender.ts` (from PR #129 review)
-  `todo-task.ts` is ~990 lines with ~7 responsibilities. Three blocks are not todo-task's business:
-  - GitHub layer: `getOpenPrList` / `viewPr` / `resolveOpenPr` / `switchToPrBranch` + `PrView`/`PrSummary`
-    → `_shared/github.ts` (Feature 37 and Bug 64 will add callers; `viewPr()` already serves `/pr` and the poller).
+- Feature 74 | todo-task: extract `_shared/session-sender.ts` (from PR #129 review)
+  `todo-task.ts` still contains session-sender machinery and duplicate argument parsing:
   - session-sender machinery: `MessageSender`, `messageQueue`, `flushMessageQueue`, `safeSendUserMessage`,
     `safeSendMessage`, `hasValidSender` / `ownSessionReplacement` / `resetSender` (~100 lines)
     → `_shared/session-sender.ts` (generic "survive newSession/fork" plumbing; Bugs 43/44/48/50 fix it).
   - `parseCommandArgs` (`todo-task.ts`) and `parseReviewArgs` (`pr-review.ts`) are the same ~25 lines.
-  ≈ −230 lines with zero behaviour change, so it must be a mechanical PR of its own.
+  Keep this a mechanical PR with zero behaviour change.
   Keep the modules under `_shared/` (deployed by `containers_setup.sh`), never in the extensions root where Pi loads them.
-  Also removes the 400-line forward reference to `viewPr()` in the poller.
+  - Extract the remaining PR workflow (`resolveOpenPr`, `switchToPrBranch`, and `PrView`); consider a PR-specific utility module.
+  - Remove the forward reference from the poller to `viewPr` if Feature 75 has not already done so.
 
 - Feature 75 | todo-task: extract `todo-task/pr-poller.ts` with mocked `gh` tests (from PR #129 review)
   Polling is ~200 lines inside a 990-line file and has no automated coverage; every bug in it was found
@@ -223,14 +222,6 @@
   Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
   Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
  
-- Feature 90 | pi-agent: Move GitHub related functions out of todo-task.ts
-  Create  _shared/github.ts file (for Pi Agent extensions) and move there the GitHub functions from todo-task.ts
-  - getOpenPrList
-  - viewPr
-  - appendReportToPr (partly)
-
-  Don't pick this list as fixed... use your jusgment.  
-
 ### OpenCode
 
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
