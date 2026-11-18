@@ -171,7 +171,11 @@ select_project() {
                 echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
                 # Everything below prints under the title, so a remedy stays readable, and no step may
                 # end the script (errexit) or the session: a failure redraws the menu.
-                origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
+                # `git -C` walks up to a parent repository: `--show-prefix` is empty only when the project
+                # folder is itself the repository root, so a plain folder never inherits a parent remote.
+                if [[ -z "$(git -C "$project_dir" rev-parse --show-prefix 2>/dev/null)" ]]; then
+                    origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
+                fi
                 # A project can be local-only or on another host: it opens with the token unchanged.
                 if [[ -n "$origin_url" ]] && ! is_github_https_url "$origin_url"; then
                     echo -e "${YELLOW}${GIT_EMOJI} PAT lookup: only https://github.com/ remotes are supported, so GITHUB_TOKEN is left unchanged ('${origin_url}').${NC}"
