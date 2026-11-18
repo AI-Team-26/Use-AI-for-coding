@@ -35,16 +35,7 @@
   Investigate the built-in Pi footer (footer section) and write a document. It will be the base for the new extension.
 - Feature 27.2: new pi extension to replace built-in footer described in Feature 27: implementation
 
-- Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
-  The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
-  but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
-  1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
-     GITHUB_TOKEN to the default agent account (the old "works if you are a collaborator" fallback, now implicit
-     and not communicated to the user).
-  2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
-     suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
-- Bug 82 | Opening a project without a PAT record exits the script under set -e; guard it, stay in the menu, suggest "🔑 Manage GitHub credentials"
 - Feature 84 | Actionable no-access guidance: invite GITHUB_AGENT_ACCOUNT with write access / move to org / add owner PAT. Forks out of scope. Also: an accepted invitation is not re-checked for permission, and an org invitation can be read-only, so the first push may still fail
 - Bug 85 | Invitation lookup: `gh api /user/repository_invitations` returns 30 items per page (needs `--paginate`); inviters should keep the shared agent account's invitation list short (invites expire after 7 days)
 - Feature 85 | Commit the fake-`gh` harness for `check_repo_access` / `check_and_accept_invite` under `scripts/tests/` so the invitation cases are repeatable
@@ -260,6 +251,8 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 22 [obsolete]: GIT credentials for not-owned repositories is covered elsewhere — `clone_repo` checks the token lookup and announces the agent-account fallback (Bug 86), an invitation is accepted under the agent PAT (Bug 81), and the remaining permission re-check and no-access guidance are Feature 84
+- Bug 82 [fix/82_project_without_pat_stays_in_menu]: opening a project whose repo owner has no PAT record no longer ends the start script — `select_project` guards `set_github_auth_for_repo`, names the remedy (**🔑 Manage GitHub credentials**) and redraws the menu; new `scripts/tests/` harness drives the menu with canned answers
 - Bug 86 [fix/86_clone_without_owner_pat]: an invited repo clones without an owner PAT — `clone_repo` falls back to the agent PAT (named `GIT_AUTH_*` codes, announced switch, bad URL/malformed PAT still fatal), and `check_repo_access` runs the invitation lookup on the `REPO_ACCESS_ERROR` path too, because a private repo with a pending invitation answers 404 until it is accepted
 - Bug 81 [fix/81_accept_invite]: invitation acceptance works — the HTTP outcome comes from the `gh api` exit status instead of `jq .status` on a JSON array (always `null`), invitations match `full_name` case-insensitively, the first matching id is accepted, and `clone_repo` no longer repeats the invitation lookup that `check_repo_access` already did; the agent token is kept after a successful accept and the previous one is put back otherwise
 - Feature 83 [fix/83_token_switch_notice]: check_and_accept_invite announces the agent-account token it uses for the invitation lookup and reports the no-invite case; guards token-switch failure (the `jq .status` bug it depended on was fixed by Bug 81)

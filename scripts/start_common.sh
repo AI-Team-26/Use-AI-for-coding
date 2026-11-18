@@ -73,6 +73,20 @@ read_menu_input() {
     done
 }
 
+# Explains how to fix the token lookup of an already-cloned project.
+# The menu stays usable: the user adds the record and opens the project again.
+report_project_auth_failure() {
+    local proj=$1 rc=$2
+
+    echo ""
+    if [[ "$rc" -eq "$GIT_AUTH_NO_OWNER_PAT" ]]; then
+        echo -e "${YELLOW}${GIT_EMOJI} No PAT record for the owner of '${proj}'.${NC}"
+    else
+        echo -e "${YELLOW}${GIT_EMOJI} Cannot set the GitHub token for '${proj}'.${NC}"
+    fi
+    echo -e "${YELLOW}   → Use \"🔑 Manage GitHub credentials\" in the menu to add or fix the record, then open '${proj}' again.${NC}"
+}
+
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
@@ -153,19 +167,24 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
+                cd "$project_folder/$proj" || exit 1
+
+                # A failed token lookup must not end the script (errexit) nor the session:
+                # the menu is redrawn so the user can add the missing PAT.
+                local repo_url auth_rc=0
+                repo_url=$(git remote get-url origin 2>/dev/null) || repo_url=""
+                if [[ -n "$repo_url" ]]; then
+                    set_github_auth_for_repo "$repo_url" || auth_rc=$?
+                fi
+                if [[ $auth_rc -ne 0 ]]; then
+                    report_project_auth_failure "$proj" "$auth_rc"
+                    continue 2
+                fi
+
                 clear
 
                 echo ""
                 echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-                cd "$project_folder/$proj" || exit 1
-
-                #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
-                local repo_url=$(git remote get-url origin 2>/dev/null)   
-                if [[ -n "$repo_url" ]]; then
-                    if ! set_github_auth_for_repo "$repo_url" ; then
-                        return 1
-                    fi
-                fi
 
                 # custom tool function
                 start_project "$proj"
@@ -230,8 +249,8 @@ clone_repo() {
             fi
         ;;
         *)
-            # TODO(Bug 82, Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
-            # account) is not named here, and select_project still aborts instead of staying in the menu.
+            # TODO(Feature 84): name the remedy here too (invite the agent account with write
+            # access, move the repo to an org, add the owner PAT).
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
