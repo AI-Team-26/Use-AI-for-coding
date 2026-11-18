@@ -80,6 +80,12 @@ After applying changes, run the test suite if available:
 
 ---
 
+# Keep Work Proportional
+
+- Make the smallest correct change for the task. Avoid speculative checks and unrelated fixes, especially in internal tools.
+- Keep documentation brief and focused on the general workflow, not details easily found in code.
+- Review for task requirements, regressions and important risks. Do not repeatedly expand scope for optional polish or pre-existing issues; leave a code TODO or mention a follow-up in the PR when useful.
+
 # Project Conventions
 
 ## Comments in the code

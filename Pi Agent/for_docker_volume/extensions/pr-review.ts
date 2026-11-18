@@ -67,6 +67,7 @@ export default function prExtension(pi: ExtensionAPI) {
             const prompt = `Please review the PR ${prNumber}. Leave a PR review comment, signed with your name. \n
       Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 suggestion. \n
       Also number the points to have a clear reference. \n
+      Block (🟧) only for missing task requirements, regressions or concrete defects. Everything else is a non-blocking 🟨 suggestion or a follow-up TODO. \n
       Add a decision at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected. \n
       Report here a recap specifying if there are blocking points (changes request) or PR can be merged as it is. \n
       Do not consider the fact that the branch is behind main. \n
