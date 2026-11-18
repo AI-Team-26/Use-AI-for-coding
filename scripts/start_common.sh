@@ -167,21 +167,27 @@ select_project() {
                 return 0
             elif [[ -n "$proj" ]]; then
 
-                # Nothing in this branch may end the script (errexit) nor the session:
-                # every failure reports the reason and redraws the menu.
-                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0 remote_notice=""
+                local project_dir="$project_folder/$proj" origin_url="" auth_rc=0
+
+                clear
+
+                echo ""
+                echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
+                # Everything below prints under the title, so a notice or a remedy stays readable.
+                # No step here may end the script (errexit) nor the session: every failure
+                # reports the reason and redraws the menu.
 
                 origin_url=$(git -C "$project_dir" remote get-url origin 2>/dev/null) || origin_url=""
-                if [[ -n "$origin_url" ]]; then
-                    if is_github_https_url "$origin_url"; then
-                        set_github_auth_for_repo "$origin_url" || auth_rc=$?
-                    elif [[ "$origin_url" =~ ^(git@|ssh://) ]]; then
-                        # Shown after `clear`, next to the project title.
-                        remote_notice="SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged."
-                    else
-                        remote_notice="Only HTTPS GitHub URLs are supported ('${origin_url}'): GITHUB_TOKEN is left unchanged."
-                    fi
+                if [[ -z "$origin_url" ]]; then
+                    echo -e "${YELLOW}${GIT_EMOJI} No 'origin' remote: GITHUB_TOKEN is left unchanged.${NC}"
+                elif is_github_https_url "$origin_url"; then
+                    set_github_auth_for_repo "$origin_url" || auth_rc=$?
+                elif [[ "$origin_url" =~ ^(git@|ssh://) ]]; then
+                    echo -e "${YELLOW}${GIT_EMOJI} SSH URLs are not allowed, only HTTPS GitHub URLs ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
+                else
+                    echo -e "${YELLOW}${GIT_EMOJI} Only HTTPS GitHub URLs are supported ('${origin_url}'): GITHUB_TOKEN is left unchanged.${NC}"
                 fi
+
                 if [[ $auth_rc -ne 0 ]]; then
                     report_project_auth_failure "$proj" "$auth_rc"
                     continue 2
@@ -190,14 +196,6 @@ select_project() {
                 if ! cd "$project_dir"; then
                     echo -e "${WARNING_EMOJI} Cannot enter '${project_dir}'. Retry."
                     continue 2
-                fi
-
-                clear
-
-                echo ""
-                echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-                if [[ -n "$remote_notice" ]]; then
-                    echo -e "${YELLOW}${GIT_EMOJI} ${remote_notice}${NC}"
                 fi
 
                 # custom tool function
