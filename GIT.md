@@ -171,7 +171,8 @@ git config --global user.email
 2. `check_repo_access` calls the GitHub API as the token's account and classifies the result through the
    `REPO_ACCESS_*` exit codes:
    - `REPO_ACCESS_OK` — the token's account is the repo owner, an org admin, or a collaborator with push.
-   - `REPO_ACCESS_READ_ONLY` — no write access; the script then checks whether the repository is public.
+   - `REPO_ACCESS_READ_ONLY` — no write access; the script then checks whether the repository is readable
+     with the current token (public, or private but visible through a read-only invitation).
    - `REPO_ACCESS_ERROR` — the repository info could not be fetched or access is denied.
 3. `check_and_accept_invite` covers the collaborator invite path for an agent account: it falls back to
    the agent-account token (`set_default_github_token`), lists `/user/repository_invitations`, matches the
@@ -181,13 +182,18 @@ git config --global user.email
      404 until the invitation is accepted — without this second call an invited repository could never be
      cloned while its owner has no PAT.
 
-   A successful accept returns `REPO_ACCESS_OK`. The agent token is kept when an invitation is accepted (the
-   clone then runs as that account) and the previous token is put back otherwise.
+   After a successful accept the granted permission is re-checked (`verify_push_after_invite`): write access
+   returns `REPO_ACCESS_OK`; a read-only invitation (the org base role can be read) returns
+   `REPO_ACCESS_READ_ONLY` with a warning — the clone still works, the first push would fail. If the
+   permission cannot be verified, a warning is printed and the clone proceeds. The agent token is kept when
+   an invitation is accepted (the clone then runs as that account) and the previous token is put back otherwise.
 
-> Note: this not-owned-repository path is still being improved (see Bug 82 and Feature 84 in
-> `TODO.md`). An accepted invitation is not re-checked for the granted role, so an org invitation that is
-> read-only still fails on the first push. Opening such a project again also still aborts, because
-> `select_project` uses `set_github_auth_for_repo` alone and the owner has no PAT record.
+   When access is not enough, `print_access_remedies` lists the options: invite the agent account with the
+   Write role, move the repository to an organization where it has write access, or add the owner's PAT via
+   **🔑 Manage GitHub credentials**.
+
+> Note: opening a not-owned project again still aborts, because `select_project` uses
+> `set_github_auth_for_repo` alone and the owner has no PAT record (Feature-old 22 in `TODO.md`).
 
 ## Manage credentials
 
