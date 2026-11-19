@@ -54,18 +54,6 @@
   + If it is on main branch:
      "Verify branches. Do they have open PRs. If PRs are merged delete them. if there are open PRs, recap the status."
 
-- Feature 42 | todo extension: use fresh session for /todo command
-     The /todo command currently runs in the existing session context, carrying over all conversation history.
-     This makes it slower, more expensive (more tokens), and risks triggering compaction.
-
-     Modify `extensions/todo.ts` to use `ctx.newSession()` with `withSession` callback, so the agent starts with a clean context.
-     Use `{ deliverAs: 'steer' }` for the initial prompt inside `withSession`.
-
-     Constraints:
-     - Keep behavior identical (same output format, same git pull, same PR status check)
-     - Only one file changed (`todo.ts`)
-     - Well under 500 lines delta
-
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
@@ -249,6 +237,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (ctx.newSession + withSession) with the initial prompt delivered as steer — no conversation-history carryover
 - Bug 82 [fix/82_stay_in_menu_when_no_pat]: opening a project without a PAT record stays in the menu — the auth failure is guarded in select_project, the script no longer exits under set -e, and the message suggests "🔑 Manage GitHub credentials"
 - Bug 86 [fix/86_clone_without_owner_pat]: an invited repo clones without an owner PAT — `clone_repo` falls back to the agent PAT (named `GIT_AUTH_*` codes, announced switch, bad URL/malformed PAT still fatal), and `check_repo_access` runs the invitation lookup on the `REPO_ACCESS_ERROR` path too, because a private repo with a pending invitation answers 404 until it is accepted
 - Feature 75 [feat/75_pr_poller_module]: PR-review watching moved out of `todo-task.ts` into `todo-task/pr-watcher.ts` (injected deps, module-scope watch); no automated test suite is planned for it
