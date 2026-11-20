@@ -84,30 +84,41 @@
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
 
-- Bug 73 | todo-task /pr must watch unresolved review threads (/pr + /review: use GitHub review threads (isResolved))
+- Bug 73 | todo-task /pr: watch unresolved review threads (add to reviewDecision, not replace it)
 
-  Comment by Pi Lemon (qwen3.8-flash):
-  """ 
-  todo-task /pr + /review: use GitHub review threads (isResolved) as the review protocol
-     /review posts each finding as an inline comment on file:line (a thread); /pr polls reviewThreads and wakes the
-     agent while any thread is unresolved, then tells the human it is ready to merge. No numbering/body parsing.
-     Also: with all agents on one account a formal APPROVE/REQUEST_CHANGES is impossible (GitHub 422 for the PR author),
-     so reviewDecision stays REVIEW_REQUIRED forever and the current poller acts on nothing — it must switch to threads.
-     Follow-up: set required_review_thread_resolution=true in the "main branch" ruleset (admin token).
-  """
+     Verified 2026-11-27 (PRs #169–#175): reviews authored by alex-piccione DO produce
+     APPROVED/CHANGES_REQUESTED, so `reviewDecision` works and the current APPROVED/REJECTED
+     paths in `pr-watcher.ts` must be kept. The old claim "reviewDecision stays REVIEW_REQUIRED
+     forever" is wrong for that account.
 
-  Comamnt by Pi Orange ():
-  """
-  todo-task: `/pr N` must watch unresolved GitHub review threads
-     All agents share one GitHub account, so formal APPROVED/CHANGES_REQUESTED reviews cannot be relied on.
-     `/pr N` currently checks `reviewDecision` and reviews but can miss actionable inline review comments.
-     Use GitHub GraphQL `reviewThreads` and the native `isResolved` field to detect unresolved findings.
-     Notify the agent once per new review comment, deduplicating by comment ID, and stop notifying once
-     the thread is resolved. Replies must use the native thread `/replies` endpoint.
-     Actionable findings must be posted as inline review threads; review summaries remain informational.
-     Do not add custom review numbering, titles, checkbox parsing, or comment-body state tracking.
-     Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
-  """"
+     The real gap: all agents share the alex-cyber-75 account, so agent-to-agent reviews can
+     only be COMMENTED (GitHub 422 on own-PR verdicts). The watcher filters reviews to
+     APPROVED/CHANGES_REQUESTED, so agent findings and inline threads never wake the PR author.
+     Evidence: PR #175 merged with 1 of 5 review threads still unresolved.
+
+     Fix (scope: `todo-task/pr-watcher.ts` + a GraphQL helper in `_shared/github.ts`):
+     - Replace the per-tick `gh pr view` with ONE GraphQL query returning state, mergeable,
+       reviewDecision, headRefOid AND reviewThreads { isResolved, comments { databaseId,
+       author, body, url } }. Same one-subprocess cost, no extra polling call.
+     - Keep resolvePrStatus / APPROVED / REJECTED / conflict / stale-rejection logic unchanged.
+     - Add thread watching: notify once per NEW comment in an UNRESOLVED thread, dedup by
+       comment databaseId (reserve/release pattern like handledReviewDecisions). Resolved
+       threads go quiet; no body parsing, no custom numbering as state.
+     - Skip own comments: filter by the agent signature line (AI_AGENT_NAME) to avoid
+       self-wakeup on shared account.
+     - Wake message lists the unresolved threads (path:line + URL) and points to the native
+       /replies endpoint per AGENTS.md. On transition to zero unresolved threads, send one
+       "ready for merge" note. Repeated REVIEW_REQUIRED stays debug-only.
+     - Watch end conditions unchanged: merged/closed, 4 h PR_CHECKING_MAX_MS, /feature end,
+       session shutdown.
+
+     Order: before Feature 71 (71 must not change what checkPrReview reads) and before
+     Feature 80 (its multi arm produces the threads this consumes).
+     Follow-up (separate, needs admin token): set required_review_thread_resolution=true in
+     the "main branch" ruleset — it is currently false, which allowed the #175 merge.
+
+     Done when: an unresolved inline comment from another agent wakes the PR author once,
+     resolving the thread stops notifications, and alex-piccione verdicts behave as today.
 
 - Feature 74 | todo-task: extract `_shared/session-sender.ts` (from PR #129 review)
   `todo-task.ts` still contains session-sender machinery and duplicate argument parsing:
