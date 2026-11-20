@@ -2,41 +2,6 @@
 
 ## Backlog
 
-- Feature 71 | todo-task: one state owner + one idempotent teardown (keep both timers)
-     Not the two timers — Feature 30 fixed its flicker by splitting one shared status key into `STATUS_KEY_TASK` and
-     `STATUS_KEY_PR` (commit 883cfa8), so that split must be preserved, not undone. `taskStatusTimer` (15 s, string only)
-     and `prCheckTimer` (20 s, `gh` subprocess) also have different lifetimes: `/pr <n>` arms the PR watch with no task.
-     The real defect is the number of *owners*: `stopStatusTimer` / `stopPrCheckPolling` / `clearCurrentTask` / `abortStart` /
-     `session_shutdown` / `finishActivity` each decide what "stop" means and disagree — `abortStart` clears both keys,
-     `finishActivity` only the task key, `clearCurrentTask` stops both timers.
-
-     Refactor, one file (`Pi Agent/for_docker_volume/extensions/todo-task.ts`):
-  - one module-scope state object owning `currentTask`, `watchedPr`, `phase` (`working` → `awaiting_review` → `ended`),
-       `startedAt`, `prCheckStartedAt`, `watchGeneration`, `handledReviewDecisions`, `consecutiveGhFailures`,
-       `consecutiveSendFailures`, `taskProjectRoot`;
-  - one `stopAll(reason)` — idempotent, clears both status keys — called by session shutdown, `abortStart`,
-       `finishActivity` and `/feature end`; the low-level `stopStatusTimer` / `stopPrCheckPolling` stay internal;
-  - one `renderStatus()` that writes both keys from the state, so no site writes a key from a stale local belief;
-  - keep the 15 s / 20 s cadences and both timers. Do NOT merge them into one interval.
-     The state must stay at module scope (Pi never disposes the old instance on session swap, hence `watchGeneration`).
-
-     Watch ends only on: PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`, session shutdown.
-     An `agent_settled` is deliberately NOT a stop condition, because `/pr <n>` arms the watch with no active task.
-
-     Order: after Feature 75 (poller module) — otherwise 75 rewrites the same code twice. Excludes Bug 73
-     (`reviewThreads` switch): do not change what `checkPrReview` reads.
-     Done when: behaviour identical (no change to what is shown, only fewer code paths writing it), no new files,
-     `todo-task.ts` only.
-
-- Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
-  The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
-  but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
-  1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
-     GITHUB_TOKEN to the default agent account (the old "works if you are a collaborator" fallback, now implicit
-     and not communicated to the user).
-  2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
-     suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
-
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
 
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
@@ -148,6 +113,21 @@
      taking the review JSON on stdin, to remove prompt-following from the equation.
 
 ### Pi Agent
+
+- Bug 95 | (todo-task extension) /feature end stops the PR watch twice
+  Symptom: the user sees "Stop PR check." two times in a row.
+  Cause: the END path calls prWatcher.stopPrCheckPolling() and then clearCurrentTask(), which calls it again.
+  Fix: make stopping idempotent — one entry point that checks "already stopped" and returns silently. ~20 lines, todo-task.ts only. This is the seed of stopAll, grown only when needed.
+
+- Bug 96 | (todo-task extension) A failed task start can silence the next PR watch
+  Symptom: after /feature N fails to open its session, the next [PR N CREATED] marker is ignored and the watch never starts. The user gets no review notifications and no error.
+  Cause: abortStart clears timers and status keys but leaves watchedPr set in the watcher; the marker handler skips when a PR is already "watched".
+  Fix: abortStart also calls prWatcher.clearWatch(). ~3 lines plus a check of the other stop paths for the same hole.
+
+- Feature 93 | (todo-task extension) One writer for the two status-bar keys
+  Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
+  Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
+  Why it is useful now: Feature 38 (countdown display) adds a new status writer. Doing this first gives 38 one place to plug into instead of one more scattered writer.
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
