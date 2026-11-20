@@ -197,8 +197,8 @@ select_project() {
 # --- Clone a repository and create a new Project ---
 clone_repo() {
     echo ""
+    local repo_url proj_dir
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
-    local proj_dir
     read -p "Directory name (leave blank for repo name): " proj_dir
     proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
     if [ -d "$project_folder/$proj_dir" ]; then
