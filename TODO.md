@@ -37,10 +37,6 @@
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
-- Bug 90 | clone_repo ignores the entered "Directory name": `local proj_dir` runs AFTER the `read` and resets
-  the value, so the repo basename is always used (`scripts/start_common.sh`). Found while testing Feature 84.
-  Fix: declare `local proj_dir` before the read (or drop the re-declaration).
-
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
 
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
@@ -239,6 +235,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 90 [fix/90_clone_dir_name]: clone_repo uses the entered "Directory name" — `local proj_dir` is declared before the `read` so it no longer resets the input to the repo basename; the variable also no longer leaks to global scope
 - Feature 84 [feat/84_no_access_guidance]: no-access paths print the remedies (invite agent account with Write role / move to org / add owner PAT); an accepted invitation is re-checked for push permission — read-only grants clone with a warning instead of a false OK
 - Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (ctx.newSession + withSession) with the initial prompt delivered as steer — no conversation-history carryover
 - Bug 82 [fix/82_stay_in_menu_when_no_pat]: opening a project without a PAT record stays in the menu — the auth failure is guarded in select_project, the script no longer exits under set -e, and the message suggests "🔑 Manage GitHub credentials"
