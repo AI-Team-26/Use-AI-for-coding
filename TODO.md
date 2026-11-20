@@ -20,18 +20,6 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
-- Bug 64 (remaining) | todo-task execution report is not attached when the PR is not open
-  `appendReportToPr()` and `finishActivity()` still look the branch PR up with `--state open`, so a
-  merged/closed PR yields an empty list and the report is dropped. Reported as:
-  ```
-  Start PR check...
-  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
-  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
-  ```
-  Only the poller half is fixed; this needs its own lookup plus a decision on whether a report should
-  be appended to a merged PR. The poller cannot be reused: it resolves a PR by number/URL that it
-  already knows, while `appendReportToPr()` starts from a branch name.
-
 - Bug 61 | pi-agent errors break the TUI
   Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
     Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
