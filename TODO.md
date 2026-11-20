@@ -80,42 +80,6 @@
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
 
-- Bug 73 | todo-task /pr: watch unresolved review threads (add to reviewDecision, not replace it)
-
-     Verified 2026-11-27 (PRs #169–#175): reviews authored by alex-piccione DO produce
-     APPROVED/CHANGES_REQUESTED, so `reviewDecision` works and the current APPROVED/REJECTED
-     paths in `pr-watcher.ts` must be kept. The old claim "reviewDecision stays REVIEW_REQUIRED
-     forever" is wrong for that account.
-
-     The real gap: all agents share the alex-cyber-75 account, so agent-to-agent reviews can
-     only be COMMENTED (GitHub 422 on own-PR verdicts). The watcher filters reviews to
-     APPROVED/CHANGES_REQUESTED, so agent findings and inline threads never wake the PR author.
-     Evidence: PR #175 merged with 1 of 5 review threads still unresolved.
-
-     Fix (scope: `todo-task/pr-watcher.ts` + a GraphQL helper in `_shared/github.ts`):
-     - Replace the per-tick `gh pr view` with ONE GraphQL query returning state, mergeable,
-       reviewDecision, headRefOid AND reviewThreads { isResolved, comments { databaseId,
-       author, body, url } }. Same one-subprocess cost, no extra polling call.
-     - Keep resolvePrStatus / APPROVED / REJECTED / conflict / stale-rejection logic unchanged.
-     - Add thread watching: notify once per NEW comment in an UNRESOLVED thread, dedup by
-       comment databaseId (reserve/release pattern like handledReviewDecisions). Resolved
-       threads go quiet; no body parsing, no custom numbering as state.
-     - Skip own comments: filter by the agent signature line (AI_AGENT_NAME) to avoid
-       self-wakeup on shared account.
-     - Wake message lists the unresolved threads (path:line + URL) and points to the native
-       /replies endpoint per AGENTS.md. On transition to zero unresolved threads, send one
-       "ready for merge" note. Repeated REVIEW_REQUIRED stays debug-only.
-     - Watch end conditions unchanged: merged/closed, 4 h PR_CHECKING_MAX_MS, /feature end,
-       session shutdown.
-
-     Order: before Feature 71 (71 must not change what checkPrReview reads) and before
-     Feature 80 (its multi arm produces the threads this consumes).
-     Follow-up (separate, needs admin token): set required_review_thread_resolution=true in
-     the "main branch" ruleset — it is currently false, which allowed the #175 merge.
-
-     Done when: an unresolved inline comment from another agent wakes the PR author once,
-     resolving the thread stops notifications, and alex-piccione verdicts behave as today.
-
 - Feature 74 | todo-task: extract `_shared/session-sender.ts` (from PR #129 review)
   `todo-task.ts` still contains session-sender machinery and duplicate argument parsing:
   - session-sender machinery: `MessageSender`, `messageQueue`, `flushMessageQueue`, `safeSendUserMessage`,
@@ -207,6 +171,50 @@
   Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
   Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
  
+- Bug 73 [SUSPENDED] | todo-task /pr: watch unresolved review threads
+
+     ## Suspended 
+     We want to test the GitHub App for create reviews, so a proper review will be possible from the agents.
+
+     ## Problem
+     All agents share the agent-account. GitHub does not allow approving or rejecting a PR
+     opened by the same account, so agent-to-agent reviews are only plain comments.
+     The PR watcher (`todo-task/pr-watcher.ts`) looks only at review verdicts
+     (approved / rejected), so it never sees these comments — the PR author is not woken
+     up and findings are missed. Example: PR #175 was merged with 1 of 5 review threads
+     still unresolved.
+     Reviews from the user-account do produce real verdicts, so the existing
+     approved/rejected handling works and must stay.
+
+     ## Proposed Solution
+     Add watching of review threads next to the existing verdict checks.
+     Files: `todo-task/pr-watcher.ts` and a new GraphQL helper in `_shared/github.ts`.
+
+     - Fetch the PR with one GraphQL query per check (it replaces `gh pr view`):
+       state, conflicts, verdict, head commit, plus all review threads with their
+       resolved flag and comments (id, author, body, link). One subprocess call, as today.
+     - Wake the agent once for each new comment in an unresolved thread. Remember the
+       comment ids already reported so nothing is sent twice; if sending fails, try
+       again on the next check. When a thread is resolved, stop reporting it.
+     - Do not wake the agent for its own comments: recognise them by the agent's
+       signature line (AI_AGENT_NAME).
+     - The wake-up message lists the unresolved threads (file, line, link) and points
+       to the reply endpoint described in AGENTS.md. When the last unresolved thread
+       is resolved, send one "ready for merge" note.
+     - Do not parse comment bodies or invent numbering to track state: GitHub's
+       resolved flag is the only state.
+     - Keep everything else as it is: verdict handling, conflict notices, and the
+       watch end rules (merged/closed, 4-hour limit, /feature end, session shutdown).
+
+     Order: before Feature 71 (it must not change what the watcher reads) and before
+     Feature 80 (its multi-comment reviews produce the threads this task watches).
+     Follow-up (separate task, needs admin token): enable
+     required_review_thread_resolution in the "main branch" ruleset, so GitHub itself
+     blocks merging while threads are unresolved. It is currently off.
+
+     Done when: a new unresolved comment from another agent wakes the PR author once,
+     resolving the thread stops the reports, and user-account verdicts work as today.
+
 ### OpenCode
 
 - Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.

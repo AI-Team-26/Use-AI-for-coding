@@ -1,8 +1,16 @@
-// ~/.pi/agent/extensions/todo-task/pr-watcher.ts
 /**
- * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer decisions.
+ * Watches one pull request on GitHub and tells the user and the agent when something happens.
  *
- * Pi-facing side effects arrive through injected deps; GitHub and git are called directly.
+ * It checks the PR every 20 seconds and reports:
+ * - a review verdict (approved or rejected), once per review,
+ * - merge conflicts with the base branch, once per head commit,
+ * - the PR being merged or closed, which ends the watch.
+ *
+ * The watch starts with a known PR number/URL, or finds the open PR of the current
+ * branch. It also ends when stopped by the caller or after 4 hours without a decision.
+ *
+ * GitHub and git are queried directly. Notifications and messages to the agent go
+ * through the functions the caller passes in (PrWatcherDeps).
  */
 
 import { execSync, spawnSync } from "node:child_process"

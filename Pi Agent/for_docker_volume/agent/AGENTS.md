@@ -88,11 +88,13 @@ After applying changes, run the test suite if available:
 
 # Project Conventions
 
-## Comments in the code
+## Comments and Docstrings
+- Write comments, docstrings, and messages in plain, everyday English; no jargon, shorthand, or abstract labels like "deps" or "handoff."
+- **State the real goal:** In file docstrings, say plainly what the code does and what specific things it looks for.
 - Write only really useful comments - Avoid comments like "Person first name"
-- Do not refer to backlog Feature or Bug in the comments
 - Explain **WHAT**, not **HOW**, unless the code/solution is not obvious
 - **No history** — a comment never explains what was removed, replaced, or *why* the change was made. It must make sense to a reader who never saw the old code.
+- Avoid references to previous code and to TODO tasks: Anyone that read the file for the first time has to be able too understand.
 
 ## .NET Projects
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`
@@ -154,6 +156,8 @@ To catch up with main, merge — don't rebase:
    git fetch origin
    git merge origin/main        # on your feature branch
 ```
+
+---
 
 # PR Review Workflow
 
@@ -255,4 +259,4 @@ curl -L -X POST \
 
 - **web-search skill** — For facts, package names, API usage, build errors
 - **GitHub CLI (`gh`)** — Create and monitor PRs
-- **Hardware and Software.md** — OS and software info
+- **Hardware and Software.md** — User OS and software info
