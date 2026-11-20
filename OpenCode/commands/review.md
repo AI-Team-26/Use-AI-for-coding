@@ -14,7 +14,8 @@ Leave a PR review comment, signed with your name.
 Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 suggestion.  
 Also number the points to have a clear reference.  
 Block (🟧) only for missing task requirements, regressions or concrete defects. Everything else is a non-blocking 🟨 suggestion or a follow-up TODO.  
-Add a verdict at the beginning of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
+Add a verdict of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
+The first line of the review should be like this: <verdict> by <agent>.  
 Do not consider the fact that the branch is behind main.  
   
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
