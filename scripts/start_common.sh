@@ -197,9 +197,15 @@ select_project() {
 # --- Clone a repository and create a new Project ---
 clone_repo() {
     echo ""
+    local repo_url proj_dir
     read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
     read -p "Directory name (leave blank for repo name): " proj_dir
-    local proj_dir; proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
+    if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
+        echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
+        return 1
+    fi
     if [ -d "$project_folder/$proj_dir" ]; then
         echo -e "${RED}${WARNING_EMOJI} Directory '$project_folder/$proj_dir' already exists!${NC}"
         return 1
