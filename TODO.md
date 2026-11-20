@@ -180,20 +180,7 @@
 
 ### OpenCode
 
-- Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
-
-- Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
-     ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
-
-  Let me know if you want me to add it to TODO.md (it would be its own small branch + PR, or I can just add the line if you prefer).
-
-  Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
-
-  I prefer Option 2 if /quit or /exit does the same.
-  
-  Allows copy "as normal":
-     { "terminal": { "copy": "select" } }
 
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
@@ -218,6 +205,7 @@
 
 ## DONE (latest tasks completed)
 - Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
+- Bug 53 [fix/53_opencode_ctrl_c_copy]: Ctrl+C no longer exits the OpenCode TUI — `app.exit` is `<leader>q` only and `terminal.copy: "select"` copies selected text without Ctrl+C; documented in README OpenCode.md (also completes Feature 55)
 - Bug 90 [fix/90_clone_dir_name]: clone_repo uses the entered "Directory name" — `local repo_url proj_dir` is declared before the reads so the input is no longer reset to the repo basename; names containing `/` or starting with `-` are rejected
 - Feature 84 [feat/84_no_access_guidance]: no-access paths print the remedies (invite agent account with Write role / move to org / add owner PAT); an accepted invitation is re-checked for push permission — read-only grants clone with a warning instead of a false OK
 - Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (ctx.newSession + withSession) with the initial prompt delivered as steer — no conversation-history carryover
