@@ -223,23 +223,22 @@ clone_repo() {
             # OK, Owner or collaborator, can use it
         ;;
         "$REPO_ACCESS_READ_ONLY")
-            echo -e "Check if ${YELLOW}$repo_path${NC} is public..."
-            local api_url="https://api.github.com/repos/$repo_path"
-
-            # Query the GitHub API to check if the repo is public
-            local response=$(curl -s -o /dev/null -w "%{http_code}" "$api_url")
-
-            if [ "$response" -eq 200 ]; then
-                # Repository is public
-                echo -e "${GREEN}Repository is public. Proceeding with clone...${NC}"
+            # Read access is enough to clone. The check runs with the current token:
+            # an accepted read-only invitation makes a private repo visible to it.
+            echo -e "Checking read access to ${YELLOW}$repo_path${NC}..."
+            if gh api "repos/$repo_path" --template '{{.full_name}}' >/dev/null 2>&1; then
+                echo -e "${GREEN}Repository is readable. Proceeding with clone (push needs write access)...${NC}"
+                print_access_remedies "$repo_path"
             else
                 echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+                print_access_remedies "$repo_path"
                 return 1
             fi
         ;;
         *)
-            # TODO(Feature 84): the remedy ("🔑 Manage GitHub credentials", invite the agent
-            # account) is not named here.
+            echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+            print_access_remedies "$repo_path"
+            echo -e "${BLUE}ℹ️ If this looks like a network/API error, check the URL and retry.${NC}"
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
@@ -249,6 +248,7 @@ clone_repo() {
         # Error is PAT has no permission on this repo: 
         # > GraphQL: Could not resolve to a Repository with the name 'AI-Team-26/game.Creatures'. (repository)
         echo -e "❌ Failed to clone!"
+        print_access_remedies "$repo_path"
         return 1
     }
 

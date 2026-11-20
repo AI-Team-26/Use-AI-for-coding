@@ -120,6 +120,36 @@ REPO_ACCESS_ERROR=1
 REPO_ACCESS_READ_ONLY=2
 
 
+# Actionable ways to get write access when the current credentials are not enough.
+print_access_remedies() {
+    local repo_path=$1
+    echo -e "${YELLOW}👉 To get write access to ${repo_path}:${NC}"
+    echo -e "${YELLOW}   1. Invite '${GITHUB_AGENT_ACCOUNT}' as a collaborator with the Write role (an org invitation with a read-only role is not enough).${NC}"
+    echo -e "${YELLOW}   2. Move the repository to an organization where '${GITHUB_AGENT_ACCOUNT}' has write access.${NC}"
+    echo -e "${YELLOW}   3. Add the owner's PAT with '🔑 Manage GitHub credentials', then retry.${NC}"
+}
+
+
+# An accepted invitation can grant only read access (the org base role may be read),
+# so the granted permission is verified before the repository is declared usable.
+verify_push_after_invite() {
+    local repo_path=$1
+    local push
+    push=$(gh api "repos/$repo_path" --template '{{.permissions.push}}' 2>/dev/null || true)
+
+    if [[ "$push" == "true" ]]; then
+        echo -e "✔️ Write access to $repo_path granted by the invitation, as the agent account '${GITHUB_AGENT_ACCOUNT}'"
+        return "$REPO_ACCESS_OK"
+    fi
+    if [[ "$push" == "false" ]]; then
+        echo -e "${YELLOW}⚠️ The invitation granted only read access to $repo_path — the first push would fail.${NC}"
+        return "$REPO_ACCESS_READ_ONLY"
+    fi
+    echo -e "${YELLOW}⚠️ Invitation accepted, but the granted permission could not be verified — the first push may fail.${NC}"
+    return "$REPO_ACCESS_OK"
+}
+
+
 check_repo_access() {
     #echo "check_repo_access()"
     local repo_path=$1   # "owner/repo"
@@ -139,10 +169,9 @@ check_repo_access() {
 
         case $invite_rc in
             "$INVITE_ACCEPTED")
-                # TODO(Feature 84): the role granted by the invitation is not verified here,
-                # so an org invitation that is read-only still fails on the first push.
-                echo -e "✔️ Access to $repo_path granted by the invitation, as the agent account '${GITHUB_AGENT_ACCOUNT}'"
-                return "$REPO_ACCESS_OK"
+                local invite_access_rc=0
+                verify_push_after_invite "$repo_path" || invite_access_rc=$?
+                return "$invite_access_rc"
             ;;
             "$INVITE_NOT_FOUND")
                 echo -e "❌ ${RED}Could not fetch repo info for $repo_path${NC}"
@@ -183,13 +212,15 @@ check_repo_access() {
 
     case $? in
         "$INVITE_ACCEPTED")
-            return "$REPO_ACCESS_OK"
+            local invite_access_rc=0
+            verify_push_after_invite "$repo_path" || invite_access_rc=$?
+            return "$invite_access_rc"
         ;;
         "$INVITE_NOT_FOUND")
             echo "Invite not found"
         ;;
         *)
-            echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+            # The caller prints the ⛔ message and the remedies.
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
