@@ -1,4 +1,5 @@
 .env
+**/*.pem
 
 # temporary file used when customize models
 Modelfile
