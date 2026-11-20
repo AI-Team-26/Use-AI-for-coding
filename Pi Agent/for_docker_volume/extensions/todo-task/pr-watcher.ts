@@ -53,6 +53,7 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
+    /** Safe to call when no watch is running: it then returns silently. */
     stopPrCheckPolling(): void
     /** Drop the watched identity and dedup state without touching timers: a new task must not inherit the previous task's PR. */
     clearWatch(): void
@@ -348,7 +349,11 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     function stopPrCheckPolling(): void {
-        if (prCheckTimer) clearInterval(prCheckTimer)
+        // Idempotent: several paths can stop the same watch (END, abortStart, session_shutdown,
+        // and the watcher itself on merge, close or time limit). A second stop must not repeat
+        // the "Stop PR check." notice.
+        if (prCheckTimer === null) return
+        clearInterval(prCheckTimer)
         prCheckTimer = null
         firstTick = true
         deps.setPrStatus(undefined)
