@@ -228,6 +228,7 @@ clone_repo() {
             echo -e "Checking read access to ${YELLOW}$repo_path${NC}..."
             if gh api "repos/$repo_path" --template '{{.full_name}}' >/dev/null 2>&1; then
                 echo -e "${GREEN}Repository is readable. Proceeding with clone (push needs write access)...${NC}"
+                print_access_remedies "$repo_path"
             else
                 echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
                 print_access_remedies "$repo_path"
@@ -235,7 +236,9 @@ clone_repo() {
             fi
         ;;
         *)
+            echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
             print_access_remedies "$repo_path"
+            echo -e "${BLUE}ℹ️ If this looks like a network/API error, check the URL and retry.${NC}"
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
@@ -245,6 +248,7 @@ clone_repo() {
         # Error is PAT has no permission on this repo: 
         # > GraphQL: Could not resolve to a Repository with the name 'AI-Team-26/game.Creatures'. (repository)
         echo -e "❌ Failed to clone!"
+        print_access_remedies "$repo_path"
         return 1
     }
 

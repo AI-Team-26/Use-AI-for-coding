@@ -220,7 +220,7 @@ check_repo_access() {
             echo "Invite not found"
         ;;
         *)
-            echo "⛔ You cannot access this repo. You need to set credentials or be a collaborator."
+            # The caller prints the ⛔ message and the remedies.
             return "$REPO_ACCESS_ERROR"
         ;;
     esac
