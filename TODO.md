@@ -37,6 +37,11 @@
   2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
      suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
 
+- Bug 91 | clone_repo follow-ups (from PR #175 review): `repo_url` is still a global leak — declare it `local`
+  before the read (check no caller reads it first), same pattern as Bug 90. Also the entered "Directory name"
+  is not validated: a value with `/` or a leading `-` goes straight to `gh repo clone` as a path — reject
+  names containing `/` or starting with `-` (`scripts/start_common.sh`).
+
 - Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
 
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
