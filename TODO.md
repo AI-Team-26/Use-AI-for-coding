@@ -102,11 +102,6 @@
 
 ### Pi Agent
 
-- Bug 95 | (todo-task extension) /feature end stops the PR watch twice
-  Symptom: the user sees "Stop PR check." two times in a row.
-  Cause: the END path calls prWatcher.stopPrCheckPolling() and then clearCurrentTask(), which calls it again.
-  Fix: make stopping idempotent — one entry point that checks "already stopped" and returns silently. ~20 lines, todo-task.ts only. This is the seed of stopAll, grown only when needed.
-
 - Bug 96 | (todo-task extension) A failed task start can silence the next PR watch
   Symptom: after /feature N fails to open its session, the next [PR N CREATED] marker is ignored and the watch never starts. The user gets no review notifications and no error.
   Cause: abortStart clears timers and status keys but leaves watchedPr set in the watcher; the marker handler skips when a PR is already "watched".
@@ -222,6 +217,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
 - Bug 90 [fix/90_clone_dir_name]: clone_repo uses the entered "Directory name" — `local repo_url proj_dir` is declared before the reads so the input is no longer reset to the repo basename; names containing `/` or starting with `-` are rejected
 - Feature 84 [feat/84_no_access_guidance]: no-access paths print the remedies (invite agent account with Write role / move to org / add owner PAT); an accepted invitation is re-checked for push permission — read-only grants clone with a warning instead of a false OK
 - Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (ctx.newSession + withSession) with the initial prompt delivered as steer — no conversation-history carryover
