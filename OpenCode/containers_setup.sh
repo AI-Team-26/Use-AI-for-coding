@@ -62,6 +62,9 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volumes/$agent/projects"
     docker_volume_opencode="$docker_volumes/$agent/opencode"
     mkdir -p "$docker_volume_opencode"
+    # Sessions live in /root/.local/share/opencode (opencode.db). It must be a bind
+    # volume, otherwise every container recreation loses them and --continue starts fresh.
+    mkdir -p "$docker_volumes/$agent/opencode-data"
 
     # Copy opencode config
     cp opencode.json "$docker_volume_opencode/opencode.json"
