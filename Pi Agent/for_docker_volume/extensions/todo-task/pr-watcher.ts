@@ -203,7 +203,6 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
                 display: true,
                 details: {},
             })
-            // The watch is over: drop the watched PR so a later "[PR N CREATED]" marker can arm a new watch.
             clearWatch()
             return
         }
