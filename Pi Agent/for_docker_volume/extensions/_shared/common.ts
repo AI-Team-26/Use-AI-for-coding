@@ -11,7 +11,6 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync, spawnSync } from "node:child_process"
 
-// Notifications are rendered inside the chat area and the terminal footer, so they are kept short enough to fit one line.
 const MAX_NOTIFY_CHARS = 300
 
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
@@ -35,16 +34,12 @@ export function osc8Link(url: string, text: string): string {
     return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
 }
 
-/**
- * Fold a message into a single short line: line breaks, tabs and repeated spaces
- * break the terminal layout of a notification (the text spills over the footer and
- * the plugins status line), so every notification goes through this first.
- */
-export function oneLine(text: string, maxChars = MAX_NOTIFY_CHARS): string {
+/** Fold a message into one short line: line breaks and tabs break the terminal layout. */
+function oneLine(text: string): string {
     const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
-    // Cutting an OSC 8 link in half leaves the terminal hyperlink open, so such messages are kept whole.
-    if (flat.length <= maxChars || flat.includes("\x1b]8;")) return flat
-    return `${flat.slice(0, maxChars - 1)}…`
+    // A cut OSC 8 link stays open in the terminal.
+    if (flat.length <= MAX_NOTIFY_CHARS || flat.includes("\x1b]8;")) return flat
+    return `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
 }
 
 /**
@@ -115,13 +110,12 @@ export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
         return true
     } catch (err) {
         const e = err as { stderr?: string; message: string }
-        // stderr holds the real git output; the Error message only repeats the command, so it is not added again.
-        const lines = ((e.stderr ?? "").trim() || e.message)
+        const summary = ((e.stderr ?? "").trim() || e.message)
             .split("\n")
             .map((line) => line.trim())
             .filter((line) => line.length > 0)
-        console.error(`[pullLatestMain] ${lines.join(" | ")}`)
-        const summary = lines.slice(0, 4).reduce((acc, line) => (acc === "" ? line : `${acc}${acc.endsWith(":") ? " " : "; "}${line}`), "")
+            .slice(0, 3)
+            .join(" ")
         safeNotify(getCtx, `❌ Git update failed: ${summary}`, "error")
         return false
     }

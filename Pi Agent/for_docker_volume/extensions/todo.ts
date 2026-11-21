@@ -11,7 +11,6 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { execSync } from "node:child_process"
-import { oneLine } from "./_shared/common.ts"
 
 const EXTENSION = "TODO-TASK"
 const MAX_CHARS = 4096
@@ -32,7 +31,7 @@ function loadLatestMainTodo(cwd: string): TodoLoadResult {
     } catch (err) {
         const e = err as { stderr?: string; message: string }
         // Show up to 3 lines: enough context without flooding the notification.
-        const detail = ((e.stderr ?? "").trim() || e.message).split("\n").slice(0, 3).join("\n")
+        const detail = ((e.stderr ?? "").trim() || e.message).split("\n").slice(0, 3).join(" ")
         return { ok: false, detail }
     }
 }
@@ -56,8 +55,7 @@ export default function todoExtension(pi: ExtensionAPI) {
             // local content, so bail out after notifying.
             const loaded = loadLatestMainTodo(projectRoot)
             if (!loaded.ok) {
-                // The git error is multi-line: it must reach the user as one short line or it overwrites the footer.
-                ctx.ui.notify(oneLine(`❌ Failed to fetch latest TODO.md: ${loaded.detail}`), "error")
+                ctx.ui.notify(`❌ Failed to fetch latest TODO.md: ${loaded.detail}`, "error")
                 return
             }
 
