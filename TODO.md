@@ -5,6 +5,9 @@
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
+- Feature 97 | containers_setup.sh: the extension copy never removes stale files, so a docker volume can keep an extension the repo dropped.
+  Make the copy a mirror of the shipped set (top-level `*.ts`, `_shared/`, `todo-task/`): remove files in the target that are not in the repo, and check the source folder exists before deleting anything.
+
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
   + If it is NOT on main branch: 

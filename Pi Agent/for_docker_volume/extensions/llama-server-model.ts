@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs"
 import { safeSetStatus } from "./_shared/common.ts"
 
 const STATUS_KEY = "alex-piccione-llama-model"
+const EXTENSION = "LLAMA"
 const MODEL_FILE = "/scripts/llama-server-current-model.txt"
 const REFRESH_MS = 30_000
 
@@ -39,7 +40,7 @@ export default function llamaServerModelExtension(pi: ExtensionAPI) {
         const model = readCurrentModel() ?? ""
         if (model !== last) {
             last = model
-            if (model) safeSetStatus(() => latestCtx, STATUS_KEY, `🦙 ${model}`, STATUS_KEY)
+            if (model) safeSetStatus(() => latestCtx, STATUS_KEY, `🦙 ${model}`, EXTENSION)
         }
     }
 

@@ -11,6 +11,6 @@ const STATUS_KEY = "alex-piccione-agent-name"
 
 export default function agentNameExtension(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
-    safeSetStatus(() => ctx, STATUS_KEY, process.env.AI_AGENT_NAME ?? "NO-NAME", STATUS_KEY)
+    safeSetStatus(() => ctx, STATUS_KEY, process.env.AI_AGENT_NAME ?? "NO-NAME", "AGENT-NAME")
   })
 }

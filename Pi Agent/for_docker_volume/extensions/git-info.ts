@@ -10,6 +10,7 @@ import { execSync } from "node:child_process"
 import { CYAN, BLUE, GREEN, RESET, safeNotify, safeSetStatus } from "./_shared/common.ts"
 
 const STATUS_KEY = "alex-piccione-git-info"
+const EXTENSION = "GIT-INFO"
 const REFRESH_MS = 5_000
 
 function run(cmd: string): string | null {
@@ -42,8 +43,8 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
         const msg = err instanceof Error ? err.message : String(err)
         if (msg === lastError || !latestCtx) return
         lastError = msg
-        console.error(`[${STATUS_KEY}] ${msg}`)
-        safeNotify(() => latestCtx, `${STATUS_KEY}: ${msg}`, "warning", STATUS_KEY)
+        console.error(`[${EXTENSION}] ${msg}`)
+        safeNotify(() => latestCtx, `${EXTENSION}: ${msg}`, "warning", EXTENSION)
     }
 
     const buildStatus = (): string | undefined => {
@@ -80,7 +81,7 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
         const text = buildStatus()
         if ((text ?? "") !== lastText) {
             lastText = text ?? ""
-            safeSetStatus(() => latestCtx, STATUS_KEY, text, STATUS_KEY)
+            safeSetStatus(() => latestCtx, STATUS_KEY, text, EXTENSION)
         }
     }
 
@@ -91,7 +92,7 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
 
         if (!isGitRepo()) {
             stopRefresh()
-            safeSetStatus(() => ctx, STATUS_KEY, undefined, STATUS_KEY)
+            safeSetStatus(() => latestCtx, STATUS_KEY, undefined, EXTENSION)
             return
         }
 

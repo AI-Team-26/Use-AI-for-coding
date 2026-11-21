@@ -72,7 +72,14 @@ export function safeSetStatus(
     try {
         ctx.ui.setStatus(key, text)
     } catch (err) {
-        ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        console.error(`${source} ❌ safeSetStatus() failed.`, err)
+        // On a stale ctx every ctx.ui access throws, notify included: guard it so
+        // a failing status write can never escape into a timer and crash Pi.
+        try {
+            ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        } catch {
+            // already reported on the console above
+        }
     }
 }
 
