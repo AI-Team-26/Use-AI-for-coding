@@ -7,3 +7,6 @@ Modelfile
 Ollama models/modelfiles/
 
 **/node_modules/
+
+# Python bytecode from the test harness
+**/__pycache__/
