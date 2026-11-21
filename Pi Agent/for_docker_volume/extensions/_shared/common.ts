@@ -26,8 +26,6 @@ export type ContextGetter = () => ExtensionContext | null
  * Build an OSC 8 hyperlink escape sequence wrapping `text` so terminals that
  * support it (iTerm2/Kitty/WezTerm/VS Code) render it as a clickable link.
  * Degrades gracefully to plain text in unsupported terminals.
- * Terminated with ST (ESC \), not BEL: a BEL that leaks through a broken
- * render path rings the terminal bell. Same terminator as pi-tui hyperlink().
  */
 export function osc8Link(url: string, text: string): string {
     if (!url) return text
