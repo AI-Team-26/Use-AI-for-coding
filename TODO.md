@@ -3,7 +3,6 @@
 ## Backlog
 
 - Feature 35.2 | follow-up to 35.1: the credential prompts in `scripts/git_common.sh` (username, repo, account, email...) still use plain `read -p`; give them ESC-to-cancel with `read_input` too.
-  Also fix the ESC-sequence drain in `read_input`: `read -rsn5 -t 0.05` can swallow up to 5 real chars typed right after an arrow/function key (e.g. `\e[Ahello` fast → `lo`). Drain only the actual escape sequence (read until a letter or `~`).
 
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.

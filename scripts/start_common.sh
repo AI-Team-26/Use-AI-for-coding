@@ -39,39 +39,24 @@ print_menu() {
     done
 }
 
-# Reads one line of user input; use ESC to cancel.
-# The answer is printed on stdout, so callers write: name=$(read_input "Prompt: ")
-# The prompt and the echo of the first char go to stderr to keep stdout clean.
-# Return codes:
-#   0 = answer read (may be empty)
-#   1 = input closed (terminal gone or Ctrl-D): the menus stop cleanly
-#   2 = ESC pressed: the user cancelled
-# Only the first char is read raw (to catch ESC); the rest of the line keeps
-# normal terminal editing. Arrow/function keys also start with ESC, so their
-# sequence is drained and ignored instead of cancelling.
+INPUT_ESC=2
+# Reads one line of user input into the global INPUT; use ESC to cancel.
+# Return codes: 0 = answer read (may be empty), 1 = input closed (terminal
+# gone or Ctrl-D), INPUT_ESC = ESC pressed.
+# Accepted trade-offs: the ESC byte is echoed to the terminal (the next
+# printed text may be garbled), and arrow keys cancel like ESC and leave
+# their extra bytes in the input buffer.
 read_input() {
-    local prompt=$1 first rest seq
-    while true; do
-        printf '%s' "$prompt" >&2
-        IFS= read -rsn1 first || return 1
-        if [[ "$first" == $'\e' ]]; then
-            seq=""
-            IFS= read -rsn5 -t 0.05 seq 2>/dev/null || :
-            printf '\n' >&2
-            if [[ -z "$seq" ]]; then
-                return 2
-            fi
-            continue
-        fi
-        if [[ -z "$first" ]]; then
-            printf '\n' >&2
-            return 0
-        fi
-        printf '%s' "$first" >&2
-        IFS= read -r rest || return 1
-        printf '%s\n' "$first$rest"
-        return 0
-    done
+    local prompt=$1 first rest
+    INPUT=""
+
+    printf '%s' "$prompt"
+    IFS= read -n1 first || return 1  # n1: pick one character only, so ESC arrives as data
+    [[ "$first" == $'\e' ]] && return $INPUT_ESC
+    [[ -z "$first" ]] && { printf '\n'; return 0; }
+
+    IFS= read -r rest || return 1
+    INPUT="$first$rest"
 }
 
 # --- Select or Clone a Project ---
@@ -84,7 +69,7 @@ select_project() {
         mkdir "$project_folder"
     fi
 
-    local projects proj reply action_done=0 rc=0
+    local projects proj action_done=0 rc=0
 
     # Loop instead of recursing: an unguarded tail-recursion spins forever
     # when stdin hits EOF (terminal closed at the prompt), because the read
@@ -116,17 +101,17 @@ select_project() {
         print_menu "${projects[@]}"
         while true; do
             rc=0
-            reply=$(read_input "$PS3") || rc=$?
+            read_input "$PS3" || rc=$?
             if [[ $rc -eq 1 ]]; then
                 break      # input closed: handled after the loop
-            elif [[ $rc -eq 2 ]]; then
+            elif [[ $rc -eq $INPUT_ESC ]]; then
                 return 0   # ESC acts like "❌ Exit"
-            elif [[ -z "$reply" ]]; then
+            elif [[ -z "$INPUT" ]]; then
                 continue 2 # empty line: redraw the menu, like `select` did
             fi
             proj=""
-            if [[ "$reply" =~ ^[0-9]+$ ]] && (( 10#$reply >= 1 && 10#$reply <= ${#projects[@]} )); then
-                proj=${projects[10#$reply - 1]}
+            if [[ "$INPUT" =~ ^[0-9]+$ ]] && (( 10#$INPUT >= 1 && 10#$INPUT <= ${#projects[@]} )); then
+                proj=${projects[10#$INPUT - 1]}
             fi
             if [[ "$proj" == "🧩 Clone a repository" ]]; then
                 # clone_repo returns 1 on failure; keep the menu alive under errexit
@@ -200,13 +185,14 @@ select_project() {
 clone_repo() {
     echo ""
     local repo_url proj_dir
-    repo_url=$(read_input "GitHub repo URL (MUST BE THE HTTPS PATH): ") || { echo "(cancelled)"; return 0; }
+    read_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || { echo "(cancelled)"; return 0; }
+    repo_url=$INPUT
     if [[ -z "$repo_url" ]]; then
         echo "(cancelled)"
         return 0
     fi
-    proj_dir=$(read_input "Directory name (leave blank for repo name): ") || { echo "(cancelled)"; return 0; }
-    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    read_input "Directory name (leave blank for repo name): " || { echo "(cancelled)"; return 0; }
+    proj_dir=${INPUT:-$(basename "$repo_url" .git)}
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -274,7 +260,8 @@ clone_repo() {
 create_new_proj() {
     echo ""
     local proj_name
-    proj_name=$(read_input "Name of the new project: ") || { echo "(cancelled)"; return 0; }
+    read_input "Name of the new project: " || { echo "(cancelled)"; return 0; }
+    proj_name=$INPUT
     if [[ -z "$proj_name" ]]; then
         echo "(cancelled)"
         return 0
@@ -297,21 +284,21 @@ delete_proj() {
     local items=("${projects[@]}" "❌ Exit")
     print_menu "${items[@]}"
 
-    local action_done=0 rc=0 proj reply
+    local action_done=0 rc=0 proj
     while true; do
         rc=0
-        reply=$(read_input "$PS3") || rc=$?
+        read_input "$PS3" || rc=$?
         if [[ $rc -eq 1 ]]; then
             break
-        elif [[ $rc -eq 2 ]]; then
+        elif [[ $rc -eq $INPUT_ESC ]]; then
             return 0   # ESC acts like "❌ Exit": back to the main menu
-        elif [[ -z "$reply" ]]; then
+        elif [[ -z "$INPUT" ]]; then
             print_menu "${items[@]}"
             continue
         fi
         proj=""
-        if [[ "$reply" =~ ^[0-9]+$ ]] && (( 10#$reply >= 1 && 10#$reply <= ${#items[@]} )); then
-            proj=${items[10#$reply - 1]}
+        if [[ "$INPUT" =~ ^[0-9]+$ ]] && (( 10#$INPUT >= 1 && 10#$INPUT <= ${#items[@]} )); then
+            proj=${items[10#$INPUT - 1]}
         fi
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
