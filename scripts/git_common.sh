@@ -305,6 +305,8 @@ add_github_pat() {
     local git_username_default=$(git config --global user.name)
 
     if [[ -n "$git_username_default" ]]; then
+        # TODO: the credential prompts in this file still use plain `read -p`;
+        # give them ESC-to-cancel with read_menu_input (start_common.sh) as a follow-up.
         read -p "GitHub username (leave empty to use $git_username_default): " git_username
         if [[ -z "$git_username" ]]; then
             git_username=$git_username_default

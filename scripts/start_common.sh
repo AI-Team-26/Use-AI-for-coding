@@ -39,7 +39,7 @@ print_menu() {
     done
 }
 
-# Reads a menu answer like `select` did, but a lone ESC cancels.
+# Reads one input line (menu answer or free text), but a lone ESC cancels.
 # The raw answer is put in MENU_REPLY. Return codes tell the caller how to end:
 #   0 = answer read (may be empty)
 #   1 = stdin closed (EOF): terminal gone, caller reports interruption and exits
@@ -133,7 +133,8 @@ select_project() {
                 action_done=1
                 break
             elif [[ "$proj" == "🏝️ Create a new project" ]]; then
-                create_new_proj
+                # create_new_proj returns 1 on EOF; keep the menu alive under errexit
+                create_new_proj || :
                 action_done=1
                 break
             elif [[ "$proj" == "🗑️ Delete a project" ]]; then
@@ -197,10 +198,24 @@ select_project() {
 # --- Clone a repository and create a new Project ---
 clone_repo() {
     echo ""
-    local repo_url proj_dir
-    read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
-    read -p "Directory name (leave blank for repo name): " proj_dir
-    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    local repo_url proj_dir rc=0
+    read_menu_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || rc=$?
+    if [[ $rc -eq 2 ]]; then
+        echo "(cancelled)"
+        return 0
+    elif [[ $rc -eq 1 ]]; then
+        return 1
+    fi
+    repo_url=$MENU_REPLY
+    rc=0
+    read_menu_input "Directory name (leave blank for repo name): " || rc=$?
+    if [[ $rc -eq 2 ]]; then
+        echo "(cancelled)"
+        return 0
+    elif [[ $rc -eq 1 ]]; then
+        return 1
+    fi
+    proj_dir=${MENU_REPLY:-$(basename "$repo_url" .git)}
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -221,7 +236,7 @@ clone_repo() {
     # Guard the call: a bare non-zero return would abort the script under errexit.
     # Running it in a `||` context also disables errexit inside check_repo_access,
     # so its internal `check_and_accept_invite` + `case $?` works as intended.
-    local rc=0
+    rc=0
     check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
     case $rc in
@@ -267,7 +282,15 @@ clone_repo() {
 # --- Create a new project that is not (yet) linked to a repository ---
 create_new_proj() {
     echo ""
-    read -p "Name of the new project: " proj_name
+    local rc=0
+    read_menu_input "Name of the new project: " || rc=$?
+    if [[ $rc -eq 2 ]]; then
+        echo "(cancelled)"
+        return 0
+    elif [[ $rc -eq 1 ]]; then
+        return 1
+    fi
+    proj_name=$MENU_REPLY
     if [[ -z "$proj_name" ]]; then
         echo "(cancelled)"
         return 0
