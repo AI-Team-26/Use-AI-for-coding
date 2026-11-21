@@ -34,12 +34,6 @@ export function osc8Link(url: string, text: string): string {
     return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
 }
 
-/** Fold a message into one short line: line breaks and tabs break the terminal layout. */
-function oneLine(text: string): string {
-    const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
-    return flat.length <= MAX_NOTIFY_CHARS ? flat : `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
-}
-
 /**
  * Guarded UI notification for calls made outside a fresh handler/event scope
  * (timers, post-await code). The context is read lazily because it can be
@@ -54,7 +48,7 @@ export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyT
         return
     }
     try {
-        ctx.ui.notify(oneLine(message), type)
+        ctx.ui.notify(message, type)
     } catch (err) {
         console.error(`${source} ❌ safeNotify() failed.`, err)
     }
