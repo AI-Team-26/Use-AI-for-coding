@@ -91,6 +91,13 @@
 
 ### Pi Agent
 
+- Bug 97 | (todo-task extension) session_shutdown keeps a watched PR that nothing re-uses
+  After /new, /resume or /fork, `stopPrCheckPolling` keeps `watchedPr` for a "re-arm" that no code performs:
+  `/pr` without arguments discovers by branch, `/pr N` passes the number explicitly, and nothing reads
+  `getWatchedPr()` to re-arm. The kept identity only holds the `[PR N CREATED]` marker gate closed
+  (same shape as Bug 96). Decide: either clear the watch on external session replacement, or make the
+  session-start path actually re-arm from `getWatchedPr()`. From the #183 review (point 1).
+
 - Feature 93 | (todo-task extension) One writer for the two status-bar keys
   Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
   Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.

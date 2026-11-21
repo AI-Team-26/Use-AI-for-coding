@@ -141,7 +141,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
 
         stopPrCheckPolling()
-        watchedPr = null
+        clearWatch()
 
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
@@ -197,13 +197,13 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
             stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
+            clearWatch()
             await safeSendMessage({
                 customType: `${deps.extension}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
                 display: true,
                 details: {},
             })
-            clearWatch()
             return
         }
 
