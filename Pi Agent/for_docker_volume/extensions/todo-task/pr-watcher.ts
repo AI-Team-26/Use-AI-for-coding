@@ -53,9 +53,9 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
-    /** Safe to call when no watch is running: it then returns silently. */
+    /** Stop the timer but keep the watched PR, so a session replacement can re-arm the same watch. */
     stopPrCheckPolling(): void
-    /** Drop the watched identity and dedup state without touching timers: a new task must not inherit the previous task's PR. */
+    /** End the watch: stop polling and drop the watched PR and dedup state. Safe to call when no watch is running. */
     clearWatch(): void
     getWatchedPr(): WatchedPr | null
 }
@@ -140,7 +140,6 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
 
-        stopPrCheckPolling()
         clearWatch()
 
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
@@ -195,7 +194,6 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
-            stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
             clearWatch()
             await safeSendMessage({
@@ -364,6 +362,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     const clearWatch = (): void => {
+        stopPrCheckPolling()
         watchedPr = null
         handledReviewDecisions.clear()
     }

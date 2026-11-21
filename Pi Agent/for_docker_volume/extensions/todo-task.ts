@@ -285,7 +285,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prWatcher.stopPrCheckPolling()
         prWatcher.clearWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
@@ -440,7 +439,6 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prWatcher.stopPrCheckPolling()
                 prWatcher.clearWatch()
                 stopStatusTimer()
                 currentTask = null
