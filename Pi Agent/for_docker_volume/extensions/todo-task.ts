@@ -72,6 +72,8 @@ const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs 
 
 let latestCtx: ExtensionContext | null = null
 let currentTask: CurrentTask | null = null
+// Current text of the PR status-bar entry; written to the footer only by renderStatus().
+let prStatusText: string | undefined
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
@@ -141,6 +143,20 @@ function safeSetStatus(key: string, text: string | undefined): void {
     sharedSafeSetStatus(() => latestCtx, key, text, EXTENSION)
 }
 
+// Single writer for the two status-bar keys: the task entry is derived from currentTask,
+// the PR entry from prStatusText. Every other site updates state only, then calls this —
+// a stop path cannot leave a ghost footer entry by forgetting one key.
+function renderStatus(): void {
+    let taskText: string | undefined
+    if (currentTask) {
+        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
+        const label = currentTask.type === "feature" ? "Feature" : "Bug"
+        taskText = `${emoji} ${label} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`
+    }
+    safeSetStatus(STATUS_KEY_TASK, taskText)
+    safeSetStatus(STATUS_KEY_PR, prStatusText)
+}
+
 function startStatusTimer(): void {
     stopStatusTimer()
     if (currentTask === null) return
@@ -149,11 +165,7 @@ function startStatusTimer(): void {
             stopStatusTimer()
             return
         }
-        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
-        safeSetStatus(
-            STATUS_KEY_TASK,
-            `${emoji} ${currentTask.type === "feature" ? "Feature" : "Bug"} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`,
-        )
+        renderStatus()
     }
     refresh()
     taskStatusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -191,7 +203,10 @@ const ensureTodoDir = (): Promise<void> =>
 const prWatcher = createPrWatcher({
     extension: EXTENSION,
     notify: (message, type) => safeNotify(message, type),
-    setPrStatus: (text) => safeSetStatus(STATUS_KEY_PR, text),
+    setPrStatus: (text) => {
+        prStatusText = text
+        renderStatus()
+    },
     sendUserMessage: async (content, options) => {
         const sender = messageSender ?? activePi
         if (!sender) throw new Error("no session context available")
@@ -245,12 +260,11 @@ _(first push only, without following reviews rework)_
     // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
     safeNotify(`✅ ${label} ${currentTask.number} completed in ${elapsedMinutes} minutes.`, "info")
     stopStatusTimer()
-    safeSetStatus(STATUS_KEY_TASK, undefined)
+    currentTask = null
+    renderStatus()
 
     if (taskProjectRoot === null) safeNotify(`❌ finishActivity(). TaskProjectRoot is null.`, "error")
     else appendReportToPr(taskProjectRoot, report)
-
-    currentTask = null
 }
 
 function appendReportToPr(cwd: string, report: string) {
@@ -287,8 +301,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         stopStatusTimer()
         prWatcher.endWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
-        safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
+        renderStatus()
     }
 
     pi.on("session_start", (_event, ctx: ExtensionContext) => {
@@ -456,8 +470,8 @@ ${typeData.extra ?? ""}\n\
                 prWatcher.endWatch()
                 stopStatusTimer()
                 currentTask = null
-                safeSetStatus(STATUS_KEY_TASK, undefined)
-                safeSetStatus(STATUS_KEY_PR, undefined)
+                prStatusText = undefined
+                renderStatus()
             } catch (err) {
                 safeNotify(`❌ Failed abortStart(). ${err}`, "error")
             }
