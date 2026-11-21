@@ -163,11 +163,6 @@
      Done when: a new unresolved comment from another agent wakes the PR author once,
      resolving the thread stops the reports, and user-account verdicts work as today.
 
-- Bug 98 | todo-task: terminal bell sounds from osc8Link() BEL terminators (issue #185).
-  `osc8Link()` in `_shared/common.ts` terminates OSC 8 hyperlinks with BEL (`\x07`); when the render path breaks the
-  sequence the BEL leaks as an audible bell (approved message, then every turn because the `🚩 MERGED` footer status
-  is redrawn). Fix: terminate with ST (`\x1b\\`) like pi-tui's own `hyperlink()` — one line, fixes all call sites.
-
 
 ### OpenCode
 
@@ -195,6 +190,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
 - Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
 - Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
 - Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
