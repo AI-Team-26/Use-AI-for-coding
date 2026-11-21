@@ -52,7 +52,6 @@ if [[ "$steps" == *create_container* ]]; then
             --mount type=bind,src="$docker_volumes/scripts",dst=/scripts \
             --mount type=bind,src="$docker_volumes/scripts",dst=/share \
             --mount type=bind,src="$docker_volumes/$AGENT_ID/opencode",dst=/root/.config/opencode \
-            --mount type=bind,src="$docker_volumes/$AGENT_ID/opencode-data",dst=/root/.local/share/opencode \
             --mount type=bind,src="$docker_volumes/$AGENT_ID/projects",dst=/projects \
             $docker_image
     done

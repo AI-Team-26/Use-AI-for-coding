@@ -168,7 +168,6 @@
 
 - Bug 54 [SUSPENDED] | `opencode --continue` doesn't continue the previous session but always starts a new one — in the SAME container.
   Waiting for confirmation: if a previous session exists for the project, `--continue` should resume it; if that is what happens, there is no bug.
-  Separate issue, already handled in PR #187: sessions were lost on container recreation (new `opencode-data` bind volume).
 
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.

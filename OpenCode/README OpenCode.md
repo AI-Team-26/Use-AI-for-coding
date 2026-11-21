@@ -44,11 +44,6 @@ The bind-mount volumes:
 - (shared)   /share      -> for sharing files between agents and with the Host
 - (container)/projects   -> the GIT repositories (projects)
 - (container)/opencode   -> the OpenCode settings, skills etc...
-- (container)/opencode-data -> the OpenCode sessions database (`/root/.local/share/opencode`), so `opencode --continue` resumes the previous session
-
-The `opencode-data` mount only applies to newly created containers: to get it on an existing
-agent, delete the container and run `./containers.sh setup` + `./containers.sh create_container` again.
-Sessions created before that are inside the old container and are lost when it is deleted.
 
 ```bash
 cd OpenCode
