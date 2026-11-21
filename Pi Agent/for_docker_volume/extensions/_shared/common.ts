@@ -29,7 +29,7 @@ export type ContextGetter = () => ExtensionContext | null
  */
 export function osc8Link(url: string, text: string): string {
     if (!url) return text
-    return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
+    return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`
 }
 
 /**
