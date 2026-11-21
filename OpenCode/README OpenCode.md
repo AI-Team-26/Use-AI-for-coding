@@ -49,3 +49,12 @@ The bind-mount volumes:
 cd OpenCode
 ./containers.sh create_container
 ```
+
+## Keyboard: exit and copy
+
+The TUI settings live in `cli.json`, copied to each agent volume by `./containers.sh setup`.
+Re-run setup after changing it, otherwise the containers keep the old file.
+
+- **Ctrl+C does not exit OpenCode.** The only exit key is `<leader>q`: press `ctrl+x`, release, then `q`.
+- **Copy works by selecting text.** `terminal.copy` is set to `select`, so text selected with the mouse is copied immediately, no Ctrl+C needed. While OpenCode captures the mouse, hold `Shift` to select (standard terminal behavior).
+- Ctrl+C still clears the prompt input line (default `prompt.clear` binding). It never closes the program.

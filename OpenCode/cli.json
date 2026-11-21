@@ -4,6 +4,7 @@
     "app.exit": "<leader>q"
   },
   "terminal": {
-    "title": false
+    "title": false,
+    "copy": "select"
   }
 }

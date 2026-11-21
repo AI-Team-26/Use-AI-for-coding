@@ -356,7 +356,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return
             }
             const { type: pendingType, number: pendingNumber } = currentTask
-            prWatcher.stopPrCheckPolling()
+            // clearCurrentTask stops the PR watch — one entry point, so the notice is printed once.
             clearCurrentTask("Forceed END of task.")
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
