@@ -37,9 +37,7 @@ export function osc8Link(url: string, text: string): string {
 /** Fold a message into one short line: line breaks and tabs break the terminal layout. */
 function oneLine(text: string): string {
     const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
-    // A cut OSC 8 link stays open in the terminal.
-    if (flat.length <= MAX_NOTIFY_CHARS || flat.includes("\x1b]8;")) return flat
-    return `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
+    return flat.length <= MAX_NOTIFY_CHARS ? flat : `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
 }
 
 /**
@@ -110,13 +108,8 @@ export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
         return true
     } catch (err) {
         const e = err as { stderr?: string; message: string }
-        const summary = ((e.stderr ?? "").trim() || e.message)
-            .split("\n")
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0)
-            .slice(0, 3)
-            .join(" ")
-        safeNotify(getCtx, `❌ Git update failed: ${summary}`, "error")
+        const detail = (e.stderr ?? "").trim() || e.message
+        safeNotify(getCtx, `❌ Git update failed: ${detail}`, "error")
         return false
     }
 }

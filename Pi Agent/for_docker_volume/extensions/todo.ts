@@ -31,7 +31,7 @@ function loadLatestMainTodo(cwd: string): TodoLoadResult {
     } catch (err) {
         const e = err as { stderr?: string; message: string }
         // Show up to 3 lines: enough context without flooding the notification.
-        const detail = ((e.stderr ?? "").trim() || e.message).split("\n").slice(0, 3).join(" ")
+        const detail = ((e.stderr ?? "").trim() || e.message).split("\n").slice(0, 3).join("\n")
         return { ok: false, detail }
     }
 }
