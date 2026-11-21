@@ -166,7 +166,8 @@
 
 ### OpenCode
 
-- Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
+- Bug 54 [SUSPENDED] | `opencode --continue` doesn't continue the previous session but always starts a new one — in the SAME container.
+  Waiting for confirmation: if a previous session exists for the project, `--continue` should resume it; if that is what happens, there is no bug.
 
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
