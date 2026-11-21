@@ -300,13 +300,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        // External replacement (/new, /resume, /fork): session_shutdown already stopped the timers,
+        // External replacement (/new, /resume, /fork): session_shutdown already ended the watch,
         // pi already cleared the footer. Only a still-open task needs the user's attention.
-        if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
+        if (currentTask !== null) safeNotify("⚠️ PR watch stopped after session switch. Run /pr to resume the watch.", "warning")
     })
 
     pi.on("session_shutdown", () => {
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         stopStatusTimer()
         messageSender = null
     })

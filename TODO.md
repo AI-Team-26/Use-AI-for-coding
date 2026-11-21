@@ -91,16 +91,6 @@
 
 ### Pi Agent
 
-- Bug 97 | (todo-task extension) after a session switch the next PR watch never starts
-  Symptom: after /new, /resume or /fork, the agent opens a PR and writes [PR N CREATED], but no watch
-  starts and no review notifications arrive.
-  Cause: `session_shutdown` calls `stopPrCheckPolling()`, which stops the timer but keeps `watchedPr`.
-  The marker handler only runs when `getWatchedPr()` is null, so the kept PR blocks every later marker.
-  Nothing re-arms from the kept number: `/pr` without arguments discovers by branch, `/pr N` takes an
-  explicit number.
-  Fix options (about one line either way, pick one): clear the watch on external session replacement,
-  or make `session_start` re-arm polling from `getWatchedPr()`.
-
 - Feature 93 | (todo-task extension) One writer for the two status-bar keys
   Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
   Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
@@ -198,7 +188,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Bug 96 [fix/96_abort_start_clears_watch]: a failed task start no longer silences the next PR watch — `abortStart`, `clearCurrentTask` and the watcher 4-hour time limit now call `clearWatch()`, so a stale watched PR cannot block the next `[PR N CREATED]` marker
+- Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
 - Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
 - Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
 - Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first

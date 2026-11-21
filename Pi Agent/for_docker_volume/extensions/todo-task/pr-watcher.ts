@@ -53,8 +53,6 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
-    /** Stop the timer but keep the watched PR and dedup state. */
-    stopPrCheckPolling(): void
     /** End the watch: stop polling and drop the watched PR and dedup state. Safe to call when no watch is running. */
     endWatch(): void
     getWatchedPr(): WatchedPr | null
@@ -348,8 +346,8 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     function stopPrCheckPolling(): void {
-        // Idempotent: session_shutdown, endWatch() and the re-arm inside startPrCheckPolling()
-        // can stop an already-stopped watch. A second stop must not repeat the "Stop PR check." notice.
+        // Idempotent: endWatch() and the re-arm inside startPrCheckPolling() can stop an
+        // already-stopped watch. A second stop must not repeat the "Stop PR check." notice.
         if (prCheckTimer === null) return
         clearInterval(prCheckTimer)
         prCheckTimer = null
@@ -366,7 +364,6 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
 
     return {
         startPrCheckPolling,
-        stopPrCheckPolling,
         endWatch,
         getWatchedPr: () => watchedPr,
     }
