@@ -20,3 +20,13 @@ Steps:
    If the entry does not exist, or is marked SUSPENDED/BLOCKED/DONE, stop and report it instead of guessing.
 3. Invoking this command counts as approval to start; follow AGENTS.md and implement it: create a new branch (`feat/<N>_<short_name>`), make the changes, open a PR with a short description, remove the task from the Backlog and add a Done line in TODO.md. Sign any comments you post with your own agent name.
 4. **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in the response.
+5. **Simplify, don't pile on code**
+  - A good fix makes the wrong state impossible, not adds a check that cleans it up later.
+    Ask "can this state exist at all?" before "how do I clean it up?".
+  - Before adding a function, call, or flag: can an existing one absorb the job?
+    Two calls always used together are one function. Merge them.
+  - Prefer changing what a function does over adding a second function beside it.
+    Updating its callers and doc comment is part of the task, not extra scope.
+  - Removing lines is a valid fix. If your change only adds code, stop once and look for a design that removes the problem instead.
+  - Write the line delta (+N/−M) in the PR description. If it only grows, say in one sentence why shrinking was not possible.
+  - Simplify only the code the task touches. No drive-by refactors.

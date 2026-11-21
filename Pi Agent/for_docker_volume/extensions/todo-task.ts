@@ -427,6 +427,18 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
+\n\
+## Simplify, don't pile on code\n\
+- A good fix makes the wrong state impossible, not adds a check that cleans it up later.\n\
+  Ask "can this state exist at all?" before "how do I clean it up?".\n\
+- Before adding a function, call, or flag: can an existing one absorb the job?\n\
+  Two calls always used together are one function. Merge them.\n\
+- Prefer changing what a function does over adding a second function beside it.\n\
+  Updating its callers and doc comment is part of the task, not extra scope.\n\
+- Removing lines is a valid fix. If your change only adds code, stop once and look for a design that removes the problem instead.\n\
+- Write the line delta (+N/−M) in the PR description. If it only grows, say in one sentence why shrinking was not possible.\n\
+- Simplify only the code the task touches. No drive-by refactors.\n\
+\n\
 **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in your reply to the user. That precise message is used as a signal by a Pi extension to start watching the PR.\n\
 **IMPORTANT**: after you complete the work, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
