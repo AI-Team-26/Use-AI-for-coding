@@ -39,36 +39,37 @@ print_menu() {
     done
 }
 
-# Reads one input line (menu answer or free text), but a lone ESC cancels.
-# The raw answer is put in MENU_REPLY. Return codes tell the caller how to end:
+# Reads one line of user input; use ESC to cancel.
+# The answer is printed on stdout, so callers write: name=$(read_input "Prompt: ")
+# The prompt and the echo of the first char go to stderr to keep stdout clean.
+# Return codes:
 #   0 = answer read (may be empty)
-#   1 = stdin closed (EOF): terminal gone, caller reports interruption and exits
-#   2 = ESC pressed: deliberate cancel (menu exit, or abort the text prompt)
+#   1 = input closed (terminal gone or Ctrl-D): the menus stop cleanly
+#   2 = ESC pressed: the user cancelled
 # Only the first char is read raw (to catch ESC); the rest of the line keeps
 # normal terminal editing. Arrow/function keys also start with ESC, so their
 # sequence is drained and ignored instead of cancelling.
-read_menu_input() {
+read_input() {
     local prompt=$1 first rest seq
-    MENU_REPLY=""
     while true; do
-        printf '%s' "$prompt"
+        printf '%s' "$prompt" >&2
         IFS= read -rsn1 first || return 1
         if [[ "$first" == $'\e' ]]; then
             seq=""
             IFS= read -rsn5 -t 0.05 seq 2>/dev/null || :
-            printf '\n'
+            printf '\n' >&2
             if [[ -z "$seq" ]]; then
                 return 2
             fi
             continue
         fi
         if [[ -z "$first" ]]; then
-            printf '\n'
+            printf '\n' >&2
             return 0
         fi
-        printf '%s' "$first"
+        printf '%s' "$first" >&2
         IFS= read -r rest || return 1
-        MENU_REPLY="$first$rest"
+        printf '%s\n' "$first$rest"
         return 0
     done
 }
@@ -83,7 +84,7 @@ select_project() {
         mkdir "$project_folder"
     fi
 
-    local projects proj action_done=0 rc=0
+    local projects proj reply action_done=0 rc=0
 
     # Loop instead of recursing: an unguarded tail-recursion spins forever
     # when stdin hits EOF (terminal closed at the prompt), because the read
@@ -115,17 +116,17 @@ select_project() {
         print_menu "${projects[@]}"
         while true; do
             rc=0
-            read_menu_input "$PS3" || rc=$?
+            reply=$(read_input "$PS3") || rc=$?
             if [[ $rc -eq 1 ]]; then
-                break      # stdin closed: handled after the loop
+                break      # input closed: handled after the loop
             elif [[ $rc -eq 2 ]]; then
                 return 0   # ESC acts like "❌ Exit"
-            elif [[ -z "$MENU_REPLY" ]]; then
+            elif [[ -z "$reply" ]]; then
                 continue 2 # empty line: redraw the menu, like `select` did
             fi
             proj=""
-            if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#projects[@]} )); then
-                proj=${projects[10#$MENU_REPLY - 1]}
+            if [[ "$reply" =~ ^[0-9]+$ ]] && (( 10#$reply >= 1 && 10#$reply <= ${#projects[@]} )); then
+                proj=${projects[10#$reply - 1]}
             fi
             if [[ "$proj" == "🧩 Clone a repository" ]]; then
                 # clone_repo returns 1 on failure; keep the menu alive under errexit
@@ -133,7 +134,7 @@ select_project() {
                 action_done=1
                 break
             elif [[ "$proj" == "🏝️ Create a new project" ]]; then
-                # create_new_proj returns 1 on EOF; keep the menu alive under errexit
+                # create_new_proj can fail (e.g. the folder already exists); keep the menu alive under errexit
                 create_new_proj || :
                 action_done=1
                 break
@@ -198,28 +199,14 @@ select_project() {
 # --- Clone a repository and create a new Project ---
 clone_repo() {
     echo ""
-    local repo_url proj_dir rc=0
-    read_menu_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || rc=$?
-    if [[ $rc -eq 2 ]]; then
-        echo "(cancelled)"
-        return 0
-    elif [[ $rc -eq 1 ]]; then
-        return 1
-    fi
-    repo_url=$MENU_REPLY
+    local repo_url proj_dir
+    repo_url=$(read_input "GitHub repo URL (MUST BE THE HTTPS PATH): ") || { echo "(cancelled)"; return 0; }
     if [[ -z "$repo_url" ]]; then
         echo "(cancelled)"
         return 0
     fi
-    rc=0
-    read_menu_input "Directory name (leave blank for repo name): " || rc=$?
-    if [[ $rc -eq 2 ]]; then
-        echo "(cancelled)"
-        return 0
-    elif [[ $rc -eq 1 ]]; then
-        return 1
-    fi
-    proj_dir=${MENU_REPLY:-$(basename "$repo_url" .git)}
+    proj_dir=$(read_input "Directory name (leave blank for repo name): ") || { echo "(cancelled)"; return 0; }
+    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -240,7 +227,7 @@ clone_repo() {
     # Guard the call: a bare non-zero return would abort the script under errexit.
     # Running it in a `||` context also disables errexit inside check_repo_access,
     # so its internal `check_and_accept_invite` + `case $?` works as intended.
-    rc=0
+    local rc=0
     check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
     case $rc in
@@ -286,15 +273,8 @@ clone_repo() {
 # --- Create a new project that is not (yet) linked to a repository ---
 create_new_proj() {
     echo ""
-    local rc=0
-    read_menu_input "Name of the new project: " || rc=$?
-    if [[ $rc -eq 2 ]]; then
-        echo "(cancelled)"
-        return 0
-    elif [[ $rc -eq 1 ]]; then
-        return 1
-    fi
-    proj_name=$MENU_REPLY
+    local proj_name
+    proj_name=$(read_input "Name of the new project: ") || { echo "(cancelled)"; return 0; }
     if [[ -z "$proj_name" ]]; then
         echo "(cancelled)"
         return 0
@@ -317,21 +297,21 @@ delete_proj() {
     local items=("${projects[@]}" "❌ Exit")
     print_menu "${items[@]}"
 
-    local action_done=0 rc=0 proj
+    local action_done=0 rc=0 proj reply
     while true; do
         rc=0
-        read_menu_input "$PS3" || rc=$?
+        reply=$(read_input "$PS3") || rc=$?
         if [[ $rc -eq 1 ]]; then
             break
         elif [[ $rc -eq 2 ]]; then
             return 0   # ESC acts like "❌ Exit": back to the main menu
-        elif [[ -z "$MENU_REPLY" ]]; then
+        elif [[ -z "$reply" ]]; then
             print_menu "${items[@]}"
             continue
         fi
         proj=""
-        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
-            proj=${items[10#$MENU_REPLY - 1]}
+        if [[ "$reply" =~ ^[0-9]+$ ]] && (( 10#$reply >= 1 && 10#$reply <= ${#items[@]} )); then
+            proj=${items[10#$reply - 1]}
         fi
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0

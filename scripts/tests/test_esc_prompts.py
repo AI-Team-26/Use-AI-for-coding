@@ -1,9 +1,10 @@
 """Checks that ESC cancels the free-text prompts in start_common.sh.
 
-Extracts read_menu_input, clone_repo and create_new_proj from the script,
-stubs the GitHub/tool calls, and drives the prompts through a pseudo-terminal.
-Verifies: ESC cancels at each prompt, empty URL/name cancels, normal input
-still reaches the clone/creation flow, and arrow keys are not a cancel.
+Extracts read_input, clone_repo, create_new_proj and delete_proj from the
+script, stubs the GitHub/tool calls, and drives the prompts through a
+pseudo-terminal. Verifies: ESC cancels at each prompt, empty URL/name cancels,
+normal input still reaches the clone/creation flow, arrow keys are not a
+cancel, and the numbered menus still read answers and cancel on ESC.
 
 Run: python3 scripts/tests/test_esc_prompts.py
 """
@@ -34,10 +35,16 @@ with open(harness, "w") as f:
     f.write("RED=''; GREEN=''; YELLOW=''; NC=''; WARNING_EMOJI='!'\n")
     f.write(f"project_folder={projects}\n")
     f.write('mkdir -p "$project_folder"\n')
-    f.write("MENU_REPLY=''\n")
-    f.write(extract("read_menu_input") + "\n")
+    f.write(extract("read_input") + "\n")
+    f.write(extract("print_menu") + "\n")
     f.write(extract("clone_repo") + "\n")
     f.write(extract("create_new_proj") + "\n")
+    f.write(extract("delete_proj") + "\n")
+    f.write(extract("select_project") + "\n")
+    f.write("GIT_AUTH_OK=0\n")
+    f.write("set_github_auth_for_repo() { return 0; }\n")
+    f.write("manage_git_credentials() { echo 'CREDENTIALS'; }\n")
+    f.write('ask() { local a; a=$(read_input "Type: ") || { echo "CANCELLED rc=$?"; return 0; }; echo "GOT=[$a]"; }\n')
     # stubs for everything past the prompts
     f.write('set_github_auth_for_repo_or_agent() { echo "AUTH $1"; return 1; }\n')
     f.write('start_project() { echo "START $1"; }\n')
@@ -119,5 +126,28 @@ check("create_new_proj: empty name cancels", "(cancelled)" in out and "RC=0" in 
 
 out, _ = run("create_new_proj", [b"testproj" + NL])
 check("create_new_proj: name accepted, pi launched", "PI LAUNCHED" in out and "RC=0" in out, out)
+
+out, _ = run("ask", [b"hello world" + NL])
+check("read_input: answer on stdout, prompt not captured", "GOT=[hello world]" in out and "Type: " in out, out)
+
+out, _ = run("ask", [ESC])
+check("read_input: ESC returns 2", "CANCELLED rc=2" in out, out)
+
+out, _ = run("ask", [NL])
+check("read_input: empty line returns empty answer", "GOT=[]" in out, out)
+
+os.makedirs(os.path.join(projects, "delme"), exist_ok=True)
+out, _ = run("delete_proj", [b"1" + NL])
+check("delete_proj: menu number still deletes", "deleted" in out and not os.path.exists(os.path.join(projects, "delme")), out)
+
+os.makedirs(os.path.join(projects, "delme"), exist_ok=True)
+out, _ = run("delete_proj", [ESC])
+check("delete_proj: ESC keeps the folder", "RC=0" in out and os.path.exists(os.path.join(projects, "delme")), out)
+
+out, _ = run("select_project", [ESC])
+check("select_project: ESC exits like the Exit item", "RC=0" in out, out)
+
+out, _ = run("select_project", [NL, ESC])
+check("select_project: empty line redraws, then ESC exits", out.count("Select a project/action") >= 2 and "RC=0" in out, out)
 
 sys.exit(1 if fails else 0)
