@@ -20,15 +20,6 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
-- Bug 61 | pi-agent errors break the TUI
-  Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
-    Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
-  Please commit your changes or stash them before you switch branches.
-  Aborting
-
-  After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
-  '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
-
 - Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
@@ -204,6 +195,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
 - Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
 - Bug 53 [fix/53_opencode_ctrl_c_copy]: Ctrl+C no longer exits the OpenCode TUI — `app.exit` is `<leader>q` only and `terminal.copy: "select"` copies selected text without Ctrl+C; documented in README OpenCode.md (also completes Feature 55)
 - Bug 90 [fix/90_clone_dir_name]: clone_repo uses the entered "Directory name" — `local repo_url proj_dir` is declared before the reads so the input is no longer reset to the repo basename; names containing `/` or starting with `-` are rejected

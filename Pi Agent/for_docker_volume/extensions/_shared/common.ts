@@ -11,6 +11,8 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync, spawnSync } from "node:child_process"
 
+const MAX_NOTIFY_CHARS = 300
+
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 export const CYAN = "\x1b[36m"
 export const BLUE = "\x1b[34m"
@@ -32,6 +34,12 @@ export function osc8Link(url: string, text: string): string {
     return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
 }
 
+/** Fold a message into one short line: line breaks and tabs break the terminal layout. */
+function oneLine(text: string): string {
+    const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
+    return flat.length <= MAX_NOTIFY_CHARS ? flat : `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
+}
+
 /**
  * Guarded UI notification for calls made outside a fresh handler/event scope
  * (timers, post-await code). The context is read lazily because it can be
@@ -46,7 +54,7 @@ export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyT
         return
     }
     try {
-        ctx.ui.notify(message, type)
+        ctx.ui.notify(oneLine(message), type)
     } catch (err) {
         console.error(`${source} ❌ safeNotify() failed.`, err)
     }
@@ -101,7 +109,7 @@ export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
     } catch (err) {
         const e = err as { stderr?: string; message: string }
         const detail = (e.stderr ?? "").trim() || e.message
-        safeNotify(getCtx, `❌ Git update failed: ${detail}. ${err}`, "error")
+        safeNotify(getCtx, `❌ Git update failed: ${detail}`, "error")
         return false
     }
 }
