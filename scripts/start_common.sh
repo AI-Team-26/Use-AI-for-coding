@@ -43,7 +43,7 @@ print_menu() {
 # The raw answer is put in MENU_REPLY. Return codes tell the caller how to end:
 #   0 = answer read (may be empty)
 #   1 = stdin closed (EOF): terminal gone, caller reports interruption and exits
-#   2 = ESC pressed: deliberate cancel, caller treats it as the "❌ Exit" item
+#   2 = ESC pressed: deliberate cancel (menu exit, or abort the text prompt)
 # Only the first char is read raw (to catch ESC); the rest of the line keeps
 # normal terminal editing. Arrow/function keys also start with ESC, so their
 # sequence is drained and ignored instead of cancelling.
@@ -207,6 +207,10 @@ clone_repo() {
         return 1
     fi
     repo_url=$MENU_REPLY
+    if [[ -z "$repo_url" ]]; then
+        echo "(cancelled)"
+        return 0
+    fi
     rc=0
     read_menu_input "Directory name (leave blank for repo name): " || rc=$?
     if [[ $rc -eq 2 ]]; then
