@@ -1,6 +1,3 @@
-# TODO: the credential prompts in this file still use plain `read -p`;
-# give them ESC-to-cancel with read_input (start_common.sh) as a follow-up.
-
 source /scripts/utils.sh
 
 required_vars GITHUB_AGENT_ACCOUNT GITHUB_COMMIT_EMAIL
@@ -308,19 +305,19 @@ add_github_pat() {
     local git_username_default=$(git config --global user.name)
 
     if [[ -n "$git_username_default" ]]; then
-        read -p "GitHub username (leave empty to use $git_username_default): " git_username
-        if [[ -z "$git_username" ]]; then
-            git_username=$git_username_default
-        fi
+        read_input "GitHub username (leave empty to use $git_username_default): " || { echo "(cancelled)"; return 0; }
+        git_username=${INPUT:-$git_username_default}
     else
-        read -p "GitHub username (it is not required to match GitHub account): " git_username
+        read_input "GitHub username (it is not required to match GitHub account): " || { echo "(cancelled)"; return 0; }
+        git_username=$INPUT
         if [[ -z "$git_username" ]]; then
             echo -e "${RED}❌ Error: A user name must be defined ${NC}"
             return 1
         fi
     fi    
     
-    read -p "GitHub repository (MUST be HTTPS): " git_repo
+    read_input "GitHub repository (MUST be HTTPS): " || { echo "(cancelled)"; return 0; }
+    git_repo=$INPUT
 
     # Check git_repo starts with "https://", if not error message
     if [[ ! "$git_repo" =~ ^https:// ]]; then
@@ -331,7 +328,8 @@ add_github_pat() {
     # Create the path for the credentials record = remove the initial "https://"
     local repo_path="${git_repo#https://}"
 
-    read -s -p "GitHub PAT (hidden): " git_pat; echo    
+    read_input "GitHub PAT (hidden): " hidden || { echo "(cancelled)"; return 0; }
+    git_pat=$INPUT
 
     echo "https://$git_username:$git_pat@$repo_path" >> ~/.git-credentials
     echo -e "✔️ GitHub repository credentials configured!"
@@ -402,11 +400,11 @@ Values are stored as <account>:<PAT>.${NC}"
                     break # Break out of 'select', but stay in 'while' to refresh
                 ;;
                 "Add")
-                    read -p "GitHub account (user or org): " account
-                    read -s -p "GitHub account PAT (hidden): " pat
-                    echo ""
+                    read_input "GitHub account (user or org): " || { echo "(cancelled)"; break; }
+                    account=$INPUT
+                    read_input "GitHub account PAT (hidden): " hidden || { echo "(cancelled)"; break; }
+                    pat=$INPUT
 
-                    local owner_repo="$owner"
                     if  [[ -n "$account" && -n "$pat" ]]; then 
                     # Append new credential
                         echo "${account}:${pat}" >> "$github_pat_file"
@@ -417,7 +415,8 @@ Values are stored as <account>:<PAT>.${NC}"
                 "Remove")
                     # Re-run print so they see current numbers before choosing
                     load_and_print_list
-                    read -p "Enter number to remove: " index
+                    read_input "Enter number to remove: " || { echo "(cancelled)"; break; }
+                    index=$INPUT
 
                     if [[ "$index" =~ ^[0-9]+$ ]]; then
                         sed -i "${index}d" "$github_pat_file"
@@ -446,9 +445,18 @@ setup_git_global() {
     if [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
         echo -e "GIT is not configured. Set up name and email:${NC}"
 
-        # GITHUB_COMMIT_EMAIL is the GitHub account that gets credited as the commit author
-        read -p "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " git_username
-        read -p "GitHub user email (account credited for commits, leave blank for '${GITHUB_COMMIT_EMAIL}'): " git_email
+        # GITHUB_COMMIT_EMAIL is the GitHub account that gets credited as the commit author.
+        # ESC keeps the defaults so the start script continues; closed input stops the setup.
+        local rc=0
+        read_input "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " || rc=$?
+        if [[ $rc -eq 1 ]]; then return 1; fi
+        if [[ $rc -eq $INPUT_ESC ]]; then echo "(cancelled, using default)"; fi
+        git_username=$INPUT
+        rc=0
+        read_input "GitHub user email (account credited for commits, leave blank for '${GITHUB_COMMIT_EMAIL}'): " || rc=$?
+        if [[ $rc -eq 1 ]]; then return 1; fi
+        if [[ $rc -eq $INPUT_ESC ]]; then echo "(cancelled, using default)"; fi
+        git_email=$INPUT
 
         git_username="${git_username:-$AGENT_NAME}"
         git_email="${git_email:-$GITHUB_COMMIT_EMAIL}"

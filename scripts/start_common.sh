@@ -73,27 +73,6 @@ read_menu_input() {
     done
 }
 
-INPUT_ESC=2
-# Reads one line of free text into the global INPUT; use ESC to cancel.
-# Return codes: 0 = answer read (may be empty), 1 = input closed (terminal
-# gone or Ctrl-D), INPUT_ESC = ESC pressed.
-# Accepted trade-offs: the ESC byte is echoed to the terminal (the next
-# printed text may be garbled), arrow keys cancel like ESC and leave
-# their extra bytes in the input buffer, and Ctrl-D as the first key
-# becomes part of the answer instead of ending the input.
-read_input() {
-    local prompt=$1 first rest
-    INPUT=""
-
-    printf '%s' "$prompt"
-    IFS= read -n1 first || return 1  # n1: pick one character only, so ESC arrives as data
-    [[ "$first" == $'\e' ]] && return $INPUT_ESC
-    [[ -z "$first" ]] && { printf '\n'; return 0; }  # if user press ENTER the next read will not find it
-
-    IFS= read -r rest || return 1
-    INPUT="$first$rest"
-}
-
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
