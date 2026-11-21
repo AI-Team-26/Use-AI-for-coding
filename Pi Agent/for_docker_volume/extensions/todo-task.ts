@@ -286,6 +286,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         if (currentTask === null) return
         stopStatusTimer()
         prWatcher.stopPrCheckPolling()
+        // The task is over: drop the watched PR so a later "[PR N CREATED]" marker can arm a new watch.
+        prWatcher.clearWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
@@ -440,6 +442,9 @@ ${typeData.extra ?? ""}\n\
         const abortStart = (): void => {
             try {
                 prWatcher.stopPrCheckPolling()
+                // stopPrCheckPolling keeps the watched PR for session-swap re-arm; a failed start
+                // must drop it, or the next "[PR N CREATED]" marker is ignored as already watched.
+                prWatcher.clearWatch()
                 stopStatusTimer()
                 currentTask = null
                 safeSetStatus(STATUS_KEY_TASK, undefined)

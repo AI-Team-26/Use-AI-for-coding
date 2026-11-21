@@ -91,11 +91,6 @@
 
 ### Pi Agent
 
-- Bug 96 | (todo-task extension) A failed task start can silence the next PR watch
-  Symptom: after /feature N fails to open its session, the next [PR N CREATED] marker is ignored and the watch never starts. The user gets no review notifications and no error.
-  Cause: abortStart clears timers and status keys but leaves watchedPr set in the watcher; the marker handler skips when a PR is already "watched".
-  Fix: abortStart also calls prWatcher.clearWatch(). ~3 lines plus a check of the other stop paths for the same hole.
-
 - Feature 93 | (todo-task extension) One writer for the two status-bar keys
   Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
   Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
@@ -193,6 +188,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 96 [fix/96_abort_start_clears_watch]: a failed task start no longer silences the next PR watch — `abortStart`, `clearCurrentTask` and the watcher 4-hour time limit now call `clearWatch()`, so a stale watched PR cannot block the next `[PR N CREATED]` marker
 - Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
 - Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
 - Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
