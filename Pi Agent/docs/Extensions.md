@@ -10,7 +10,7 @@ pnpm add -D @earendil-works/pi-coding-agent@<specific-version> typescript
 ```
 
 
-## Known extensions
+## Known xtensions
 
 ### Third party
 
@@ -24,9 +24,8 @@ pnpm add -D @earendil-works/pi-coding-agent@<specific-version> typescript
 
 ### Mine
 
-- [pi-status](https://github.com/AI-Team-26/pi-status)
-  ``pi install npm:pi-idle``
-  Fork of [pi-idle](https://github.com/ZoRDoK/pi-idle)
+- [pi.extension.agent-status](https://github.com/AI-Team-26/pi.extension.agent-status)
+  ``pi install [npm:pi-idle](https://github.com/AI-Team-26/pi.extension.agent-status)``
   Shows a ✓ checkmark in the terminal title when Pi is idle and displays a spinner while Pi is actively working.
   It also show the agent name first character (emoji) in the title bar.
 

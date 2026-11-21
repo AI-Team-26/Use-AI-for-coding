@@ -74,7 +74,7 @@ start_project() {
         exec pi "$model_param" --continue
     fi
 
-    # pi-status extension
+    # agent-status extension
     # extract the initial EMOJI or take the first 2 characters
     local agent_icon=${AI_AGENT_NAME%%[[:ascii:]]*}
     [[ -z $agent_icon ]] && agent_icon=${AI_AGENT_NAME:0:2}

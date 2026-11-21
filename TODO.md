@@ -2,52 +2,11 @@
 
 ## Backlog
 
-- Feature 71 | todo-task: one state owner + one idempotent teardown (keep both timers)
-     Not the two timers — Feature 30 fixed its flicker by splitting one shared status key into `STATUS_KEY_TASK` and
-     `STATUS_KEY_PR` (commit 883cfa8), so that split must be preserved, not undone. `taskStatusTimer` (15 s, string only)
-     and `prCheckTimer` (20 s, `gh` subprocess) also have different lifetimes: `/pr <n>` arms the PR watch with no task.
-     The real defect is the number of *owners*: `stopStatusTimer` / `stopPrCheckPolling` / `clearCurrentTask` / `abortStart` /
-     `session_shutdown` / `finishActivity` each decide what "stop" means and disagree — `abortStart` clears both keys,
-     `finishActivity` only the task key, `clearCurrentTask` stops both timers.
-
-     Refactor, one file (`Pi Agent/for_docker_volume/extensions/todo-task.ts`):
-  - one module-scope state object owning `currentTask`, `watchedPr`, `phase` (`working` → `awaiting_review` → `ended`),
-       `startedAt`, `prCheckStartedAt`, `watchGeneration`, `handledReviewDecisions`, `consecutiveGhFailures`,
-       `consecutiveSendFailures`, `taskProjectRoot`;
-  - one `stopAll(reason)` — idempotent, clears both status keys — called by session shutdown, `abortStart`,
-       `finishActivity` and `/feature end`; the low-level `stopStatusTimer` / `stopPrCheckPolling` stay internal;
-  - one `renderStatus()` that writes both keys from the state, so no site writes a key from a stale local belief;
-  - keep the 15 s / 20 s cadences and both timers. Do NOT merge them into one interval.
-     The state must stay at module scope (Pi never disposes the old instance on session swap, hence `watchGeneration`).
-
-     Watch ends only on: PR merged/closed, the 4 h `PR_CHECKING_MAX_MS` safenet, `/feature end`, session shutdown.
-     An `agent_settled` is deliberately NOT a stop condition, because `/pr <n>` arms the watch with no active task.
-
-     Order: after Feature 75 (poller module) — otherwise 75 rewrites the same code twice. Excludes Bug 73
-     (`reviewThreads` switch): do not change what `checkPrReview` reads.
-     Done when: behaviour identical (no change to what is shown, only fewer code paths writing it), no new files,
-     `todo-task.ts` only.
-
-- Feature-old 22: GIT credentials for not-owned repositories (replaces the obsolete Bug 2).
-  The old interactive prompt ("Do you want to set the GIT credentials ... [Yy]es / [N]o") was removed by a refactor,
-  but two issues remain in scripts/git_common.sh and scripts/start_common.sh:
-  1. clone_repo ignores the failure of set_github_auth_for_repo and the invite-acceptance path silently switches
-     GITHUB_TOKEN to the default agent account (the old "works if you are a collaborator" fallback, now implicit
-     and not communicated to the user).
-  2. Opening a not-owned project without a PAT record for its owner aborts with a terse error that does not
-     suggest the remedy: add the owner's PAT via "🔑 Manage GitHub credentials" and retry.
-
-- Bug 90 | clone_repo ignores the entered "Directory name": `local proj_dir` runs AFTER the `read` and resets
-  the value, so the repo basename is always used (`scripts/start_common.sh`). Found while testing Feature 84.
-  Fix: declare `local proj_dir` before the read (or drop the re-declaration).
-
-- Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
-
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
-- Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
-  Note (from the #125 review): the `~/.pi/agent/extensions/*.ts` copies are stale — they still use the pre-Feature-30 single `STATUS_KEY` and `prReview.ts` (lowercase `e`), while the repo moved to `Pi Agent/for_docker_volume/extensions/` with `pr-review.ts`. Only `todo-task.ts` is up to date there. Refresh the deployed folder (or the deploy step) together with this task.
+- Feature 97 | containers_setup.sh: the extension copy never removes stale files, so a docker volume can keep an extension the repo dropped.
+  Make the copy a mirror of the shipped set (top-level `*.ts`, `_shared/`, `todo-task/`): remove files in the target that are not in the repo, and check the source folder exists before deleting anything.
 
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
@@ -59,55 +18,9 @@
 - Feature 57 | todo-task: I see the log "effectiveDecision: '' (51)" as soon as the agent start to work on the PR.  
   Is it possible to delay this check start timer at the end ?
 
-- Bug 64 (remaining) | todo-task execution report is not attached when the PR is not open
-  `appendReportToPr()` and `finishActivity()` still look the branch PR up with `--state open`, so a
-  merged/closed PR yields an empty list and the report is dropped. Reported as:
-  ```
-  Start PR check...
-  Error: TODO-TASK ❌ PR not found on branch 'fix/39_executable_bit'.
-  Warning: ⚠️ No open PR found on the current branch — execution report not attached to a PR.
-  ```
-  Only the poller half is fixed; this needs its own lookup plus a decision on whether a report should
-  be appended to a merged PR. The poller cannot be reused: it resolves a PR by number/URL that it
-  already knows, while `appendReportToPr()` starts from a branch name.
-
-- Bug 61 | pi-agent errors break the TUI
-  Error: ❌ Git update failed: error: Your local changes to the following files would be overwritten by checkout:
-    Pi Agent/for_docker_volume/agent/extensions/_shared/common.ts
-  Please commit your changes or stash them before you switch branches.
-  Aborting
-
-  After the word "Aborting" the TUI shows the footer and it prints there the error again (overwritting hte plugins text):  
-  '\tPi Agent/for_docker_volume/....\n' + 'Please commit your changes... \n '. A repetition of the error. 
-
 - Feature 63 | When the agent is started in a non-GIT folder, the GitHub token is not set.. so it cammot access to the repos, to make a review for example.
   It should. what is the problem... that we don't know what repo will it need to use ? So we don't know which PAT ?
   Solutions?
-
-- Bug 73 | todo-task /pr must watch unresolved review threads (/pr + /review: use GitHub review threads (isResolved))
-
-  Comment by Pi Lemon (qwen3.8-flash):
-  """ 
-  todo-task /pr + /review: use GitHub review threads (isResolved) as the review protocol
-     /review posts each finding as an inline comment on file:line (a thread); /pr polls reviewThreads and wakes the
-     agent while any thread is unresolved, then tells the human it is ready to merge. No numbering/body parsing.
-     Also: with all agents on one account a formal APPROVE/REQUEST_CHANGES is impossible (GitHub 422 for the PR author),
-     so reviewDecision stays REVIEW_REQUIRED forever and the current poller acts on nothing — it must switch to threads.
-     Follow-up: set required_review_thread_resolution=true in the "main branch" ruleset (admin token).
-  """
-
-  Comamnt by Pi Orange ():
-  """
-  todo-task: `/pr N` must watch unresolved GitHub review threads
-     All agents share one GitHub account, so formal APPROVED/CHANGES_REQUESTED reviews cannot be relied on.
-     `/pr N` currently checks `reviewDecision` and reviews but can miss actionable inline review comments.
-     Use GitHub GraphQL `reviewThreads` and the native `isResolved` field to detect unresolved findings.
-     Notify the agent once per new review comment, deduplicating by comment ID, and stop notifying once
-     the thread is resolved. Replies must use the native thread `/replies` endpoint.
-     Actionable findings must be posted as inline review threads; review summaries remain informational.
-     Do not add custom review numbering, titles, checkbox parsing, or comment-body state tracking.
-     Repeated `REVIEW_REQUIRED` messages should be debug-only or logged only when the state changes.
-  """"
 
 - Feature 74 | todo-task: extract `_shared/session-sender.ts` (from PR #129 review)
   `todo-task.ts` still contains session-sender machinery and duplicate argument parsing:
@@ -178,6 +91,11 @@
 
 ### Pi Agent
 
+- Feature 93 | (todo-task extension) One writer for the two status-bar keys
+  Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
+  Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
+  Why it is useful now: Feature 38 (countdown display) adds a new status writer. Doing this first gives 38 one place to plug into instead of one more scattered writer.
+
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 27.1 [SUSPENDED]: investigate a new pi extension to replace this built-in footer:
@@ -200,22 +118,53 @@
   Verify first: that Pi 1.3.0 tolerates the unknown `additionalApiKeys` field in models.json (ignores it without error)
   Constraints: single file under `extensions/`, reuse `_shared/common.ts` helpers where possible, well under 500 lines
  
+- Bug 73 [SUSPENDED] | todo-task /pr: watch unresolved review threads
+
+     ## Suspended 
+     We want to test the GitHub App for create reviews, so a proper review will be possible from the agents.
+
+     ## Problem
+     All agents share the agent-account. GitHub does not allow approving or rejecting a PR
+     opened by the same account, so agent-to-agent reviews are only plain comments.
+     The PR watcher (`todo-task/pr-watcher.ts`) looks only at review verdicts
+     (approved / rejected), so it never sees these comments — the PR author is not woken
+     up and findings are missed. Example: PR #175 was merged with 1 of 5 review threads
+     still unresolved.
+     Reviews from the user-account do produce real verdicts, so the existing
+     approved/rejected handling works and must stay.
+
+     ## Proposed Solution
+     Add watching of review threads next to the existing verdict checks.
+     Files: `todo-task/pr-watcher.ts` and a new GraphQL helper in `_shared/github.ts`.
+
+     - Fetch the PR with one GraphQL query per check (it replaces `gh pr view`):
+       state, conflicts, verdict, head commit, plus all review threads with their
+       resolved flag and comments (id, author, body, link). One subprocess call, as today.
+     - Wake the agent once for each new comment in an unresolved thread. Remember the
+       comment ids already reported so nothing is sent twice; if sending fails, try
+       again on the next check. When a thread is resolved, stop reporting it.
+     - Do not wake the agent for its own comments: recognise them by the agent's
+       signature line (AI_AGENT_NAME).
+     - The wake-up message lists the unresolved threads (file, line, link) and points
+       to the reply endpoint described in AGENTS.md. When the last unresolved thread
+       is resolved, send one "ready for merge" note.
+     - Do not parse comment bodies or invent numbering to track state: GitHub's
+       resolved flag is the only state.
+     - Keep everything else as it is: verdict handling, conflict notices, and the
+       watch end rules (merged/closed, 4-hour limit, /feature end, session shutdown).
+
+     Order: before Feature 71 (it must not change what the watcher reads) and before
+     Feature 80 (its multi-comment reviews produce the threads this task watches).
+     Follow-up (separate task, needs admin token): enable
+     required_review_thread_resolution in the "main branch" ruleset, so GitHub itself
+     blocks merging while threads are unresolved. It is currently off.
+
+     Done when: a new unresolved comment from another agent wakes the PR author once,
+     resolving the thread stops the reports, and user-account verdicts work as today.
+
 ### OpenCode
 
-- Bug 53 | OpenCode CTRL+C close it instead of Copy the selected text. Do something that avoid CTRL+C to close the program.
 - Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
-
-- Feature 55 | Add a custom OpenCode TUI keybind task: rebind `app.exit` in ~/.config/opencode/cli.json so Ctrl+C does not close the TUI (default is `ctrl+c,
-     ctrl+d,<leader>q`). Keep an alternative exit chord (e.g. `ctrl+d` only) and document it in the team setup docs / setup script.
-
-  Let me know if you want me to add it to TODO.md (it would be its own small branch + PR, or I can just add the line if you prefer).
-
-  Option 2 rebinds it to "none", disabling app.exit entirely — no chord closes the app except <leader>q.
-
-  I prefer Option 2 if /quit or /exit does the same.
-  
-  Allows copy "as normal":
-     { "terminal": { "copy": "select" } }
 
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
@@ -239,6 +188,13 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
+- Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
+- Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
+- Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
+- Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
+- Bug 53 [fix/53_opencode_ctrl_c_copy]: Ctrl+C no longer exits the OpenCode TUI — `app.exit` is `<leader>q` only and `terminal.copy: "select"` copies selected text without Ctrl+C; documented in README OpenCode.md (also completes Feature 55)
+- Bug 90 [fix/90_clone_dir_name]: clone_repo uses the entered "Directory name" — `local repo_url proj_dir` is declared before the reads so the input is no longer reset to the repo basename; names containing `/` or starting with `-` are rejected
 - Feature 84 [feat/84_no_access_guidance]: no-access paths print the remedies (invite agent account with Write role / move to org / add owner PAT); an accepted invitation is re-checked for push permission — read-only grants clone with a warning instead of a false OK
 - Feature 42 [feat/42_todo_fresh_session]: /todo now runs in a fresh session (ctx.newSession + withSession) with the initial prompt delivered as steer — no conversation-history carryover
 - Bug 82 [fix/82_stay_in_menu_when_no_pat]: opening a project without a PAT record stays in the menu — the auth failure is guarded in select_project, the script no longer exits under set -e, and the message suggests "🔑 Manage GitHub credentials"

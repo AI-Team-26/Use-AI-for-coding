@@ -285,7 +285,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
@@ -300,13 +300,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        // External replacement (/new, /resume, /fork): session_shutdown already stopped the timers,
+        // External replacement (/new, /resume, /fork): session_shutdown already ended the watch,
         // pi already cleared the footer. Only a still-open task needs the user's attention.
-        if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
+        if (currentTask !== null) safeNotify("⚠️ PR watch stopped after session switch. Run /pr to resume the watch.", "warning")
     })
 
     pi.on("session_shutdown", () => {
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         stopStatusTimer()
         messageSender = null
     })
@@ -356,7 +356,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
                 return
             }
             const { type: pendingType, number: pendingNumber } = currentTask
-            prWatcher.stopPrCheckPolling()
+            // clearCurrentTask stops the PR watch — one entry point, so the notice is printed once.
             clearCurrentTask("Forceed END of task.")
             safeNotify(`${pendingType === "feature" ? "Feature" : "Bug"} ${pendingNumber} cancelled - no timing saved.`, "info")
             return
@@ -364,10 +364,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
 
         // Cancel any currentTask activity before starting a new one
         if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
-
-        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
-        // is already watched, so a stale watchedPr would silently drop the new task's signal.
-        prWatcher.clearWatch()
 
         await ensureTodoDir()
 
@@ -394,6 +390,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
         }
+
+        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
+        // is already watched. Runs only after the checks above, so a start that fails there
+        // leaves a running /pr watch untouched.
+        if (prWatcher.getWatchedPr() !== null) safeNotify(`Starting ${type} ${number} stops the current PR watch.`, "info")
+        prWatcher.endWatch()
 
         currentTask = { type, number, startTime, completed: false }
 
@@ -427,6 +429,18 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
+\n\
+## Simplify, don't pile on code\n\
+- A good fix makes the wrong state impossible, not adds a check that cleans it up later.\n\
+  Ask "can this state exist at all?" before "how do I clean it up?".\n\
+- Before adding a function, call, or flag: can an existing one absorb the job?\n\
+  Two calls always used together are one function. Merge them.\n\
+- Prefer changing what a function does over adding a second function beside it.\n\
+  Updating its callers and doc comment is part of the task, not extra scope.\n\
+- Removing lines is a valid fix. If your change only adds code, stop once and look for a design that removes the problem instead.\n\
+- Write the line delta (+N/−M) in the PR description. If it only grows, say in one sentence why shrinking was not possible.\n\
+- Simplify only the code the task touches. No drive-by refactors.\n\
+\n\
 **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in your reply to the user. That precise message is used as a signal by a Pi extension to start watching the PR.\n\
 **IMPORTANT**: after you complete the work, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
@@ -439,7 +453,7 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prWatcher.stopPrCheckPolling()
+                prWatcher.endWatch()
                 stopStatusTimer()
                 currentTask = null
                 safeSetStatus(STATUS_KEY_TASK, undefined)

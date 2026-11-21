@@ -23,6 +23,17 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
 4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
 
+## Simplify, don't pile on code
+- A good fix makes the wrong state impossible, not adds a check that cleans it up later.
+  Ask "can this state exist at all?" before "how do I clean it up?".
+- Before adding a function, call, or flag: can an existing one absorb the job?
+  Two calls always used together are one function. Merge them.
+- Prefer changing what a function does over adding a second function beside it.
+  Updating its callers and doc comment is part of the task, not extra scope.
+- Removing lines is a valid fix. If your change only adds code, stop once and look for a design that removes the problem instead.
+- Write the line delta (+N/−M) in the PR description. If it only grows, say in one sentence why shrinking was not possible.
+- Simplify only the code the task touches. No drive-by refactors.
+
 ---
 
 # Workflow & Investigation
@@ -57,17 +68,6 @@ Unless the user's request is 100% unambiguous that they want immediate implement
 - To know what OS and software you and the user are running on, refer to the `Hardware and Software.md` file.
 - **Build on separate build folder:** To avoid conflict with generated artifact create by the host, use a separate "agent_build" output folder.
   For example for `dotnet` use `-o agent_build` argument when call `dotnet restore`, `dotnet build` and `dotnet test`.
-
-
-
-## Plan before Act
-Unless the user's request is 100% unambiguous that they want immediate implementation:
-1. Describe the plan or approach to the user.
-2. Wait for explicit approval before writing code or executing actions.
-3. **Write the plan in the PR description** as a GitHub task list (`- [ ]`) — a chat plan is lost on session reset, the PR survives it.
-4. **CRITICAL:** When the user asks a question, answer the question. Do not jump on making changes without user approval.
-
----
 
 ---
 
@@ -135,11 +135,13 @@ After applying changes, run the test suite if available:
 
 # Project Conventions
 
-## Comments in the code
+## Comments and Docstrings
+- Write comments, docstrings, and messages in plain, everyday English; no jargon, shorthand, or abstract labels like "deps" or "handoff."
+- **State the real goal:** In file docstrings, say plainly what the code does and what specific things it looks for.
 - Write only really useful comments - Avoid comments like "Person first name"
-- Do not refer to backlog Feature or Bug in the comments
 - Explain **WHAT**, not **HOW**, unless the code/solution is not obvious
 - **No history** — a comment never explains what was removed, replaced, or *why* the change was made. It must make sense to a reader who never saw the old code.
+- Avoid references to previous code and to TODO tasks: Anyone that read the file for the first time has to be able too understand.
 
 ## .NET Projects
 - **Central package management** — Use `Directory.Build.props` and `Directory.Packages.props`

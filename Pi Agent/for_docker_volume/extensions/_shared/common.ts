@@ -72,7 +72,14 @@ export function safeSetStatus(
     try {
         ctx.ui.setStatus(key, text)
     } catch (err) {
-        ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        console.error(`${source} ❌ safeSetStatus() failed.`, err)
+        // On a stale ctx every ctx.ui access throws, notify included: guard it so
+        // a failing status write can never escape into a timer and crash Pi.
+        try {
+            ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        } catch {
+            // already reported on the console above
+        }
     }
 }
 
@@ -101,7 +108,7 @@ export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
     } catch (err) {
         const e = err as { stderr?: string; message: string }
         const detail = (e.stderr ?? "").trim() || e.message
-        safeNotify(getCtx, `❌ Git update failed: ${detail}. ${err}`, "error")
+        safeNotify(getCtx, `❌ Git update failed: ${detail}`, "error")
         return false
     }
 }

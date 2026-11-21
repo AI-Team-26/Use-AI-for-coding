@@ -1,8 +1,16 @@
-// ~/.pi/agent/extensions/todo-task/pr-watcher.ts
 /**
- * Follows one PR until it is merged/closed or the watch is stopped, announcing reviewer decisions.
+ * Watches one pull request on GitHub and tells the user and the agent when something happens.
  *
- * Pi-facing side effects arrive through injected deps; GitHub and git are called directly.
+ * It checks the PR every 20 seconds and reports:
+ * - a review verdict (approved or rejected), once per review,
+ * - merge conflicts with the base branch, once per head commit,
+ * - the PR being merged or closed, which ends the watch.
+ *
+ * The watch starts with a known PR number/URL, or finds the open PR of the current
+ * branch. It also ends when stopped by the caller or after 4 hours without a decision.
+ *
+ * GitHub and git are queried directly. Notifications and messages to the agent go
+ * through the functions the caller passes in (PrWatcherDeps).
  */
 
 import { execSync, spawnSync } from "node:child_process"
@@ -45,9 +53,8 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
-    stopPrCheckPolling(): void
-    /** Drop the watched identity and dedup state without touching timers: a new task must not inherit the previous task's PR. */
-    clearWatch(): void
+    /** End the watch: stop polling and drop the watched PR and dedup state. Safe to call when no watch is running. */
+    endWatch(): void
     getWatchedPr(): WatchedPr | null
 }
 
@@ -131,8 +138,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
 
-        stopPrCheckPolling()
-        watchedPr = null
+        endWatch()
 
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
@@ -186,8 +192,8 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
-            stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
+            endWatch()
             await safeSendMessage({
                 customType: `${deps.extension}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
@@ -340,24 +346,25 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     function stopPrCheckPolling(): void {
-        if (prCheckTimer) clearInterval(prCheckTimer)
+        // Idempotent: endWatch() and the re-arm inside startPrCheckPolling() can stop an
+        // already-stopped watch. A second stop must not repeat the "Stop PR check." notice.
+        if (prCheckTimer === null) return
+        clearInterval(prCheckTimer)
         prCheckTimer = null
         firstTick = true
         deps.setPrStatus(undefined)
         deps.notify(`Stop PR check.`, "info")
-        // Deliberately NOT clearing watchedPr here: this also runs on re-arm (session replacement),
-        // where the number must survive to keep following the same PR instead of re-discovering by branch.
     }
 
-    const clearWatch = (): void => {
+    const endWatch = (): void => {
+        stopPrCheckPolling()
         watchedPr = null
         handledReviewDecisions.clear()
     }
 
     return {
         startPrCheckPolling,
-        stopPrCheckPolling,
-        clearWatch,
+        endWatch,
         getWatchedPr: () => watchedPr,
     }
 }
