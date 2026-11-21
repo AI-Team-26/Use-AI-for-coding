@@ -92,11 +92,6 @@
 
 ### Pi Agent
 
-- Feature 93 | (todo-task extension) One writer for the two status-bar keys
-  Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
-  Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
-  Why it is useful now: Feature 38 (countdown display) adds a new status writer. Doing this first gives 38 one place to plug into instead of one more scattered writer.
-
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
 - Feature 27.1 [SUSPENDED]: investigate a new pi extension to replace this built-in footer:
