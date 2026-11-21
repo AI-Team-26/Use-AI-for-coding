@@ -285,7 +285,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prWatcher.clearWatch()
+        prWatcher.endWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
@@ -394,7 +394,8 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // A new task must not inherit the previous task's PR: the marker is ignored while a PR
         // is already watched. Runs only after the checks above, so a start that fails there
         // leaves a running /pr watch untouched.
-        prWatcher.clearWatch()
+        if (prWatcher.getWatchedPr() !== null) safeNotify(`Starting ${type} ${number} stops the current PR watch.`, "info")
+        prWatcher.endWatch()
 
         currentTask = { type, number, startTime, completed: false }
 
@@ -440,7 +441,7 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prWatcher.clearWatch()
+                prWatcher.endWatch()
                 stopStatusTimer()
                 currentTask = null
                 safeSetStatus(STATUS_KEY_TASK, undefined)
