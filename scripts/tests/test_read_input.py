@@ -5,8 +5,9 @@ in scripts/git_common.sh.
 Checks: normal typing, empty Enter (one newline, not two), ESC cancel,
 arrow keys drained without cancelling, leading backslash kept, Ctrl-D as
 first key ends input, closed input, hidden mode (no echo), and ESC at the
-credential prompts (setup_git_global keeps defaults, credentials menu
-Add/Remove cancel back to the menu without touching the PAT file).
+credential prompts (setup_git_global keeps defaults, closed input stops
+the setup, credentials menu Add/Remove cancel back to the menu without
+touching the PAT file).
 
 Run: python3 scripts/tests/test_read_input.py
 The git_common.sh tests need the container layout (/scripts/utils.sh)
@@ -121,9 +122,10 @@ def test_git_common():
         print("SKIP  git_common.sh tests (no /scripts/utils.sh outside the container)")
         return
 
-    # git_common.sh sources /scripts/utils.sh (deployed copy); sourcing the repo
-    # utils.sh first keeps the read_input under test in scope.
-    source_both = f'source "{UTILS}"; source "{GIT_COMMON}"; '
+    # git_common.sh sources /scripts/utils.sh (deployed copy), which may define
+    # its own read_input; sourcing the repo utils.sh last keeps the version
+    # under test in scope.
+    source_both = f'source "{GIT_COMMON}"; source "{UTILS}"; '
     env = dict(os.environ, GITHUB_AGENT_ACCOUNT="test-agent", GITHUB_COMMIT_EMAIL="test@example.com")
 
     with tempfile.NamedTemporaryFile(suffix=".gitconfig", delete=False) as cfg:
@@ -140,19 +142,39 @@ def test_git_common():
     finally:
         os.unlink(cfg_path)
 
-    pat_file = "/scripts/github_pat"
-    before = open(pat_file, "rb").read() if os.path.exists(pat_file) else None
+    # Closed input stops the setup: no defaults written, no code after it runs.
+    with tempfile.NamedTemporaryFile(suffix=".gitconfig", delete=False) as cfg:
+        cfg_path = cfg.name
+    try:
+        env["GIT_CONFIG_GLOBAL"] = cfg_path
+        script = 'set -e; ' + source_both + 'setup_git_global "DefaultName"; echo AFTER_SETUP'
+        proc = subprocess.run(["bash", "-c", script], stdin=subprocess.DEVNULL,
+                              capture_output=True, text=True, timeout=10, env=env)
+        check("setup_git_global: closed input stops setup",
+              "AFTER_SETUP" not in proc.stdout and os.path.getsize(cfg_path) == 0,
+              proc.stdout + proc.stderr)
+    finally:
+        os.unlink(cfg_path)
 
-    # Credentials menu: 2 = Add, ESC at the account prompt, 4 = Exit.
-    rc, out = run_pty(source_both + "manage_git_credentials", [(0.3, b"2\n"), (0.3, b"\x1b"), (0.3, b"4\n")], env)
-    check("credentials Add: ESC back to menu", "(cancelled)" in out and rc == 0, out)
+    # The menu tests run against a temp PAT file, never the real credentials.
+    with tempfile.NamedTemporaryFile(suffix=".pat", delete=False) as pf:
+        pf.write(b"test-account:ghp_0123456789abcdefghijklmnop\n")
+        pat_path = pf.name
+    try:
+        menu_script = source_both + f'github_pat_file="{pat_path}"; manage_git_credentials'
+        before = open(pat_path, "rb").read()
 
-    # 3 = Remove, ESC at the number prompt, 4 = Exit.
-    rc, out = run_pty(source_both + "manage_git_credentials", [(0.3, b"3\n"), (0.3, b"\x1b"), (0.3, b"4\n")], env)
-    check("credentials Remove: ESC back to menu", "(cancelled)" in out and rc == 0, out)
+        # Credentials menu: 2 = Add, ESC at the account prompt, 4 = Exit.
+        rc, out = run_pty(menu_script, [(0.3, b"2\n"), (0.3, b"\x1b"), (0.3, b"4\n")], env)
+        check("credentials Add: ESC back to menu", "(cancelled)" in out and rc == 0, out)
 
-    after = open(pat_file, "rb").read() if os.path.exists(pat_file) else None
-    check("PAT file untouched", before == after)
+        # 3 = Remove, ESC at the number prompt, 4 = Exit.
+        rc, out = run_pty(menu_script, [(0.3, b"3\n"), (0.3, b"\x1b"), (0.3, b"4\n")], env)
+        check("credentials Remove: ESC back to menu", "(cancelled)" in out and rc == 0, out)
+
+        check("PAT file untouched", open(pat_path, "rb").read() == before)
+    finally:
+        os.unlink(pat_path)
 
 
 def main():

@@ -446,10 +446,16 @@ setup_git_global() {
         echo -e "GIT is not configured. Set up name and email:${NC}"
 
         # GITHUB_COMMIT_EMAIL is the GitHub account that gets credited as the commit author.
-        # ESC keeps the defaults, so the start script continues.
-        read_input "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " || echo "(cancelled, using default)"
+        # ESC keeps the defaults so the start script continues; closed input stops the setup.
+        local rc=0
+        read_input "GitHub user name (name used for commits author, leave blank for '${AGENT_NAME}'): " || rc=$?
+        if [[ $rc -eq 1 ]]; then return 1; fi
+        if [[ $rc -eq $INPUT_ESC ]]; then echo "(cancelled, using default)"; fi
         git_username=$INPUT
-        read_input "GitHub user email (account credited for commits, leave blank for '${GITHUB_COMMIT_EMAIL}'): " || echo "(cancelled, using default)"
+        rc=0
+        read_input "GitHub user email (account credited for commits, leave blank for '${GITHUB_COMMIT_EMAIL}'): " || rc=$?
+        if [[ $rc -eq 1 ]]; then return 1; fi
+        if [[ $rc -eq $INPUT_ESC ]]; then echo "(cancelled, using default)"; fi
         git_email=$INPUT
 
         git_username="${git_username:-$AGENT_NAME}"
