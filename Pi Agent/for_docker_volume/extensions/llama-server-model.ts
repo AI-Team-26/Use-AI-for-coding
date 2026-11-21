@@ -7,8 +7,10 @@
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { readFileSync } from "node:fs"
+import { safeSetStatus } from "./_shared/common.ts"
 
 const STATUS_KEY = "alex-piccione-llama-model"
+const EXTENSION = "LLAMA"
 const MODEL_FILE = "/scripts/llama-server-current-model.txt"
 const REFRESH_MS = 30_000
 
@@ -34,16 +36,11 @@ export default function llamaServerModelExtension(pi: ExtensionAPI) {
     let intervalId: ReturnType<typeof setInterval> | null = null
 
     const refresh = () => {
-        const ctx = latestCtx
-        if (!ctx) return
-        try {
-            const model = readCurrentModel() ?? ""
-            if (model !== last) {
-                last = model
-                if (model) ctx.ui.setStatus(STATUS_KEY, `🦙 ${model}`)
-            }
-        } catch {
-            // ctx became stale between capture and call — session_start / agent_settled will replace it
+        if (!latestCtx) return
+        const model = readCurrentModel() ?? ""
+        if (model !== last) {
+            last = model
+            if (model) safeSetStatus(() => latestCtx, STATUS_KEY, `🦙 ${model}`, EXTENSION)
         }
     }
 
