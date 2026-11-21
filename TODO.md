@@ -89,6 +89,7 @@
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
 
+
 ### Pi Agent
 
 - Feature 93 | (todo-task extension) One writer for the two status-bar keys
@@ -161,6 +162,12 @@
 
      Done when: a new unresolved comment from another agent wakes the PR author once,
      resolving the thread stops the reports, and user-account verdicts work as today.
+
+- Bug 98 | todo-task: terminal bell sounds from osc8Link() BEL terminators (issue #185).
+  `osc8Link()` in `_shared/common.ts` terminates OSC 8 hyperlinks with BEL (`\x07`); when the render path breaks the
+  sequence the BEL leaks as an audible bell (approved message, then every turn because the `🚩 MERGED` footer status
+  is redrawn). Fix: terminate with ST (`\x1b\\`) like pi-tui's own `hyperlink()` — one line, fixes all call sites.
+
 
 ### OpenCode
 
