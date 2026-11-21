@@ -78,8 +78,9 @@ INPUT_ESC=2
 # Return codes: 0 = answer read (may be empty), 1 = input closed (terminal
 # gone or Ctrl-D), INPUT_ESC = ESC pressed.
 # Accepted trade-offs: the ESC byte is echoed to the terminal (the next
-# printed text may be garbled), and arrow keys cancel like ESC and leave
-# their extra bytes in the input buffer.
+# printed text may be garbled), arrow keys cancel like ESC and leave
+# their extra bytes in the input buffer, and Ctrl-D as the first key
+# becomes part of the answer instead of ending the input.
 read_input() {
     local prompt=$1 first rest
     INPUT=""
@@ -87,7 +88,6 @@ read_input() {
     printf '%s' "$prompt"
     IFS= read -n1 first || return 1  # n1: pick one character only, so ESC arrives as data
     [[ "$first" == $'\e' ]] && return $INPUT_ESC
-    [[ "$first" == $'\x04' ]] && return 1  # Ctrl-D: end of input; in -n1 mode it arrives as data, not EOF
     [[ -z "$first" ]] && { printf '\n'; return 0; }  # if user press ENTER the next read will not find it
 
     IFS= read -r rest || return 1
