@@ -11,8 +11,6 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync, spawnSync } from "node:child_process"
 
-const MAX_NOTIFY_CHARS = 300
-
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 export const CYAN = "\x1b[36m"
 export const BLUE = "\x1b[34m"
