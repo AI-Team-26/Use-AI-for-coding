@@ -185,7 +185,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); `Pi Agent/deploy_extensions.sh` mirrors the repo extensions into `~/.pi/agent/extensions` (run it once to refresh the deployed copies)
+- Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
 - Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
 - Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
 - Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
