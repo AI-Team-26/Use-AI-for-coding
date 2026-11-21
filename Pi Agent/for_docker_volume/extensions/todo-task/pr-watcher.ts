@@ -53,10 +53,8 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
-    /** Safe to call when no watch is running: it then returns silently. */
-    stopPrCheckPolling(): void
-    /** Drop the watched identity and dedup state without touching timers: a new task must not inherit the previous task's PR. */
-    clearWatch(): void
+    /** End the watch: stop polling and drop the watched PR and dedup state. Safe to call when no watch is running. */
+    endWatch(): void
     getWatchedPr(): WatchedPr | null
 }
 
@@ -140,8 +138,7 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     const stopIfPrFinished = (pr: { number: number; url?: string; state: string }): boolean => {
         if (pr.state !== "MERGED" && pr.state !== "CLOSED") return false
 
-        stopPrCheckPolling()
-        watchedPr = null
+        endWatch()
 
         const link = osc8Link(pr.url ?? "", `PR #${pr.number}`)
         if (pr.state === "MERGED") {
@@ -195,8 +192,8 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
 
         // Safenet: stop polling after PR_CHECKING_MAX_MS even without a reviewer decision.
         if (Date.now() - prCheckStartedAt > PR_CHECKING_MAX_MS) {
-            stopPrCheckPolling()
             const prRef = watchedPr ? ` Waiting for the review of ${osc8Link(watchedPr.url, `PR #${watchedPr.number}`)}.` : ""
+            endWatch()
             await safeSendMessage({
                 customType: `${deps.extension}-stop-pr-check-polling`,
                 content: `⏸️ Stopped watching for PR review (time limit reached).${prRef}`,
@@ -349,28 +346,25 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     function stopPrCheckPolling(): void {
-        // Idempotent: several paths can stop the same watch (END, abortStart, session_shutdown,
-        // and the watcher itself on merge, close or time limit). A second stop must not repeat
-        // the "Stop PR check." notice.
+        // Idempotent: endWatch() and the re-arm inside startPrCheckPolling() can stop an
+        // already-stopped watch. A second stop must not repeat the "Stop PR check." notice.
         if (prCheckTimer === null) return
         clearInterval(prCheckTimer)
         prCheckTimer = null
         firstTick = true
         deps.setPrStatus(undefined)
         deps.notify(`Stop PR check.`, "info")
-        // Deliberately NOT clearing watchedPr here: this also runs on re-arm (session replacement),
-        // where the number must survive to keep following the same PR instead of re-discovering by branch.
     }
 
-    const clearWatch = (): void => {
+    const endWatch = (): void => {
+        stopPrCheckPolling()
         watchedPr = null
         handledReviewDecisions.clear()
     }
 
     return {
         startPrCheckPolling,
-        stopPrCheckPolling,
-        clearWatch,
+        endWatch,
         getWatchedPr: () => watchedPr,
     }
 }

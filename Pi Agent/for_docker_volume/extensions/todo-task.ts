@@ -285,7 +285,7 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
         safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
@@ -300,13 +300,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        // External replacement (/new, /resume, /fork): session_shutdown already stopped the timers,
+        // External replacement (/new, /resume, /fork): session_shutdown already ended the watch,
         // pi already cleared the footer. Only a still-open task needs the user's attention.
-        if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
+        if (currentTask !== null) safeNotify("⚠️ PR watch stopped after session switch. Run /pr to resume the watch.", "warning")
     })
 
     pi.on("session_shutdown", () => {
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         stopStatusTimer()
         messageSender = null
     })
@@ -365,10 +365,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // Cancel any currentTask activity before starting a new one
         if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
 
-        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
-        // is already watched, so a stale watchedPr would silently drop the new task's signal.
-        prWatcher.clearWatch()
-
         await ensureTodoDir()
 
         const startTime = Date.now()
@@ -394,6 +390,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
         }
+
+        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
+        // is already watched. Runs only after the checks above, so a start that fails there
+        // leaves a running /pr watch untouched.
+        if (prWatcher.getWatchedPr() !== null) safeNotify(`Starting ${type} ${number} stops the current PR watch.`, "info")
+        prWatcher.endWatch()
 
         currentTask = { type, number, startTime, completed: false }
 
@@ -451,7 +453,7 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prWatcher.stopPrCheckPolling()
+                prWatcher.endWatch()
                 stopStatusTimer()
                 currentTask = null
                 safeSetStatus(STATUS_KEY_TASK, undefined)
