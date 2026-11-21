@@ -11,6 +11,9 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync, spawnSync } from "node:child_process"
 
+// Notifications are rendered inside the chat area and the terminal footer, so they are kept short enough to fit one line.
+const MAX_NOTIFY_CHARS = 300
+
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 export const CYAN = "\x1b[36m"
 export const BLUE = "\x1b[34m"
@@ -33,6 +36,18 @@ export function osc8Link(url: string, text: string): string {
 }
 
 /**
+ * Fold a message into a single short line: line breaks, tabs and repeated spaces
+ * break the terminal layout of a notification (the text spills over the footer and
+ * the plugins status line), so every notification goes through this first.
+ */
+export function oneLine(text: string, maxChars = MAX_NOTIFY_CHARS): string {
+    const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
+    // Cutting an OSC 8 link in half leaves the terminal hyperlink open, so such messages are kept whole.
+    if (flat.length <= maxChars || flat.includes("\x1b]8;")) return flat
+    return `${flat.slice(0, maxChars - 1)}…`
+}
+
+/**
  * Guarded UI notification for calls made outside a fresh handler/event scope
  * (timers, post-await code). The context is read lazily because it can be
  * replaced by a session swap while the caller is running.
@@ -46,7 +61,7 @@ export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyT
         return
     }
     try {
-        ctx.ui.notify(message, type)
+        ctx.ui.notify(oneLine(message), type)
     } catch (err) {
         console.error(`${source} ❌ safeNotify() failed.`, err)
     }
@@ -100,8 +115,14 @@ export function pullLatestMain(getCtx: ContextGetter, cwd: string): boolean {
         return true
     } catch (err) {
         const e = err as { stderr?: string; message: string }
-        const detail = (e.stderr ?? "").trim() || e.message
-        safeNotify(getCtx, `❌ Git update failed: ${detail}. ${err}`, "error")
+        // stderr holds the real git output; the Error message only repeats the command, so it is not added again.
+        const lines = ((e.stderr ?? "").trim() || e.message)
+            .split("\n")
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0)
+        console.error(`[pullLatestMain] ${lines.join(" | ")}`)
+        const summary = lines.slice(0, 4).reduce((acc, line) => (acc === "" ? line : `${acc}${acc.endsWith(":") ? " " : "; "}${line}`), "")
+        safeNotify(getCtx, `❌ Git update failed: ${summary}`, "error")
         return false
     }
 }
