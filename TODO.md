@@ -91,12 +91,15 @@
 
 ### Pi Agent
 
-- Bug 97 | (todo-task extension) session_shutdown keeps a watched PR that nothing re-uses
-  After /new, /resume or /fork, `stopPrCheckPolling` keeps `watchedPr` for a "re-arm" that no code performs:
-  `/pr` without arguments discovers by branch, `/pr N` passes the number explicitly, and nothing reads
-  `getWatchedPr()` to re-arm. The kept identity only holds the `[PR N CREATED]` marker gate closed
-  (same shape as Bug 96). Decide: either clear the watch on external session replacement, or make the
-  session-start path actually re-arm from `getWatchedPr()`. From the #183 review (point 1).
+- Bug 97 | (todo-task extension) after a session switch the next PR watch never starts
+  Symptom: after /new, /resume or /fork, the agent opens a PR and writes [PR N CREATED], but no watch
+  starts and no review notifications arrive.
+  Cause: `session_shutdown` calls `stopPrCheckPolling()`, which stops the timer but keeps `watchedPr`.
+  The marker handler only runs when `getWatchedPr()` is null, so the kept PR blocks every later marker.
+  Nothing re-arms from the kept number: `/pr` without arguments discovers by branch, `/pr N` takes an
+  explicit number.
+  Fix options (about one line either way, pick one): clear the watch on external session replacement,
+  or make `session_start` re-arm polling from `getWatchedPr()`.
 
 - Feature 93 | (todo-task extension) One writer for the two status-bar keys
   Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.

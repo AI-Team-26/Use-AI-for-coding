@@ -365,10 +365,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // Cancel any currentTask activity before starting a new one
         if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
 
-        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
-        // is already watched, so a stale watchedPr would silently drop the new task's signal.
-        prWatcher.clearWatch()
-
         await ensureTodoDir()
 
         const startTime = Date.now()
@@ -394,6 +390,11 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
         }
+
+        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
+        // is already watched. Runs only after the checks above, so a start that fails there
+        // leaves a running /pr watch untouched.
+        prWatcher.clearWatch()
 
         currentTask = { type, number, startTime, completed: false }
 

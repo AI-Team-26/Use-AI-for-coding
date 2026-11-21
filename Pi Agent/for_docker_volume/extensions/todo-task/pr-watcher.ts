@@ -53,7 +53,7 @@ export interface PrWatcherDeps {
 
 export interface PrWatcherApi {
     startPrCheckPolling(cwd: string, pr?: WatchedPr | null): void
-    /** Stop the timer but keep the watched PR, so a session replacement can re-arm the same watch. */
+    /** Stop the timer but keep the watched PR and dedup state. Only clearWatch() drops the watched identity. */
     stopPrCheckPolling(): void
     /** End the watch: stop polling and drop the watched PR and dedup state. Safe to call when no watch is running. */
     clearWatch(): void
@@ -348,17 +348,14 @@ export function createPrWatcher(deps: PrWatcherDeps): PrWatcherApi {
     }
 
     function stopPrCheckPolling(): void {
-        // Idempotent: several paths can stop the same watch (END, abortStart, session_shutdown,
-        // and the watcher itself on merge, close or time limit). A second stop must not repeat
-        // the "Stop PR check." notice.
+        // Idempotent: session_shutdown, clearWatch() and the re-arm inside startPrCheckPolling()
+        // can stop an already-stopped watch. A second stop must not repeat the "Stop PR check." notice.
         if (prCheckTimer === null) return
         clearInterval(prCheckTimer)
         prCheckTimer = null
         firstTick = true
         deps.setPrStatus(undefined)
         deps.notify(`Stop PR check.`, "info")
-        // Deliberately NOT clearing watchedPr here: this also runs on re-arm (session replacement),
-        // where the number must survive to keep following the same PR instead of re-discovering by branch.
     }
 
     const clearWatch = (): void => {
