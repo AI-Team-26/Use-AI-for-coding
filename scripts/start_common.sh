@@ -39,8 +39,42 @@ print_menu() {
     done
 }
 
+# Reads a menu answer like `select` did, but a lone ESC cancels.
+# The raw answer is put in MENU_REPLY. Return codes tell the caller how to end:
+#   0 = answer read (may be empty)
+#   1 = stdin closed (EOF): terminal gone, caller reports interruption and exits
+#   2 = ESC pressed: deliberate cancel, caller treats it as the "❌ Exit" item
+# Only the first char is read raw (to catch ESC); the rest of the line keeps
+# normal terminal editing. Arrow/function keys also start with ESC, so their
+# sequence is drained and ignored instead of cancelling.
+read_menu_input() {
+    local prompt=$1 first rest seq
+    MENU_REPLY=""
+    while true; do
+        printf '%s' "$prompt"
+        IFS= read -rsn1 first || return 1
+        if [[ "$first" == $'\e' ]]; then
+            seq=""
+            IFS= read -rsn5 -t 0.05 seq 2>/dev/null || :
+            printf '\n'
+            if [[ -z "$seq" ]]; then
+                return 2
+            fi
+            continue
+        fi
+        if [[ -z "$first" ]]; then
+            printf '\n'
+            return 0
+        fi
+        printf '%s' "$first"
+        IFS= read -r rest || return 1
+        MENU_REPLY="$first$rest"
+        return 0
+    done
+}
+
 INPUT_ESC=2
-# Reads one line of user input into the global INPUT; use ESC to cancel.
+# Reads one line of free text into the global INPUT; use ESC to cancel.
 # Return codes: 0 = answer read (may be empty), 1 = input closed (terminal
 # gone or Ctrl-D), INPUT_ESC = ESC pressed.
 # Accepted trade-offs: the ESC byte is echoed to the terminal (the next
@@ -101,17 +135,17 @@ select_project() {
         print_menu "${projects[@]}"
         while true; do
             rc=0
-            read_input "$PS3" || rc=$?
+            read_menu_input "$PS3" || rc=$?
             if [[ $rc -eq 1 ]]; then
-                break      # input closed: handled after the loop
-            elif [[ $rc -eq $INPUT_ESC ]]; then
+                break      # stdin closed: handled after the loop
+            elif [[ $rc -eq 2 ]]; then
                 return 0   # ESC acts like "❌ Exit"
-            elif [[ -z "$INPUT" ]]; then
+            elif [[ -z "$MENU_REPLY" ]]; then
                 continue 2 # empty line: redraw the menu, like `select` did
             fi
             proj=""
-            if [[ "$INPUT" =~ ^[0-9]+$ ]] && (( 10#$INPUT >= 1 && 10#$INPUT <= ${#projects[@]} )); then
-                proj=${projects[10#$INPUT - 1]}
+            if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#projects[@]} )); then
+                proj=${projects[10#$MENU_REPLY - 1]}
             fi
             if [[ "$proj" == "🧩 Clone a repository" ]]; then
                 # clone_repo returns 1 on failure; keep the menu alive under errexit
@@ -287,18 +321,18 @@ delete_proj() {
     local action_done=0 rc=0 proj
     while true; do
         rc=0
-        read_input "$PS3" || rc=$?
+        read_menu_input "$PS3" || rc=$?
         if [[ $rc -eq 1 ]]; then
             break
-        elif [[ $rc -eq $INPUT_ESC ]]; then
+        elif [[ $rc -eq 2 ]]; then
             return 0   # ESC acts like "❌ Exit": back to the main menu
-        elif [[ -z "$INPUT" ]]; then
+        elif [[ -z "$MENU_REPLY" ]]; then
             print_menu "${items[@]}"
             continue
         fi
         proj=""
-        if [[ "$INPUT" =~ ^[0-9]+$ ]] && (( 10#$INPUT >= 1 && 10#$INPUT <= ${#items[@]} )); then
-            proj=${items[10#$INPUT - 1]}
+        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
+            proj=${items[10#$MENU_REPLY - 1]}
         fi
         if [[ "$proj" == "❌ Exit" ]]; then
             return 0
