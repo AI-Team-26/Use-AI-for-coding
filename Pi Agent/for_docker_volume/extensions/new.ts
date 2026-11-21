@@ -12,6 +12,7 @@
 import fs from "node:fs/promises"
 import path from "node:path"
 import type { ExtensionAPI, ExtensionContext, SessionStartEvent, SessionBeforeSwitchEvent } from "@earendil-works/pi-coding-agent"
+import { safeNotify } from "./_shared/common.ts"
 
 /** Temporary file path — only exists during a /new command flow. */
 const MODEL_TEMP_FILE = path.join(process.env.HOME ?? "", ".pi", "agent", "new_command_model_to_use.txt")
@@ -29,21 +30,6 @@ async function saveModel(model: { provider: string; id: string }): Promise<void>
     } catch {
         // TODO: console.error
         // non-fatal
-    }
-}
-
-/**
- * Notify via a possibly-stale ctx.
- * Event handlers here await filesystem work before touching ctx; if the session
- * gets replaced in that window any ctx.ui.* access throws (stale-ctx crash class).
- * Skips only when no ctx is available; any other failure is logged, never silenced.
- */
-function safeNotify(ctx: ExtensionContext | null, message: string, type: "warning" | "error"): void {
-    if (!ctx) return
-    try {
-        ctx.ui.notify(message, type)
-    } catch (err) {
-        console.error("[new] notify failed:", err)
     }
 }
 
@@ -81,7 +67,7 @@ export default function newExtension(pi: ExtensionAPI) {
 
         const saved = await loadAndDeleteModel()
         if (!saved) {
-            safeNotify(ctx, "❌ /new: No saved model found (temp file missing or invalid)", "warning")
+            safeNotify(() => ctx, "❌ /new: No saved model found (temp file missing or invalid)", "warning", "NEW")
             return
         }
 
@@ -89,14 +75,14 @@ export default function newExtension(pi: ExtensionAPI) {
         // plain text plus registry lookup is enough).
         const restored = ctx.modelRegistry.find(saved.provider, saved.id)
         if (!restored) {
-            safeNotify(ctx, `❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error")
+            safeNotify(() => ctx, `❌ /new: Could not find model ${saved.provider}/${saved.id} in registry`, "error", "NEW")
             return
         }
 
         try {
             await pi.setModel(restored)
         } catch (err) {
-            safeNotify(ctx, `❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error")
+            safeNotify(() => ctx, `❌ /new: Failed to restore model: ${err instanceof Error ? err.message : String(err)}`, "error", "NEW")
         }
     })
 }

@@ -5,11 +5,12 @@
 */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
+import { safeSetStatus } from './_shared/common.ts'
 
 const STATUS_KEY = "alex-piccione-agent-name"
 
 export default function agentNameExtension(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
-    ctx.ui.setStatus(STATUS_KEY, process.env.AI_AGENT_NAME ?? "NO-NAME")
+    safeSetStatus(() => ctx, STATUS_KEY, process.env.AI_AGENT_NAME ?? "NO-NAME", STATUS_KEY)
   })
 }

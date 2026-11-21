@@ -5,9 +5,6 @@
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
-- Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
-  Note (from the #125 review): the `~/.pi/agent/extensions/*.ts` copies are stale — they still use the pre-Feature-30 single `STATUS_KEY` and `prReview.ts` (lowercase `e`), while the repo moved to `Pi Agent/for_docker_volume/extensions/` with `pr-review.ts`. Only `todo-task.ts` is up to date there. Refresh the deployed folder (or the deploy step) together with this task.
-
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
   + If it is NOT on main branch: 
@@ -188,6 +185,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); `Pi Agent/deploy_extensions.sh` mirrors the repo extensions into `~/.pi/agent/extensions` (run it once to refresh the deployed copies)
 - Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
 - Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
 - Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
