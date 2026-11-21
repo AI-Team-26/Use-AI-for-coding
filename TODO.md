@@ -166,6 +166,10 @@
 
 ### OpenCode
 
+- Bug 54 [SUSPENDED] | `opencode --continue` doesn't continue the previous session but always starts a new one — in the SAME container.
+  Waiting for confirmation: if a previous session exists for the project, `--continue` should resume it; if that is what happens, there is no bug.
+  Separate issue, already handled in PR #187: sessions were lost on container recreation (new `opencode-data` bind volume).
+
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
   Skip (or recreate) containers that already exist, so the step can be re-run safely.
@@ -188,7 +192,6 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
-- Bug 54 [fix/54_opencode_continue_session]: `opencode --continue` works — the session database (`/root/.local/share/opencode`) is now a per-agent bind volume (`opencode-data`), so sessions survive container recreation
 - Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
 - Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
 - Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
