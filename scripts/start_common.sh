@@ -53,7 +53,7 @@ read_input() {
     printf '%s' "$prompt"
     IFS= read -n1 first || return 1  # n1: pick one character only, so ESC arrives as data
     [[ "$first" == $'\e' ]] && return $INPUT_ESC
-    [[ -z "$first" ]] && { printf '\n'; return 0; }
+    [[ -z "$first" ]] && { printf '\n'; return 0; }  # if user press ENTER the next read will not find it
 
     IFS= read -r rest || return 1
     INPUT="$first$rest"
