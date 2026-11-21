@@ -73,6 +73,27 @@ read_menu_input() {
     done
 }
 
+INPUT_ESC=2
+# Reads one line of free text into the global INPUT; use ESC to cancel.
+# Return codes: 0 = answer read (may be empty), 1 = input closed (terminal
+# gone or Ctrl-D), INPUT_ESC = ESC pressed.
+# Accepted trade-offs: the ESC byte is echoed to the terminal (the next
+# printed text may be garbled), arrow keys cancel like ESC and leave
+# their extra bytes in the input buffer, and Ctrl-D as the first key
+# becomes part of the answer instead of ending the input.
+read_input() {
+    local prompt=$1 first rest
+    INPUT=""
+
+    printf '%s' "$prompt"
+    IFS= read -n1 first || return 1  # n1: pick one character only, so ESC arrives as data
+    [[ "$first" == $'\e' ]] && return $INPUT_ESC
+    [[ -z "$first" ]] && { printf '\n'; return 0; }  # if user press ENTER the next read will not find it
+
+    IFS= read -r rest || return 1
+    INPUT="$first$rest"
+}
+
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
@@ -133,7 +154,8 @@ select_project() {
                 action_done=1
                 break
             elif [[ "$proj" == "🏝️ Create a new project" ]]; then
-                create_new_proj
+                # create_new_proj can fail (e.g. the folder already exists); keep the menu alive under errexit
+                create_new_proj || :
                 action_done=1
                 break
             elif [[ "$proj" == "🗑️ Delete a project" ]]; then
@@ -198,9 +220,14 @@ select_project() {
 clone_repo() {
     echo ""
     local repo_url proj_dir
-    read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
-    read -p "Directory name (leave blank for repo name): " proj_dir
-    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    read_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || { echo "(cancelled)"; return 0; }
+    repo_url=$INPUT
+    if [[ -z "$repo_url" ]]; then
+        echo "(cancelled)"
+        return 0
+    fi
+    read_input "Directory name (leave blank for repo name): " || { echo "(cancelled)"; return 0; }
+    proj_dir=${INPUT:-$(basename "$repo_url" .git)}
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -267,7 +294,9 @@ clone_repo() {
 # --- Create a new project that is not (yet) linked to a repository ---
 create_new_proj() {
     echo ""
-    read -p "Name of the new project: " proj_name
+    local proj_name
+    read_input "Name of the new project: " || { echo "(cancelled)"; return 0; }
+    proj_name=$INPUT
     if [[ -z "$proj_name" ]]; then
         echo "(cancelled)"
         return 0

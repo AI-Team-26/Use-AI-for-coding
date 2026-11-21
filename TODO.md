@@ -2,7 +2,8 @@
 
 ## Backlog
 
-- Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
+- Feature 35.2 | follow-up to 35.1: the credential prompts in `scripts/git_common.sh` (username, repo, account, email...) still use plain `read -p`; give them ESC-to-cancel with `read_input` too.
+  Optional hardening of `read_input` (from PR #180 review): `-r` so a leading backslash is not eaten; arrow-key drain (copy the 3 lines from `read_menu_input`) so arrows don't cancel/spill bytes; `-s` + manual echo to fix the double blank line on empty Enter and the bare-LF paste quirk; treat Ctrl-D as end of input when it is the first key (in `-n1` mode it arrives as data).
 
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.

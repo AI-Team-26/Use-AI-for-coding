@@ -1,3 +1,6 @@
+# TODO: the credential prompts in this file still use plain `read -p`;
+# give them ESC-to-cancel with read_input (start_common.sh) as a follow-up.
+
 source /scripts/utils.sh
 
 required_vars GITHUB_AGENT_ACCOUNT GITHUB_COMMIT_EMAIL
