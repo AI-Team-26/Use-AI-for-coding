@@ -1093,16 +1093,6 @@
             "apiKey": "{{OPENROUTER_API_KEY}}",
             "models": [
                 {
-                    "id": "thinkingmachines/inkling:free",
-                    "maxTokens": 8192,
-                    "reasoning": true
-                },
-                {
-                    "id": "thinkingmachines/inkling-small:free",
-                    "maxTokens": 8192,
-                    "reasoning": true
-                },
-                {
                     "id": "nvidia/nemotron-3.5-lightning:free",
                     "maxTokens": 8192,
                     "reasoning": true
