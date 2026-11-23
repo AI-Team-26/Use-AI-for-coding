@@ -7,15 +7,11 @@
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync } from "node:child_process"
+import { CYAN, BLUE, GREEN, RESET, safeNotify, safeSetStatus } from "./_shared/common.ts"
 
 const STATUS_KEY = "alex-piccione-git-info"
+const EXTENSION = "GIT-INFO"
 const REFRESH_MS = 5_000
-
-// ANSI colors — passed straight into the status line (the footer does not strip escapes)
-const CYAN = "\x1b[36m"
-const BLUE = "\x1b[34m"
-const GREEN = "\x1b[32m"
-const RESET = "\x1b[0m"
 
 function run(cmd: string): string | null {
     try {
@@ -47,12 +43,8 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
         const msg = err instanceof Error ? err.message : String(err)
         if (msg === lastError || !latestCtx) return
         lastError = msg
-        console.error(`[${STATUS_KEY}] ${msg}`)
-        try {
-            latestCtx.ui.notify(`${STATUS_KEY}: ${msg}`, "warning")
-        } catch {
-            // ctx went stale mid-report; next event delivers a fresh one
-        }
+        console.error(`[${EXTENSION}] ${msg}`)
+        safeNotify(() => latestCtx, `${EXTENSION}: ${msg}`, "warning", EXTENSION)
     }
 
     const buildStatus = (): string | undefined => {
@@ -84,17 +76,12 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
     }
 
     const refresh = () => {
-        const ctx = latestCtx
-        if (!ctx) return
+        if (!latestCtx) return
 
         const text = buildStatus()
         if ((text ?? "") !== lastText) {
             lastText = text ?? ""
-            try {
-                ctx.ui.setStatus(STATUS_KEY, text)
-            } catch {
-                // ctx became stale between capture and call — session_start / agent_settled will replace it
-            }
+            safeSetStatus(() => latestCtx, STATUS_KEY, text, EXTENSION)
         }
     }
 
@@ -105,11 +92,7 @@ export default function gitInfoExtension(pi: ExtensionAPI) {
 
         if (!isGitRepo()) {
             stopRefresh()
-            try {
-                ctx.ui.setStatus(STATUS_KEY, undefined)
-            } catch {
-                // ctx went stale mid-call; the next event delivers a fresh one
-            }
+            safeSetStatus(() => latestCtx, STATUS_KEY, undefined, EXTENSION)
             return
         }
 

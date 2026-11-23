@@ -2,13 +2,11 @@
 
 ## Backlog
 
-- Feature 35.1 | free-text `read -p` prompts (clone repo URL, new project name) should accept ESC to cancel, like the menus do (needs the same raw-first-char read trick as `read_menu_input`)
-
 - Feature 38 | todo-task: The PR check polling should report a nice graphical view of passed time and remaining to me maximum.
   It should replace the current counter. It should use max 4 characters spaces. a sort of progress or actually countdown.
 
-- Feature 40: extend `_shared/common.ts` (created by Feature 39) to the remaining extensions: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` still define their own colors/status/notify helpers.
-  Note (from the #125 review): the `~/.pi/agent/extensions/*.ts` copies are stale — they still use the pre-Feature-30 single `STATUS_KEY` and `prReview.ts` (lowercase `e`), while the repo moved to `Pi Agent/for_docker_volume/extensions/` with `pr-review.ts`. Only `todo-task.ts` is up to date there. Refresh the deployed folder (or the deploy step) together with this task.
+- Feature 97 | containers_setup.sh: the extension copy never removes stale files, so a docker volume can keep an extension the repo dropped.
+  Make the copy a mirror of the shipped set (top-level `*.ts`, `_shared/`, `todo-task/`): remove files in the target that are not in the repo, and check the source folder exists before deleting anything.
 
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
@@ -91,17 +89,8 @@
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
 
+
 ### Pi Agent
-
-- Bug 96 | (todo-task extension) A failed task start can silence the next PR watch
-  Symptom: after /feature N fails to open its session, the next [PR N CREATED] marker is ignored and the watch never starts. The user gets no review notifications and no error.
-  Cause: abortStart clears timers and status keys but leaves watchedPr set in the watcher; the marker handler skips when a PR is already "watched".
-  Fix: abortStart also calls prWatcher.clearWatch(). ~3 lines plus a check of the other stop paths for the same hole.
-
-- Feature 93 | (todo-task extension) One writer for the two status-bar keys
-  Symptom it prevents: ghost footer entries (elapsed time shown for a task that no longer exists) when a stop path forgets one key.
-  Fix: a single renderStatus() in todo-task.ts that writes STATUS_KEY_TASK and STATUS_KEY_PR from the current state; every other site updates state only. No behaviour change, no timer changes.
-  Why it is useful now: Feature 38 (countdown display) adds a new status writer. Doing this first gives 38 one place to plug into instead of one more scattered writer.
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
 
@@ -169,9 +158,11 @@
      Done when: a new unresolved comment from another agent wakes the PR author once,
      resolving the thread stops the reports, and user-account verdicts work as today.
 
+
 ### OpenCode
 
-- Bug 54 | `opencode --continue` doesn't continue the previous session but always start a new one.
+- Bug 54 [SUSPENDED] | `opencode --continue` doesn't continue the previous session but always starts a new one — in the SAME container.
+  Waiting for confirmation: if a previous session exists for the project, `--continue` should resume it; if that is what happens, there is no bug.
 
 - Feature 66 | containers.sh: make `create_container` idempotent (Pi Agent + OpenCode)
   A re-run aborts with "name already in use" and, with `set -e`, leaves the remaining agents uncreated.
@@ -195,6 +186,10 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
+- Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
+- Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
+- Feature 35.2 [feat/35_2_esc_credential_prompts]: credential prompts in `git_common.sh` use `read_input` (ESC cancels; `setup_git_global` keeps defaults); `read_input` moved to `utils.sh` and hardened (`-r`, arrow drain, `-s` + manual echo, Ctrl-D ends input, `hidden` mode for PATs)
 - Bug 61 [fix/61_tui_notify_one_line]: error notifications are folded to one short line (`oneLine()` in `_shared/common.ts`, used by `safeNotify()`), and `pullLatestMain` no longer repeats the error text (`${err}` after stderr)
 - Bug 95 [fix/95_stop_pr_check_twice]: `stopPrCheckPolling()` is idempotent — it returns silently when no timer runs, so `/feature end` (via `clearCurrentTask`), `abortStart` and `session_shutdown` no longer print "Stop PR check." more than once, and starting a watch no longer prints a spurious stop first
 - Bug 53 [fix/53_opencode_ctrl_c_copy]: Ctrl+C no longer exits the OpenCode TUI — `app.exit` is `<leader>q` only and `terminal.copy: "select"` copies selected text without Ctrl+C; documented in README OpenCode.md (also completes Feature 55)

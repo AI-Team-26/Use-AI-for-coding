@@ -36,7 +36,7 @@ RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
 # Pi Extensions
 RUN pi install https://github.com/gsanhueza/pi-token-speed
-RUN pi install https://github.com/AI-Team-26/pi-status
+RUN pi install https://github.com/AI-Team-26/pi-extension.agent-status
 RUN pi install npm:pi-llama-cpp-stats
 #RUN pi install npm:pi-voice-stt     crash Pi after update to new TUI version (0.9x)
 

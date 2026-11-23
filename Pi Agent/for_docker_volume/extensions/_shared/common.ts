@@ -11,8 +11,6 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { execSync, spawnSync } from "node:child_process"
 
-const MAX_NOTIFY_CHARS = 300
-
 // ANSI colors — passed straight into the status line (the footer does not strip escapes)
 export const CYAN = "\x1b[36m"
 export const BLUE = "\x1b[34m"
@@ -31,13 +29,7 @@ export type ContextGetter = () => ExtensionContext | null
  */
 export function osc8Link(url: string, text: string): string {
     if (!url) return text
-    return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`
-}
-
-/** Fold a message into one short line: line breaks and tabs break the terminal layout. */
-function oneLine(text: string): string {
-    const flat = text.replace(/[\r\n\t]+/g, " ").replace(/ +/g, " ").trim()
-    return flat.length <= MAX_NOTIFY_CHARS ? flat : `${flat.slice(0, MAX_NOTIFY_CHARS - 1)}…`
+    return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`
 }
 
 /**
@@ -54,7 +46,7 @@ export function safeNotify(getCtx: ContextGetter, message: string, type: NotifyT
         return
     }
     try {
-        ctx.ui.notify(oneLine(message), type)
+        ctx.ui.notify(message, type)
     } catch (err) {
         console.error(`${source} ❌ safeNotify() failed.`, err)
     }
@@ -80,7 +72,14 @@ export function safeSetStatus(
     try {
         ctx.ui.setStatus(key, text)
     } catch (err) {
-        ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        console.error(`${source} ❌ safeSetStatus() failed.`, err)
+        // On a stale ctx every ctx.ui access throws, notify included: guard it so
+        // a failing status write can never escape into a timer and crash Pi.
+        try {
+            ctx.ui.notify(`${source} ❌ safeSetStatus() failed. ${err}.`, "error")
+        } catch {
+            // already reported on the console above
+        }
     }
 }
 

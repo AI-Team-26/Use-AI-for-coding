@@ -133,7 +133,8 @@ select_project() {
                 action_done=1
                 break
             elif [[ "$proj" == "🏝️ Create a new project" ]]; then
-                create_new_proj
+                # create_new_proj can fail (e.g. the folder already exists); keep the menu alive under errexit
+                create_new_proj || :
                 action_done=1
                 break
             elif [[ "$proj" == "🗑️ Delete a project" ]]; then
@@ -198,9 +199,14 @@ select_project() {
 clone_repo() {
     echo ""
     local repo_url proj_dir
-    read -p "GitHub repo URL (MUST BE THE HTTPS PATH): " repo_url
-    read -p "Directory name (leave blank for repo name): " proj_dir
-    proj_dir=${proj_dir:-$(basename "$repo_url" .git)}
+    read_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || { echo "(cancelled)"; return 0; }
+    repo_url=$INPUT
+    if [[ -z "$repo_url" ]]; then
+        echo "(cancelled)"
+        return 0
+    fi
+    read_input "Directory name (leave blank for repo name): " || { echo "(cancelled)"; return 0; }
+    proj_dir=${INPUT:-$(basename "$repo_url" .git)}
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -267,7 +273,9 @@ clone_repo() {
 # --- Create a new project that is not (yet) linked to a repository ---
 create_new_proj() {
     echo ""
-    read -p "Name of the new project: " proj_name
+    local proj_name
+    read_input "Name of the new project: " || { echo "(cancelled)"; return 0; }
+    proj_name=$INPUT
     if [[ -z "$proj_name" ]]; then
         echo "(cancelled)"
         return 0

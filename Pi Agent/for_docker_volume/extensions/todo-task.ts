@@ -72,6 +72,8 @@ const LOCAL_LLAMA_CPP_PROVIDER = "Llama.cpp" // Provider id used for local LLMs 
 
 let latestCtx: ExtensionContext | null = null
 let currentTask: CurrentTask | null = null
+// Current text of the PR status-bar entry; written to the footer only by renderStatus().
+let prStatusText: string | undefined
 // Project root of the running task — needed by finishActivity to locate the branch's PR.
 let taskProjectRoot: string | null = null
 
@@ -141,6 +143,20 @@ function safeSetStatus(key: string, text: string | undefined): void {
     sharedSafeSetStatus(() => latestCtx, key, text, EXTENSION)
 }
 
+// Single writer for the two status-bar keys: the task entry is derived from currentTask,
+// the PR entry from prStatusText. Every other site updates state only, then calls this —
+// a stop path cannot leave a ghost footer entry by forgetting one key.
+function renderStatus(): void {
+    let taskText: string | undefined
+    if (currentTask) {
+        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
+        const label = currentTask.type === "feature" ? "Feature" : "Bug"
+        taskText = `${emoji} ${label} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`
+    }
+    safeSetStatus(STATUS_KEY_TASK, taskText)
+    safeSetStatus(STATUS_KEY_PR, prStatusText)
+}
+
 function startStatusTimer(): void {
     stopStatusTimer()
     if (currentTask === null) return
@@ -149,11 +165,7 @@ function startStatusTimer(): void {
             stopStatusTimer()
             return
         }
-        const emoji = currentTask.type === "feature" ? "☑️" : "🐛"
-        safeSetStatus(
-            STATUS_KEY_TASK,
-            `${emoji} ${currentTask.type === "feature" ? "Feature" : "Bug"} ${currentTask.number} (${formatElapsed(Date.now() - currentTask.startTime)})`,
-        )
+        renderStatus()
     }
     refresh()
     taskStatusTimer = setInterval(refresh, STATUS_UPDATE_MS)
@@ -191,7 +203,10 @@ const ensureTodoDir = (): Promise<void> =>
 const prWatcher = createPrWatcher({
     extension: EXTENSION,
     notify: (message, type) => safeNotify(message, type),
-    setPrStatus: (text) => safeSetStatus(STATUS_KEY_PR, text),
+    setPrStatus: (text) => {
+        prStatusText = text
+        renderStatus()
+    },
     sendUserMessage: async (content, options) => {
         const sender = messageSender ?? activePi
         if (!sender) throw new Error("no session context available")
@@ -245,12 +260,11 @@ _(first push only, without following reviews rework)_
     // ctx was used after awaits above — guard via helpers (skip only when null, log otherwise)
     safeNotify(`✅ ${label} ${currentTask.number} completed in ${elapsedMinutes} minutes.`, "info")
     stopStatusTimer()
-    safeSetStatus(STATUS_KEY_TASK, undefined)
+    currentTask = null
+    renderStatus()
 
     if (taskProjectRoot === null) safeNotify(`❌ finishActivity(). TaskProjectRoot is null.`, "error")
     else appendReportToPr(taskProjectRoot, report)
-
-    currentTask = null
 }
 
 function appendReportToPr(cwd: string, report: string) {
@@ -285,10 +299,10 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
     const clearCurrentTask = (reason: string): void => {
         if (currentTask === null) return
         stopStatusTimer()
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         safeNotify(`Stop check task ${currentTask.number}. ${reason}`, "warning")
-        safeSetStatus(STATUS_KEY_TASK, undefined)
         currentTask = null
+        renderStatus()
     }
 
     pi.on("session_start", (_event, ctx: ExtensionContext) => {
@@ -300,13 +314,13 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             return
         }
 
-        // External replacement (/new, /resume, /fork): session_shutdown already stopped the timers,
+        // External replacement (/new, /resume, /fork): session_shutdown already ended the watch,
         // pi already cleared the footer. Only a still-open task needs the user's attention.
-        if (currentTask !== null) safeNotify("⚠️ PR watch paused after session switch. Run /pr to resume the watch.", "warning")
+        if (currentTask !== null) safeNotify("⚠️ PR watch stopped after session switch. Run /pr to resume the watch.", "warning")
     })
 
     pi.on("session_shutdown", () => {
-        prWatcher.stopPrCheckPolling()
+        prWatcher.endWatch()
         stopStatusTimer()
         messageSender = null
     })
@@ -365,10 +379,6 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
         // Cancel any currentTask activity before starting a new one
         if (currentTask) clearCurrentTask(`Start new task (${type} ${number}).`)
 
-        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
-        // is already watched, so a stale watchedPr would silently drop the new task's signal.
-        prWatcher.clearWatch()
-
         await ensureTodoDir()
 
         const startTime = Date.now()
@@ -394,6 +404,12 @@ export default function todoFeatureExtension(pi: ExtensionAPI) {
             safeNotify(`❌ No "Feature ${number}" or "Bug ${number}" found in the TODO backlog.`, "error")
             return
         }
+
+        // A new task must not inherit the previous task's PR: the marker is ignored while a PR
+        // is already watched. Runs only after the checks above, so a start that fails there
+        // leaves a running /pr watch untouched.
+        if (prWatcher.getWatchedPr() !== null) safeNotify(`Starting ${type} ${number} stops the current PR watch.`, "info")
+        prWatcher.endWatch()
 
         currentTask = { type, number, startTime, completed: false }
 
@@ -427,6 +443,18 @@ If the bug is not present in the TODO backlog or the task is not 100% clear, ask
 While you do the code changes, **consider side effects** and required rework or refactoring**. Leave "TODO" comments in the code if needed.\n\
 Test it when possible.\n\
 ${typeData.extra ?? ""}\n\
+\n\
+## Simplify, don't pile on code\n\
+- A good fix makes the wrong state impossible, not adds a check that cleans it up later.\n\
+  Ask "can this state exist at all?" before "how do I clean it up?".\n\
+- Before adding a function, call, or flag: can an existing one absorb the job?\n\
+  Two calls always used together are one function. Merge them.\n\
+- Prefer changing what a function does over adding a second function beside it.\n\
+  Updating its callers and doc comment is part of the task, not extra scope.\n\
+- Removing lines is a valid fix. If your change only adds code, stop once and look for a design that removes the problem instead.\n\
+- Write the line delta (+N/−M) in the PR description. If it only grows, say in one sentence why shrinking was not possible.\n\
+- Simplify only the code the task touches. No drive-by refactors.\n\
+\n\
 **IMPORTANT**: after you publish the PR, include "[PR N CREATED]" (replace N with the PR number) in your reply to the user. That precise message is used as a signal by a Pi extension to start watching the PR.\n\
 **IMPORTANT**: after you complete the work, include "${typeData.complete}" in your reply to the user. That precise message is used as a signal by a Pi extension.\n`
 
@@ -439,11 +467,11 @@ ${typeData.extra ?? ""}\n\
         //const abortStart = (freshCtx: ExtensionContext | null): void => {
         const abortStart = (): void => {
             try {
-                prWatcher.stopPrCheckPolling()
+                prWatcher.endWatch()
                 stopStatusTimer()
                 currentTask = null
-                safeSetStatus(STATUS_KEY_TASK, undefined)
-                safeSetStatus(STATUS_KEY_PR, undefined)
+                prStatusText = undefined
+                renderStatus()
             } catch (err) {
                 safeNotify(`❌ Failed abortStart(). ${err}`, "error")
             }
