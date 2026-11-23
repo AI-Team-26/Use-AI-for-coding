@@ -2,10 +2,6 @@
 
 ## Backlog
 
-- Feature 97 | containers_setup.sh: when it copies the extension to the  docker volumes, it doesn't remove stale files (old), so a docker volume can keep an extension the repo dropped.
-  A solution is to wipe out the extension folder completely.
-  It is fine to delete hand-placed extensions (they are temporary or has to be set in this repo).
-
 - Feature 41: Create a new Pi extension: /continue
   It should send a message like this: 
   + If it is NOT on main branch: 
@@ -184,6 +180,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 97 [fix/97_wipe_extensions_volume]: `containers_setup.sh` wipes and re-copies `skills` and `extensions` in each docker volume
 - Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
 - Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task
 - Bug 96 [fix/96_abort_start_clears_watch]: a stale watched PR can no longer silence the next PR watch — every end path (failed start, task end, session switch, merge/close, 4-hour limit) goes through `endWatch()`, which stops polling and drops the watched PR, so the next `[PR N CREATED]` marker always arms a watch
