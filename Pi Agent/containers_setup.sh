@@ -69,7 +69,6 @@ for agent in "${!agents[@]}"; do
     mkdir -p "$docker_volumes/$agent/projects"
     docker_volume_pi_agent="$docker_volumes/$agent/.pi/agent"
     mkdir -p "$docker_volume_pi_agent/skills"
-    mkdir -p "$docker_volume_pi_agent/extensions"
 
     # Copy configuration files
     cp for_docker_volume/agent/AGENTS.md "$docker_volume_pi_agent/AGENTS.md"
@@ -90,14 +89,18 @@ for agent in "${!agents[@]}"; do
     sed -i "s/{{AI_AGENT_NAME}}/$AI_AGENT_NAME/g" "$docker_volume_pi_agent/AGENTS.md"
     sed -i "s/{{AI_AGENT_COLOR}}/$AI_AGENT_COLOR/g" "$docker_volume_pi_agent/AGENTS.md"
 
-    # Copy skills and extensions recursively
+    # Copy skills
     cp -r for_docker_volume/skills/* "$docker_volume_pi_agent/skills/" || true
-    # WARN careful to not copy node_modules !
-    #cp -r agent/extensions/* "$docker_volume_pi_agent/extensions/" || true
-    # Only top-level *.ts are shipped; WIP/ is intentionally excluded (keep it that way)
-    cp for_docker_volume/extensions/*.ts "$docker_volume_pi_agent/extensions/" || true
-    cp -r for_docker_volume/extensions/_shared "$docker_volume_pi_agent/extensions/" || true
-    cp -r for_docker_volume/extensions/todo-task "$docker_volume_pi_agent/extensions/" || true
+
+    # Replace the extensions folder: it is wiped first so a volume never keeps an extension
+    # the repo dropped. Hand-placed extensions and WIP/ are removed as well.
+    # Only top-level *.ts are shipped; node_modules and the pnpm files are not copied.
+    extensions_src="for_docker_volume/extensions"
+    extensions_dst="$docker_volume_pi_agent/extensions"
+    rm -rf "$extensions_dst"
+    mkdir -p "$extensions_dst"
+    cp "$extensions_src"/*.ts "$extensions_dst/"
+    cp -r "$extensions_src/_shared" "$extensions_src/todo-task" "$extensions_dst/"
 
     # Set secret keys
     sed -i "s/{{NOVITAAI_API_KEY}}/$NOVITAAI_API_KEY/g" "$docker_volume_pi_agent/models.json"
