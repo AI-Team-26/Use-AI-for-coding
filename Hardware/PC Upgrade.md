@@ -107,29 +107,44 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - Downsides: the X570 chipset takes ~10 W the whole time the PC is on and its small fan is always spinning.
   The AIO adds 5–8 W. An air cooler on the 9700K adds 0 W when idle.
 
-## Bundle #3 - 
+## Bundle #3 — AMD AM5, 500 EUR
 
-Asus PRIME B650 PLUS AM5 ATX con 32gb RAM DDR5
-Dissipatore Deep Cool Gammax AG400 V5 ARGB
-Processore RYZEN 5 7600x 6core 12 thread 4,7ghz socket AM5
+| Part   | Model                                          | Year |
+| ------ | ---------------------------------------------- | ---- |
+| MB     | ASUS Prime B650-Plus, socket AM5, B650, ATX    | 2022 |
+| CPU    | AMD Ryzen 5 7600X, 6 cores / 12 threads, 105 W | 2022 |
+| RAM    | 32 GB DDR5                                     | ?    |
+| Cooler | DeepCool Gammaxx AG400 V5 ARGB, tower air      | ?    |
+
+- AM5 board. PCIe 4.0 x16 from the CPU plus a second x16 slot at 4.0 **x4** from the chipset, so a second
+  card gets the same ~7.9 GB/s as on the other two bundles.
+- **DDR5 at ~96 GB/s**, about double DDR4. This is the tier llama.cpp and MoE engines use when weights leave
+  the GPU, so it is the one real speed gain between the three bundles.
+- First M.2 is PCIe 5.0 x4. No disk is mentioned in the listing.
+- The 7600X is a **105 W part** (142 W PPT), not a 65 W one: ~90-110 W all-core. ECO mode or PPT 88 W in the
+  BIOS turns it into a 65 W-class CPU with no measurable loss for coding.
+- Tower air cooler: no pump, fan near zero at idle. Lower idle draw than the AIO in bundle #2.
+- AM5 is the only live socket here. Zen 5 drops in later.
+- The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
 
 ## Comparison
 
-|                            | Bundle #1 (9700K)  | Bundle #2 (5600X)   |
-| -------------------------- | ------------------ | ------------------- |
-| Price                      | 360 EUR            | 350 EUR             |
-| Motherboard year           | 2018               | 2019                |
-| CPU all-core draw          | ~120–140 W         | ~75–90 W (45 W ECO) |
-| Energy for the same job    | higher             | lower               |
-| Chipset draw, always on    | ~4 W, passive      | ~10 W, small fan    |
-| Cooler                     | none, ~40 EUR      | 120 mm AIO, 5–8 W   |
-| Usable x16 slots           | 2, both from CPU   | 1 + 1 from chipset  |
-| Slot speed for card #2     | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)  |
-| Card #1 speed              | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)   |
-| NVMe                       | 500 GB included    | none, ~60 EUR       |
-| DDR4 bandwidth if offload  | ~51 GB/s at 3200   | ~51 GB/s at 3200    |
-| Future CPU upgrade         | none               | 5700X3D / 5950X     |
-| CPU Mark (not a reason)    | ~14,400            | ~21,800             |
+|                             | Bundle #1 (9700K)  | Bundle #2 (5600X)     | Bundle #3 (7600X)     |
+| --------------------------- | ------------------ | --------------------- | --------------------- |
+| Price                       | 360 EUR            | 350 EUR               | 500 EUR               |
+| Cost with the missing parts | ~400 EUR (+cooler) | ~410 EUR (+1 TB disk) | ~560 EUR (+1 TB disk) |
+| Motherboard year            | 2018               | 2019                  | 2022                  |
+| CPU all-core draw           | ~120-140 W         | ~75-90 W (45 W ECO)   | ~90-110 W (88 W ECO)  |
+| Energy for the same job     | higher             | lower                 | lowest                |
+| Chipset draw, always on     | ~4 W, passive      | ~10 W, small fan      | ~5-7 W, passive       |
+| Cooler                      | none, ~40 EUR      | 120 mm AIO, 5-8 W     | AG400 air, ~0 W idle  |
+| Usable x16 slots            | 2, both from CPU   | 1 + 1 from chipset    | 1 + 1 from chipset    |
+| Slot speed for card #2      | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    |
+| Card #1 speed               | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     |
+| NVMe                        | 500 GB included    | none, ~60 EUR         | none mentioned        |
+| RAM bandwidth if offload    | ~51 GB/s at 3200   | ~51 GB/s at 3200      | ~96 GB/s at 6000      |
+| Future CPU upgrade          | none               | 5700X3D / 5950X       | Zen 5 / Zen 6         |
+| CPU Mark (not a reason)     | ~14,400            | ~21,800               | ~28,500               |
 
 ## Recommendation
 
@@ -139,6 +154,15 @@ a CPU that stays at 75–90 W during any long job.
 
 Take **bundle #1** only if you plan two GPUs on a direct CPU link and want the included NVMe. It costs more
 energy per task, needs a cooler, and cannot be upgraded later.
+
+**Bundle #3** costs 150 EUR more than the others, and once the missing disk is added it is roughly 150-160
+more than either. What that buys: double the RAM bandwidth (96 vs 51 GB/s), a PCIe 5.0 M.2 slot, an air
+cooler instead of an AIO pump, and a socket that still takes new CPUs. It does not buy lower power: the 7600X
+is a 105 W part, so set ECO mode in the BIOS if watts come first.
+
+So: **bundle #2** if this is a stopgap and 350 EUR is the point. **Bundle #3** if you will keep the machine for
+years and want the RAM bandwidth for MoE weights that spill out of VRAM. Bundle #1 only for two cards on CPU
+lanes.
 
 Either way, keep the 500 W Platinum PSU if it is healthy. A right-sized unit runs near its sweet spot on this
 build; a 750 W unit at 60 W load runs a few percent less efficiently.
@@ -246,7 +270,7 @@ That is acceptable for one card and 14B models. It stops being acceptable the da
 A second GPU needs 650–750 W. The current Cooler Master is old; if you keep it, it is fine for the one-card
 build, but replace it when you add a card — capacitors age and it is the one part that can take the rest with it.
 
-## Ask the seller (both bundles)
+## Ask the seller (all bundles)
 
 - Does the board already run this CPU today, and which BIOS version? The X570 needs a Flash BIOS update
   before the first 5600X boot.
