@@ -6,34 +6,34 @@ marked with ~ where the number moves between runs. Prices are rough used prices 
 ## Speed
 
 | CPU             | Socket  | Year | Cores / threads | CPU Mark | 1-thread | Notes                                                            |
-| --------------- | ------- | ---- | --------------- | -------- | -------- | ---------------------------------------------------------------- |
-| i7-3770S        | LGA1155 | 2012 | 4 / 8           | 6,411    | 2,038    | Current CPU. No AVX2, so CPU inference takes the slow code path. |
-| i7-9700K        | LGA1151 | 2018 | 8 / 8           | 14,397   | 2,856    | No hyper-threading, so 8 threads only.                           |
-| i9-9900K        | LGA1151 | 2018 | 8 / 16          | ~18,200  | 2,907    | Newest CPU a Z390 board takes. Runs hot.                         |
-| Ryzen 7 3800X   | AM4     | 2019 | 8 / 16          | 22,942   | 2,709    | Zen 2. A 5800X beats it for similar money.                       |
-| Ryzen 5 5600X   | AM4     | 2020 | 6 / 12          | 21,820   | 3,366    | Best balance of watts and speed on AM4.                          |
-| Ryzen 7 5700X3D | AM4     | 2024 | 8 / 16          | 26,307   | 2,969    | 96 MB L3 helps games, not llama.cpp. Low clocks.                 |
-| Ryzen 5 7600    | AM5     | 2023 | 6 / 12          | ~26,300  | 3,907    | The 7600X with a 65 W limit and a cooler in the box.             |
-| Ryzen 7 5800X   | AM4     | 2020 | 8 / 16          | 27,649   | 3,449    | About 27% more multi-core than a 5600X, at 105 W.                |
-| Ryzen 5 7600X   | AM5     | 2022 | 6 / 12          | 28,252   | 4,127    | Best single thread here. Hits 95 C by design.                    |
-| Ryzen 9 3950X   | AM4     | 2019 | 16 / 32         | 38,389   | 2,701    | 16 cores for compiles. Single thread barely above a 5600X.       |
-| Ryzen 9 5950X   | AM4     | 2020 | 16 / 32         | 45,228   | 3,476    | Fastest AM4 drop-in. Overkill for coding and inference.          |
+| --------------- | ------- | ---- | --------------: | -------: | -------: | ---------------------------------------------------------------- |
+| i7-3770S        | LGA1155 | 2012 |           4 / 8 |    6,411 |    2,038 | Current CPU. No AVX2, so CPU inference takes the slow code path. |
+| i7-9700K        | LGA1151 | 2018 |           8 / 8 |   14,397 |    2,856 | No hyper-threading, so 8 threads only.                           |
+| i9-9900K        | LGA1151 | 2018 |          8 / 16 |  ~18,200 |    2,907 | Newest CPU a Z390 board takes. Runs hot.                         |
+| Ryzen 7 3800X   | AM4     | 2019 |          8 / 16 |   22,942 |    2,709 | Zen 2. A 5800X beats it for similar money.                       |
+| Ryzen 5 5600X   | AM4     | 2020 |          6 / 12 |   21,820 |    3,366 | Best balance of watts and speed on AM4.                          |
+| Ryzen 7 5700X3D | AM4     | 2024 |          8 / 16 |   26,307 |    2,969 | 96 MB L3 helps games, not llama.cpp. Low clocks.                 |
+| Ryzen 5 7600    | AM5     | 2023 |          6 / 12 |  ~26,300 |    3,907 | The 7600X with a 65 W limit and a cooler in the box.             |
+| Ryzen 7 5800X   | AM4     | 2020 |          8 / 16 |   27,649 |    3,449 | About 27% more multi-core than a 5600X, at 105 W.                |
+| Ryzen 5 7600X   | AM5     | 2022 |          6 / 12 |   28,252 |    4,127 | Best single thread here. Hits 95 C by design.                    |
+| Ryzen 9 3950X   | AM4     | 2019 |         16 / 32 |   38,389 |    2,701 | 16 cores for compiles. Single thread barely above a 5600X.       |
+| Ryzen 9 5950X   | AM4     | 2020 |         16 / 32 |   45,228 |    3,476 | Fastest AM4 drop-in. Overkill for coding and inference.          |
 
 ## Power, cooling, price
 
-| CPU             | TDP (PPT)       | All-core draw | ECO mode        | Used price |
-| --------------- | --------------- | ------------- | --------------- | ---------- |
-| i7-3770S        | 65 W            | ~50-60 W      | none            | ~30 EUR    |
-| i7-9700K        | 95 W (PL2 open) | ~120-140 W    | PL1/PL2 in BIOS | ~90 EUR    |
-| i9-9900K        | 95 W (PL2 open) | ~150-180 W    | PL1/PL2 in BIOS | ~160 EUR   |
-| Ryzen 7 3800X   | 105 W (142 W)   | ~120-140 W    | 65 W (88 W PPT) | ~100 EUR   |
-| Ryzen 5 5600X   | 65 W (88 W)     | ~75-90 W      | 45 W (61 W PPT) | ~70 EUR    |
-| Ryzen 7 5700X3D | 105 W (142 W)   | ~100-110 W    | 65 W (88 W PPT) | ~190 EUR   |
-| Ryzen 5 7600    | 65 W (88 W)     | ~70-85 W      | 45 W (61 W PPT) | ~150 EUR   |
-| Ryzen 7 5800X   | 105 W (142 W)   | ~115-130 W    | 65 W (88 W PPT) | ~120 EUR   |
-| Ryzen 5 7600X   | 105 W (142 W)   | ~90-110 W     | 65 W (88 W PPT) | ~140 EUR   |
-| Ryzen 9 3950X   | 105 W (142 W)   | ~140-150 W    | 65 W (88 W PPT) | ~220 EUR   |
-| Ryzen 9 5950X   | 105 W (142 W)   | ~140 W        | 65 W (88 W PPT) | ~300 EUR   |
+| CPU             |   TDP |      PPT | All-core draw | ECO mode        | Used price |
+| --------------- | ----: | -------: | ------------: | --------------- | ---------: |
+| i7-3770S        |  65 W |          |      ~50-60 W | none            |    ~30 EUR |
+| i7-9700K        |  95 W | PL2 open |    ~120-140 W | PL1/PL2 in BIOS |    ~90 EUR |
+| i9-9900K        |  95 W | PL2 open |    ~150-180 W | PL1/PL2 in BIOS |   ~160 EUR |
+| Ryzen 7 3800X   | 105 W |    142 W |    ~120-140 W | 65 W (88 W PPT) |   ~100 EUR |
+| Ryzen 5 5600X   |  65 W |     88 W |      ~75-90 W | 45 W (61 W PPT) |    ~70 EUR |
+| Ryzen 7 5700X3D | 105 W |    142 W |    ~100-110 W | 65 W (88 W PPT) |   ~190 EUR |
+| Ryzen 5 7600    |  65 W |     88 W |      ~70-85 W | 45 W (61 W PPT) |   ~150 EUR |
+| Ryzen 7 5800X   | 105 W |    142 W |    ~115-130 W | 65 W (88 W PPT) |   ~120 EUR |
+| Ryzen 5 7600X   | 105 W |    142 W |     ~90-110 W | 65 W (88 W PPT) |   ~140 EUR |
+| Ryzen 9 3950X   | 105 W |    142 W |    ~140-150 W | 65 W (88 W PPT) |   ~220 EUR |
+| Ryzen 9 5950X   | 105 W |    142 W |        ~140 W | 65 W (88 W PPT) |   ~300 EUR |
 
 **Power terms in this table**
 
