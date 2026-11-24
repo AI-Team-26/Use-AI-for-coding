@@ -159,12 +159,12 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 
 MSI MPG X570 Gaming Plus AMD Ryzen 7 5800X RAM 32G
 
-Scheda madre MSI MPG X570 Gaming Plus
-Processore AMD Ryzen 7 5800X 8-Core 3801 MHz
+MB: MSI MPG X570 Gaming Plus
+CPU: AMD Ryzen 7 5800X 8-Core 3801 MHz
+RAM: G.Skill Ripjaws DDR4 32GB 3600 CL16  (2x 8GB) ❌
 Dissipatore be quiet! Dark Rock 4
-RAM G.Skill Ripjaws DDR4 32GB 3600 CL16  (2x 8GB)
 
-Neet to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
+Need to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
 
 ## Bundle #5 - ASUS ROG X570-E - 320 EUR 🔥🥇
 
@@ -172,8 +172,8 @@ Neet to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules i
 
 Ryzen 9 3950X ASUS ROG X570-E 32GB G.Skill DDR4
 
-CPU: AMD Ryzen 9 3950X (16 core / 32 thread) – ideale per gaming di fascia alta e applicazioni workstation.
-Scheda madre: ASUS ROG Strix X570-E Gaming (con Wi-Fi e Bluetooth integrati).
+MB: ASUS ROG Strix X570-E Gaming (con Wi-Fi e Bluetooth integrati).
+CPU: AMD Ryzen 9 3950X (16 core / 32 thread)
 RAM: 32 GB G.Skill Trident Z Neo RGB (kit 2×16 GB, DDR4-3600, CL16).
 
 
