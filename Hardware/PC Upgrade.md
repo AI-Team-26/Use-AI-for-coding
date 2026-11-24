@@ -15,6 +15,27 @@ CPU speed is at the bottom of the list — the 3770S is enough.
 | GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
 | PSU   | Cooler Master 500 W, 80+ Platinum           |      |
 
+
+### NVMe on PCI adapter issue 
+
+Latest BIOS and drivers. Nothing to update neither in Windows 10 x64.  
+Many SATA attached (probably 4).  
+Wifi card attached to another slot.  
+Audio on the board disabled to save power/chanenls.
+Bluetooth active.
+The RTX is not recognized when conencted to PCIe slot A, I tried all the PCI settings in the BIOS.  
+Finally able to have it running on slot B. So, the GPU is on PCIs slot B.
+
+I have a PCIe adapter on PCIe slot A for a NVMe disk.  
+Here the problem. It is never recognized at first start, it requires a restart after Windows is fully loaded. Sometimes 2 restarts.  
+Worked in this way for 2 months.  
+This last week it started to require 2 restarts and in the last 2 days it started to stop beeing visible, once it caused BSOD.  
+Now, it just disappeared. I was able to see it in Explorer but then not able to open the files and finally disappeared. 
+In Windows Devices manager... refresh.. it can came up... but it really is unstable.
+
+What to do?
+
+
 ## Where the watts actually go
 
 During inference the GPU pulls 110–120 W (undervolted) and the CPU idles at 5–15 W. So the GPU is the
@@ -72,7 +93,9 @@ Before buying anything, retry the blue slot. It is free:
 
 If the blue slot is dead, only a new board fixes it. That is the honest reason to buy one of the bundles.
 
-## Bundle #1 — Intel, 360 EUR
+## Bundle #1 — Intel, 360 EUR 
+
+[https://www.ebay.it/itm/860160421053]
 
 | Part | Model                                           | Year |
 | ---- | ----------------------------------------------- | ---- |
@@ -89,6 +112,8 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - Passive chipset: no small fan running all day.
 
 ## Bundle #2 — AMD, 350 EUR
+
+[https://www.ebay.it/itm/287696521007]
 
 | Part   | Model                                      | Year |
 | ------ | ------------------------------------------ | ---- |
@@ -126,6 +151,20 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - Tower air cooler: no pump, fan near zero at idle. Lower idle draw than the AIO in bundle #2.
 - AM5 is the only live socket here. Zen 5 drops in later.
 - The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
+
+## Bundle #4 - MSI MPG X570 220 EUR
+
+[https://www.subito.it/informatica/msi-mpg-x570-gaming-plus-amd-ryzen-7-5800x-ram-32g-sondrio-646976442.htm]
+
+MSI MPG X570 Gaming Plus AMD Ryzen 7 5800X RAM 32G
+
+Scheda madre MSI MPG X570 Gaming Plus
+Processore AMD Ryzen 7 5800X 8-Core 3801 MHz
+Dissipatore be quiet! Dark Rock 4
+RAM G.Skill Ripjaws DDR4 32GB 3600 CL16  (2x 8GB)
+
+Neet to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
+
 
 ## Comparison
 
