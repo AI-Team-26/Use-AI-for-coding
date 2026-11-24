@@ -3,6 +3,8 @@ import { Plugin } from "@opencode/plugin/tui"
 const RUNNING_ICON = "⏳"
 const IDLE_ICON = "🖐️"
 
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g
+
 /**
  * Terminal title showing whether the active session is working or idle.
  * The title must be written from the TUI part: the background server has no
@@ -11,7 +13,7 @@ const IDLE_ICON = "🖐️"
 export default Plugin.define({
   id: "agent-terminal-title",
   setup(context) {
-    const agentName = process.env.AI_AGENT_NAME?.trim() || "agent"
+    const agentName = (process.env.AI_AGENT_NAME ?? "").replace(CONTROL_CHARS, "").trim() || "agent"
     let lastTitle: string | undefined
 
     const write = (running: boolean) => {
@@ -27,9 +29,11 @@ export default Plugin.define({
       return route.type === "session" ? route.sessionID : undefined
     }
 
+    // The TUI data API collapses the server status union (idle | busy | retry)
+    // to "idle" | "running"; "not idle" is the single running predicate.
     const refresh = () => {
       const sessionID = activeSessionID()
-      write(sessionID !== undefined && context.data.session.status(sessionID) === "running")
+      write(sessionID !== undefined && context.data.session.status(sessionID) !== "idle")
     }
 
     refresh()
@@ -44,7 +48,12 @@ export default Plugin.define({
       write(false)
     })
 
+    // Route switches do not always emit an event, so re-check the active session;
+    // write() skips unchanged titles.
+    const timer = setInterval(refresh, 1000)
+
     return () => {
+      clearInterval(timer)
       stopStatus()
       stopViewed()
       stopIdle()
