@@ -139,6 +139,42 @@ build; a 750 W unit at 60 W load runs a few percent less efficiently.
 
 Cheapest for power: fix the slot with the BIOS and change nothing. See the last section.
 
+## Other boards sold with a 32 GB RAM bundle
+
+Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
+(except the X570 bundle above, which includes the CPU and a cooler).
+
+| Board                        | Socket  | RAM and bandwidth   | GPU slots                                     | M.2 slots       | Second GPU    |
+| ---------------------------- | ------- | ------------------- | --------------------------------------------- | --------------- | ------------- |
+| MSI MPG X570 Gaming Plus     | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset | 4.0 x4 + 3.0 x4 | yes, 7.9 GB/s |
+| ASUS Prime B650-Plus WiFi II | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset     | 5.0 x4 + 4.0 x4 | yes, 7.9 GB/s |
+| ASUS Prime B660M-A D4 WiFi   | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset | 4.0 x4 + 4.0 x4 | yes, 3.9 GB/s |
+| Gigabyte B760 DS3H GEN5      | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1              | 4.0 x4 + 4.0 x4 | no            |
+
+**ASUS Prime B650-Plus WiFi II** — best platform of the list. DDR5-6000 doubles the RAM bandwidth, which is
+the tier llama.cpp offload and MoE engines actually use. PCIe 5.0 on the first M.2, second x16 slot at
+4.0 x4, passive chipset (no fan). AM5 still gets new CPUs. Needs an AM5 CPU (7500F / 7600, ~120-150 EUR).
+
+**ASUS Prime B660M-A D4 WiFi** — the DDR4 Intel option, and a real one: unlike the B760 below it has a
+second x16-length slot, at PCIe 3.0 x4 (~3.9 GB/s). That is fine for inference and half the load speed of
+the 4.0 boards. Two 4.0 M.2 slots, passive chipset, low idle. Costs: mATX, so two GPUs need a 4-slot case
+and the airflow between them is tight; LGA1700 is a dead socket; DDR4 gives 51 GB/s.
+
+**Gigabyte B760 DS3H GEN5** — skip it if two GPUs are the plan. One x16 slot; the other four x16-length
+slots are wired **x1**. "GEN5" is only the graphics slot, both M.2 are PCIe 4.0. Dead socket as well.
+
+Chipset power, always on: X570 ~10 W with a small fan, B650 ~5-7 W passive, B660 / B760 ~4-6 W passive.
+That is a few watts against a CPU at 75-140 W under load, but it is the part that runs all day.
+
+Board ranking for this build:
+1. **B650-Plus WiFi II** if the bundle is cheap enough that RAM + board + CPU lands near 350 EUR.
+2. **X570 Gaming Plus** at 350 EUR complete: cheapest known-good, second card at 4.0 x4, 5700X3D later.
+3. **B660M-A D4 WiFi**: workable, DDR4 and a slower second slot, mATX space is the catch.
+4. **B760 DS3H GEN5**: only if you give up the second GPU.
+
+Ask both sellers: is the 32 GB **2 x 16 GB or 1 x 32 GB**? One stick halves the RAM bandwidth, which is
+the whole reason to pick DDR5. And on AM5, four sticks of DDR5 rarely reach 6000.
+
 ## Adding a second GPU: RTX 3060 12 GB
 
 This is where "low power" and "bigger models" collide. A second card adds ~110 W (undervolted) during
