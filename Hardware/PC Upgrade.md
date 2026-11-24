@@ -3,6 +3,7 @@
 Goal: run local models with llama.cpp, plus coding. No gaming.  
 Criteria, in this order: **low power consumption**, then VRAM, then everything else.  
 CPU speed is at the bottom of the list — the 3770S is enough.  
+Benchmarks and power figures of every CPU mentioned here: [CPU_comparison.md](CPU_comparison.md).
 
 ## Current PC
 
