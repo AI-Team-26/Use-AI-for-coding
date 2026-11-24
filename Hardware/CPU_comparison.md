@@ -35,6 +35,15 @@ marked with ~ where the number moves between runs. Prices are rough used prices 
 | Ryzen 9 3950X   | 105 W (142 W)   | ~140-150 W    | 65 W (88 W PPT) | ~220 EUR   |
 | Ryzen 9 5950X   | 105 W (142 W)   | ~140 W        | 65 W (88 W PPT) | ~300 EUR   |
 
+**Power terms in this table**
+
+- **TDP** is a cooling number, not a consumption number. A 65 W part can draw more than 65 W for a while.
+- **PPT** (AMD) is the real package power limit. Every AMD part has one, and it always sits above the TDP:
+  65 W TDP means 88 W PPT, 105 W TDP means 142 W PPT.
+- **PL1 / PL2** (Intel) are the long-term and short-term limits. **PL2 open** means the board ignores the
+  short-term limit, so a 95 W chip like the 9700K or 9900K holds 120-180 W for minutes, not seconds, as long
+  as the cooler can take it. That is why these two need a real cooler and a case with airflow.
+
 ## How to read this
 
 - **CPU Mark** is the multi-core total. It answers "how fast does a compile, an unpack or a model load finish".
