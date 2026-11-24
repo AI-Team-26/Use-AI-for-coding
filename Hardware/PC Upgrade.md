@@ -235,16 +235,16 @@ Cheapest for power: fix the slot with the BIOS and change nothing. See the last 
 Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
 (except the X570 bundles above, which include the CPU).
 
-| Board                        | Chipset | Year | Socket  | RAM and bandwidth  | GPU slots                                              | Second GPU     | Verdict                |
-| ---------------------------- | ------- | ---- | ------- | ------------------ | ------------------------------------------------------ | -------------- | ---------------------- |
-| MSI MPG X570 Gaming Plus     | X570    | 2019 | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset          | yes, 7.9 GB/s  | buy, bundles #2 and #4 |
-| ASUS ROG Strix X570-E Gaming | X570+   | 2019 | AM4     | DDR4-3600, 57 GB/s | x16 4.0 from CPU, **switches to x8/x8 with two cards** | yes, 15.8 GB/s | buy, bundle #5         |
-| ASUS TUF Gaming B550-Plus    | B550    | 2020 | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset          | yes, 3.9 GB/s  | skip, see below        |
-| ASUS Prime B650-Plus WiFi II | B650    | 2022 | AM5     | DDR5-6000, 96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset              | yes, 7.9 GB/s  | OK                     |
-| ASUS Prime B660M-A D4 WiFi   | B660    | 2022 | LGA1700 | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset          | yes, 3.9 GB/s  | workable               |
-| Gigabyte B760 DS3H GEN5      | B760    | 2023 | LGA1700 | DDR5-6000, 96 GB/s | x16 5.0 from CPU + 4 slots at x1                       | no             | skip                   |
-| Z370 / Z390                  |         |      |         |                    |                                                        |                | ???                    |
-| ASUS ROG Strix B550-F Gaming |         |      |         |                    |                                                        |                | ???                    |
+| Board                        | Chipset     | Socket  | RAM and bandwidth  | GPU slots                                     |   2nd GPU | Verdict             |
+| ---------------------------- | ----------- | ------- | ------------------ | --------------------------------------------- | --------: | ------------------- |
+| MSI MPG X570 Gaming Plus     | X570 (2019) | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset |  7.9 GB/s | buy, bundles #2, #4 |
+| ASUS ROG Strix X570-E Gaming | X570 (2019) | AM4     | DDR4-3600, 57 GB/s | x16 4.0 from CPU, **x8/x8 with two cards**    | 15.8 GB/s | buy, bundle #5      |
+| ASUS TUF Gaming B550-Plus    | B550 (2020) | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset |  3.9 GB/s | skip, see below     |
+| ASUS Prime B650-Plus WiFi II | B650 (2022) | AM5     | DDR5-6000, 96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset     |  7.9 GB/s | OK                  |
+| ASUS Prime B660M-A D4 WiFi   | B660 (2022) | LGA1700 | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset |  3.9 GB/s | workable            |
+| Z370 / Z390                  |             |         |                    |                                               |           | ???                 |
+| Gigabyte B760 DS3H GEN5      | B760 (2023) | LGA1700 | DDR5-6000, 96 GB/s | x16 5.0 from CPU + 4 slots at x1              |        no | ❌ skip             |
+| ASUS ROG Strix B550-F Gaming |             |         |                    |                                               |           | ❌ skip, bad slot B |
 
 Year is the chipset year. Suffixes in the name (WiFi II, GEN5) mean a later revision of the same board,
 not a newer platform. The year that matters is the socket:
