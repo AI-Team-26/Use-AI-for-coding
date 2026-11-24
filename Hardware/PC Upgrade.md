@@ -1,8 +1,8 @@
 # PC upgrade
 
-Goal: run local models with llama.cpp, plus coding. No gaming.
-Criteria, in this order: **low power consumption**, then VRAM, then everything else.
-CPU speed is at the bottom of the list — the 3770S is enough.
+Goal: run local models with llama.cpp, plus coding. No gaming.  
+Criteria, in this order: **low power consumption**, then VRAM, then everything else.  
+CPU speed is at the bottom of the list — the 3770S is enough.  
 
 ## Current PC
 
@@ -10,10 +10,10 @@ CPU speed is at the bottom of the list — the 3770S is enough.
 | ----- | ------------------------------------------- | ---- |
 | MB    | ASUS P8Z77-V LX, socket LGA1155, Z77        | 2012 |
 | CPU   | Intel i7-3770S, 4 cores / 8 threads, 65 W   | 2012 |
-| RAM   | 32 GB DDR3-1600, 4 x 8 GB Corsair Vengeance | ?    |
-| Disks | SATA only, this board has no M.2 slot       | ?    |
+| RAM   | 32 GB DDR3-1600, 4 x 8 GB Corsair Vengeance |      |
+| Disks | SATA only, this board has no M.2 slot       |      |
 | GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
-| PSU   | Cooler Master 500 W, 80+ Platinum           | ?    |
+| PSU   | Cooler Master 500 W, 80+ Platinum           |      |
 
 ## Where the watts actually go
 
@@ -78,8 +78,8 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 | ---- | ----------------------------------------------- | ---- |
 | MB   | Gigabyte Z390 AORUS ULTRA, socket LGA1151, Z390 | 2018 |
 | CPU  | Intel i7-9700K, 8 cores / 8 threads, 95 W       | 2018 |
-| RAM  | 32 GB DDR4, speed not stated                    | ?    |
-| Disk | AORUS NVMe 500 GB                               | ?    |
+| RAM  | 32 GB DDR4, speed not stated                    |      |
+| Disk | AORUS NVMe 500 GB                               |      |
 
 - Two cards at PCIe 3.0 x8/x8, both from the CPU. Best slot layout of the two.
 - Three M.2 slots, all PCIe 3.0 x4. The 500 GB NVMe is included.
