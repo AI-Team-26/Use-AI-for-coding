@@ -21,19 +21,19 @@ marked with ~ where the number moves between runs. Prices are rough used prices 
 
 ## Power, cooling, price
 
-| CPU             | TDP (PPT)       | All-core draw | ECO mode        | Cooler in box       | Used price |
-| --------------- | --------------- | ------------- | --------------- | ------------------- | ---------- |
-| i7-3770S        | 65 W            | ~50-60 W      | none            | yes, boxed          | ~30 EUR    |
-| i7-9700K        | 95 W (PL2 open) | ~120-140 W    | PL1/PL2 in BIOS | no                  | ~90 EUR    |
-| i9-9900K        | 95 W (PL2 open) | ~150-180 W    | PL1/PL2 in BIOS | no                  | ~160 EUR   |
-| Ryzen 7 3800X   | 105 W (142 W)   | ~120-140 W    | 65 W (88 W PPT) | yes, Wraith Prism   | ~100 EUR   |
-| Ryzen 5 5600X   | 65 W (88 W)     | ~75-90 W      | 45 W (61 W PPT) | yes, Wraith Stealth | ~70 EUR    |
-| Ryzen 7 5700X3D | 105 W (142 W)   | ~100-110 W    | 65 W (88 W PPT) | no                  | ~190 EUR   |
-| Ryzen 5 7600    | 65 W (88 W)     | ~70-85 W      | 45 W (61 W PPT) | yes, Wraith Stealth | ~150 EUR   |
-| Ryzen 7 5800X   | 105 W (142 W)   | ~115-130 W    | 65 W (88 W PPT) | no                  | ~120 EUR   |
-| Ryzen 5 7600X   | 105 W (142 W)   | ~90-110 W     | 65 W (88 W PPT) | no                  | ~140 EUR   |
-| Ryzen 9 3950X   | 105 W (142 W)   | ~140-150 W    | 65 W (88 W PPT) | no                  | ~220 EUR   |
-| Ryzen 9 5950X   | 105 W (142 W)   | ~140 W        | 65 W (88 W PPT) | no                  | ~300 EUR   |
+| CPU             | TDP (PPT)       | All-core draw | ECO mode        | Used price |
+| --------------- | --------------- | ------------- | --------------- | ---------- |
+| i7-3770S        | 65 W            | ~50-60 W      | none            | ~30 EUR    |
+| i7-9700K        | 95 W (PL2 open) | ~120-140 W    | PL1/PL2 in BIOS | ~90 EUR    |
+| i9-9900K        | 95 W (PL2 open) | ~150-180 W    | PL1/PL2 in BIOS | ~160 EUR   |
+| Ryzen 7 3800X   | 105 W (142 W)   | ~120-140 W    | 65 W (88 W PPT) | ~100 EUR   |
+| Ryzen 5 5600X   | 65 W (88 W)     | ~75-90 W      | 45 W (61 W PPT) | ~70 EUR    |
+| Ryzen 7 5700X3D | 105 W (142 W)   | ~100-110 W    | 65 W (88 W PPT) | ~190 EUR   |
+| Ryzen 5 7600    | 65 W (88 W)     | ~70-85 W      | 45 W (61 W PPT) | ~150 EUR   |
+| Ryzen 7 5800X   | 105 W (142 W)   | ~115-130 W    | 65 W (88 W PPT) | ~120 EUR   |
+| Ryzen 5 7600X   | 105 W (142 W)   | ~90-110 W     | 65 W (88 W PPT) | ~140 EUR   |
+| Ryzen 9 3950X   | 105 W (142 W)   | ~140-150 W    | 65 W (88 W PPT) | ~220 EUR   |
+| Ryzen 9 5950X   | 105 W (142 W)   | ~140 W        | 65 W (88 W PPT) | ~300 EUR   |
 
 ## How to read this
 
@@ -92,6 +92,11 @@ per watt, which matters more than the CPU Mark total for a machine that is on al
 - **Ryzen 9 3950X** - 16 cores, great for long compiles, widest gap between idle and load. Single thread is
   barely better than a 5600X, so buy it for the core count only.
 - **Ryzen 9 5950X** - the fastest CPU AM4 will ever take. Overkill for coding plus inference.
+
+## What comes in the box
+
+The 5600X, 7600, 3800X and 3770S ship with a stock cooler. The 7600X, 5800X, 5700X3D, 3950X, 5950X, 9700K and
+9900K do not, so budget 40-60 EUR for a tower cooler on those.
 
 ## Pick order for a power-first llama.cpp build
 
