@@ -16,8 +16,7 @@ Benchmarks and power figures of every CPU mentioned here: [CPU_comparison.md](CP
 | GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
 | PSU   | Cooler Master 500 W, 80+ Platinum           |      |
 
-
-### NVMe on PCI adapter issue 
+### NVMe on PCI adapter issue
 
 Latest BIOS and drivers. Nothing to update neither in Windows 10 x64.  
 Many SATA attached (probably 4).  
@@ -31,11 +30,10 @@ I have a PCIe adapter on PCIe slot A for a NVMe disk.
 Here the problem. It is never recognized at first start, it requires a restart after Windows is fully loaded. Sometimes 2 restarts.  
 Worked in this way for 2 months.  
 This last week it started to require 2 restarts and in the last 2 days it started to stop beeing visible, once it caused BSOD.  
-Now, it just disappeared. I was able to see it in Explorer but then not able to open the files and finally disappeared. 
+Now, it just disappeared. I was able to see it in Explorer but then not able to open the files and finally disappeared.
 In Windows Devices manager... refresh.. it can came up... but it really is unstable.
 
 What to do?
-
 
 ## Where the watts actually go
 
@@ -58,19 +56,20 @@ Nice to have, not a reason to upgrade.
 
 ## Power of the parts in play
 
-| Part            | TDP     | Typical real draw        | Note                                        |
-| --------------- | ------- | ------------------------ | ------------------------------------------- |
-| i7-3770S        | 65 W    | ~50–65 W all-core        | 22 nm, current CPU                          |
-| i7-9700K        | 95 W    | ~120–140 W all-core      | Z390 ignores the TDP by default; can cap it |
-| Ryzen 5 5600X   | 65 W    | ~75–90 W all-core        | ECO mode in BIOS drops it to ~45 W          |
-| Z390 chipset    | ~4 W    | ~4 W, always on          | passive heatsink                            |
-| X570 chipset    | ~10 W   | ~10 W, always on         | small fan, runs the whole time the PC is on |
-| 120 mm AIO      | 5–8 W   | 5–8 W, always on         | pump + fan; an air cooler adds 0 W          |
-| RTX 4060 Ti     | 160 W   | 110–120 W undervolted    | ~5–8 W idle                                 |
-| RTX 3060 12 GB  | 170 W   | ~110 W undervolted       | ~5–8 W idle                                 |
-| RTX 3090        | 350 W   | 300–350 W                | wrong part for a low-power build            |
+| Part           | TDP   | Typical real draw     | Note                                        |
+| -------------- | ----- | --------------------- | ------------------------------------------- |
+| i7-3770S       | 65 W  | ~50–65 W all-core     | 22 nm, current CPU                          |
+| i7-9700K       | 95 W  | ~120–140 W all-core   | Z390 ignores the TDP by default; can cap it |
+| Ryzen 5 5600X  | 65 W  | ~75–90 W all-core     | ECO mode in BIOS drops it to ~45 W          |
+| Z390 chipset   | ~4 W  | ~4 W, always on       | passive heatsink                            |
+| X570 chipset   | ~10 W | ~10 W, always on      | small fan, runs the whole time the PC is on |
+| 120 mm AIO     | 5–8 W | 5–8 W, always on      | pump + fan; an air cooler adds 0 W          |
+| RTX 4060 Ti    | 160 W | 110–120 W undervolted | ~5–8 W idle                                 |
+| RTX 3060 12 GB | 170 W | ~110 W undervolted    | ~5–8 W idle                                 |
+| RTX 3090       | 350 W | 300–350 W             | wrong part for a low-power build            |
 
 What this means for the two bundles:
+
 - **Idle (coding, browser, editor):** both systems land around 45–60 W at the wall. The 5600X saves on the
   CPU side but the X570 chipset takes ~6 W back. The difference is a few watts — not a reason to choose.
 - **Under load (compile, unpack, model load):** the 5600X does the work with less energy. 7 nm, 65 W class,
@@ -80,6 +79,7 @@ What this means for the two bundles:
 ## The slot problem
 
 The board has two "x16" slots, but only the blue one is wired to the CPU:
+
 - blue slot: PCIe 3.0 x16
 - black slot: PCIe 2.0 **x4** (from the Z77 chipset)
 
@@ -88,13 +88,14 @@ For llama.cpp that costs model load time (16 GB takes ~8 s instead of ~2 s) and 
 It does not cost tokens per second.
 
 Before buying anything, retry the blue slot. It is free:
+
 - Update the BIOS to the last version ASUS shipped for this board.
 - In the BIOS: disable CSM (pure UEFI boot), enable "Above 4G Decoding", set the slot to "Gen 3" instead of "Auto".
 - Reseat the card, try a different 8-pin cable, test the card in another PC if possible.
 
 If the blue slot is dead, only a new board fixes it. That is the honest reason to buy one of the bundles.
 
-## Bundle #1 — Intel, 360 EUR 
+## Bundle #1 — Intel, 360 EUR
 
 [https://www.ebay.it/itm/860160421053]
 
@@ -161,7 +162,7 @@ MSI MPG X570 Gaming Plus AMD Ryzen 7 5800X RAM 32G
 
 MB: MSI MPG X570 Gaming Plus
 CPU: AMD Ryzen 7 5800X 8-Core 3801 MHz
-RAM: G.Skill Ripjaws DDR4 32GB 3600 CL16  (2x 8GB) ❌
+RAM: G.Skill Ripjaws DDR4 32GB 3600 CL16 (2x 8GB) ❌
 Dissipatore be quiet! Dark Rock 4
 
 Need to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
@@ -175,7 +176,6 @@ Ryzen 9 3950X ASUS ROG X570-E 32GB G.Skill DDR4
 MB: ASUS ROG Strix X570-E Gaming (con Wi-Fi e Bluetooth integrati).
 CPU: AMD Ryzen 9 3950X (16 core / 32 thread)
 RAM: 32 GB G.Skill Trident Z Neo RGB (kit 2×16 GB, DDR4-3600, CL16).
-
 
 ## Comparison
 
@@ -232,17 +232,19 @@ Cheapest for power: fix the slot with the BIOS and change nothing. See the last 
 Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
 (except the X570 bundles above, which include the CPU).
 
-| Board                        | Chipset        | Year | Socket  | RAM and bandwidth   | GPU slots                                          | Second GPU     | Verdict                         |
-| ---------------------------- | -------------- | ---- | ------- | ------------------- | -------------------------------------------------- | -------------- | ------------------------------- |
-| MSI MPG X570 Gaming Plus     | X570           | 2019 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset      | yes, 7.9 GB/s  | buy, bundles #2 and #4          |
-| ASUS ROG Strix X570-E Gaming | X570, high-end | 2019 | AM4     | DDR4-3600, ~57 GB/s | x16 4.0 from CPU, switches to x8/x8 with two cards | yes, 15.8 GB/s | buy, bundle #5                  |
-| ASUS TUF Gaming B550-Plus    | B550           | 2020 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset      | yes, 3.9 GB/s  | skip, see below                 |
-| ASUS Prime B650-Plus WiFi II | B650           | 2022 | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset          | yes, 7.9 GB/s  | buy, if the CPU fits the budget |
-| ASUS Prime B660M-A D4 WiFi   | B660           | 2022 | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset      | yes, 3.9 GB/s  | workable                        |
-| Gigabyte B760 DS3H GEN5      | B760           | 2023 | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1                   | no             | skip                            |
+| Board                        | Chipset | Year | Socket  | RAM and bandwidth  | GPU slots                                              | Second GPU     | Verdict                |
+| ---------------------------- | ------- | ---- | ------- | ------------------ | ------------------------------------------------------ | -------------- | ---------------------- |
+| MSI MPG X570 Gaming Plus     | X570    | 2019 | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset          | yes, 7.9 GB/s  | buy, bundles #2 and #4 |
+| ASUS ROG Strix X570-E Gaming | X570+   | 2019 | AM4     | DDR4-3600, 57 GB/s | x16 4.0 from CPU, **switches to x8/x8 with two cards** | yes, 15.8 GB/s | buy, bundle #5         |
+| ASUS TUF Gaming B550-Plus    | B550    | 2020 | AM4     | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset          | yes, 3.9 GB/s  | skip, see below        |
+| ASUS Prime B650-Plus WiFi II | B650    | 2022 | AM5     | DDR5-6000, 96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset              | yes, 7.9 GB/s  | OK                     |
+| ASUS Prime B660M-A D4 WiFi   | B660    | 2022 | LGA1700 | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset          | yes, 3.9 GB/s  | workable               |
+| Gigabyte B760 DS3H GEN5      | B760    | 2023 | LGA1700 | DDR5-6000, 96 GB/s | x16 5.0 from CPU + 4 slots at x1                       | no             | skip                   |
+| Z370 / Z390                  |         |      |         |                    |                                                        |                | skip?                  |
 
 Year is the chipset year. Suffixes in the name (WiFi II, GEN5) mean a later revision of the same board,
 not a newer platform. The year that matters is the socket:
+
 - **AM5 (2022):** the only live socket here. Takes Zen 4 today and Zen 5 as a drop-in, new CPUs still come out.
 - **AM4 (2017-2022):** dead, but a 5700X3D or 5950X is cheap and still a big step up from a 5600X.
 - **LGA1700 (2021-2023):** dead. The 14th gen is the last generation it will ever take.
@@ -273,6 +275,7 @@ The board itself is fine: ATX, passive chipset (no fan, which is a plus), 4.0 x1
 x16-length slot at 3.0 x4, and 4.0 x4 plus 3.0 x4 M.2. Better than the MSI X570 boards on noise.
 
 But the bundle is wrong:
+
 - **400 EUR** for a 5600X, a 32 GB DDR4-3200 kit and a board whose parts are worth ~315-380.
 - The RAM is a **4 x 8 GB** kit. Four sticks on AM4 rarely hold 3200 with tight timings, and the 2 sticks
   per channel load drops the safe speed. It also fills all four slots, so growing to 64 GB means selling it.
@@ -298,6 +301,7 @@ B660 / B760 ~4-6 W passive. That is a few watts against a CPU at 75-140 W under 
 that runs all day.
 
 Board ranking for this build:
+
 1. **ROG Strix X570-E** - the best AM4 board here: x8/x8, two 4.0 M.2, Flashback, VRM for a 5950X. Bundle #5.
 2. **B650-Plus WiFi II** - best platform overall, if the bundle is cheap enough that board + RAM + CPU lands
    near 400 EUR.
@@ -324,6 +328,7 @@ Worth it only if you want a **32B coding model at Q4** (~20 GB) with a real cont
 with a very long context. 16 GB does not hold those.
 
 What it needs:
+
 - **Two x16 slots.** Both bundles can do it. Z390: both cards at 3.0 x8. X570 Gaming Plus: card 1 at 4.0 x16,
   card 2 at 4.0 x4 through the chipset. Same bandwidth (~7.9 GB/s) to the second card.
 - **Power:** 330 W peak for the two cards plus the rest. Plan a 650–750 W PSU.
@@ -331,6 +336,7 @@ What it needs:
 - **Driver:** a 40-series and a 30-series card work together on one driver.
 
 What to expect in llama.cpp:
+
 - `--split-mode layer` is the default and shares the layers between the cards.
 - Unequal cards: set the ratio by hand, for example `-ts 0.6,0.4`, so the 16 GB card takes more layers.
   `--main-gpu` decides which card keeps the KV cache.
@@ -356,6 +362,7 @@ If the BIOS fix works and one GPU is enough, you can stay as you are. That is al
 65 W CPU, passive chipset, no AIO pump, an existing Platinum PSU.
 
 What you give up:
+
 - no NVMe (SATA SSD only, ~550 MB/s),
 - DDR3-1600 at 25.6 GB/s if you ever offload to CPU,
 - the second card can only go in the black slot at PCIe 2.0 x4 (~2 GB/s).
