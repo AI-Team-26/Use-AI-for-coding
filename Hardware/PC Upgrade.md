@@ -402,17 +402,3 @@ What you give up:
 
 That is acceptable for one card and 14B models. It stops being acceptable the day you want a 32B model.
 
-## PSU
-
-500 W is plenty for the 3770S (65 W) plus the 4060 Ti (160 W), and right-sized means efficient.
-A second GPU needs 650–750 W. The current Cooler Master is old; if you keep it, it is fine for the one-card
-build, but replace it when you add a card — capacitors age and it is the one part that can take the rest with it.
-
-## Ask the seller (all bundles)
-
-- Does the board already run this CPU today, and which BIOS version? The X570 needs a Flash BIOS update
-  before the first 5600X boot.
-- RAM kit: 2 x 16 GB or 4 x 8 GB, what speed, and does XMP work? 2 x 16 GB at 3200 is what you want;
-  four sticks often fall back below 3200.
-- Was the CPU ever overclocked? Any bent socket pins?
-- Is there a return option? Photos of the socket, the RAM stickers, and a boot screen.
