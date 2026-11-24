@@ -269,6 +269,39 @@ For llama.cpp the x8/x8 switch changes **load time only**, not tokens per second
 the cards exchange a few KB of activations per token. So the X570-E is worth paying for because of the
 second 4.0 M.2, the Flashback button and the VRM, not because of the lane split.
 
+### Which boards split the CPU lanes x8/x8
+
+x8/x8 is a board feature, not a chipset feature: the board must carry a switch and route both slots from
+the CPU. Only mid-range and up pay for it, so on this list two boards do it, and one of them is on PCIe 3.0.
+
+| Board                                     | Chipset          | Links with two cards    | Card #2 gets | Links with one card |
+| ----------------------------------------- | ---------------- | ----------------------- | ------------ | ------------------- |
+| Gigabyte Z390 AORUS ULTRA (bundle #1)     | Z390 (3.0)       | 3.0 x8/x8               | 7.9 GB/s     | 3.0 x16, 15.8 GB/s  |
+| ASUS ROG Strix X570-E (bundle #5)         | X570 (4.0)       | 4.0 x8/x8               | 15.8 GB/s    | 4.0 x16, 31.5 GB/s  |
+| MSI MPG X570 Gaming Plus (bundles #2, #4) | X570 (4.0)       | 4.0 x16 + 4.0 x4        | 7.9 GB/s     | 4.0 x16, 31.5 GB/s  |
+| ASUS Prime B650-Plus WiFi II              | B650 (4.0)       | 4.0 x16 + 4.0 x4        | 7.9 GB/s     | 4.0 x16, 31.5 GB/s  |
+| TUF B550-Plus / B660M-A D4 / Z370 HD3     | B550, B660, Z370 | 4.0 or 3.0 x16 + 3.0 x4 | 3.9 GB/s     | 4.0 x16 or 3.0 x16  |
+
+Read the generation with the lane count, because the label alone says nothing:
+
+| Link    | Bandwidth |
+| ------- | --------- |
+| 3.0 x4  | 3.9 GB/s  |
+| 3.0 x8  | 7.9 GB/s  |
+| 3.0 x16 | 15.8 GB/s |
+| 4.0 x4  | 7.9 GB/s  |
+| 4.0 x8  | 15.8 GB/s |
+| 4.0 x16 | 31.5 GB/s |
+
+So **Z390's x8/x8 hands each card 7.9 GB/s, exactly what a plain 4.0 x4 chipset slot gives.** Bundle #1 buys
+no bandwidth over bundles #2 and #4; its real advantage is three M.2 slots and the included 500 GB NVMe.
+
+Also note the RTX 4060 Ti is an **x8 card**: it never uses 16 lanes. On Z390 it runs at 3.0 x8 (7.9 GB/s)
+even alone, against 4.0 x8 (15.8 GB/s) on any X570 board.
+
+How to check a board before buying: look for **"x8/x8"** or **"2-Way SLI"** in the spec sheet. If the second
+x16-length slot is listed as **x4**, it can never become x8.
+
 ### ASUS TUF Gaming B550-Plus, 400 EUR - skip
 
 The board itself is fine: ATX, passive chipset (no fan, which is a plus), 4.0 x16 from the CPU, a second
