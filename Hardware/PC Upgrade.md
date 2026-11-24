@@ -230,14 +230,16 @@ Cheapest for power: fix the slot with the BIOS and change nothing. See the last 
 ## Other boards sold with a 32 GB RAM bundle
 
 Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
-(except the X570 bundle above, which includes the CPU and a cooler).
+(except the X570 bundles above, which include the CPU).
 
-| Board                        | Year | Socket  | RAM and bandwidth   | GPU slots                                     | M.2 slots       | Second GPU    |
-| ---------------------------- | ---- | ------- | ------------------- | --------------------------------------------- | --------------- | ------------- |
-| MSI MPG X570 Gaming Plus     | 2019 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset | 4.0 x4 + 3.0 x4 | yes, 7.9 GB/s |
-| ASUS Prime B650-Plus WiFi II | 2022 | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset     | 5.0 x4 + 4.0 x4 | yes, 7.9 GB/s |
-| ASUS Prime B660M-A D4 WiFi   | 2022 | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset | 4.0 x4 + 4.0 x4 | yes, 3.9 GB/s |
-| Gigabyte B760 DS3H GEN5      | 2023 | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1              | 4.0 x4 + 4.0 x4 | no            |
+| Board                        | Chipset        | Year | Socket  | RAM and bandwidth   | GPU slots                                          | Second GPU     | Verdict                         |
+| ---------------------------- | -------------- | ---- | ------- | ------------------- | -------------------------------------------------- | -------------- | ------------------------------- |
+| MSI MPG X570 Gaming Plus     | X570           | 2019 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset      | yes, 7.9 GB/s  | buy, bundles #2 and #4          |
+| ASUS ROG Strix X570-E Gaming | X570, high-end | 2019 | AM4     | DDR4-3600, ~57 GB/s | x16 4.0 from CPU, switches to x8/x8 with two cards | yes, 15.8 GB/s | buy, bundle #5                  |
+| ASUS TUF Gaming B550-Plus    | B550           | 2020 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset      | yes, 3.9 GB/s  | skip, see below                 |
+| ASUS Prime B650-Plus WiFi II | B650           | 2022 | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset          | yes, 7.9 GB/s  | buy, if the CPU fits the budget |
+| ASUS Prime B660M-A D4 WiFi   | B660           | 2022 | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset      | yes, 3.9 GB/s  | workable                        |
+| Gigabyte B760 DS3H GEN5      | B760           | 2023 | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1                   | no             | skip                            |
 
 Year is the chipset year. Suffixes in the name (WiFi II, GEN5) mean a later revision of the same board,
 not a newer platform. The year that matters is the socket:
@@ -245,26 +247,64 @@ not a newer platform. The year that matters is the socket:
 - **AM4 (2017-2022):** dead, but a 5700X3D or 5950X is cheap and still a big step up from a 5600X.
 - **LGA1700 (2021-2023):** dead. The 14th gen is the last generation it will ever take.
 
-**ASUS Prime B650-Plus WiFi II** — best platform of the list. DDR5-6000 doubles the RAM bandwidth, which is
+### X570 against X570-E
+
+Both are the same **X570 chipset**, same year, same socket, same 4.0 x4 from the chipset. The difference is
+the board, not the chipset:
+
+|                          | MSI MPG X570 Gaming Plus                        | ASUS ROG Strix X570-E          |
+| ------------------------ | ----------------------------------------------- | ------------------------------ |
+| CPU lanes with two cards | x16 + nothing, card #2 goes through the chipset | x8/x8, both cards on CPU lanes |
+| Card #2 bandwidth        | 7.9 GB/s                                        | 15.8 GB/s                      |
+| M.2                      | one 4.0 x4                                      | two 4.0 x4                     |
+| BIOS Flashback           | yes                                             | yes                            |
+| VRM                      | mid-range                                       | 12+4, takes a 5950X            |
+| WiFi and 2.5 Gb LAN      | no                                              | yes                            |
+| Chipset fan              | yes, ~10 W                                      | yes, ~12 W                     |
+| Price as a bundle        | 220 (with 5800X, 16 GB)                         | 320 (with 3950X, 32 GB)        |
+
+For llama.cpp the x8/x8 switch changes **load time only**, not tokens per second: with `--split-mode layer`
+the cards exchange a few KB of activations per token. So the X570-E is worth paying for because of the
+second 4.0 M.2, the Flashback button and the VRM, not because of the lane split.
+
+### ASUS TUF Gaming B550-Plus, 400 EUR - skip
+
+The board itself is fine: ATX, passive chipset (no fan, which is a plus), 4.0 x16 from the CPU, a second
+x16-length slot at 3.0 x4, and 4.0 x4 plus 3.0 x4 M.2. Better than the MSI X570 boards on noise.
+
+But the bundle is wrong:
+- **400 EUR** for a 5600X, a 32 GB DDR4-3200 kit and a board whose parts are worth ~315-380.
+- The RAM is a **4 x 8 GB** kit. Four sticks on AM4 rarely hold 3200 with tight timings, and the 2 sticks
+  per channel load drops the safe speed. It also fills all four slots, so growing to 64 GB means selling it.
+- A 5600X at that price loses to bundle #5, which is 320 EUR and includes 16 cores and a 2 x 16 kit.
+- The second slot is 3.0 x4, so the second card runs at half the speed of any X570 board here.
+
+Offer 300, walk away above 330. It only becomes interesting if you find it near 300 with a 2 x 16 kit.
+
+**ASUS Prime B650-Plus WiFi II** - best platform of the list. DDR5-6000 doubles the RAM bandwidth, which is
 the tier llama.cpp offload and MoE engines actually use. PCIe 5.0 on the first M.2, second x16 slot at
 4.0 x4, passive chipset (no fan). AM5 still gets new CPUs. Needs an AM5 CPU (7500F / 7600, ~120-150 EUR).
 
-**ASUS Prime B660M-A D4 WiFi** — the DDR4 Intel option, and a real one: unlike the B760 below it has a
+**ASUS Prime B660M-A D4 WiFi** - the DDR4 Intel option, and a real one: unlike the B760 below it has a
 second x16-length slot, at PCIe 3.0 x4 (~3.9 GB/s). That is fine for inference and half the load speed of
 the 4.0 boards. Two 4.0 M.2 slots, passive chipset, low idle. Costs: mATX, so two GPUs need a 4-slot case
 and the airflow between them is tight; LGA1700 is a dead socket; DDR4 gives 51 GB/s.
 
-**Gigabyte B760 DS3H GEN5** — skip it if two GPUs are the plan. One x16 slot; the other four x16-length
+**Gigabyte B760 DS3H GEN5** - skip it if two GPUs are the plan. One x16 slot; the other four x16-length
 slots are wired **x1**. "GEN5" is only the graphics slot, both M.2 are PCIe 4.0. Dead socket as well.
 
-Chipset power, always on: X570 ~10 W with a small fan, B650 ~5-7 W passive, B660 / B760 ~4-6 W passive.
-That is a few watts against a CPU at 75-140 W under load, but it is the part that runs all day.
+Chipset power, always on: X570 ~10 W with a small fan, B550 ~5-7 W passive, B650 ~5-7 W passive,
+B660 / B760 ~4-6 W passive. That is a few watts against a CPU at 75-140 W under load, but it is the part
+that runs all day.
 
 Board ranking for this build:
-1. **B650-Plus WiFi II** if the bundle is cheap enough that RAM + board + CPU lands near 350 EUR.
-2. **X570 Gaming Plus** at 350 EUR complete: cheapest known-good, second card at 4.0 x4, 5700X3D later.
-3. **B660M-A D4 WiFi**: workable, DDR4 and a slower second slot, mATX space is the catch.
-4. **B760 DS3H GEN5**: only if you give up the second GPU.
+1. **ROG Strix X570-E** - the best AM4 board here: x8/x8, two 4.0 M.2, Flashback, VRM for a 5950X. Bundle #5.
+2. **B650-Plus WiFi II** - best platform overall, if the bundle is cheap enough that board + RAM + CPU lands
+   near 400 EUR.
+3. **MSI X570 Gaming Plus** - cheapest known-good option, second card at 4.0 x4, 5700X3D later. Bundles #2, #4.
+4. **B660M-A D4 WiFi** - workable, DDR4 and a slower second slot, mATX space is the catch.
+5. **B550-Plus** - skip at 400. Only near 300 and with a 2 x 16 kit.
+6. **B760 DS3H GEN5** - only if you give up the second GPU.
 
 Ask both sellers: is the 32 GB **2 x 16 GB or 1 x 32 GB**? One stick halves the RAM bandwidth, which is
 the whole reason to pick DDR5. And on AM5, four sticks of DDR5 rarely reach 6000.
