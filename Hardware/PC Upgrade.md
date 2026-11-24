@@ -107,6 +107,12 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - Downsides: the X570 chipset takes ~10 W the whole time the PC is on and its small fan is always spinning.
   The AIO adds 5–8 W. An air cooler on the 9700K adds 0 W when idle.
 
+## Bundle #3 - 
+
+Asus PRIME B650 PLUS AM5 ATX con 32gb RAM DDR5
+Dissipatore Deep Cool Gammax AG400 V5 ARGB
+Processore RYZEN 5 7600x 6core 12 thread 4,7ghz socket AM5
+
 ## Comparison
 
 |                            | Bundle #1 (9700K)  | Bundle #2 (5600X)   |
