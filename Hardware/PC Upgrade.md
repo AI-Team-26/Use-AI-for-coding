@@ -144,12 +144,18 @@ Cheapest for power: fix the slot with the BIOS and change nothing. See the last 
 Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
 (except the X570 bundle above, which includes the CPU and a cooler).
 
-| Board                        | Socket  | RAM and bandwidth   | GPU slots                                     | M.2 slots       | Second GPU    |
-| ---------------------------- | ------- | ------------------- | --------------------------------------------- | --------------- | ------------- |
-| MSI MPG X570 Gaming Plus     | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset | 4.0 x4 + 3.0 x4 | yes, 7.9 GB/s |
-| ASUS Prime B650-Plus WiFi II | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset     | 5.0 x4 + 4.0 x4 | yes, 7.9 GB/s |
-| ASUS Prime B660M-A D4 WiFi   | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset | 4.0 x4 + 4.0 x4 | yes, 3.9 GB/s |
-| Gigabyte B760 DS3H GEN5      | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1              | 4.0 x4 + 4.0 x4 | no            |
+| Board                        | Year | Socket  | RAM and bandwidth   | GPU slots                                     | M.2 slots       | Second GPU    |
+| ---------------------------- | ---- | ------- | ------------------- | --------------------------------------------- | --------------- | ------------- |
+| MSI MPG X570 Gaming Plus     | 2019 | AM4     | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 4.0 from chipset | 4.0 x4 + 3.0 x4 | yes, 7.9 GB/s |
+| ASUS Prime B650-Plus WiFi II | 2022 | AM5     | DDR5-6000, ~96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset     | 5.0 x4 + 4.0 x4 | yes, 7.9 GB/s |
+| ASUS Prime B660M-A D4 WiFi   | 2022 | LGA1700 | DDR4-3200, ~51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset | 4.0 x4 + 4.0 x4 | yes, 3.9 GB/s |
+| Gigabyte B760 DS3H GEN5      | 2023 | LGA1700 | DDR5-6000, ~96 GB/s | x16 5.0 from CPU + 4 slots at x1              | 4.0 x4 + 4.0 x4 | no            |
+
+Year is the chipset year. Suffixes in the name (WiFi II, GEN5) mean a later revision of the same board,
+not a newer platform. The year that matters is the socket:
+- **AM5 (2022):** the only live socket here. Takes Zen 4 today and Zen 5 as a drop-in, new CPUs still come out.
+- **AM4 (2017-2022):** dead, but a 5700X3D or 5950X is cheap and still a big step up from a 5600X.
+- **LGA1700 (2021-2023):** dead. The 14th gen is the last generation it will ever take.
 
 **ASUS Prime B650-Plus WiFi II** — best platform of the list. DDR5-6000 doubles the RAM bandwidth, which is
 the tier llama.cpp offload and MoE engines actually use. PCIe 5.0 on the first M.2, second x16 slot at
