@@ -179,40 +179,48 @@ RAM: 32 GB G.Skill Trident Z Neo RGB (kit 2×16 GB, DDR4-3600, CL16).
 
 ## Comparison
 
-|                             | Bundle #1 (9700K)  | Bundle #2 (5600X)     | Bundle #3 (7600X)     |
-| --------------------------- | ------------------ | --------------------- | --------------------- |
-| Price                       | 360 EUR            | 350 EUR               | 500 EUR               |
-| Cost with the missing parts | ~400 EUR (+cooler) | ~410 EUR (+1 TB disk) | ~560 EUR (+1 TB disk) |
-| Motherboard year            | 2018               | 2019                  | 2022                  |
-| CPU all-core draw           | ~120-140 W         | ~75-90 W (45 W ECO)   | ~90-110 W (88 W ECO)  |
-| Energy for the same job     | higher             | lower                 | lowest                |
-| Chipset draw, always on     | ~4 W, passive      | ~10 W, small fan      | ~5-7 W, passive       |
-| Cooler                      | none, ~40 EUR      | 120 mm AIO, 5-8 W     | AG400 air, ~0 W idle  |
-| Usable x16 slots            | 2, both from CPU   | 1 + 1 from chipset    | 1 + 1 from chipset    |
-| Slot speed for card #2      | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    |
-| Card #1 speed               | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     |
-| NVMe                        | 500 GB included    | none, ~60 EUR         | none mentioned        |
-| RAM bandwidth if offload    | ~51 GB/s at 3200   | ~51 GB/s at 3200      | ~96 GB/s at 6000      |
-| Future CPU upgrade          | none               | 5700X3D / 5950X       | Zen 5 / Zen 6         |
-| CPU Mark (not a reason)     | ~14,400            | ~21,800               | ~28,500               |
+|                             | Bundle #1 (9700K)  | Bundle #2 (5600X)     | Bundle #3 (7600X)     | Bundle #4 (5800X)     | Bundle #5 (3950X)        |
+| --------------------------- | ------------------ | --------------------- | --------------------- | --------------------- | ------------------------ |
+| Price                       | 360 EUR            | 350 EUR               | 500 EUR               | 220 EUR               | 320 EUR                  |
+| Cost with the missing parts | ~400 EUR (+cooler) | ~410 EUR (+1 TB disk) | ~560 EUR (+1 TB disk) | ~350 EUR (+32 GB RAM) | ~370 EUR (+cooler)       |
+| Motherboard year            | 2018               | 2019                  | 2022                  | 2019                  | 2019                     |
+| Cores / threads             | 8 / 8              | 6 / 12                | 6 / 12                | 8 / 16                | 16 / 32                  |
+| CPU Mark (not a reason)     | ~14,400            | ~21,800               | ~28,500               | ~27,600               | ~38,400                  |
+| 1-thread (daily feel)       | 2,856              | 3,366                 | 4,127                 | 3,449                 | 2,701                    |
+| RAM included                | 32 GB DDR4         | 32 GB G-Skill         | 32 GB DDR5            | 16 GB (2x8 3600 CL16) | 32 GB (2x16 3600 CL16)   |
+| RAM bandwidth if offload    | ~51 GB/s at 3200   | ~51 GB/s at 3200      | ~96 GB/s at 6000      | ~57 GB/s at 3600      | ~57 GB/s at 3600         |
+| CPU all-core draw           | ~120-140 W         | ~75-90 W (45 W ECO)   | ~90-110 W (88 W ECO)  | ~115-130 W (65 W ECO) | ~140-150 W (65 W ECO)    |
+| Energy for the same job     | higher             | lower                 | lowest                | low                   | low, but finishes sooner |
+| Chipset draw, always on     | ~4 W, passive      | ~10 W, small fan      | ~5-7 W, passive       | ~10 W, small fan      | ~12 W, small fan         |
+| Cooler                      | none, ~40 EUR      | 120 mm AIO            | AG400 air             | Dark Rock 4 included  | none, ~50 EUR            |
+| Usable x16 slots            | 2, both from CPU   | 1 + 1 from chipset    | 1 + 1 from chipset    | 1 + 1 from chipset    | 2, both from CPU         |
+| Slot speed for card #2      | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    | 4.0 x8 (~15.8 GB/s)      |
+| Card #1 speed               | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)        |
+| NVMe                        | 500 GB included    | none, ~60 EUR         | none, ~60 EUR         | none, ~60 EUR         | none, ~60 EUR            |
+| Future CPU upgrade          | none               | 5700X3D / 5950X       | Zen 5 / Zen 6         | 5700X3D / 5950X       | 5950X                    |
 
 ## Recommendation
 
-**Bundle #2 (X570 + 5600X)** is the lower-energy choice: 65 W part, ECO mode, work finishes sooner, and a
-cooler is in the box. The X570 chipset costs ~6 W more than Z390 while idle, but that is a few watts against
-a CPU that stays at 75–90 W during any long job.
+**Bundle #5 (X570-E + 3950X, 320 EUR)** is the best machine and the best value. Once the missing cooler is
+added it is ~370 EUR, which is about 20 EUR more than bundle #4 brought up to 32 GB. For those 20 EUR you get
+double the cores, the best board of the five, and a 2x16 3600 CL16 kit you do not have to gamble on.
 
-Take **bundle #1** only if you plan two GPUs on a direct CPU link and want the included NVMe. It costs more
-energy per task, needs a cooler, and cannot be upgraded later.
+Its weakness is daily feel: 2,701 single thread is the lowest of the AMD group, so the 5800X desktop is
+snappier. Power does not separate them — during llama.cpp inference both CPUs sit at 5-15 W, because the GPU
+does the work.
 
-**Bundle #3** costs 150 EUR more than the others, and once the missing disk is added it is roughly 150-160
-more than either. What that buys: double the RAM bandwidth (96 vs 51 GB/s), a PCIe 5.0 M.2 slot, an air
-cooler instead of an AIO pump, and a socket that still takes new CPUs. It does not buy lower power: the 7600X
-is a 105 W part, so set ECO mode in the BIOS if watts come first.
+Take **bundle #4 (220 EUR)** instead when the seller of #5 cannot show it running, or when you prefer a snappy
+desktop to core count. Add a 2x16 kit (+~130 after selling the 2x8) and it lands at ~350 EUR.
 
-So: **bundle #2** if this is a stopgap and 350 EUR is the point. **Bundle #3** if you will keep the machine for
-years and want the RAM bandwidth for MoE weights that spill out of VRAM. Bundle #1 only for two cards on CPU
-lanes.
+Take **bundle #2 (350 EUR)** if you want 32 GB without shopping for RAM. The 5600X is the lowest-power CPU
+here and a cooler is in the box, but it is a mid-range board and a 120 mm AIO adds a pump that never stops.
+
+**Bundle #3** costs 150 EUR more and, with the missing disk, roughly 190 more than bundle #5. What that buys:
+double the RAM bandwidth (96 vs 57 GB/s), a PCIe 5.0 M.2 slot and a socket that still takes new CPUs. It does
+not buy lower power, because the 7600X is a 105 W part.
+
+**Bundle #1** only for two cards on direct CPU lanes, or for the included NVMe. Most energy per task, no
+upgrade path.
 
 Either way, keep the 500 W Platinum PSU if it is healthy. A right-sized unit runs near its sweet spot on this
 build; a 750 W unit at 60 W load runs a few percent less efficiently.
