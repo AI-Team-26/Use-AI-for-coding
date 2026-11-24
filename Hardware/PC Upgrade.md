@@ -56,12 +56,12 @@ Nice to have, not a reason to upgrade.
 
 ## Power of the parts in play
 
-| Part           | TDP   | Typical real draw     | Note                                        |
-| -------------- | ----- | --------------------- | ------------------------------------------- |
-| i7-3770S       | 65 W  | ~50–65 W all-core     | 22 nm, current CPU                          |
-| i7-9700K       | 95 W  | ~120–140 W all-core   | Z390 ignores the TDP by default; can cap it |
-| Ryzen 5 5600X  | 65 W  | ~75–90 W all-core     | ECO mode in BIOS drops it to ~45 W          |
-| Z390 chipset   | ~4 W  | ~4 W, always on       | passive heatsink                            |
+| Part           |   TDP | Typical real draw     | Note                                        |
+| -------------- | ----: | --------------------- | ------------------------------------------- |
+| i7-3770S       |  65 W | ~50–65 W all-core     | 22 nm, current CPU                          |
+| i7-9700K       |  95 W | ~120–140 W all-core   | Z390 ignores the TDP by default; can cap it |
+| Ryzen 5 5600X  |  65 W | ~75–90 W all-core     | ECO mode in BIOS drops it to ~45 W          |
+| Z390 chipset   |  ~4 W | ~4 W, always on       | passive heatsink                            |
 | X570 chipset   | ~10 W | ~10 W, always on      | small fan, runs the whole time the PC is on |
 | 120 mm AIO     | 5–8 W | 5–8 W, always on      | pump + fan; an air cooler adds 0 W          |
 | RTX 4060 Ti    | 160 W | 110–120 W undervolted | ~5–8 W idle                                 |
@@ -95,7 +95,7 @@ Before buying anything, retry the blue slot. It is free:
 
 If the blue slot is dead, only a new board fixes it. That is the honest reason to buy one of the bundles.
 
-## Bundle #1 — Intel, 360 EUR
+## Bundle #1 — Z390, (ebay) 360 EUR
 
 [https://www.ebay.it/itm/860160421053]
 
@@ -113,7 +113,7 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - 9th gen is the newest CPU this board takes (i9-9900K). No cheaper future upgrade.
 - Passive chipset: no small fan running all day.
 
-## Bundle #2 — AMD, 350 EUR
+## Bundle #2 — MSI MPG X570, (ebay) 350 EUR
 
 [https://www.ebay.it/itm/287696521007]
 
@@ -134,7 +134,7 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - Downsides: the X570 chipset takes ~10 W the whole time the PC is on and its small fan is always spinning.
   The AIO adds 5–8 W. An air cooler on the 9700K adds 0 W when idle.
 
-## Bundle #3 — AMD AM5, 500 EUR
+## Bundle #3 — B650-Plus | AMD AM5, 500 EUR
 
 | Part   | Model                                          | Year |
 | ------ | ---------------------------------------------- | ---- |
@@ -154,22 +154,25 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - AM5 is the only live socket here. Zen 5 drops in later.
 - The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
 
-## Bundle #4 - MSI MPG X570 - 220 EUR 🔥
+## Bundle #4 - MSI MPG X570 - (subito) 210 EUR 🔥 🥇
 
 [https://www.subito.it/informatica/msi-mpg-x570-gaming-plus-amd-ryzen-7-5800x-ram-32g-sondrio-646976442.htm]
 
 MSI MPG X570 Gaming Plus AMD Ryzen 7 5800X RAM 32G
 
-MB: MSI MPG X570 Gaming Plus
+MB: MSI MPG X570 Gaming Plus It has a small fan on the MB ❌
 CPU: AMD Ryzen 7 5800X 8-Core 3801 MHz
-RAM: G.Skill Ripjaws DDR4 32GB 3600 CL16 (2x 8GB) ❌
+RAM: G.Skill Ripjaws DDR4 32GB 3600 CL16 (2x 8GB)
 Dissipatore be quiet! Dark Rock 4
 
 Need to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
 
-## Bundle #5 - ASUS ROG X570-E - 320 EUR 🔥🥇
+## Bundle #5 - ASUS ROG X570-E - (subito) 310 EUR 🔥
 
-[https://www.subito.it/informatica/ryzen-9-3950x-asus-rog-x570-e-32gb-g-skill-ddr4-matera-646873428.htm]
+[https://www.subito.it/informatica/ryzen-9-3950x-asus-rog-x570-e-32gb-g-skill-ddr4-matera-646873428.htm]  
+[https://www.subito.it/vi/646873428.htm]
+
+❌ Use doesn't answer !!
 
 Ryzen 9 3950X ASUS ROG X570-E 32GB G.Skill DDR4
 
@@ -179,25 +182,25 @@ RAM: 32 GB G.Skill Trident Z Neo RGB (kit 2×16 GB, DDR4-3600, CL16).
 
 ## Comparison
 
-|                             | Bundle #1 (9700K)  | Bundle #2 (5600X)     | Bundle #3 (7600X)     | Bundle #4 (5800X)     | Bundle #5 (3950X)        |
-| --------------------------- | ------------------ | --------------------- | --------------------- | --------------------- | ------------------------ |
-| Price                       | 360 EUR            | 350 EUR               | 500 EUR               | 220 EUR               | 320 EUR                  |
-| Cost with the missing parts | ~400 EUR (+cooler) | ~410 EUR (+1 TB disk) | ~560 EUR (+1 TB disk) | ~350 EUR (+32 GB RAM) | ~370 EUR (+cooler)       |
-| Motherboard year            | 2018               | 2019                  | 2022                  | 2019                  | 2019                     |
-| Cores / threads             | 8 / 8              | 6 / 12                | 6 / 12                | 8 / 16                | 16 / 32                  |
-| CPU Mark (not a reason)     | ~14,400            | ~21,800               | ~28,500               | ~27,600               | ~38,400                  |
-| 1-thread (daily feel)       | 2,856              | 3,366                 | 4,127                 | 3,449                 | 2,701                    |
-| RAM included                | 32 GB DDR4         | 32 GB G-Skill         | 32 GB DDR5            | 16 GB (2x8 3600 CL16) | 32 GB (2x16 3600 CL16)   |
-| RAM bandwidth if offload    | ~51 GB/s at 3200   | ~51 GB/s at 3200      | ~96 GB/s at 6000      | ~57 GB/s at 3600      | ~57 GB/s at 3600         |
-| CPU all-core draw           | ~120-140 W         | ~75-90 W (45 W ECO)   | ~90-110 W (88 W ECO)  | ~115-130 W (65 W ECO) | ~140-150 W (65 W ECO)    |
-| Energy for the same job     | higher             | lower                 | lowest                | low                   | low, but finishes sooner |
-| Chipset draw, always on     | ~4 W, passive      | ~10 W, small fan      | ~5-7 W, passive       | ~10 W, small fan      | ~12 W, small fan         |
-| Cooler                      | none, ~40 EUR      | 120 mm AIO            | AG400 air             | Dark Rock 4 included  | none, ~50 EUR            |
-| Usable x16 slots            | 2, both from CPU   | 1 + 1 from chipset    | 1 + 1 from chipset    | 1 + 1 from chipset    | 2, both from CPU         |
-| Slot speed for card #2      | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    | 4.0 x8 (~15.8 GB/s)      |
-| Card #1 speed               | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)        |
-| NVMe                        | 500 GB included    | none, ~60 EUR         | none, ~60 EUR         | none, ~60 EUR         | none, ~60 EUR            |
-| Future CPU upgrade          | none               | 5700X3D / 5950X       | Zen 5 / Zen 6         | 5700X3D / 5950X       | 5950X                    |
+|                             | Bundle #1 (9700K)  | Bundle #2 (5600X)     | Bundle #3 (7600X)     | Bundle #4 (5800X)      | Bundle #5 (3950X)        |
+| --------------------------- | ------------------ | --------------------- | --------------------- | ---------------------- | ------------------------ |
+| Price                       | 360 EUR            | 350 EUR               | 500 EUR               | 210 EUR                | 310 EUR                  |
+| Cost with the missing parts | ~400 EUR (+cooler) | ~410 EUR (+1 TB disk) | ~560 EUR (+1 TB disk) |                        | ~370 EUR (+cooler)       |
+| Motherboard year            | 2018               | 2019                  | 2022                  | 2019                   | 2019                     |
+| Cores / threads             | 8 / 8              | 6 / 12                | 6 / 12                | 8 / 16                 | 16 / 32                  |
+| CPU Mark (not a reason)     | ~14,400            | ~21,800               | ~28,500               | ~27,600                | ~38,400                  |
+| 1-thread (daily feel)       | 2,856              | 3,366                 | 4,127                 | 3,449                  | 2,701                    |
+| RAM included                | 32 GB DDR4         | 32 GB G-Skill         | 32 GB DDR5            | 32 GB (2x16 3600 CL16) | 32 GB (2x16 3600 CL16)   |
+| RAM bandwidth if offload    | ~51 GB/s at 3200   | ~51 GB/s at 3200      | ~96 GB/s at 6000      | ~57 GB/s at 3600       | ~57 GB/s at 3600         |
+| CPU all-core draw           | ~120-140 W         | ~75-90 W (45 W ECO)   | ~90-110 W (88 W ECO)  | ~115-130 W (65 W ECO)  | ~140-150 W (65 W ECO)    |
+| Energy for the same job     | higher             | lower                 | lowest                | low                    | low, but finishes sooner |
+| Chipset draw, always on     | ~4 W, passive      | ~10 W, small fan      | ~5-7 W, passive       | ~10 W, small fan       | ~12 W, small fan         |
+| Cooler                      | none, ~40 EUR      | 120 mm AIO            | AG400 air             | Dark Rock 4 included   | none, ~50 EUR            |
+| Usable x16 slots            | 2, both from CPU   | 1 + 1 from chipset    | 1 + 1 from chipset    | 1 + 1 from chipset     | 2, both from CPU         |
+| Slot speed for card #2      | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)    | 4.0 x4 (~7.9 GB/s)     | 4.0 x8 (~15.8 GB/s)      |
+| Card #1 speed               | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)     | 4.0 x16 (x8 used)      | 4.0 x16 (x8 used)        |
+| NVMe                        | 500 GB included    | none, ~60 EUR         | none, ~60 EUR         | none, ~60 EUR          | none, ~60 EUR            |
+| Future CPU upgrade          | none               | 5700X3D / 5950X       | Zen 5 / Zen 6         | 5700X3D / 5950X        | 5950X                    |
 
 ## Recommendation
 
@@ -240,7 +243,8 @@ Same criteria: idle power, then room for a second card. All are board + RAM only
 | ASUS Prime B650-Plus WiFi II | B650    | 2022 | AM5     | DDR5-6000, 96 GB/s | x16 4.0 from CPU + x16 at x4 from chipset              | yes, 7.9 GB/s  | OK                     |
 | ASUS Prime B660M-A D4 WiFi   | B660    | 2022 | LGA1700 | DDR4-3200, 51 GB/s | x16 4.0 from CPU + x16 at x4 3.0 from chipset          | yes, 3.9 GB/s  | workable               |
 | Gigabyte B760 DS3H GEN5      | B760    | 2023 | LGA1700 | DDR5-6000, 96 GB/s | x16 5.0 from CPU + 4 slots at x1                       | no             | skip                   |
-| Z370 / Z390                  |         |      |         |                    |                                                        |                | skip?                  |
+| Z370 / Z390                  |         |      |         |                    |                                                        |                | ???                    |
+| ASUS ROG Strix B550-F Gaming |         |      |         |                    |                                                        |                | ???                    |
 
 Year is the chipset year. Suffixes in the name (WiFi II, GEN5) mean a later revision of the same board,
 not a newer platform. The year that matters is the socket:
@@ -401,4 +405,3 @@ What you give up:
 - the second card can only go in the black slot at PCIe 2.0 x4 (~2 GB/s).
 
 That is acceptable for one card and 14B models. It stops being acceptable the day you want a 32B model.
-
