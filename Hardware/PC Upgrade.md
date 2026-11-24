@@ -230,7 +230,7 @@ build; a 750 W unit at 60 W load runs a few percent less efficiently.
 
 Cheapest for power: fix the slot with the BIOS and change nothing. See the last section.
 
-## Other boards sold with a 32 GB RAM bundle
+## Motherborads
 
 Same criteria: idle power, then room for a second card. All are board + RAM only, so the CPU is extra
 (except the X570 bundles above, which include the CPU).
