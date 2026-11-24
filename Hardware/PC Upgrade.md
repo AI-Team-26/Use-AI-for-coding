@@ -4,14 +4,14 @@ Notes for replacing the 2012 platform. Two used bundles are on eBay for nearly t
 
 ## Current PC
 
-| Part    | Model                                                     |
-| ------- | --------------------------------------------------------- |
-| MB      | ASUS P8Z77-V LX (2012, socket LGA1155, Z77)               |
-| CPU     | Intel i7-3770S — 4 cores / 8 threads, 65 W                |
-| RAM     | 32 GB DDR3-1600 (4 x 8 GB Corsair Vengeance)              |
-| Disks   | SATA only (this board has no M.2 slot)                    |
-| GPU     | RTX 4060 Ti 16 GB, undervolted                            |
-| PSU     | Cooler Master 500 W, 80+ Platinum                         |
+| Part  | Model                                       | Year |
+| ----- | ------------------------------------------- | ---- |
+| MB    | ASUS P8Z77-V LX, socket LGA1155, Z77        | 2012 |
+| CPU   | Intel i7-3770S, 4 cores / 8 threads, 65 W   | 2012 |
+| RAM   | 32 GB DDR3-1600, 4 x 8 GB Corsair Vengeance | ?    |
+| Disks | SATA only, this board has no M.2 slot       | ?    |
+| GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
+| PSU   | Cooler Master 500 W, 80+ Platinum           | ?    |
 
 PassMark CPU Mark: i7-3770S ≈ 6,200. Single thread ≈ 2,040.
 
@@ -33,12 +33,12 @@ If the blue slot is dead, the two bundles below are the fix: both give a working
 
 ## Bundle #1 — Intel, 360 EUR
 
-| Part  | Model                                                    |
-| ----- | -------------------------------------------------------- |
-| MB    | Gigabyte Z390 AORUS ULTRA (2018, LGA1151, Z390)          |
-| CPU   | Intel i7-9700K — 8 cores / 8 threads, 95 W               |
-| RAM   | 32 GB DDR4 (speed not stated)                            |
-| Disk  | AORUS NVMe 500 GB                                        |
+| Part | Model                                           | Year |
+| ---- | ----------------------------------------------- | ---- |
+| MB   | Gigabyte Z390 AORUS ULTRA, socket LGA1151, Z390 | 2018 |
+| CPU  | Intel i7-9700K, 8 cores / 8 threads, 95 W       | 2018 |
+| RAM  | 32 GB DDR4, speed not stated                    | ?    |
+| Disk | AORUS NVMe 500 GB                               | ?    |
 
 - CPU Mark ≈ 14,400. About +130% over the 3770S.
 - Three x16 slots, PCIe 3.0 from the CPU. Two cards run at x8/x8.
@@ -48,12 +48,12 @@ If the blue slot is dead, the two bundles below are the fix: both give a working
 
 ## Bundle #2 — AMD, 350 EUR
 
-| Part   | Model                                            |
-| ------ | ------------------------------------------------ |
-| MB     | MSI X570 (exact model not stated)                |
-| CPU    | Ryzen 5 5600X — 6 cores / 12 threads, 65 W       |
-| RAM    | 32 GB DDR4 G-Skill (speed not stated)            |
-| Cooler | NZXT 120 mm liquid cooler                        |
+| Part   | Model                                     | Year |
+| ------ | ----------------------------------------- | ---- |
+| MB     | MSI X570, exact model not stated          | 2019 |
+| CPU    | Ryzen 5 5600X, 6 cores / 12 threads, 65 W | 2020 |
+| RAM    | 32 GB DDR4 G-Skill, speed not stated      | ?    |
+| Cooler | NZXT 120 mm liquid cooler                 | ?    |
 
 - CPU Mark ≈ 21,800. About +250% over the 3770S, and ~50% over the 9700K.
 - PCIe 4.0 from the CPU: the 4060 Ti runs at 4.0 x8, its full speed.
@@ -64,17 +64,17 @@ If the blue slot is dead, the two bundles below are the fix: both give a working
 
 ## Comparison
 
-|                       | Bundle #1 (9700K) | Bundle #2 (5600X) |
-| --------------------- | ----------------- | ----------------- |
-| Price                 | 360 EUR           | 350 EUR           |
-| Cores / threads       | 8 / 8             | 6 / 12            |
-| CPU Mark              | ~14,400           | ~21,800           |
-| PCIe for the 4060 Ti  | 3.0 x16 (full)    | 4.0 x16 (full)    |
-| Two GPUs              | x8/x8 (built in)  | depends on board  |
-| NVMe disk included    | yes, 500 GB       | no                |
-| CPU cooler included   | no                | yes, 120 mm AIO   |
-| Future CPU upgrade    | none              | 5700X3D / 5950X   |
-| Platform year         | 2018              | 2020              |
+|                      | Bundle #1 (9700K) | Bundle #2 (5600X) |
+| -------------------- | ----------------- | ----------------- |
+| Price                | 360 EUR           | 350 EUR           |
+| Motherboard year     | 2018              | 2019              |
+| Cores / threads      | 8 / 8             | 6 / 12            |
+| CPU Mark             | ~14,400           | ~21,800           |
+| PCIe for the 4060 Ti | 3.0 x16 (full)    | 4.0 x16 (full)    |
+| Two GPUs             | x8/x8 (built in)  | depends on board  |
+| NVMe disk included   | yes, 500 GB       | no                |
+| CPU cooler included  | no                | yes, 120 mm AIO   |
+| Future CPU upgrade   | none              | 5700X3D / 5950X   |
 
 ## Recommendation
 
@@ -84,11 +84,44 @@ upgrade path, and a cooler is included. Add a 1 TB NVMe.
 Take bundle #1 (Z390 + 9700K) if two GPUs are planned. The x8/x8 split is built into the board, while on
 X570 it depends on the model. The included 500 GB NVMe also closes part of the price gap.
 
+## Adding a second GPU: RTX 3060 12 GB
+
+This is the cheapest way to get more VRAM. A used RTX 3060 12 GB costs about 150–180 EUR and adds 12 GB
+next to the current card:
+
+| Part                  | VRAM  | Power | Year |
+| --------------------- | ----- | ----- | ---- |
+| RTX 4060 Ti (current) | 16 GB | 160 W | 2023 |
+| RTX 3060 12 GB (used) | 12 GB | 170 W | 2021 |
+| Total                 | 28 GB | 330 W |      |
+
+28 GB fits models that one card cannot hold, for example a 30B model at Q4 with a normal context, or a
+smaller model with a very long context.
+
+What it needs:
+- **Two slots wired x8/x8 from the CPU.** Z390 AORUS ULTRA does this out of the box. On X570 check the exact
+  model: most boards run the second card at x4 from the chipset, which still works but is slower.
+- **Power:** 330 W for the two cards plus ~95 W CPU and the rest. Plan a 750 W PSU, not the current 500 W.
+- **Space:** two 2-slot cards, so a case with room for 2.5 slots or more, and enough airflow between them.
+  Undervolt the 3060 too: it drops from 170 W to about 110 W.
+- **Driver:** a 40-series and a 30-series card work together on one driver, no problem.
+
+What to expect in llama.cpp:
+- Multi-GPU is built in: `--split-mode layer` is the default, and the model layers are shared between the cards.
+- Unequal cards: set the ratio by hand, for example `-ts 0.6,0.4`, so the 16 GB card takes more layers.
+  `--main-gpu` decides which card keeps the KV cache.
+- Speed: each token passes through both cards, so it is slower per token than one big card of the same total
+  VRAM. Fine for one user; not good for many parallel requests.
+- Two cards make sense for running bigger models, not for training. LoRA fine-tuning is easier on a single card.
+
+If two GPUs are the plan, the Z390 bundle is the safer buy: the x8/x8 split is a board feature, so you do
+not have to hunt for a specific X570 model.
+
 ## PSU
 
-500 W is enough for one RTX 4060 Ti (160 W) plus either CPU. It is not enough for two GPUs: plan a
-750–850 W unit then. If the current Cooler Master is from 2012, replace it with the upgrade: capacitors
-age, and it is the one part that can kill everything else.
+500 W is enough for one RTX 4060 Ti (160 W) plus either CPU. With a second GPU, plan a 750–850 W unit.
+If the current Cooler Master is from 2012, replace it with the upgrade: capacitors age, and it is the one
+part that can kill everything else.
 
 ## Ask the seller (both bundles)
 
