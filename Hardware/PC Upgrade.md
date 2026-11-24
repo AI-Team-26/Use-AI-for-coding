@@ -153,7 +153,7 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - AM5 is the only live socket here. Zen 5 drops in later.
 - The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
 
-## Bundle #4 - MSI MPG X570 - 220 EUR
+## Bundle #4 - MSI MPG X570 - 220 EUR 🔥
 
 [https://www.subito.it/informatica/msi-mpg-x570-gaming-plus-amd-ryzen-7-5800x-ram-32g-sondrio-646976442.htm]
 
@@ -166,7 +166,7 @@ RAM G.Skill Ripjaws DDR4 32GB 3600 CL16  (2x 8GB)
 
 Neet to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
 
-## Bundle #5 - ASUS ROG X570-E - 320 EUR
+## Bundle #5 - ASUS ROG X570-E - 320 EUR 🔥🥇
 
 [https://www.subito.it/informatica/ryzen-9-3950x-asus-rog-x570-e-32gb-g-skill-ddr4-matera-646873428.htm]
 
@@ -176,16 +176,6 @@ CPU: AMD Ryzen 9 3950X (16 core / 32 thread) – ideale per gaming di fascia alt
 Scheda madre: ASUS ROG Strix X570-E Gaming (con Wi-Fi e Bluetooth integrati).
 RAM: 32 GB G.Skill Trident Z Neo RGB (kit 2×16 GB, DDR4-3600, CL16).
 
-
-## Bundle #6 - MSI MPG X570 Gaming Edge WiFi, 400 EUR
-
-KIT GAMING AMD Ryzen 7 3800X + MSI X570 + 32GB RAM
-
-[https://www.subito.it/informatica/kit-gaming-amd-ryzen-7-3800x-msi-x570-32gb-ram-rovigo-668802421.htm]
-
-- Processore: AMD Ryzen 7 3800X – 8 core / 16 thread, fino a 4,5 GHz
-- Scheda madre: MSI MPG X570 Gaming Edge WiFi – socket AM4, chipset X570, supporto SSD M.2 NVMe e PCIe 4.0
-- RAM: Corsair Vengeance LPX 32 GB (2×16 GB) DDR4 3200 MHz
 
 ## Comparison
 
