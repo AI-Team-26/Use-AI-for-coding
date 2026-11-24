@@ -1,6 +1,8 @@
 # PC upgrade
 
-Notes for replacing the 2012 platform. Two used bundles are on eBay for nearly the same price.
+Goal: run local models with llama.cpp, plus coding. No gaming.
+Criteria, in this order: **low power consumption**, then VRAM, then everything else.
+CPU speed is at the bottom of the list — the 3770S is enough.
 
 ## Current PC
 
@@ -13,23 +15,62 @@ Notes for replacing the 2012 platform. Two used bundles are on eBay for nearly t
 | GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
 | PSU   | Cooler Master 500 W, 80+ Platinum           | ?    |
 
-PassMark CPU Mark: i7-3770S ≈ 6,200. Single thread ≈ 2,040.
+## Where the watts actually go
+
+During inference the GPU pulls 110–120 W (undervolted) and the CPU idles at 5–15 W. So the GPU is the
+energy bill, not the CPU. The CPU decides the energy of everything else: boot, compiles, model loading,
+file indexing, the browser.
+
+For the same job, "less power" usually means "less energy", because energy = power × time.
+A weaker CPU that stays at 65 W for 4 minutes can use more energy than a strong one at 90 W for 2 minutes.
+That is the only place the 9700K vs 5600X question matters.
+
+## The CPU is not the limit for llama.cpp
+
+- Decode speed is decided by **VRAM bandwidth** (288 GB/s on the 4060 Ti), not by cores.
+- Sampling, tokenizing and the chat loop are microseconds of work even on a 2012 CPU.
+- Single thread: 3770S ≈ 2,040 vs 5600X ≈ 3,366 PassMark. That moves web benchmarks, not tok/s.
+
+The CPU only matters when weights run **on the CPU**: hybrid offload, or MoE models with experts in RAM.
+Nice to have, not a reason to upgrade.
+
+## Power of the parts in play
+
+| Part            | TDP     | Typical real draw        | Note                                        |
+| --------------- | ------- | ------------------------ | ------------------------------------------- |
+| i7-3770S        | 65 W    | ~50–65 W all-core        | 22 nm, current CPU                          |
+| i7-9700K        | 95 W    | ~120–140 W all-core      | Z390 ignores the TDP by default; can cap it |
+| Ryzen 5 5600X   | 65 W    | ~75–90 W all-core        | ECO mode in BIOS drops it to ~45 W          |
+| Z390 chipset    | ~4 W    | ~4 W, always on          | passive heatsink                            |
+| X570 chipset    | ~10 W   | ~10 W, always on         | small fan, runs the whole time the PC is on |
+| 120 mm AIO      | 5–8 W   | 5–8 W, always on         | pump + fan; an air cooler adds 0 W          |
+| RTX 4060 Ti     | 160 W   | 110–120 W undervolted    | ~5–8 W idle                                 |
+| RTX 3060 12 GB  | 170 W   | ~110 W undervolted       | ~5–8 W idle                                 |
+| RTX 3090        | 350 W   | 300–350 W                | wrong part for a low-power build            |
+
+What this means for the two bundles:
+- **Idle (coding, browser, editor):** both systems land around 45–60 W at the wall. The 5600X saves on the
+  CPU side but the X570 chipset takes ~6 W back. The difference is a few watts — not a reason to choose.
+- **Under load (compile, unpack, model load):** the 5600X does the work with less energy. 7 nm, 65 W class,
+  and ECO mode is one BIOS setting away.
+- **During inference:** identical. The CPU sits idle in both cases; the GPU decides.
+
+## The slot problem
 
 The board has two "x16" slots, but only the blue one is wired to the CPU:
 - blue slot: PCIe 3.0 x16
 - black slot: PCIe 2.0 **x4** (from the Z77 chipset)
 
-The RTX 4060 Ti only has 8 PCIe lanes, so in the black slot it runs at PCIe 2.0 x4 ≈ 2 GB/s instead of
-PCIe 4.0 x8 ≈ 16 GB/s. Model load times and anything that moves data to and from the card get much slower.
+The card does not run in the blue slot at all (tried a lot), so it sits in the black one at 2.0 x4.
+For llama.cpp that costs model load time (16 GB takes ~8 s instead of ~2 s) and blocks a second card.
+It does not cost tokens per second.
 
-## The slot problem is the real bottleneck
-
-Before buying anything, try to make the card work in the blue slot. It costs nothing:
+Before buying anything, retry the blue slot. It is free:
 - Update the BIOS to the last version ASUS shipped for this board.
-- In the BIOS: disable CSM (pure UEFI boot), enable "Above 4G Decoding", set the slot speed to "Gen 3" instead of "Auto".
+- In the BIOS: disable CSM (pure UEFI boot), enable "Above 4G Decoding", set the slot to "Gen 3" instead of "Auto".
 - Reseat the card, try a different 8-pin cable, test the card in another PC if possible.
 
-If the blue slot is dead, the two bundles below are the fix: both give a working PCIe x16 slot from the CPU.
+If the blue slot is dead, only a new board fixes it. That is the honest reason to buy one of the bundles.
 
 ## Bundle #1 — Intel, 360 EUR
 
@@ -40,11 +81,12 @@ If the blue slot is dead, the two bundles below are the fix: both give a working
 | RAM  | 32 GB DDR4, speed not stated                    | ?    |
 | Disk | AORUS NVMe 500 GB                               | ?    |
 
-- CPU Mark ≈ 14,400. About +130% over the 3770S.
-- Three x16 slots, PCIe 3.0 from the CPU. Two cards run at x8/x8.
-- Three M.2 slots, all PCIe 3.0 x4. NVMe disk is included.
-- No CPU cooler in the bundle, and the 9700K runs hot. Budget ~40 EUR for an air cooler.
-- End of the line: 9th gen is the newest CPU this board takes (i9-9900K). No cheaper future upgrade.
+- Two cards at PCIe 3.0 x8/x8, both from the CPU. Best slot layout of the two.
+- Three M.2 slots, all PCIe 3.0 x4. The 500 GB NVMe is included.
+- No CPU cooler, and the 9700K needs a real one (~40 EUR). It also pulls 120–140 W all-core unless you
+  cap it in the BIOS (PL1/PL2), which costs speed.
+- 9th gen is the newest CPU this board takes (i9-9900K). No cheaper future upgrade.
+- Passive chipset: no small fan running all day.
 
 ## Bundle #2 — AMD, 350 EUR
 
@@ -55,85 +97,112 @@ If the blue slot is dead, the two bundles below are the fix: both give a working
 | RAM    | 32 GB DDR4 G-Skill, speed not stated       | ?    |
 | Cooler | NZXT 120 mm liquid cooler                  | ?    |
 
-- CPU Mark ≈ 21,800. About +250% over the 3770S, and ~50% over the 9700K.
-- PCIe 4.0 from the CPU: the 4060 Ti runs at 4.0 x8, its full speed.
-- 12 threads instead of 8. That matters for llama.cpp CPU work and for everything that is not on the GPU.
-- Upgrade path: this socket also takes a 5700X3D / 5800X3D or a 5950X later, for much less than a new platform.
-- No disk in the bundle. A 1 TB NVMe is ~60 EUR.
-- Board: one PCIe 4.0 x16 slot from the CPU (blue) and one x16-length slot at PCIe 4.0 **x4** from the chipset.
-  No x8/x8. Two M.2 slots: the main one is PCIe 4.0 x4, the second is PCIe 3.0 x4.
-- Board: has a Flash BIOS button, so the BIOS can be updated from a USB stick without a CPU installed.
-  Useful, because a 2019 board does not boot a 5600X until that update is done.
-- VRM 10 phases (8+2): plenty for a 65 W 5600X, and enough for a 5950X later.
+- One PCIe 4.0 x16 slot from the CPU (the 4060 Ti runs at 4.0 x8, full speed) plus one x16-length slot at
+  PCIe 4.0 **x4** from the chipset. No x8/x8.
+- 4.0 x4 is ~7.9 GB/s, the same as 3.0 x8 on the Z390. A second card gets the same bandwidth on both.
+- Two M.2 slots: main one PCIe 4.0 x4, second PCIe 3.0 x4. No disk included (~60 EUR for 1 TB).
+- 65 W CPU, ECO mode ~45 W, and later a 5700X3D or 5950X on the same board.
+- Flash BIOS button, so the BIOS can be updated from a USB stick with no CPU installed. Needed: a 2019
+  board does not boot a 5600X until that update.
+- Downsides: the X570 chipset takes ~10 W the whole time the PC is on and its small fan is always spinning.
+  The AIO adds 5–8 W. An air cooler on the 9700K adds 0 W when idle.
 
 ## Comparison
 
-|                      | Bundle #1 (9700K) | Bundle #2 (5600X) |
-| -------------------- | ----------------- | ----------------- |
-| Price                | 360 EUR           | 350 EUR           |
-| Motherboard year     | 2018              | 2019              |
-| Cores / threads      | 8 / 8             | 6 / 12            |
-| CPU Mark             | ~14,400           | ~21,800           |
-| PCIe for the 4060 Ti | 3.0 x16 (full)    | 4.0 x16 (full)    |
-| Two GPUs             | x8/x8 (built in)  | 4.0 x4, no x8/x8  |
-| NVMe disk included   | yes, 500 GB       | no                |
-| CPU cooler included  | no                | yes, 120 mm AIO   |
-| Future CPU upgrade   | none              | 5700X3D / 5950X   |
+|                            | Bundle #1 (9700K)  | Bundle #2 (5600X)   |
+| -------------------------- | ------------------ | ------------------- |
+| Price                      | 360 EUR            | 350 EUR             |
+| Motherboard year           | 2018               | 2019                |
+| CPU all-core draw          | ~120–140 W         | ~75–90 W (45 W ECO) |
+| Energy for the same job    | higher             | lower               |
+| Chipset draw, always on    | ~4 W, passive      | ~10 W, small fan    |
+| Cooler                     | none, ~40 EUR      | 120 mm AIO, 5–8 W   |
+| Usable x16 slots           | 2, both from CPU   | 1 + 1 from chipset  |
+| Slot speed for card #2     | 3.0 x8 (~7.9 GB/s) | 4.0 x4 (~7.9 GB/s)  |
+| Card #1 speed              | 3.0 x16 (x8 used)  | 4.0 x16 (x8 used)   |
+| NVMe                       | 500 GB included    | none, ~60 EUR       |
+| DDR4 bandwidth if offload  | ~51 GB/s at 3200   | ~51 GB/s at 3200    |
+| Future CPU upgrade         | none               | 5700X3D / 5950X     |
+| CPU Mark (not a reason)    | ~14,400            | ~21,800             |
 
 ## Recommendation
 
-Take bundle #2 (X570 + 5600X) if the goal is one GPU and a fast machine: more threads, PCIe 4.0, a real
-upgrade path, and a cooler is included. Add a 1 TB NVMe.
+**Bundle #2 (X570 + 5600X)** is the lower-energy choice: 65 W part, ECO mode, work finishes sooner, and a
+cooler is in the box. The X570 chipset costs ~6 W more than Z390 while idle, but that is a few watts against
+a CPU that stays at 75–90 W during any long job.
 
-Take bundle #1 (Z390 + 9700K) if you want true x8/x8 for two cards, three M.2 slots, and the 500 GB NVMe
-inside the price. On the X570 Gaming Plus the second card runs at PCIe 4.0 x4 from the chipset instead of x8.
+Take **bundle #1** only if you plan two GPUs on a direct CPU link and want the included NVMe. It costs more
+energy per task, needs a cooler, and cannot be upgraded later.
+
+Either way, keep the 500 W Platinum PSU if it is healthy. A right-sized unit runs near its sweet spot on this
+build; a 750 W unit at 60 W load runs a few percent less efficiently.
+
+Cheapest for power: fix the slot with the BIOS and change nothing. See the last section.
 
 ## Adding a second GPU: RTX 3060 12 GB
 
-This is the cheapest way to get more VRAM. A used RTX 3060 12 GB costs about 150–180 EUR and adds 12 GB
-next to the current card:
+This is where "low power" and "bigger models" collide. A second card adds ~110 W (undervolted) during
+inference and ~6 W at idle, plus ~330 W of peak headroom and a bigger PSU.
 
-| Part                  | VRAM  | Power | Year |
-| --------------------- | ----- | ----- | ---- |
-| RTX 4060 Ti (current) | 16 GB | 160 W | 2023 |
-| RTX 3060 12 GB (used) | 12 GB | 170 W | 2021 |
-| Total                 | 28 GB | 330 W |      |
+| Part                  | VRAM  | Bandwidth | Power | Year |
+| --------------------- | ----- | --------- | ----- | ---- |
+| RTX 4060 Ti (current) | 16 GB | 288 GB/s  | 160 W | 2023 |
+| RTX 3060 12 GB (used) | 12 GB | 360 GB/s  | 170 W | 2021 |
+| Total                 | 28 GB | 648 GB/s  | 330 W |      |
 
-28 GB fits models that one card cannot hold, for example a 30B model at Q4 with a normal context, or a
-smaller model with a very long context.
+Worth it only if you want a **32B coding model at Q4** (~20 GB) with a real context window, or a 14B model
+with a very long context. 16 GB does not hold those.
 
 What it needs:
-- **Two x16 slots.** Z390 AORUS ULTRA runs them at PCIe 3.0 x8/x8 (~7.9 GB/s each). MSI X570 Gaming Plus
-  runs card 1 at 4.0 x16 (x8 used) and card 2 at 4.0 x4 (~7.9 GB/s, through the chipset).
-  Same bandwidth for the second card on both boards, so the second GPU does not decide the bundle.
-  The chipset slot shares its uplink with USB, SATA and the second M.2, which costs a little more latency.
-- **Power:** 330 W for the two cards plus ~95 W CPU and the rest. Plan a 750 W PSU, not the current 500 W.
-- **Space:** two 2-slot cards, so a case with room for 2.5 slots or more, and enough airflow between them.
-  Undervolt the 3060 too: it drops from 170 W to about 110 W.
-- **Driver:** a 40-series and a 30-series card work together on one driver, no problem.
+- **Two x16 slots.** Both bundles can do it. Z390: both cards at 3.0 x8. X570 Gaming Plus: card 1 at 4.0 x16,
+  card 2 at 4.0 x4 through the chipset. Same bandwidth (~7.9 GB/s) to the second card.
+- **Power:** 330 W peak for the two cards plus the rest. Plan a 650–750 W PSU.
+- **Space and airflow:** two 2-slot cards, undervolt the 3060 too (~110 W).
+- **Driver:** a 40-series and a 30-series card work together on one driver.
 
 What to expect in llama.cpp:
-- Multi-GPU is built in: `--split-mode layer` is the default, and the model layers are shared between the cards.
+- `--split-mode layer` is the default and shares the layers between the cards.
 - Unequal cards: set the ratio by hand, for example `-ts 0.6,0.4`, so the 16 GB card takes more layers.
   `--main-gpu` decides which card keeps the KV cache.
-- Speed: each token passes through both cards, so it is slower per token than one big card of the same total
-  VRAM. Fine for one user; not good for many parallel requests.
-- Two cards make sense for running bigger models, not for training. LoRA fine-tuning is easier on a single card.
+- A 32B Q4 split over two slow cards runs at roughly reading speed (~8–12 tok/s). Fine for coding,
+  not for a fast chat. A 14B on the 4060 Ti alone is faster per token and uses less power.
 
-If two GPUs are the plan, both bundles work: the second card gets about 8 GB/s either way. The Z390 keeps
-the card on a direct CPU link at x8; the X570 runs it at x4 through the chipset, which is fine for inference
-and worse for moving large amounts of data between the cards.
+Not an option for a low-power build: a used RTX 3090 (24 GB, 936 GB/s) is ~600 EUR and 350 W. Best tok/s per
+euro, worst watts. Skip it if power is the first criterion.
+
+## Low-power tips for llama.cpp
+
+- Keep the 4060 Ti undervolted, and also cap it: `nvidia-smi -pl 100` costs a few percent of speed and
+  saves 20–30 W under load.
+- Always offload all layers (`-ngl 99`), so the CPU stays idle instead of helping.
+- 5600X: set ECO mode (45 W) in the BIOS. For coding and inference the difference is not measurable.
+- Z390 (if you go Intel): set PL1/PL2 to 65 W. You lose the all-core turbo you do not need.
+- Enable C-states and "ErP" in the BIOS so idle really is idle. One wall plug meter (~15 EUR) shows the truth.
+- Shut the machine down when you stop working. 50 W of idle for 10 hours is 0.5 kWh every day.
+
+## Cheapest path: keep the 3770S
+
+If the BIOS fix works and one GPU is enough, you can stay as you are. That is also the lowest-power option:
+65 W CPU, passive chipset, no AIO pump, an existing Platinum PSU.
+
+What you give up:
+- no NVMe (SATA SSD only, ~550 MB/s),
+- DDR3-1600 at 25.6 GB/s if you ever offload to CPU,
+- the second card can only go in the black slot at PCIe 2.0 x4 (~2 GB/s).
+
+That is acceptable for one card and 14B models. It stops being acceptable the day you want a 32B model.
 
 ## PSU
 
-500 W is enough for one RTX 4060 Ti (160 W) plus either CPU. With a second GPU, plan a 750–850 W unit.
-If the current Cooler Master is from 2012, replace it with the upgrade: capacitors age, and it is the one
-part that can kill everything else.
+500 W is plenty for the 3770S (65 W) plus the 4060 Ti (160 W), and right-sized means efficient.
+A second GPU needs 650–750 W. The current Cooler Master is old; if you keep it, it is fine for the one-card
+build, but replace it when you add a card — capacitors age and it is the one part that can take the rest with it.
 
 ## Ask the seller (both bundles)
 
-- Does the X570 Gaming Plus already run the 5600X today (which BIOS version)? Otherwise it needs the
-  Flash BIOS update before the first boot.
-- RAM kit model and speed, and whether it runs with XMP on (3200 MHz or faster is what you want).
-- Was the CPU ever overclocked or delaminated? Any bent socket pins?
+- Does the board already run this CPU today, and which BIOS version? The X570 needs a Flash BIOS update
+  before the first 5600X boot.
+- RAM kit: 2 x 16 GB or 4 x 8 GB, what speed, and does XMP work? 2 x 16 GB at 3200 is what you want;
+  four sticks often fall back below 3200.
+- Was the CPU ever overclocked? Any bent socket pins?
 - Is there a return option? Photos of the socket, the RAM stickers, and a boot screen.
