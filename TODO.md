@@ -83,6 +83,12 @@
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
   
+- Feature 100 | start_common.sh: extract one shared menu-input helper
+  `select_project`, `delete_proj` and `select_org_repo` repeat the same ~15-line loop
+  (print menu, read, handle EOF/ESC, empty line redraw, range check with `10#`, invalid retry).
+  One helper (e.g. `choose_from_menu item...` returning the choice in a global) would remove
+  the copies and keep ESC/EOF handling identical everywhere. From PR #192 review.
+
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi

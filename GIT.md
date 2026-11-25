@@ -66,6 +66,9 @@ GITHUB_COMMIT_EMAIL=<commit email>
 EXA_API_KEY=<key>
 ```
 
+`GITHUB_ORG` is read by the clone menu in `start_common.sh` to list the organization repositories.
+Containers created before it was added keep the manual URL input until `containers_setup.sh` is re-run.
+
 Set `GITHUB_COMMIT_EMAIL` to the account's private `…@users.noreply.github.com` address to avoid the
 [GH007 private-email error](#private-hidden-github-email).
 

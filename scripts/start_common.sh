@@ -199,12 +199,12 @@ select_project() {
 # The chosen URL is put in ORG_REPO_URL. Return codes:
 #   0 = repository chosen
 #   1 = manual URL entry (menu item, listing failure, or nothing left to clone)
-#   2 = cancelled (ESC or stdin closed)
+#   2 = cancelled (Exit item, ESC or stdin closed)
 select_org_repo() {
     ORG_REPO_URL=""
     local listing repos=() items=("✍️ Add it manually") name
     set_github_auth_for_owner "$GITHUB_ORG" || return 1
-    if ! listing=$(gh api --paginate "orgs/$GITHUB_ORG/repos?per_page=100" --jq '.[].name' 2>/dev/null); then
+    if ! listing=$(gh api --paginate "orgs/$GITHUB_ORG/repos?per_page=100" --jq '.[].name'); then
         echo -e "${YELLOW}${WARNING_EMOJI} Cannot list the repositories of '$GITHUB_ORG'. Enter the URL manually.${NC}"
         return 1
     fi
@@ -215,9 +215,14 @@ select_org_repo() {
         fi
     done
     if (( ${#items[@]} == 1 )); then
-        echo -e "${BLUE}${INFO_EMOJI} All repositories of '$GITHUB_ORG' are already in $project_folder.${NC}"
+        if [[ -z "$listing" ]]; then
+            echo -e "${BLUE}${INFO_EMOJI} No repositories found for '$GITHUB_ORG'.${NC}"
+        else
+            echo -e "${BLUE}${INFO_EMOJI} All repositories of '$GITHUB_ORG' are already in $project_folder.${NC}"
+        fi
         return 1
     fi
+    items+=("❌ Exit")
     echo -e "${GIT_EMOJI} Repositories of ${YELLOW}$GITHUB_ORG${NC} not yet in $project_folder:"
     print_menu "${items[@]}"
     local prompt=$'\e[34mSelect a repository to clone: \e[0m' rc=0 choice
@@ -234,6 +239,8 @@ select_org_repo() {
             choice=${items[10#$MENU_REPLY - 1]}
             if [[ "$choice" == "✍️ Add it manually" ]]; then
                 return 1
+            elif [[ "$choice" == "❌ Exit" ]]; then
+                return 2
             fi
             ORG_REPO_URL="https://github.com/$GITHUB_ORG/$choice.git"
             return 0
