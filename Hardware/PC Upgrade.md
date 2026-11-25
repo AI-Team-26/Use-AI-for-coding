@@ -7,14 +7,15 @@ Benchmarks and power figures of every CPU mentioned here: [CPU_comparison.md](CP
 
 ## Current PC
 
-| Part  | Model                                       | Year |
-| ----- | ------------------------------------------- | ---- |
-| MB    | ASUS P8Z77-V LX, socket LGA1155, Z77        | 2012 |
-| CPU   | Intel i7-3770S, 4 cores / 8 threads, 65 W   | 2012 |
-| RAM   | 32 GB DDR3-1600, 4 x 8 GB Corsair Vengeance |      |
-| Disks | SATA only, this board has no M.2 slot       |      |
-| GPU   | RTX 4060 Ti 16 GB, undervolted              | 2023 |
-| PSU   | Cooler Master 500 W, 80+ Platinum           |      |
+| Part       | Model                                       | Year |
+| ---------- | ------------------------------------------- | ---- |
+| MB         | ASUS P8Z77-V LX, socket LGA1155, Z77        | 2012 |
+| CPU        | Intel i7-3770S, 4 cores / 8 threads, 65 W   | 2012 |
+| RAM        | 32 GB DDR3-1600, 4 x 8 GB                   |      |
+| Disks      | SATA only, this board has no M.2 slot       |      |
+| GPU        | RTX 4060 Ti 16 GB, undervolted              | 2023 |
+| PSU        | Cooler Master 500 W, 80+ Platinum           |      |
+| CPU Cooler | CNPS 14X                                    | 2012 |
 
 ### NVMe on PCI adapter issue
 
@@ -154,7 +155,7 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - AM5 is the only live socket here. Zen 5 drops in later.
 - The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
 
-## Bundle #4 - MSI MPG X570 - (subito) 210 EUR 🔥 🥇  [SOLD]
+## Bundle #4 - MSI MPG X570 - (subito) 210 EUR 🔥 🥇 [SOLD]
 
 [https://www.subito.it/informatica/msi-mpg-x570-gaming-plus-amd-ryzen-7-5800x-ram-32g-sondrio-646976442.htm]
 
@@ -167,7 +168,7 @@ Dissipatore be quiet! Dark Rock 4
 
 Need to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
 
-## Bundle #5 - ASUS ROG X570-E - (subito) 310 EUR 🔥  [❌ Use doesn't answer !!]
+## Bundle #5 - ASUS ROG X570-E - (subito) 310 EUR 🔥 [❌ Use doesn't answer !!]
 
 [https://www.subito.it/informatica/ryzen-9-3950x-asus-rog-x570-e-32gb-g-skill-ddr4-matera-646873428.htm]  
 [https://www.subito.it/vi/646873428.htm]
