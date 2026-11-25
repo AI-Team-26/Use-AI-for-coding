@@ -33,6 +33,8 @@ fi
 # Run ---------------------------------------------------------------------------------------------
 if [[ "$steps" == *create_container* ]]; then
 
+    echo -e "Containers folder: ${docker_volumes}"
+
     for id in "${!agents[@]}"; do
         AGENT_ID="$id"                        # "Dev-1"  (the assoc-array key)
         AGENT_FULL_NAME="${agents[$id]}"      # "🔵 Blu"

@@ -1,4 +1,4 @@
-docker_volumes="${AI_AGENTS_FOLDER:-/ai_agents}/PiAgent_Containers"
+docker_volumes="${AI_AGENTS_FOLDER:? variable not defined}/PiAgent_Containers"
 
 # Agent names, format "<icon> <alias>" → become the container icon/alias labels
 declare -A agents

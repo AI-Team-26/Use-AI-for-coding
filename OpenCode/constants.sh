@@ -1,4 +1,4 @@
-docker_volumes="${AI_AGENTS_FOLDER:-/ai_agents}/OpenCode_Containers"
+docker_volumes="${AI_AGENTS_FOLDER:?AI_AGENTS_FOLDER not defined}/OpenCode_Containers"
 
 declare -A agents
 agents["Dev-1"]="🐼 OpenCode Panda"
