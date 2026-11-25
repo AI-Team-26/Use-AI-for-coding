@@ -76,6 +76,7 @@ read_menu_input() {
 # Prints the numbered menu and reads the answer until it is one of the items.
 # The chosen item is put in MENU_CHOICE, so the caller only handles what it means.
 # An empty line redraws the menu and an invalid answer retries, like `select` did.
+# MENU_CHOICE is global: read it at once, before any call that may open another menu.
 # Return codes:
 #   0 = item chosen (in MENU_CHOICE)
 #   1 = stdin closed (EOF): the terminal is gone, the caller reports and exits
