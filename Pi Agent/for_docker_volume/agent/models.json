@@ -7,32 +7,32 @@
             "apiKey": "Llama.cpp",
             "models": [
                 {
-                    "id": "64K",
+                    "id": "local 52K",
+                    "contextWindow": 53248,
+                    "maxTokens": 8192,
+                    "reasoning": true
+                },
+                {
+                    "id": "local 64K",
                     "contextWindow": 65536,
                     "maxTokens": 8192,
                     "reasoning": true
                 },
                 {
-                    "id": "80K",
+                    "id": "local 80K",
                     "contextWindow": 81920,
                     "maxTokens": 8192,
                     "reasoning": true
                 },
                 {
-                    "id": "96K",
+                    "id": "local 96K",
                     "contextWindow": 98304,
                     "maxTokens": 8192,
                     "reasoning": true
                 },
                 {
-                    "id": "128K",
+                    "id": "local 128K",
                     "contextWindow": 131072,
-                    "maxTokens": 8192,
-                    "reasoning": true
-                },
-                {
-                    "id": "52K",
-                    "contextWindow": 53248,
                     "maxTokens": 8192,
                     "reasoning": true
                 }
@@ -460,7 +460,7 @@
             "models": [
                 {
                     "id": "deepseek-v4.1-flash-1017",
-                    "name": "qwen3.8-flash",
+                    "name": "deepseek-v4.1-flash-1017",
                     "maxTokens": 8192,
                     "reasoning": true,
                     "cost": {
