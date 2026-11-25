@@ -18,5 +18,7 @@ Add a verdict of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ 
 The first line of the review should be like this: <verdict> by <agent>.  
 Do not consider the fact that the branch is behind main.  
   
+After you wrote your points, check them again, one by one, to verify it is not a false claim.  
+  
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
 **IMPORTANT** The very last line of your response MUST be exactly this: "[REVIEW FOR `$1` DONE]".

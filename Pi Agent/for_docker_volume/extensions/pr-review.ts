@@ -72,6 +72,9 @@ export default function prExtension(pi: ExtensionAPI) {
       The first line of the review should be like this: <verdict> by <agent>. \n
       Report here a recap specifying if there are blocking points (changes request) or PR can be merged as it is. \n
       Do not consider the fact that the branch is behind main. \n
+      \n
+      After you wrote your points, check them again, one by one, to verify it is not a false claim. \n
+      \n
       **IMPORTANT**: The very last line of your response MUST be exactly this: "[REVIEW FOR ${prNumber} DONE]". \n
       ${note ?? ""}`
 
