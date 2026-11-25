@@ -21,7 +21,6 @@ cp ../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
 cp ../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
 cp ../scripts/utils.sh "$docker_volumes/scripts/utils.sh"
 cp start.sh "$docker_volumes/scripts/start.sh"
-#cp .env "$docker_volumes/scripts/.env"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
 GITHUB_ORG=$GITHUB_ORG
