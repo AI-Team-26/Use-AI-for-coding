@@ -61,6 +61,7 @@ must be visible at container startup:
 
 ```text
 GITHUB_AGENT_ACCOUNT=<account>
+GITHUB_ORG=<organization>
 GITHUB_COMMIT_EMAIL=<commit email>
 EXA_API_KEY=<key>
 ```

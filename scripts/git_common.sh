@@ -46,6 +46,15 @@ set_github_auth_for_repo() {
     local owner=$(echo "$repo_path" | awk -F'/' '{print $1}' )
     echo -e "Owner: $owner"
 
+    set_github_auth_for_owner "$owner" "$missing_pat_tone"
+}
+
+# Sets GITHUB_TOKEN from the PAT record of <owner> in the PAT file.
+# <missing_pat_tone> has the same meaning as in set_github_auth_for_repo().
+set_github_auth_for_owner() {
+    local owner=${1:?The owner must be specified}
+    local missing_pat_tone=${2:-error}
+
     local pat=$(grep "^${owner}:" "$github_pat_file" | cut -d':' -f2 | sed 's|[[:space:]]*$||' || true)
     if [[ -z "$pat" ]]; then
         if [[ "$missing_pat_tone" == "info" ]]; then
@@ -64,9 +73,6 @@ set_github_auth_for_repo() {
     local obfuscated_pat="$(obfuscate_pat $pat)"
     echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${owner}${NC}"
     export GITHUB_TOKEN=$pat
-
-    # TODO: is it worth to do this check?
-    #check_repo_access "$repo_path"
 }
 
 # Sets GITHUB_TOKEN for a repository that can be owned by an account without a PAT record.

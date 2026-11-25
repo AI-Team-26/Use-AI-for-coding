@@ -37,6 +37,7 @@ cp for_docker_volume/start.sh "$docker_volumes/scripts/start.sh"
 #cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
+GITHUB_ORG=$GITHUB_ORG
 GITHUB_COMMIT_EMAIL=$GITHUB_COMMIT_EMAIL
 EXA_API_KEY=$EXA_API_KEY
 EOF

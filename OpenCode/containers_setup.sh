@@ -24,6 +24,7 @@ cp start.sh "$docker_volumes/scripts/start.sh"
 #cp .env "$docker_volumes/scripts/.env"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
+GITHUB_ORG=$GITHUB_ORG
 GITHUB_COMMIT_EMAIL=$GITHUB_COMMIT_EMAIL
 EXA_API_KEY=$EXA_API_KEY
 AELDER_API_KEY=$AELDER_API_KEY
