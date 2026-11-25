@@ -5,8 +5,8 @@ subagent: false
 
 If no number was provided, reply with the usage `/review <N> [note]` and do nothing else.
 Otherwise, review **PR $1** of this repository.
-- Number: `$1`
-- Optional user note: `$2`
+- Number: $1
+- Optional user note: $2
 
 If PR is not "open" highlight it in the response.  
 
@@ -19,4 +19,4 @@ The first line of the review should be like this: <verdict> by <agent>.
 Do not consider the fact that the branch is behind main.  
   
 Report a recap specifying if there are blocking points (changes request) or PR can be merged as it is.  
-**IMPORTANT** The very last line of your response MUST be exactly this: "[REVIEW FOR `$1` DONE]".
+**IMPORTANT** The very last line of your response MUST be exactly this: "[REVIEW FOR $1 DONE]".
