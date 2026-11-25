@@ -82,8 +82,10 @@
      no APPROVE/REQUEST_CHANGES, no labels in this round.
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
-
-
+- Feature 99 | clone_project is start_common.sh should allow a simple select of organization repositories
+  The function should read the repositories of the organization ($GITHUB_ORG) and show a list, skipping the repositories already present in /projects.
+  The first item of the list should be "add it manually", and this choice should present the same input request of the current implementation.  
+  
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
