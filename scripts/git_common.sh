@@ -22,12 +22,8 @@ INVITE_NOT_FOUND=2
 
 # Since GIT uses GITHUB CLI authentication, we set the GITHUB_TOKEN that will be used by GitHub CLI 
 # <repo_url> argument must be in format "https://github.com/account/repo.git"
-# <missing_pat_tone> is "error" (default) when the missing owner PAT ends the operation, or "info"
-# when the caller can continue with another account: an error line followed by "continuing" reads
-# like a failure that was ignored.
 set_github_auth_for_repo() {
     local repo_url=${1:?The repository URL must be specified}
-    local missing_pat_tone=${2:-error}
 
     # Check that repository URL us in HTTP format
     if [[ ! "$repo_url" =~ ^https://github.com ]]; then
@@ -46,13 +42,18 @@ set_github_auth_for_repo() {
     local owner=$(echo "$repo_path" | awk -F'/' '{print $1}' )
     echo -e "Owner: $owner"
 
+    set_github_auth_for_owner "$owner"
+}
+
+# Sets GITHUB_TOKEN from the PAT record of <owner> in the PAT file.
+# A missing record is reported as a neutral fact: the caller decides if it is
+# fatal or continues with another account, and prints its own outcome line.
+set_github_auth_for_owner() {
+    local owner=${1:?The owner must be specified}
+
     local pat=$(grep "^${owner}:" "$github_pat_file" | cut -d':' -f2 | sed 's|[[:space:]]*$||' || true)
     if [[ -z "$pat" ]]; then
-        if [[ "$missing_pat_tone" == "info" ]]; then
-            echo -e "${BLUE}ℹ️ No PAT record for owner '${owner}' in '${github_pat_file}'.${NC}"
-        else
-            echo -e "${RED}❌ Failed to get PAT from file '${github_pat_file}' for owner '${owner}' ${NC}"
-        fi
+        echo -e "${BLUE}ℹ️ No PAT record for owner '${owner}' in '${github_pat_file}'.${NC}"
         return "$GIT_AUTH_NO_OWNER_PAT"
     fi
 
@@ -64,9 +65,6 @@ set_github_auth_for_repo() {
     local obfuscated_pat="$(obfuscate_pat $pat)"
     echo "GITHUB_TOKEN (${PURPLE}${obfuscated_pat}${NC}) set for ${YELLOW}${owner}${NC}"
     export GITHUB_TOKEN=$pat
-
-    # TODO: is it worth to do this check?
-    #check_repo_access "$repo_path"
 }
 
 # Sets GITHUB_TOKEN for a repository that can be owned by an account without a PAT record.
@@ -77,7 +75,7 @@ set_github_auth_for_repo_or_agent() {
     local repo_url=${1:?The repository URL must be specified}
     local rc=0
 
-    set_github_auth_for_repo "$repo_url" info || rc=$?
+    set_github_auth_for_repo "$repo_url" || rc=$?
 
     case $rc in
         "$GIT_AUTH_OK")

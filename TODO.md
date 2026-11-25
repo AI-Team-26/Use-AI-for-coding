@@ -82,10 +82,13 @@
      no APPROVE/REQUEST_CHANGES, no labels in this round.
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
-- Feature 99 | clone_project is start_common.sh should allow a simple select of organization repositories
-  The function should read the repositories of the organization ($GITHUB_ORG) and show a list, skipping the repositories already present in /projects.
-  The first item of the list should be "add it manually", and this choice should present the same input request of the current implementation.  
-  
+
+- Feature 100 | start_common.sh: extract one shared menu-input helper
+  `select_project`, `delete_proj` and `select_org_repo` repeat the same ~15-line loop
+  (print menu, read, handle EOF/ESC, empty line redraw, range check with `10#`, invalid retry).
+  One helper (e.g. `choose_from_menu item...` returning the choice in a global) would remove
+  the copies and keep ESC/EOF handling identical everywhere. From PR #192 review.
+
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
@@ -182,6 +185,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 99 [feat/99_clone_org_repo_select]: "Clone a repository" lists the `$GITHUB_ORG` repos not yet in /projects (first item: "Add it manually" = old URL input); `GITHUB_ORG` is now exported into `/scripts/.env` by both containers_setup.sh
 - Feature 97 [fix/97_wipe_extensions_volume]: `containers_setup.sh` wipes and re-copies `skills` and `extensions` in each docker volume
 - Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
 - Feature 40 [feat/40_shared_common_helpers]: `git-info.ts`, `agent-name.ts`, `llama-server-model.ts`, `new.ts` reuse `_shared/common.ts` (colors, safeNotify, safeSetStatus); deployed copies in `~/.pi/agent/extensions` are refreshed by the user's VS Code task

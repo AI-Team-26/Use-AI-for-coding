@@ -195,18 +195,90 @@ select_project() {
 }
 
 
+# Shows the organization repositories ($GITHUB_ORG) that are not yet in $project_folder.
+# The chosen URL is put in ORG_REPO_URL. Return codes:
+#   0 = repository chosen
+#   1 = manual URL entry (menu item, listing failure, or nothing left to clone)
+#   2 = cancelled (Exit item, ESC or stdin closed)
+select_org_repo() {
+    ORG_REPO_URL=""
+    [[ -n "${GITHUB_ORG:-}" ]] || return 1
+    local listing repos=() items=("✍️ Add it manually") name
+    if ! set_github_auth_for_owner "$GITHUB_ORG"; then
+        echo -e "${YELLOW}${WARNING_EMOJI} Cannot list the repositories of '$GITHUB_ORG'. Enter the URL manually.${NC}"
+        return 1
+    fi
+    if ! listing=$(gh api --paginate "orgs/$GITHUB_ORG/repos?per_page=100" --jq '.[] | select(.archived | not) | .name'); then
+        echo -e "${YELLOW}${WARNING_EMOJI} Cannot list the repositories of '$GITHUB_ORG'. Enter the URL manually.${NC}"
+        return 1
+    fi
+    mapfile -t repos < <(printf '%s\n' "$listing" | sort)
+    # A repo whose name already has a folder in /projects is skipped.
+    for name in "${repos[@]}"; do
+        if [[ -n "$name" && ! -d "$project_folder/$name" ]]; then
+            items+=("$name")
+        fi
+    done
+    if (( ${#items[@]} == 1 )); then
+        if [[ -z "$listing" ]]; then
+            echo -e "${BLUE}${INFO_EMOJI} No repositories found for '$GITHUB_ORG'.${NC}"
+        else
+            echo -e "${BLUE}${INFO_EMOJI} All repositories of '$GITHUB_ORG' are already in $project_folder.${NC}"
+        fi
+        return 1
+    fi
+    items+=("❌ Exit")
+    echo -e "${GIT_EMOJI} Repositories of ${YELLOW}$GITHUB_ORG${NC} not yet in $project_folder:"
+    print_menu "${items[@]}"
+    local prompt=$'\e[34mSelect a repository to clone: \e[0m' rc=0 choice
+    while true; do
+        rc=0
+        read_menu_input "$prompt" || rc=$?
+        if [[ $rc -ne 0 ]]; then
+            return 2
+        elif [[ -z "$MENU_REPLY" ]]; then
+            print_menu "${items[@]}"
+            continue
+        fi
+        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
+            if (( 10#$MENU_REPLY == 1 )); then
+                return 1   # first item: "✍️ Add it manually"
+            fi
+            choice=${items[10#$MENU_REPLY - 1]}
+            if [[ "$choice" == "❌ Exit" ]]; then
+                return 2
+            fi
+            ORG_REPO_URL="https://github.com/$GITHUB_ORG/$choice.git"
+            return 0
+        fi
+        echo -e "${WARNING_EMOJI} Invalid selection. Retry."
+    done
+}
+
 # --- Clone a repository and create a new Project ---
 clone_repo() {
     echo ""
-    local repo_url proj_dir
-    read_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || { echo "(cancelled)"; return 0; }
-    repo_url=$INPUT
-    if [[ -z "$repo_url" ]]; then
-        echo "(cancelled)"
-        return 0
+    local repo_url="" proj_dir rc=0
+    if [[ -n "${GITHUB_ORG:-}" ]]; then
+        select_org_repo || rc=$?
+        if [[ $rc -eq 0 ]]; then
+            repo_url=$ORG_REPO_URL
+            proj_dir=$(basename "$repo_url" .git)
+        elif [[ $rc -eq 2 ]]; then
+            echo "(cancelled)"
+            return 0
+        fi
     fi
-    read_input "Directory name (leave blank for repo name): " || { echo "(cancelled)"; return 0; }
-    proj_dir=${INPUT:-$(basename "$repo_url" .git)}
+    if [[ -z "$repo_url" ]]; then
+        read_input "GitHub repo URL (MUST BE THE HTTPS PATH): " || { echo "(cancelled)"; return 0; }
+        repo_url=$INPUT
+        if [[ -z "$repo_url" ]]; then
+            echo "(cancelled)"
+            return 0
+        fi
+        read_input "Directory name (leave blank for repo name): " || { echo "(cancelled)"; return 0; }
+        proj_dir=${INPUT:-$(basename "$repo_url" .git)}
+    fi
     # A '/' would escape the projects folder; a leading '-' would be parsed as an option by gh.
     if [[ "$proj_dir" == */* || "$proj_dir" == -* ]]; then
         echo -e "${RED}${WARNING_EMOJI} Invalid directory name '$proj_dir': '/' and a leading '-' are not allowed.${NC}"
@@ -227,7 +299,7 @@ clone_repo() {
     # Guard the call: a bare non-zero return would abort the script under errexit.
     # Running it in a `||` context also disables errexit inside check_repo_access,
     # so its internal `check_and_accept_invite` + `case $?` works as intended.
-    local rc=0
+    rc=0
     check_repo_access "$repo_path" || rc=$?   # rc holds the non-zero exit status
 
     case $rc in

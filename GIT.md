@@ -61,6 +61,7 @@ must be visible at container startup:
 
 ```text
 GITHUB_AGENT_ACCOUNT=<account>
+GITHUB_ORG=<organization>
 GITHUB_COMMIT_EMAIL=<commit email>
 EXA_API_KEY=<key>
 ```
@@ -94,7 +95,7 @@ If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_c
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
 4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
    `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
-   while `select_project` still **aborts** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
+   while `select_project` stays in the menu and asks to add the PAT.
 5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
