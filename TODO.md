@@ -82,7 +82,7 @@
      no APPROVE/REQUEST_CHANGES, no labels in this round.
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
-  
+
 - Feature 100 | start_common.sh: extract one shared menu-input helper
   `select_project`, `delete_proj` and `select_org_repo` repeat the same ~15-line loop
   (print menu, read, handle EOF/ESC, empty line redraw, range check with `10#`, invalid retry).
