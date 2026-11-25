@@ -33,8 +33,6 @@ cp ../scripts/start_common.sh "$docker_volumes/scripts/start_common.sh"
 cp ../scripts/git_common.sh "$docker_volumes/scripts/git_common.sh"
 cp ../scripts/utils.sh "$docker_volumes/scripts/utils.sh"
 cp for_docker_volume/start.sh "$docker_volumes/scripts/start.sh"
-#cp .env "$docker_volumes/scripts/.env"
-#cp for-docker-volumes/run_loop.sh "$docker_volumes/scripts/run_loop.sh"
 cat << EOF > "$docker_volumes/scripts/.env"
 GITHUB_AGENT_ACCOUNT=$GITHUB_AGENT_ACCOUNT
 GITHUB_ORG=$GITHUB_ORG
