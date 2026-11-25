@@ -202,9 +202,13 @@ select_project() {
 #   2 = cancelled (Exit item, ESC or stdin closed)
 select_org_repo() {
     ORG_REPO_URL=""
+    [[ -n "${GITHUB_ORG:-}" ]] || return 1
     local listing repos=() items=("✍️ Add it manually") name
-    set_github_auth_for_owner "$GITHUB_ORG" || return 1
-    if ! listing=$(gh api --paginate "orgs/$GITHUB_ORG/repos?per_page=100" --jq '.[].name'); then
+    if ! set_github_auth_for_owner "$GITHUB_ORG"; then
+        echo -e "${YELLOW}${WARNING_EMOJI} Cannot list the repositories of '$GITHUB_ORG'. Enter the URL manually.${NC}"
+        return 1
+    fi
+    if ! listing=$(gh api --paginate "orgs/$GITHUB_ORG/repos?per_page=100" --jq '.[] | select(.archived | not) | .name'); then
         echo -e "${YELLOW}${WARNING_EMOJI} Cannot list the repositories of '$GITHUB_ORG'. Enter the URL manually.${NC}"
         return 1
     fi
@@ -236,10 +240,11 @@ select_org_repo() {
             continue
         fi
         if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
+            if (( 10#$MENU_REPLY == 1 )); then
+                return 1   # first item: "✍️ Add it manually"
+            fi
             choice=${items[10#$MENU_REPLY - 1]}
-            if [[ "$choice" == "✍️ Add it manually" ]]; then
-                return 1
-            elif [[ "$choice" == "❌ Exit" ]]; then
+            if [[ "$choice" == "❌ Exit" ]]; then
                 return 2
             fi
             ORG_REPO_URL="https://github.com/$GITHUB_ORG/$choice.git"

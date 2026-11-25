@@ -98,7 +98,7 @@ If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_c
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
 4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
    `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
-   while `select_project` still **aborts** with *"Failed to get PAT from file '/scripts/github_pat' for owner '<owner>'"*.
+   while `select_project` prints *"ℹ️ No PAT record for owner '<owner>' …"* and stays in the menu with its own *"Cannot start"* warning.
 5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
