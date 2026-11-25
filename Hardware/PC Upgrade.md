@@ -154,7 +154,7 @@ If the blue slot is dead, only a new board fixes it. That is the honest reason t
 - AM5 is the only live socket here. Zen 5 drops in later.
 - The 7600X sits at 95 °C by design. The AG400 is enough, but it is audible during long compiles.
 
-## Bundle #4 - MSI MPG X570 - (subito) 210 EUR 🔥 🥇
+## Bundle #4 - MSI MPG X570 - (subito) 210 EUR 🔥 🥇  [SOLD]
 
 [https://www.subito.it/informatica/msi-mpg-x570-gaming-plus-amd-ryzen-7-5800x-ram-32g-sondrio-646976442.htm]
 
@@ -167,12 +167,10 @@ Dissipatore be quiet! Dark Rock 4
 
 Need to buy another 16GB or 32 GB DDR4 (is it good to mix 8GB and 16GB modules in pair?)
 
-## Bundle #5 - ASUS ROG X570-E - (subito) 310 EUR 🔥
+## Bundle #5 - ASUS ROG X570-E - (subito) 310 EUR 🔥  [❌ Use doesn't answer !!]
 
 [https://www.subito.it/informatica/ryzen-9-3950x-asus-rog-x570-e-32gb-g-skill-ddr4-matera-646873428.htm]  
 [https://www.subito.it/vi/646873428.htm]
-
-❌ Use doesn't answer !!
 
 Ryzen 9 3950X ASUS ROG X570-E 32GB G.Skill DDR4
 
