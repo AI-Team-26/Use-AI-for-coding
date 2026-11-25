@@ -213,6 +213,7 @@ select_org_repo() {
         return 1
     fi
     mapfile -t repos < <(printf '%s\n' "$listing" | sort)
+    # A repo whose name already has a folder in /projects is skipped.
     for name in "${repos[@]}"; do
         if [[ -n "$name" && ! -d "$project_folder/$name" ]]; then
             items+=("$name")

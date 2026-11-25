@@ -89,11 +89,6 @@
   One helper (e.g. `choose_from_menu item...` returning the choice in a global) would remove
   the copies and keep ESC/EOF handling identical everywhere. From PR #192 review.
 
-- Feature 101 | start_common.sh: "already cloned" check should read each project's origin
-  `select_org_repo` skips repos by folder name (`-d "$project_folder/$name"`), so a repo cloned
-  into a custom directory is offered again and a same-named non-git folder hides a repo.
-  Read each project's `git remote get-url origin` instead. From PR #192 review.
-
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi

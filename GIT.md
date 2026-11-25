@@ -66,9 +66,6 @@ GITHUB_COMMIT_EMAIL=<commit email>
 EXA_API_KEY=<key>
 ```
 
-`GITHUB_ORG` is read by the clone menu in `start_common.sh` to list the organization repositories.
-Containers created before it was added keep the manual URL input until `containers_setup.sh` is re-run.
-
 Set `GITHUB_COMMIT_EMAIL` to the account's private `…@users.noreply.github.com` address to avoid the
 [GH007 private-email error](#private-hidden-github-email).
 
@@ -98,7 +95,7 @@ If the project has a remote, it calls `set_github_auth_for_repo` (`scripts/git_c
 3. Look up `grep "^<owner>:" /scripts/github_pat`.
 4. If not found: the owner has no PAT record. `set_github_auth_for_repo` returns `GIT_AUTH_NO_OWNER_PAT`;
    `clone_repo` then continues with the agent PAT (see [Repository access on clone](#repository-access-on-clone-owner--collaborator--invite)),
-   while `select_project` prints *"ℹ️ No PAT record for owner '<owner>' …"* and stays in the menu with its own *"Cannot start"* warning.
+   while `select_project` stays in the menu and asks to add the PAT.
 5. If the resolved PAT ends with `github.com`: **abort** — the line was probably written as
    `owner:pat@github.com`.
 6. Otherwise: `export GITHUB_TOKEN=<PAT>`.
