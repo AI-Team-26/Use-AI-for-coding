@@ -73,6 +73,36 @@ read_menu_input() {
     done
 }
 
+# Prints the numbered menu and reads the answer until it is one of the items.
+# The chosen item is put in MENU_CHOICE, so the caller only handles what it means.
+# An empty line redraws the menu and an invalid answer retries, like `select` did.
+# Return codes:
+#   0 = item chosen (in MENU_CHOICE)
+#   1 = stdin closed (EOF): the terminal is gone, the caller reports and exits
+#   2 = ESC pressed: the caller treats it as its own cancel
+choose_from_menu() {
+    local prompt=$1
+    shift
+    local items=("$@") rc=0
+    MENU_CHOICE=""
+    print_menu "${items[@]}"
+    while true; do
+        rc=0
+        read_menu_input "$prompt" || rc=$?
+        if [[ $rc -ne 0 ]]; then
+            return $rc
+        elif [[ -z "$MENU_REPLY" ]]; then
+            print_menu "${items[@]}"
+            continue
+        fi
+        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
+            MENU_CHOICE=${items[10#$MENU_REPLY - 1]}
+            return 0
+        fi
+        echo -e "${WARNING_EMOJI} Invalid selection. Retry."
+    done
+}
+
 # --- Select or Clone a Project ---
 select_project() {
     #sleep 10
@@ -83,19 +113,13 @@ select_project() {
         mkdir "$project_folder"
     fi
 
-    local projects proj action_done=0 rc=0
+    local projects proj prompt=$'\e[34mSelect a project/action: \e[0m' rc=0
 
-    # Loop instead of recursing: an unguarded tail-recursion spins forever
-    # when stdin hits EOF (terminal closed at the prompt), because the read
-    # aborts without running its body and would re-enter the function endlessly.
     while true; do
         #mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d ! -name ".pnpm-store" -printf "%f\n")
         mapfile -t projects < <(find "$project_folder" -mindepth 1 -maxdepth 1 -type d -printf "%f\n")
 
         echo $'\n\e[34m------------------------------------------------\e[0m'
-
-        #echo -e "${YELLOW}${MENU_EMOJI} Select a project/action:${NC}"
-        PS3=$'\e[34mSelect a project/action: \e[0m'
 
         # ≫ ══ • ⬩➤ ⇢╰┈➤ ➝🏝️💥➕➔🌟✨
         # 🗑️
@@ -111,85 +135,54 @@ select_project() {
            "❌ Exit"
         )
 
-        action_done=0
-        print_menu "${projects[@]}"
-        while true; do
-            rc=0
-            read_menu_input "$PS3" || rc=$?
-            if [[ $rc -eq 1 ]]; then
-                break      # stdin closed: handled after the loop
-            elif [[ $rc -eq 2 ]]; then
-                return 0   # ESC acts like "❌ Exit"
-            elif [[ -z "$MENU_REPLY" ]]; then
-                continue 2 # empty line: redraw the menu, like `select` did
-            fi
-            proj=""
-            if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#projects[@]} )); then
-                proj=${projects[10#$MENU_REPLY - 1]}
-            fi
-            if [[ "$proj" == "🧩 Clone a repository" ]]; then
-                # clone_repo returns 1 on failure; keep the menu alive under errexit
-                clone_repo || :
-                action_done=1
-                break
-            elif [[ "$proj" == "🏝️ Create a new project" ]]; then
-                # create_new_proj can fail (e.g. the folder already exists); keep the menu alive under errexit
-                create_new_proj || :
-                action_done=1
-                break
-            elif [[ "$proj" == "🗑️ Delete a project" ]]; then
-                # delete_proj returns 1 on EOF; keep the menu alive under errexit
-                delete_proj || :
-                action_done=1
-                break
-            elif [[ "$proj" == ">_ Shell" ]]; then 
-                /bin/bash
-                action_done=1
-                break  
-            elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
-                manage_git_credentials || :
-                action_done=1
-                break
-            elif [[ "$proj" == "❌ Exit" ]]; then
-                return 0
-            elif [[ -n "$proj" ]]; then
-
-                clear
-
-                echo ""
-                echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
-                cd "$project_folder/$proj" || exit 1
-
-                #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
-                local repo_url=$(git remote get-url origin 2>/dev/null)   
-                if [[ -n "$repo_url" ]]; then
-                    # A missing owner PAT must not kill the script under errexit:
-                    # stay in the menu so the user can add the PAT and retry.
-                    local auth_rc=0
-                    set_github_auth_for_repo "$repo_url" || auth_rc=$?
-                    if [[ $auth_rc -ne $GIT_AUTH_OK ]]; then
-                        echo -e "${RED}${WARNING_EMOJI} Cannot start '$proj' without its GitHub credentials.${NC}"
-                        echo -e "${YELLOW}👉 Add the owner's PAT with '🔑 Manage GitHub credentials', then select the project again.${NC}"
-                        cd "$project_folder" || true
-                        action_done=1
-                        break
-                    fi
-                fi
-
-                # custom tool function
-                start_project "$proj"
-                action_done=1
-                break
-            else
-                echo -e "${WARNING_EMOJI} Invalid selection. Retry."
-            fi
-        done
-
-        # The prompt loop exited without any handled action = stdin closed (EOF):
-        # stop cleanly instead of redrawing the menu forever.
-        if [[ $action_done -eq 0 ]]; then
+        choose_from_menu "$prompt" "${projects[@]}" || rc=$?
+        if [[ $rc -eq 1 ]]; then
             echo -e "\n${WARNING_EMOJI} Input interrupted or terminal closed. Exiting."
             return 1
+        elif [[ $rc -eq 2 ]]; then
+            return 0   # ESC acts like "❌ Exit"
+        fi
+        proj=$MENU_CHOICE
+
+        if [[ "$proj" == "🧩 Clone a repository" ]]; then
+            # clone_repo returns 1 on failure; keep the menu alive under errexit
+            clone_repo || :
+        elif [[ "$proj" == "🏝️ Create a new project" ]]; then
+            # create_new_proj can fail (e.g. the folder already exists); keep the menu alive under errexit
+            create_new_proj || :
+        elif [[ "$proj" == "🗑️ Delete a project" ]]; then
+            # delete_proj returns 1 on EOF; keep the menu alive under errexit
+            delete_proj || :
+        elif [[ "$proj" == ">_ Shell" ]]; then
+            /bin/bash
+        elif [[ "$proj" == "🔑 Manage GitHub credentials" ]]; then
+            manage_git_credentials || :
+        elif [[ "$proj" == "❌ Exit" ]]; then
+            return 0
+        else
+            clear
+
+            echo ""
+            echo -e "${GREEN}${ROCKET_EMOJI} Project: ${YELLOW}$proj${NC}"
+            cd "$project_folder/$proj" || exit 1
+
+            #local repo_path=$(git remote get-url origin 2>/dev/null | sed 's|.*github.com[/:]||' | sed 's|\.git$||')            
+            local repo_url=$(git remote get-url origin 2>/dev/null)   
+            if [[ -n "$repo_url" ]]; then
+                # A missing owner PAT must not kill the script under errexit:
+                # stay in the menu so the user can add the PAT and retry.
+                local auth_rc=0
+                set_github_auth_for_repo "$repo_url" || auth_rc=$?
+                if [[ $auth_rc -ne $GIT_AUTH_OK ]]; then
+                    echo -e "${RED}${WARNING_EMOJI} Cannot start '$proj' without its GitHub credentials.${NC}"
+                    echo -e "${YELLOW}👉 Add the owner's PAT with '🔑 Manage GitHub credentials', then select the project again.${NC}"
+                    cd "$project_folder" || true
+                    continue
+                fi
+            fi
+
+            # custom tool function
+            start_project "$proj"
         fi
     done
 }
@@ -229,30 +222,19 @@ select_org_repo() {
     fi
     items+=("❌ Exit")
     echo -e "${GIT_EMOJI} Repositories of ${YELLOW}$GITHUB_ORG${NC} not yet in $project_folder:"
-    print_menu "${items[@]}"
-    local prompt=$'\e[34mSelect a repository to clone: \e[0m' rc=0 choice
-    while true; do
-        rc=0
-        read_menu_input "$prompt" || rc=$?
-        if [[ $rc -ne 0 ]]; then
-            return 2
-        elif [[ -z "$MENU_REPLY" ]]; then
-            print_menu "${items[@]}"
-            continue
-        fi
-        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
-            if (( 10#$MENU_REPLY == 1 )); then
-                return 1   # first item: "✍️ Add it manually"
-            fi
-            choice=${items[10#$MENU_REPLY - 1]}
-            if [[ "$choice" == "❌ Exit" ]]; then
-                return 2
-            fi
-            ORG_REPO_URL="https://github.com/$GITHUB_ORG/$choice.git"
-            return 0
-        fi
-        echo -e "${WARNING_EMOJI} Invalid selection. Retry."
-    done
+    local prompt=$'\e[34mSelect a repository to clone: \e[0m' rc=0
+    choose_from_menu "$prompt" "${items[@]}" || rc=$?
+    if [[ $rc -ne 0 ]]; then
+        return 2   # ESC or stdin closed
+    fi
+    if [[ "$MENU_CHOICE" == "✍️ Add it manually" ]]; then
+        return 1
+    fi
+    if [[ "$MENU_CHOICE" == "❌ Exit" ]]; then
+        return 2
+    fi
+    ORG_REPO_URL="https://github.com/$GITHUB_ORG/$MENU_CHOICE.git"
+    return 0
 }
 
 # --- Clone a repository and create a new Project ---
@@ -365,42 +347,17 @@ delete_proj() {
 
     echo $'\n\e[34m------------------------------------------------\e[0m'
 
-    PS3=$'\e[34mSelect the project to delete: \e[0m'
-
     local items=("${projects[@]}" "❌ Exit")
-    print_menu "${items[@]}"
-
-    local action_done=0 rc=0 proj
-    while true; do
-        rc=0
-        read_menu_input "$PS3" || rc=$?
-        if [[ $rc -eq 1 ]]; then
-            break
-        elif [[ $rc -eq 2 ]]; then
-            return 0   # ESC acts like "❌ Exit": back to the main menu
-        elif [[ -z "$MENU_REPLY" ]]; then
-            print_menu "${items[@]}"
-            continue
-        fi
-        proj=""
-        if [[ "$MENU_REPLY" =~ ^[0-9]+$ ]] && (( 10#$MENU_REPLY >= 1 && 10#$MENU_REPLY <= ${#items[@]} )); then
-            proj=${items[10#$MENU_REPLY - 1]}
-        fi
-        if [[ "$proj" == "❌ Exit" ]]; then
-            return 0
-        elif [[ -n "$proj" ]]; then
-            rm -rf "$project_folder/$proj"
-            echo -e "${GREEN}✔️ Project '$proj' deleted.${NC}"
-            action_done=1
-            break
-        else
-            echo -e "${WARNING_EMOJI} Invalid selection. Retry."
-        fi
-    done
-
-    # stdin closed (EOF) at this prompt: bail out, caller re-shows main menu
-    if [[ $action_done -eq 0 ]]; then
+    local prompt=$'\e[34mSelect the project to delete: \e[0m' rc=0
+    choose_from_menu "$prompt" "${items[@]}" || rc=$?
+    if [[ $rc -eq 1 ]]; then
         echo -e "${WARNING_EMOJI} Input interrupted or terminal closed."
         return 1
+    elif [[ $rc -eq 2 ]]; then
+        return 0   # ESC acts like "❌ Exit": back to the main menu
+    elif [[ "$MENU_CHOICE" != "❌ Exit" ]]; then
+        rm -rf "$project_folder/$MENU_CHOICE"
+        echo -e "${GREEN}✔️ Project '$MENU_CHOICE' deleted.${NC}"
     fi
+    return 0
 }
