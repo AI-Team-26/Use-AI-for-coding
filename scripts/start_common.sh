@@ -136,6 +136,7 @@ select_project() {
            "❌ Exit"
         )
 
+        rc=0
         choose_from_menu "$prompt" "${projects[@]}" || rc=$?
         if [[ $rc -eq 1 ]]; then
             echo -e "\n${WARNING_EMOJI} Input interrupted or terminal closed. Exiting."
