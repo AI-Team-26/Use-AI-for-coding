@@ -341,6 +341,8 @@ obfuscate_pat() {
 }
 
 
+# Add/remove/show the per-account PAT records used by the GitHub commands.
+# Called from start_common.sh only, which defines choose_from_menu.
 manage_git_credentials() {
     echo -e "${YELLOW}We use a custom file to manage GitHub PAT (${BLUE}$github_pat_file${NC}${YELLOW}).\n \
 (The usual .git-credentials file is not used because not easy to read and lead to mistakes due to not properly impemented per-HTTP functionality)\n \
@@ -382,56 +384,53 @@ Values are stored as <account>:<PAT>.${NC}"
     }
 
     # MAIN LOOP
+    local prompt=$'\e[34mSelect an option: \e[0m' rc=0 choice
     while true; do
         # Refresh the visual list every time the loop repeats
         load_and_print_list
 
         echo -e "\n${BLUE}------------------------${NC}"
-        PS3=$'\e[34mSelect an option: \e[0m'
 
-        # Use select inside the while loop
-        select choice in "Show-not-obfuscated" "Add" "Remove" "Exit"; do
-            case "$choice" in
-                "Show-not-obfuscated")
-                    #echo -e "\n${GREEN}Raw File Content:${NC}" 
-                    cat $github_pat_file
-                    break # Break out of 'select', but stay in 'while' to refresh
-                ;;
-                "Add")
-                    read_input "GitHub account (user or org): " || { echo "(cancelled)"; break; }
-                    account=$INPUT
-                    read_input "GitHub account PAT (hidden): " hidden || { echo "(cancelled)"; break; }
-                    pat=$INPUT
+        rc=0
+        choose_from_menu "$prompt" "Show-not-obfuscated" "Add" "Remove" "Exit" || rc=$?
+        if [[ $rc -ne 0 ]]; then
+            return 0   # ESC or closed input: back to the main menu
+        fi
+        choice=$MENU_CHOICE
 
-                    if  [[ -n "$account" && -n "$pat" ]]; then 
-                    # Append new credential
-                        echo "${account}:${pat}" >> "$github_pat_file"
-                        echo -e "${GREEN}✓ Credential added!${NC}"
-                    fi
-                    break
-                ;;
-                "Remove")
-                    # Re-run print so they see current numbers before choosing
-                    load_and_print_list
-                    read_input "Enter number to remove: " || { echo "(cancelled)"; break; }
-                    index=$INPUT
+        case "$choice" in
+            "Show-not-obfuscated")
+                cat "$github_pat_file"
+            ;;
+            "Add")
+                read_input "GitHub account (user or org): " || { echo "(cancelled)"; continue; }
+                account=$INPUT
+                read_input "GitHub account PAT (hidden): " hidden || { echo "(cancelled)"; continue; }
+                pat=$INPUT
 
-                    if [[ "$index" =~ ^[0-9]+$ ]]; then
-                        sed -i "${index}d" "$github_pat_file"
-                        echo -e "${YELLOW}Removed.${NC}"
-                    else
-                        echo -e "${RED}Invalid number.${NC}"
-                    fi
-                    break
-                ;;
-                "Exit")
-                    return 0
-                    ;;
-                *)
-                    echo -e "${RED}Invalid selection.${NC}"
-                    break ;;
-            esac
-        done
+                if  [[ -n "$account" && -n "$pat" ]]; then 
+                # Append new credential
+                    echo "${account}:${pat}" >> "$github_pat_file"
+                    echo -e "${GREEN}✓ Credential added!${NC}"
+                fi
+            ;;
+            "Remove")
+                # Re-run print so they see current numbers before choosing
+                load_and_print_list
+                read_input "Enter number to remove: " || { echo "(cancelled)"; continue; }
+                index=$INPUT
+
+                if [[ "$index" =~ ^[0-9]+$ ]]; then
+                    sed -i "${index}d" "$github_pat_file"
+                    echo -e "${YELLOW}Removed.${NC}"
+                else
+                    echo -e "${RED}Invalid number.${NC}"
+                fi
+            ;;
+            "Exit")
+                return 0
+            ;;
+        esac
     done
 }
 

@@ -83,12 +83,6 @@
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
 
-- Feature 100 | start_common.sh: extract one shared menu-input helper
-  `select_project`, `delete_proj` and `select_org_repo` repeat the same ~15-line loop
-  (print menu, read, handle EOF/ESC, empty line redraw, range check with `10#`, invalid retry).
-  One helper (e.g. `choose_from_menu item...` returning the choice in a global) would remove
-  the copies and keep ESC/EOF handling identical everywhere. From PR #192 review.
-
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
@@ -185,6 +179,7 @@
   Don't remove this feature from TODO in the PR.
 
 ## DONE (latest tasks completed)
+- Feature 100 [feat/100_shared_menu_helper]: `choose_from_menu` in `scripts/start_common.sh` reads the menu choice once for `select_project`, `select_org_repo` and `delete_proj` (ESC, EOF, empty line and range check in one place)
 - Feature 99 [feat/99_clone_org_repo_select]: "Clone a repository" lists the `$GITHUB_ORG` repos not yet in /projects (first item: "Add it manually" = old URL input); `GITHUB_ORG` is now exported into `/scripts/.env` by both containers_setup.sh
 - Feature 97 [fix/97_wipe_extensions_volume]: `containers_setup.sh` wipes and re-copies `skills` and `extensions` in each docker volume
 - Bug 98 [fix/98_osc8_st_terminator]: `osc8Link()` terminates OSC 8 hyperlinks with ST (`\x1b\\`) instead of BEL, so a broken render path can no longer ring the terminal bell; output is byte-identical to pi-tui `hyperlink()`
