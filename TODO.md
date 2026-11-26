@@ -83,15 +83,6 @@
      Follow-up only if arm `multi` fails for execution reasons rather than review quality: `scripts/post_review.sh`
      taking the review JSON on stdin, to remove prompt-following from the equation.
 
-- Feature 101 | two menus still use the `select` builtin
-  `choose_from_menu` replaced the hand-written menu loops in `scripts/start_common.sh`, but two
-  places still use `select` with `PS3`:
-  - `manage_git_credentials` (`scripts/git_common.sh`, around line 390). It is only reached from
-    `start_common.sh`, so `choose_from_menu` is defined when it runs.
-  - `Qwen Code/for-docker-volume/start.sh` defines its own `select_project` on top of `select`,
-    which overrides the shared one.
-  Move both onto `choose_from_menu`, so ESC/EOF handling is identical everywhere.
-
 ### Pi Agent
 
 - Feature 26 [SUSPENDED] | Pi agent: https://pi.dev/packages/pi-voice-stt tp add voice commands to Pi
