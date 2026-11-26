@@ -1,14 +1,14 @@
 # Models for Coding Evaluation
 
 
-## Provider Models
+## Providers
 
 - Ofox.ai: https://ofox.ai/models?utm=app_ofox
 - TokenMix: 
 - Novita.ai: 
 
 
-## Results
+### Models
 
 Model Coding evaluation
 | Provider    | Model                             | $ In/out    | Evaluation | Note                                                            |
@@ -59,15 +59,6 @@ Model Coding evaluation
 
 moonshotai/kimi-k2.7-code
 
-
-
-## Evaluating
-
-
-0. google/gemini-3.1-flash-image-preview
-0. minimax/minimax-m2.5:free (Openrouter)  
-0. deepseek-v4-flash (TokenMix) 
-0. deepseek/deepseek-v4-flash (Ofox)
 
 ## 🟢 Good models
 

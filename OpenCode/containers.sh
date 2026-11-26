@@ -33,7 +33,7 @@ fi
 # Run ---------------------------------------------------------------------------------------------
 if [[ "$steps" == *create_container* ]]; then
 
-    echo -e "Containers folder: ${docker_volumes}"
+    echo -e "Containers folder: ${docker_volumes}\n"
 
     for id in "${!agents[@]}"; do
         AGENT_ID="$id"                        # "Dev-1"  (the assoc-array key)
@@ -56,6 +56,8 @@ if [[ "$steps" == *create_container* ]]; then
             --mount type=bind,src="$docker_volumes/$AGENT_ID/opencode",dst=/root/.config/opencode \
             --mount type=bind,src="$docker_volumes/$AGENT_ID/projects",dst=/projects \
             $docker_image
+
+        echo -e "✔️  Container for ${AGENT_ID} created\n"
     done
 fi
 

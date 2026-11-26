@@ -16,7 +16,6 @@
 | Kiro.dev       |           |      |            | ❔          |               |         |
 | TokenHarbor.ai |           |      |            | ✔️         |               |         |
 
-## Mono-provider
 
 ### DeepSeek
 
