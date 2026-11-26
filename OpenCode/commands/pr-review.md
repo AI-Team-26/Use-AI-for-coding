@@ -10,7 +10,7 @@ Otherwise, review **PR $1** of this repository.
 
 If PR is not "open" highlight it in the response.  
 
-Leave a PR review comment, signed with your name.  
+Leave a PR review comment, numbered (for reference) and signed with your name.  
 Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 suggestion.  
 Also number the points to have a clear reference. 
 Specify file and funcion or row (when possible).  
