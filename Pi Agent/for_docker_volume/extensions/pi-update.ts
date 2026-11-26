@@ -11,6 +11,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent"
 import { spawn } from "node:child_process"
 
+const EXTENSION = "PI-UPDATE"
 const WIDGET_KEY = "pi-update"
 const STATUS_KEY = "pi-update"
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
@@ -21,7 +22,7 @@ const MAX_WAIT_MINUTES = 5
 
 const STEPS = ["pi update", "pi update --extensions"]
 
-const NOTICE = `⬆️ Pi will now update (core + extensions). It can take up to ${MAX_WAIT_MINUTES} minutes. Please wait for the operation to finish.`
+const NOTICE = `Pi will now update (core + extensions). It can take up to ${MAX_WAIT_MINUTES} minutes. Please wait for the operation to finish.`
 
 interface StepResult {
     command: string
@@ -103,7 +104,12 @@ export default function updateExtension(pi: ExtensionAPI) {
     pi.registerCommand("pi-update", {
         description: "Update Pi core and all installed extensions (pi update && pi update --extensions)",
         handler: async (_args, ctx) => {
-            ctx.ui.notify(NOTICE, "info")
+            pi.sendMessage({
+                customType: EXTENSION,
+                content: NOTICE,
+                display: true,
+                details: {},
+            })
 
             const results: StepResult[] = []
 
