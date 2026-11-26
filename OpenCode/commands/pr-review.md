@@ -12,11 +12,15 @@ If PR is not "open" highlight it in the response.
 
 Leave a PR review comment, signed with your name.  
 Use these icons to mark points: 🟥 heavy 🟧 blocking 🟨 suggestion.  
-Also number the points to have a clear reference.  
+Also number the points to have a clear reference. 
+Specify file and funcion or row (when possible).  
+Example:  
+"1.🟨 10,000 PBKDF2 iterations is low. OWASP recommends 600,000 for PBKDF2-HMAC-SHA256. No real hashes exist yet, so raising Iterations now costs nothing. Benchmark the login path first if latency worries you. (File: src/Monei.Core/Entities/Account.cs, row 26)"  
+  
 Block (🟧) only for missing task requirements, regressions or concrete defects. Everything else is a non-blocking 🟨 suggestion or a follow-up TODO.  
 Add a verdict of the review: ✅ Approved ☑️ Approved (can be improved) ⛔ Rejected.  
 The first line of the review should be like this: <verdict> by <agent>.  
-Do not consider the fact that the branch is behind main.  
+Do not point that the branch is behind main.  
   
 After you wrote your points, check them again, one by one, to verify it is not a false claim.  
   
