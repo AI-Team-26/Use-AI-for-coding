@@ -79,8 +79,8 @@ read_menu_input() {
 # MENU_CHOICE is global: read it at once, before any call that may open another menu.
 # Return codes:
 #   0 = item chosen (in MENU_CHOICE)
-#   1 = stdin closed (EOF): the terminal is gone, the caller reports and exits
-#   2 = ESC pressed: the caller treats it as its own cancel
+#   1 = stdin closed (EOF): the caller decides how to stop
+#   2 = ESC pressed: the caller decides how to treat the cancel
 choose_from_menu() {
     local prompt=$1
     shift
