@@ -568,6 +568,8 @@ ${typeData.extra ?? ""}\n\
                 if (pr === null) return
                 if (!(await switchToPrBranch(ctx, projectRoot, pr))) return
 
+                messageSender?.sendUserMessage("Check if there are agents reviews not replied. Read them, do what is possible and reply to them, point by point (in a single comment).", { deliverAs: "steer" })
+
                 prWatcher.startPrCheckPolling(projectRoot, { number: pr.number, url: "" })
             } catch (err) {
                 safeNotify(`❌ /pr failed. ${err instanceof Error ? err.message : String(err)}`, "error")
