@@ -84,8 +84,19 @@ Verify external factual claims against reliable documentation.
 
 Use the GitHub CLI to leave a PR review signed with your name.
 
-The first line must be:
+Give each review a sequential number per agent within this PR.
+Read existing reviews and use your previous highest review number + 1.
+If you have no numbered review yet, start at 1.
+
+Start the review with:
 <verdict> by <agent>
+Review #<number>
+
+Use review numbers as the main reference for humans.
+Include the reviewed commit hash at the bottom as secondary technical detail.
+Do not use a commit hash instead of a review number.
+
+Number findings separately, starting at 1 in each review.
 
 Verdicts:
 - ✅ Approved — no actionable findings.
